@@ -1,0 +1,9 @@
+# Arduino compiled/generated files
+*.elf
+*.bin
+*.map
+*.hex
+build/
+.vscode/
+.DS_Store
+Thumbs.db
