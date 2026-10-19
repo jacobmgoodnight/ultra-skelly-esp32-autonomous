@@ -25,9 +25,28 @@ A standard Bluetooth-capable ESP32 development board is sufficient (the confirme
 
 The file's own eye/lights metadata may apply during playback; keep that in mind if experimenting with live eyes.
 
+## Bluetooth address: no manual MAC setup
+
+The sketch uses `SKELLY_NAME = "Ultra Skelly v2"` to discover the prop. It reads the **Bluetooth address dynamically during the BLE scan**, so **do not replace the code's service/characteristic UUIDs with your own MAC**. Those UUIDs describe the device's BLE service; they are not per-unit serial numbers.
+
+The one per-device setting you normally *must* change is `MOUTH_FILE_SERIAL`, which is the **stored MP3 file number** reported by the web controller. The original test unit used #12, but others might differ. If your prop has been renamed and advertises a different BLE name, update `SKELLY_NAME` as well.
+
 ## 4. Flash firmware
 
 Open `firmware/SkellyAutonomous/SkellyAutonomous.ino`, change `MOUTH_FILE_SERIAL` to the actual file number and upload. Open the Serial Monitor at **115200**.
+
+### After flashing: first connection
+
+Most ESP32 boards restart automatically after a successful upload; the normal controller then begins scanning. **On the original test setup, manually turning the ESP32 off and back on sometimes appeared necessary before it connected.** If the scan or connection doesn't begin:
+
+1. Power on Skelly and close/disconnect the official app and web controller.
+2. After the upload completes, press **EN/RESET** on the ESP32, or unplug and reconnect **ESP32 USB power** (not Skelly's power).
+3. Reopen Serial Monitor at **115200**, looking for `Scanning for Ultra Skelly v2...`, the discovered BLE address, and `CONNECTED`.
+4. Give it time: each scan lasts approximately **5 seconds**; after an unsuccessful scan or connection the sketch waits roughly **30 seconds** before retrying.
+5. If it only ever connects after an ESP32 reboot, report your board, Arduino-ESP32 version and serial output; manual power cycling should not be a prerequisite for normal automatic reconnect.
+
+The one-shot eye test is different: it scans **only once** per reset, while the main controller retries automatically. This distinction matters when testing immediately after flashing.
+
 
 Sample log (illustrative):
 
