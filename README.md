@@ -42,6 +42,14 @@ The audio file itself is not completely silent: the *physical volume knob on the
 
 **Optional eyes:** First run `experiments/EyeSingleTest/EyeSingleTest.ino` to verify one `AAF9` eye change on your device. Once verified, restore the main sketch and set `EYES_ENABLED = true`. More in [Eye experiments](docs/eyes.md).
 
+### Bluetooth identity and first boot
+
+**You do not need to enter your Skelly's Bluetooth MAC address.** The ESP32 scans for the advertised name `Ultra Skelly v2` and uses the address discovered at runtime. The `SERVICE_UUID` and `WRITE_UUID` identify Skelly's BLE interface, not a unique prop. Only change `SKELLY_NAME` if your device advertises under a different name.
+
+**You do need to verify `MOUTH_FILE_SERIAL`:** it is the serial number of *your uploaded MP3*, not a Bluetooth identifier. The original tester used file #12; yours may differ.
+
+After flashing, many ESP32 boards reboot automatically and scan immediately. If yours does not connect, with Skelly powered on and the web/phone controller disconnected, press the board's **EN/RESET** button or unplug/reconnect **the ESP32's USB power**. Watch Serial Monitor at **115200 baud**. The normal controller scans for 5 seconds and retries 30 seconds after a miss; a manual reboot is a troubleshooting step, **not meant to be necessary on every startup**. Full power-cycle reconnect behavior still needs testing across devices.
+
 ## Easy settings (at the top of the sketch)
 
 ```cpp
