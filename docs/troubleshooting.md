@@ -6,6 +6,8 @@
 | `getService()` / `getCharacteristic()` no matching function | The calls need UUID arguments: `client->getService(SERVICE_UUID)` and `service->getCharacteristic(WRITE_UUID)`. |
 | Skelly found, stuck at `Connecting...` | Don't call `connect()` inside BLE scan callback; connect only after the scan returns. Close other controllers. Power cycle/restart if needed. |
 | No COM port | Correct ESP32 board/USB data cable/CP210x driver and Tools > Port selection. |
+| Upload completes but ESP32 doesn't connect until reboot | Most boards auto-reset after upload. On some setups press EN/RESET or power-cycle the **ESP32 USB** after flashing; keep Skelly powered on, disconnect web/phone controller, and watch the 115200 baud Serial Monitor. The main sketch repeats its 5-sec BLE scan after ~30 sec; frequent manual resets indicate something to investigate, not a normal configuration step. |
+| Which Bluetooth address do I enter? | **None**: the sketch scans by advertised name `Ultra Skelly v2` and discovers the MAC automatically. Don't change `SERVICE_UUID` / `WRITE_UUID`; set your **MP3 file serial** in `MOUTH_FILE_SERIAL` separately. |
 | Skelly isn't found | Check it's powered, in BLE range, and not already owned by another phone/browser connection. Wait for next scan/retry. |
 | Jaw file plays but whole body moves | Set that file's **saved movement flag to 0x00**, not `0xFF` in the web controller. |
 | Wrong audio file plays | `MOUTH_FILE_SERIAL` is specific to your prop's file table, not universal. Read actual serial and rebuild. |
