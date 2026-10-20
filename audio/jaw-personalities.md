@@ -39,3 +39,10 @@ Some saved MP3s also restore their own eye design when played; use Studio's expe
 - **Haunted mutter:** a randomized mix of short chatter and a dramatic hold, chosen from multiple uploaded audio files.
 
 Each additional audio pattern needs its own uploaded Skelly file serial. The current scheduler assumes jaw MP3s last about **20–21 seconds**; keep all clips near that length unless you change the scheduling logic.
+
+
+## Field-test result: 3-second holds confirmed
+
+**October 20, 2026:** The original tester uploaded **Long Open as file #13** and **Whisper Then Gasp as file #14**. **Both successfully held the jaw open for approximately three seconds** before closing. That confirms a useful visual effect on one Ultra Skelly v2; waveform response and file numbers may differ on another unit.
+
+The test also revealed a possible interaction: when a jaw MP3 begins, it appears to interrupt an already-running arm or torso command. Studio offers a new **Protect arm + torso from jaw MP3** option to defer the AAC6 play command until those actions finish. See [body-movement notes](../docs/body-movements.md).
