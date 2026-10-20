@@ -90,3 +90,27 @@ The torso run subsequently logged independent `TORSO command sent` events with r
 The earlier and present results establish reliable-looking jaw-first arm/torso overlap on this physical prop under these test conditions. Full unattended reliability remains unmeasured.
 
 An opt-in **Alternate arm or torso when due** mode was added to Studio (requires both motors enabled and recurring mode ON). Each motor retains its own random due interval; when both are eligible for a jaw clip the controller prefers the motor not selected on the preceding successful coordinated movement. The actual alternating cadence has **not yet been physically tested**.
+
+
+## October 20, 2026 — alternating recurring scheduler: six consecutive successful follow-ups
+
+In a combined **Head OFF / Jaw ON / Arm ON / Torso ON** test, the user selected **ALTERNATING** with **2-second jaw-first delay**, **RECURRING frequency-gated**, **body overlap OFF**, **jaw body-protection ON**, and jaw MP3 **#13**. The ESP32 discovered and connected to Skelly after one unsuccessful scan and a retry. The initial jaw MP3 played without a motor follow-up; subsequent eligible clips logged exactly:
+
+```text
+JAW-FIRST RECURRING: scheduled ARM
+JAW-FIRST: sending ARM after MP3 start
+JAW-FIRST RECURRING: scheduled TORSO
+JAW-FIRST: sending TORSO after MP3 start
+JAW-FIRST RECURRING: scheduled ARM
+JAW-FIRST: sending ARM after MP3 start
+JAW-FIRST RECURRING: scheduled TORSO
+JAW-FIRST: sending TORSO after MP3 start
+JAW-FIRST RECURRING: scheduled ARM
+JAW-FIRST: sending ARM after MP3 start
+JAW-FIRST RECURRING: scheduled TORSO
+JAW-FIRST: sending TORSO after MP3 start
+```
+
+This is **six of six successful BLE command dispatches**, alternating **3 arm / 3 torso**, with no logged skips, motor-cooldown failures, or disconnects in the excerpt. Random *next motor target* intervals were **arm 69, 77, 71 seconds** and **torso 71, 60, 82 seconds**. Jaw target intervals were roughly **45–54 seconds**. These are logged scheduling targets, not externally measured completion times.
+
+**Status:** recurring alternating *command scheduling verified on the real ESP32 over multiple cycles*. Previous hardware tests independently verified that jaw-first arm and torso motions work together. The new log alone cannot confirm that each physical movement completed, nor unattended reliability over hours. The exact **two-second** inter-command spacing is configured and logged, but no timestamped trace was provided to measure its accuracy independently.

@@ -61,3 +61,12 @@ A second controlled run confirmed **jaw file #12 with arm**, and **jaw file #13 
 **New opt-in selection: Alternate arm or torso when due** (`JAW_FOLLOWUP_MOTOR = 3`, `JAW_FOLLOWUP_RECURRING = true`). Turn ON both arm and torso. Each movement becomes eligible based on its own randomized target; the next MP3 triggers *one* eligible motor after the delay, favoring the opposite motor if both are due. If neither is due, there is no motor follow-up for that clip. Repeating this automatically over multiple cycles is **not yet verified**.
 
 For an initial alternating test, turn Head OFF, Arm ON, Torso ON, Jaw ON (file #13), select Alternate, enable Recurring, and set each motor to **90–150 seconds** and Jaw to **45–60 seconds**. Keep **Protect arm + torso from jaw MP3 ON** and body overlap OFF. Observe at least four eligible jaw events: alternation is a preference when both motors are due, **not** a promise to strictly switch every time or to move on every jaw clip.
+
+
+## Recurring alternating: first multi-cycle ESP32 log result
+
+**Configuration tested:** Jaw file #13, head OFF, arm ON, torso ON, body motor overlap OFF, MP3 priority protection ON, jaw-first **ALTERNATING**, recurring enabled, and 2000 ms delay.
+
+**Result from Serial Monitor:** after an initial jaw-only clip, six jaw-first motor sends occurred in the order **ARM → TORSO → ARM → TORSO → ARM → TORSO**. There were no logged disconnects, skipped follow-ups, or failures during those six sends. The arm and torso kept independent random target intervals, and they were triggered only on jaw clips when eligible.
+
+This establishes that the **recurring selector and command dispatch** work on the real ESP32 over several cycles. The user previously confirmed that the jaw and each body motor physically overlap when jaw playback precedes `AACA`; the latest log has no new visual observations of each cycle. For the next test, watch whether **each 22-second arm and ~25-second torso movement actually finishes**, whether MP3 jaw action remains uninterrupted, and whether the system remains reliable over a longer unattended run. Head + jaw + arm/torso together also remains unverified.

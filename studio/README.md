@@ -68,3 +68,10 @@ Studio's new **Repeat when the selected motor's own random interval is due** swi
 An optional **Alternate arm or torso when due (recurring)** selection now coordinates *both* motors with MP3 playback, while still sending only one arm or torso command per MP3. Enable both arm and torso and check the Recurring option. Each motor uses its own randomized start target and cooldown; when both are eligible, the controller prefers the motor not selected the preceding time. When neither is eligible, jaw playback continues with no body follow-up. This scheduler is **untested over multiple cycles**, unlike the previously verified one-shot jaw-first arm and torso movements.
 
 The updated serial messages print `JAW-FIRST RECURRING: scheduled ARM/TORSO` when an eligible follow-up is chosen. They print `Head motion disabled` when Head is OFF rather than showing a confusing unused head timer.
+
+
+## Field test — recurring alternating commands now confirmed
+
+The original Ultra Skelly v2 logged **six consecutive successful jaw-first motor sends** in the sequence **arm, torso, arm, torso, arm, torso**, with recurring mode enabled, MP3 #13, two-second follow-up delay and head OFF. No disconnects or skipped commands were reported in the log excerpt. The scheduler and motor-selection logic have therefore been **field-tested at the BLE command level**; physical completion of *every* cycle and multi-hour reliability are still pending further observation.
+
+Select **Alternate arm or torso when due** and enable **Repeat when the selected motor's own random interval is due** to reproduce this mode. Motor frequencies continue to control eligibility; alternate selection is a preference when both motors are due, not a guarantee that every future session alternates strictly.
