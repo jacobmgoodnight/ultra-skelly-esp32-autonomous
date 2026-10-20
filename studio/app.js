@@ -8,7 +8,7 @@
     headEnabled:true, headMin:32, headMax:60,
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:false, armMin:360, armMax:720,
-    bodyOverlap:false,
+    bodyOverlap:false, jawProtectBody:true,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
@@ -17,7 +17,7 @@
   const PRESETS = {
     subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false},
     normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true}
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true}
   };
   const byId = id => document.getElementById(id);
   function replaceOnce(source, original, replacement) {
@@ -38,8 +38,8 @@
       error.push("Enable at least one movement or eye effect.");
     for(const [name,enabled,min,max,floor] of [
       ["Head",config.headEnabled,config.headMin,config.headMax,32],
-      ["Torso",config.torsoEnabled,config.torsoMin,config.torsoMax,90],
-      ["Arm",config.armEnabled,config.armMin,config.armMax,120],
+      ["Torso",config.torsoEnabled,config.torsoMin,config.torsoMax,45],
+      ["Arm",config.armEnabled,config.armMin,config.armMax,45],
       ["Jaw",config.jawEnabled,config.jawMin,config.jawMax,22],
       ["Eyes",config.eyesEnabled,config.eyesMin,config.eyesMax,15]
     ]) {
@@ -86,6 +86,7 @@
       ["const bool TORSO_ENABLED = false;","const bool TORSO_ENABLED = "+Boolean(config.torsoEnabled)+";"],
       ["const bool ARM_ENABLED = false;","const bool ARM_ENABLED = "+Boolean(config.armEnabled)+";"],
       ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
+      ["const bool JAW_PROTECTS_ARM_TORSO = true;","const bool JAW_PROTECTS_ARM_TORSO = "+Boolean(config.jawProtectBody)+";"],
       ["const uint32_t TORSO_MIN_INTERVAL_MS = 240000;","const uint32_t TORSO_MIN_INTERVAL_MS = "+(config.torsoMin*1000)+";"],
       ["const uint32_t TORSO_MAX_INTERVAL_MS = 420000;","const uint32_t TORSO_MAX_INTERVAL_MS = "+(config.torsoMax*1000)+";"],
       ["const uint32_t ARM_MIN_INTERVAL_MS = 360000;","const uint32_t ARM_MIN_INTERVAL_MS = "+(config.armMin*1000)+";"],
@@ -182,6 +183,7 @@
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
       "// Torso="+config.torsoEnabled+" "+config.torsoMin+"–"+config.torsoMax+"s; arm="+config.armEnabled+" "+config.armMin+"–"+config.armMax+"s",
       "// Head/torso/arm overlap="+config.bodyOverlap+"; measured arm runtime 22 seconds.",
+      "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -195,7 +197,7 @@
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
-      bodyOverlap:byId("bodyOverlap").checked,
+      bodyOverlap:byId("bodyOverlap").checked,jawProtectBody:byId("jawProtectBody").checked,
       jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
@@ -207,7 +209,7 @@
   function writeConfig(cfg) {
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
@@ -252,6 +254,7 @@
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
+    byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect arm / torso":"MP3 takes priority"):"Not needed";
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
