@@ -10,7 +10,9 @@ This is a proposed, **experimental** graphical configuration tool for the [Ultra
 - Switch head and jaw on or off, and choose whether their animations may overlap.
 - Supply **your jaw MP3's file serial**; it is not a Bluetooth MAC address.
 - Choose the Skelly BLE *advertised name* (default `Ultra Skelly v2`); the ESP32 discovers the address itself.
-- Opt in to randomized **experimental** eyes, change intervals, and select which of 18 icon numbers may appear.
+- Opt in to randomized eye expressions, choose which of 18 supported icon numbers may appear, and control their timing. **The one-shot ESP32 eye change is verified on real hardware; randomized eye scheduling alongside jaw audio is not yet field-tested.**
+- Add up to **eight** uploaded jaw MP3 file serial numbers to randomly switch between different jaw personalities (new, needs device testing). Each stored file must have saved motor movement flags `0x00`.
+- Enable optional **idle breaks** to pause newly triggered movements for a randomized time once any active animation has finished (new, needs device testing).
 - Preview an illustrative 5-minute schedule; **not a prediction**, because actual firmware uses fresh randomness and device timing.
 - Download a complete `SkellyAutonomous.ino` file or inspect/copy the sketch.
 
@@ -18,7 +20,7 @@ The generator starts from a snapshot of the existing ESP32 firmware as of Octobe
 
 ## Important before use
 
-1. **Eyes are off by default.** Verify [the one-shot eye test](../experiments/EyeSingleTest/EyeSingleTest.ino) on your physical Skelly before enabling. Audio playback could change the eyes back to the file's saved icon.
+1. **Eyes are off by default.** The [one-shot eye test](../experiments/EyeSingleTest/EyeSingleTest.ino) succeeded on the original ESP32/Skelly. Run it on your own device before using randomized eyes. Audio playback could change the eyes back to the file's saved icon.
 2. **Torso and arm commands remain disabled.** On your MP3 set the saved movement flag to **0x00** in the [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/) before using jaw playback.
 3. **No MAC address entry** is needed: scanning is by BLE name. `MOUTH_FILE_SERIAL` is a separate *per-file* number.
 4. Generated code is **not compiled in the browser**. Download, open in Arduino IDE, compile/upload to ESP32 Dev Module (tested framework 3.3.12), and monitor serial output at 115200.
@@ -27,8 +29,8 @@ The generator starts from a snapshot of the existing ESP32 firmware as of Octobe
 
 ## Project status
 
-This configurator is a **prototype**, proposed as a pull request. Until merged, it is separate from the verified default `main` firmware. Please validate compiled output with representative presets and do live-device testing before marking the generator stable.
+This configurator is a **beta**. GitHub Actions run JavaScript syntax checks, generator smoke tests for presets/options/validation, and protocol CRC test vectors. These tests do **not** compile the Arduino C++ against the ESP32 toolchain or replace real-hardware checks. Keep a backup of the proven main firmware. Jaw pools, random eyes during MP3 playback, and idle breaks need field testing.
 
 ## Hosting on GitHub Pages
 
-In the repository **Settings → Pages**, configure "Deploy from a branch", branch `main`, folder `/(root)`, and save. After merging the pull request and Pages deployment, `/studio/` will be available. This app requires no build pipeline, backend, tokens or third-party API.
+In the repository **Settings → Pages**, configure "Deploy from a branch", branch `main`, folder `/(root)`, and save. When this folder is on `main` and Pages finishes deploying, `/studio/` will be available. GitHub's source-file view of `index.html` is **code, not a rendered preview**. For an immediate local preview, use **Code → Download ZIP** on GitHub, extract, and double-click `studio/index.html`. This app requires no build pipeline, backend, tokens or third-party API.
