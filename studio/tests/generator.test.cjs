@@ -116,7 +116,9 @@ test("Jaw-first experiment is disabled by default and sends one selected motor a
     headEnabled:false,torsoEnabled:false
   }));
   assert.match(arm, /const uint8_t JAW_FOLLOWUP_MOTOR = 1;/);
-  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0;/);
+  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 && !jawFollowupTestDone;/);
+  assert.match(arm, /bool jawFollowupTestDone = false;/);
+  assert.match(arm, /if \(connected\) jawFollowupTestDone = true;/);
   assert.match(arm, /jawFollowupAt = now \+ JAW_FOLLOWUP_DELAY_MS;/);
   assert.match(arm, /JAW-FIRST: sending ARM after MP3 start/);
   assert.match(arm, /startArm\(t\);/);
