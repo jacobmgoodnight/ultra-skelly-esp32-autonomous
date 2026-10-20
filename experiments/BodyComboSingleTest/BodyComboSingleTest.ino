@@ -110,6 +110,10 @@ void setup() {
   // Head=bit0, Arm=bit1, Torso=bit2. CRC computed below.
   uint8_t frame[11] = {0xAA, 0xCA, TEST_MOVEMENT_MASK, 0, 0, 0, 0, 0, 0, 0, 0};
   frame[10] = crc8Skelly(frame, 10);
+  Serial.printf("Requested motors: HEAD=%s ARM=%s TORSO=%s\\n",
+                (TEST_MOVEMENT_MASK & 0x01) ? "YES" : "NO",
+                (TEST_MOVEMENT_MASK & 0x02) ? "YES" : "NO",
+                (TEST_MOVEMENT_MASK & 0x04) ? "YES" : "NO");
   Serial.printf("Sending ONE compound body command, mask 0x%02X: ", TEST_MOVEMENT_MASK);
   for (size_t i = 0; i < sizeof(frame); ++i) {
     if (frame[i] < 16) Serial.print("0");
