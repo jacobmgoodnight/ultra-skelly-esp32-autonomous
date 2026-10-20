@@ -7,7 +7,8 @@
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
 // ESP32 Dev Module, Arduino-ESP32 3.3.12
-// Torso and arm commands are NEVER sent by this sketch.
+// Optional torso and arm movements default OFF; arm command needs hardware testing.
+// Body motor commands are serialized (head/torso/arm), jaw audio may overlap.
 // One-shot and randomized eye commands worked on real Skelly hardware.
 // Eye/jaw synchronization below is a NEW option requiring field testing.
 // =============================================================
@@ -25,12 +26,27 @@
 // -------------------------------------------------------------
 const uint16_t MOUTH_FILE_SERIAL = 12;
 const bool MOUTH_ENABLED = true;
+const bool HEAD_ENABLED = true;
 
 // Existing verified head behavior (start-to-start)
 const uint32_t HEAD_ANIMATION_MS = 25000;
 const uint32_t HEAD_BUFFER_MS = 7000;
 const uint32_t HEAD_MIN_INTERVAL_MS = 32000;
 const uint32_t HEAD_MAX_INTERVAL_MS = 60000;
+
+// Advanced body movements. Torso AACA 0x04 worked (~25 sec) on original Skelly.
+// Arm AACA 0x02 is supported by upstream protocol, but not yet hardware-tested.
+// OFF by default, including the arm in Haunted until one-shot test succeeds.
+const bool TORSO_ENABLED = false;
+const bool ARM_ENABLED = false;
+const uint32_t TORSO_ANIMATION_MS = 25000;
+const uint32_t TORSO_BUFFER_MS = 10000;
+const uint32_t TORSO_MIN_INTERVAL_MS = 240000;
+const uint32_t TORSO_MAX_INTERVAL_MS = 420000;
+const uint32_t ARM_ANIMATION_MS = 30000; // conservative estimate, verify on hardware
+const uint32_t ARM_BUFFER_MS = 15000;
+const uint32_t ARM_MIN_INTERVAL_MS = 360000;
+const uint32_t ARM_MAX_INTERVAL_MS = 720000;
 
 // New jaw clip: 20.16 s including MP3 encoding padding
 const uint32_t MOUTH_CLIP_MS = 21000;
@@ -70,6 +86,9 @@ uint32_t nextScanAt = 0;
 uint32_t nextHeadAt = 0;
 uint32_t headSafeAfter = 0;
 uint32_t headMovingUntil = 0;
+uint32_t bodySafeAfter = 0; // Global motor cooldown, serialize head/torso/arm.
+uint32_t nextTorsoAt = 0;
+uint32_t nextArmAt = 0;
 uint32_t nextMouthAt = 0;
 uint32_t mouthSafeAfter = 0;
 uint32_t mouthPlayingUntil = 0;
@@ -167,6 +186,9 @@ bool connectToSkelly() {
   nextHeadAt = now + random(HEAD_MIN_INTERVAL_MS, HEAD_MAX_INTERVAL_MS + 1);
   headSafeAfter = now;
   headMovingUntil = now;
+  bodySafeAfter = now;
+  nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
+  nextArmAt = now + random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
   mouthSafeAfter = now;
   mouthPlayingUntil = now;
   nextMouthAt = now + random(MOUTH_MIN_INTERVAL_MS, MOUTH_MAX_INTERVAL_MS + 1);
@@ -177,7 +199,9 @@ bool connectToSkelly() {
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
-  Serial.println("CONNECTED. Head + jaw running independently; torso OFF.");
+  Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s. Body motor overlap BLOCKED.\n",
+    HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
+    TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
   Serial.printf("First head in %lu seconds.\n",
                 (unsigned long)((nextHeadAt - now) / 1000));
   if (mouthConfigured()) {
@@ -230,6 +254,7 @@ void startHead(uint32_t now) {
 
   headMovingUntil = now + HEAD_ANIMATION_MS;
   headSafeAfter = now + HEAD_ANIMATION_MS + HEAD_BUFFER_MS;
+  bodySafeAfter = headSafeAfter;
   // Keep original start-to-start timing regardless of jaw playback.
   const uint32_t headInterval = random(HEAD_MIN_INTERVAL_MS,
                                        HEAD_MAX_INTERVAL_MS + 1);
@@ -239,6 +264,36 @@ void startHead(uint32_t now) {
   Serial.printf("HEAD command sent; next head in %lu sec%s.\n",
                 (unsigned long)(headInterval / 1000),
                 jawAlreadyPlaying ? " (jaw audio may be playing too)" : "");
+}
+
+// Only called by the shared body-motor scheduler after cooldown.
+void startTorso(uint32_t now) {
+  uint8_t frame[11] = {0xAA, 0xCA, 0x04, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!sendFrame(frame)) {
+    Serial.println("Torso send failed / disconnected.");
+    resetConnection();
+    return;
+  }
+  bodySafeAfter = now + TORSO_ANIMATION_MS + TORSO_BUFFER_MS;
+  const uint32_t interval = random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
+  nextTorsoAt = now + interval;
+  Serial.printf("TORSO command sent; next torso target in %lu sec.\n",
+                (unsigned long)(interval / 1000));
+}
+
+void startArm(uint32_t now) {
+  // Command is protocol-grounded but arm-only action is NOT yet field-tested.
+  uint8_t frame[11] = {0xAA, 0xCA, 0x02, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!sendFrame(frame)) {
+    Serial.println("Arm send failed / disconnected.");
+    resetConnection();
+    return;
+  }
+  bodySafeAfter = now + ARM_ANIMATION_MS + ARM_BUFFER_MS;
+  const uint32_t interval = random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
+  nextArmAt = now + interval;
+  Serial.printf("ARM command sent (EXPERIMENTAL); next arm target in %lu sec.\n",
+                (unsigned long)(interval / 1000));
 }
 
 void startMouth(uint32_t now) {
@@ -302,7 +357,7 @@ void changeEyes(uint32_t now) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("\n=== ULTRA SKELLY: HEAD + JAW OVERLAP, TORSO DISABLED ===");
+  Serial.println("\n=== ULTRA SKELLY: AUTONOMOUS HEAD/JAW/EYES + OPTIONAL TORSO/ARM ===");
   randomSeed(micros());
   BLEDevice::init("");
   scanner = BLEDevice::getScan();
@@ -344,13 +399,42 @@ void loop() {
   if (!connected) { delay(100); return; }
 
   // Independently timed head and jaw: they MAY overlap.
-  // The 32 sec head minimum still preserves 25s animation + 7s buffer.
+  // Shared motor lock preserves minimum cool-down across all body parts.
+  // Head target may be delayed when torso or arm movement is enabled.
   // The 45 sec jaw minimum prevents replay before the 20s clip finishes.
   bool sentHeadThisLoop = false;
+  bool sentBodyThisLoop = false;
   bool sentMouthThisLoop = false;
-  if (reached(now, nextHeadAt)) {
-    startHead(now);
-    sentHeadThisLoop = true;
+  // Only ONE physical body motor command may be active at a time.
+  // Prioritize the most overdue scheduled movement to avoid starving torso/arm.
+  // Jaw audio and digital eyes remain independently scheduled.
+  if (reached(now, bodySafeAfter)) {
+    uint8_t choice = 0;
+    uint32_t overdue = 0;
+    if (HEAD_ENABLED && reached(now, nextHeadAt)) {
+      choice = 1;
+      overdue = now - nextHeadAt;
+    }
+    if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
+        (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
+      choice = 4;
+      overdue = now - nextTorsoAt;
+    }
+    if (ARM_ENABLED && reached(now, nextArmAt) &&
+        (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
+      choice = 2;
+    }
+    if (choice == 1) {
+      startHead(now);
+      sentHeadThisLoop = true;
+      sentBodyThisLoop = true;
+    } else if (choice == 4) {
+      startTorso(now);
+      sentBodyThisLoop = true;
+    } else if (choice == 2) {
+      startArm(now);
+      sentBodyThisLoop = true;
+    }
   }
 
   // If BLE disconnected during a write, let the next loop reconnect.
@@ -363,7 +447,7 @@ void loop() {
       reached(millis(), mouthSafeAfter)) {
     // If both commands become due together, space BLE writes a little.
     // A mouth clip can still run while the head is moving.
-    if (sentHeadThisLoop) delay(250);
+    if (sentBodyThisLoop) delay(250);
     startMouth(millis());
     sentMouthThisLoop = true;
   }
@@ -371,7 +455,7 @@ void loop() {
   // Experimental independent eye expressions. Can overlap animations.
   // Give adjacent BLE write-without-response commands a small gap.
   if (connected && EYES_ENABLED && reached(millis(), nextEyeAt)) {
-    if (sentHeadThisLoop || sentMouthThisLoop) delay(250);
+    if (sentBodyThisLoop || sentMouthThisLoop) delay(250);
     changeEyes(millis());
   }
 
