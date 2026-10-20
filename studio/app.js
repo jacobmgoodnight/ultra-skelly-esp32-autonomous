@@ -222,6 +222,16 @@
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
+    // Illustrative global motor serialization (real controller prioritizes
+    // overdue movements; exact future times are inherently unpredictable).
+    let bodyAvailableAt=0;
+    for(const ev of events) {
+      if(["head","torso","arm"].includes(ev.kind)){
+        ev.time=Math.max(ev.time,bodyAvailableAt);
+        const cooldown=ev.kind==="head"?32:ev.kind==="torso"?35:45;
+        bodyAvailableAt=ev.time+cooldown;
+      }
+    }
     if(!c.overlap&&c.headEnabled&&c.jawEnabled){
       let headUntil=0,jawUntil=0;
       for(const e of events){
