@@ -59,6 +59,6 @@ The community web controller's live movement grid **combines selected bits**: `0
 
 ## Physically tested multi-motor AACA mask and head/MP3 arbitration
 
-In the October 20 tests, `AA CA 03 00 00 00 00 00 00 00 D7` (movement mask `0x03 = HEAD + ARM`) **physically moved both requested body parts**, with no MP3 playing. Torso remained still as expected because `0x04` was not set. This directly validates a combined movement **bitmask**, not every possible motor combination. Masks `0x05` (head+torso), `0x06` (arm+torso), and `0x07` (all three) have not yet been verified on this unit.
+In the October 20 tests, `AA CA 03 00 00 00 00 00 00 00 D7` (movement mask `0x03 = HEAD + ARM`) **physically moved both requested body parts**, with no MP3 playing. Torso remained still as expected because `0x04` was not set. This directly validates a combined movement **bitmask**, not every possible motor combination. Mask `0x05` (head+torso) was subsequently physically verified: both moved from a single `AA CA 05 00 00 00 00 00 00 00 44` packet. Masks `0x06` (arm+torso) and `0x07` (all three) remain unverified.
 
 In contrast, head command `AA CA 01` during ongoing jaw MP3 #13 playback, at both **2-second and 10-second** offsets, was transmitted but **did not physically move the head**. This suggests an MP3-specific suppression/arbitration effect, not a limitation of all combined body-motor commands. Exact firmware internals are unknown.
