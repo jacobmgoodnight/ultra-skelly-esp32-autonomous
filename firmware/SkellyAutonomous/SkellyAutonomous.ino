@@ -113,6 +113,7 @@ uint32_t nextEyeAt = 0;
 uint8_t lastEye = 0; // Last successfully requested eye icon.
 bool jawDelayNotified = false;
 bool jawFollowupPending = false;
+bool jawFollowupTestDone = false; // One successful test per BLE connection.
 uint32_t jawFollowupAt = 0;
 bool jawEyeStartPending = false;
 bool jawEyeEndPending = false;
@@ -175,6 +176,7 @@ void resetConnection() {
   nextScanAt = millis(); // Re-scan immediately after power-off.
   jawDelayNotified = false;
   jawFollowupPending = false;
+  jawFollowupTestDone = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 }
@@ -223,6 +225,7 @@ bool connectToSkelly() {
   lastEye = 0;
   jawDelayNotified = false;
   jawFollowupPending = false;
+  jawFollowupTestDone = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
@@ -353,10 +356,10 @@ void startMouth(uint32_t now) {
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
   // Intentional, one-time jaw-first motor experiment. Cancels any previous
   // pending follow-up if the MP3 starts again (normally >20s apart).
-  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0;
+  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 && !jawFollowupTestDone;
   jawFollowupAt = now + JAW_FOLLOWUP_DELAY_MS;
   if (jawFollowupPending) {
-    Serial.printf("JAW-FIRST: scheduled %s %lu ms after MP3 start.\n",
+    Serial.printf("JAW-FIRST ONE-SHOT: scheduled %s %lu ms after MP3 start.\n",
                   JAW_FOLLOWUP_MOTOR == 1 ? "ARM" : "TORSO",
                   (unsigned long)JAW_FOLLOWUP_DELAY_MS);
   }
@@ -450,7 +453,8 @@ void loop() {
   // A controlled jaw-FIRST experiment: AAC6 plays, then one AACA motor packet.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
   // selected motor only; all ordinary scheduled arm/torso commands stay blocked
-  // while the MP3 is active. Do not retry a skipped follow-up automatically.
+  // while the MP3 is active. Only one successful test per BLE connection;
+  // a skipped attempt may try again on the next jaw MP3.
   if (connected && jawFollowupPending && reached(millis(), jawFollowupAt)) {
     jawFollowupPending = false;
     const uint32_t t = millis();
@@ -472,9 +476,11 @@ void loop() {
     } else if (armSelected) {
       Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
+      if (connected) jawFollowupTestDone = true;
     } else if (torsoSelected) {
       Serial.println("JAW-FIRST: sending TORSO after MP3 start (experimental).");
       startTorso(t);
+      if (connected) jawFollowupTestDone = true;
     }
   }
   if (!connected) { delay(100); return; }
