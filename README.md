@@ -130,3 +130,8 @@ Studio now offers two *Jaw first* modes: **one-shot** (one successful motor foll
 The two-second jaw-first sequence was independently verified again with **jaw #12 + arm** and **jaw #13 + torso**. In the second torso log, later torso actions were independent schedule commands, not proof of recurring jaw-first coordination.
 
 Skelly Studio now offers **Alternate arm or torso when due**: turn both motors ON and enable recurring jaw-first follow-up. One eligible motor starts after a jaw MP3 begins; the chosen motor depends on its own random interval and the last successful selection. The alternating scheduler remains opt-in and needs real multi-cycle testing. See [the test procedure](docs/jaw-first-experiment.md).
+
+
+### Endurance result: 30-minute alternating coordination run
+
+The original Ultra Skelly v2 completed an approximately **30-minute** ESP32 run using jaw MP3 #13 and **recurring, alternating jaw-first arm/torso commands**. After one unsuccessful scan followed by a successful connection, the serial log consistently scheduled **arm → torso → arm → torso**, with no logged reconnections, failed sends, or skipped follow-ups. This **validates the BLE command scheduler across an extended multi-cycle session**. Prior hardware tests confirmed that each jaw-first motor pairing can physically move with the mouth. The 30-minute serial log does not prove the completion of every physical cycle. Head and eyes were **OFF** during this run; combined head/eye/body operation remains a separate integration test. See the [experiment log](docs/experiments.md) and [jaw-first test guide](docs/jaw-first-experiment.md).
