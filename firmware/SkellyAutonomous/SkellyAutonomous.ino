@@ -42,6 +42,10 @@ const bool ARM_ENABLED = false;
 // Advanced opt-in only. When true, body motors may run at the same time.
 // This is NOT hardware-verified: test arm+head, then torso+head, then all.
 const bool ALLOW_BODY_MOTOR_OVERLAP = false;
+// AAC6 playback appears to apply saved per-file body flags (0x00), interrupting
+// arm/torso motion. When enabled, defer AAC6 until these motors finish, then
+// prevent new arm/torso starts during the MP3. Head/jaw overlap is separate.
+const bool JAW_PROTECTS_ARM_TORSO = true;
 const uint32_t BODY_WRITE_SPACING_MS = 600;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
@@ -101,6 +105,7 @@ uint32_t mouthSafeAfter = 0;
 uint32_t mouthPlayingUntil = 0;
 uint32_t nextEyeAt = 0;
 uint8_t lastEye = 0; // Last successfully requested eye icon.
+bool jawDelayNotified = false;
 bool jawEyeStartPending = false;
 bool jawEyeEndPending = false;
 uint32_t jawEyeStartAt = 0;
@@ -160,6 +165,7 @@ void resetConnection() {
   writeChar = nullptr;
   if (client != nullptr && client->isConnected()) client->disconnect();
   nextScanAt = millis(); // Re-scan immediately after power-off.
+  jawDelayNotified = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 }
@@ -206,14 +212,16 @@ bool connectToSkelly() {
   // Establish an eye icon promptly after connection so jaw playback can restore it.
   if (EYES_ENABLED) nextEyeAt = now + 2000;
   lastEye = 0;
+  jawDelayNotified = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
-  Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s. Body motor overlap BLOCKED.\n",
+  Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
     TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
-  Serial.printf("Body motor overlap %s (experimental when ON).\n",
-                ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF");
+  Serial.printf("Body motor overlap %s. Jaw body-protection %s.\n",
+                ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
+                JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
   Serial.printf("First head in %lu seconds.\n",
                 (unsigned long)((nextHeadAt - now) / 1000));
   if (mouthConfigured()) {
@@ -327,6 +335,7 @@ void startMouth(uint32_t now) {
     resetConnection();
     return;
   }
+  jawDelayNotified = false;
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
   mouthSafeAfter = mouthPlayingUntil + MOUTH_BUFFER_MS;
   // Stored MP3 metadata may change the eyes. Schedule an AAF9 correction,
@@ -424,9 +433,16 @@ void loop() {
   bool sentHeadThisLoop = false;
   bool sentBodyThisLoop = false;
   bool sentMouthThisLoop = false;
-  // Only ONE physical body motor command may be active at a time.
-  // Prioritize the most overdue scheduled movement to avoid starving torso/arm.
-  // Jaw audio and digital eyes remain independently scheduled.
+  // An AAC6 stored MP3 appears to apply saved movement flags and interrupt an
+  // active arm/torso animation. When configured, give a due jaw clip priority
+  // only once both motors are idle. Head can still overlap jaw independently.
+  const bool jawReady = mouthConfigured() &&
+                        reached(now, nextMouthAt) &&
+                        reached(now, mouthSafeAfter);
+  const bool blockArmTorsoForJaw =
+      JAW_PROTECTS_ARM_TORSO &&
+      (!reached(now, mouthPlayingUntil) || jawReady);
+  // Select the most overdue eligible body command; independent when allowed.
   if (reached(now, nextBodyWriteAt) &&
       (ALLOW_BODY_MOTOR_OVERLAP || reached(now, bodySafeAfter))) {
     uint8_t choice = 0;
@@ -437,13 +453,13 @@ void loop() {
       overdue = now - nextHeadAt;
     }
     if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
-        reached(now, torsoSafeAfter) &&
+        reached(now, torsoSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
     if (ARM_ENABLED && reached(now, nextArmAt) &&
-        reached(now, armSafeAfter) &&
+        reached(now, armSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
       choice = 2;
     }
@@ -468,11 +484,21 @@ void loop() {
 
   if (mouthConfigured() && reached(millis(), nextMouthAt) &&
       reached(millis(), mouthSafeAfter)) {
-    // If both commands become due together, space BLE writes a little.
-    // A mouth clip can still run while the head is moving.
-    if (sentBodyThisLoop) delay(250);
-    startMouth(millis());
-    sentMouthThisLoop = true;
+    // Avoid triggering the stored MP3's movement metadata during arm or torso
+    // animation. Wait through the 10-second buffer, then play AAC6 as usual.
+    const uint32_t jawNow = millis();
+    const bool torsoArmReady = reached(jawNow, torsoSafeAfter) &&
+                               reached(jawNow, armSafeAfter);
+    if (JAW_PROTECTS_ARM_TORSO && !torsoArmReady) {
+      if (!jawDelayNotified) {
+        Serial.println("JAW deferred: waiting for arm/torso cooldown.");
+        jawDelayNotified = true;
+      }
+    } else {
+      if (sentBodyThisLoop) delay(250);
+      startMouth(millis());
+      sentMouthThisLoop = true;
+    }
   }
 
   // Experimental independent eye expressions. Can overlap animations.
