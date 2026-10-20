@@ -70,3 +70,10 @@ For an initial alternating test, turn Head OFF, Arm ON, Torso ON, Jaw ON (file #
 **Result from Serial Monitor:** after an initial jaw-only clip, six jaw-first motor sends occurred in the order **ARM → TORSO → ARM → TORSO → ARM → TORSO**. There were no logged disconnects, skipped follow-ups, or failures during those six sends. The arm and torso kept independent random target intervals, and they were triggered only on jaw clips when eligible.
 
 This establishes that the **recurring selector and command dispatch** work on the real ESP32 over several cycles. The user previously confirmed that the jaw and each body motor physically overlap when jaw playback precedes `AACA`; the latest log has no new visual observations of each cycle. For the next test, watch whether **each 22-second arm and ~25-second torso movement actually finishes**, whether MP3 jaw action remains uninterrupted, and whether the system remains reliable over a longer unattended run. Head + jaw + arm/torso together also remains unverified.
+
+
+## 30-minute real-world alternating run: command scheduler field-tested
+
+The user subsequently operated the **ALTERNATING + recurring** configuration for **approximately 30 minutes** with jaw MP3 #13, head OFF, eyes OFF, arm and torso ON, and jaw-body protection ON. Serial Monitor repeatedly showed jaw playback followed by a two-second-scheduled arm or torso request in a consistent ARM/TORSO alternating pattern. One initial BLE scan missed the prop and the next connected; **no dropouts or failed sends were reported after connection**.
+
+This extends the alternating *command-scheduling* evidence beyond the initial six-cycle test. Individual jaw-first arm and jaw-first torso physical motions were verified in earlier tests, but the serial log alone is not a measurement that every moving part completed all cycles. The next meaningful integration test is to **re-enable head movement** and observe whether its start interferes with ongoing jaw/arm/torso actions. Eyes were OFF during this 30-minute run and need to be evaluated separately alongside the full-motion configuration.
