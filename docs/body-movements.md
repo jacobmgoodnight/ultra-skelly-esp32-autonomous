@@ -82,3 +82,9 @@ The earlier `AAC6` jaw MP3 play command appeared to stop an already-running arm 
 October 20 hardware tests confirmed that **jaw MP3 → 2-second delay → arm** preserved a 3-second jaw hold and the full ~22-second two-part arm animation. **Jaw MP3 → 2-second delay → torso** also allowed mouth and torso movement together. The reverse order had appeared to interrupt active body commands, so command order matters on this test unit.
 
 Studio provides one-shot follow-ups (default) or an **opt-in recurring frequency-gated follow-up**. In recurring mode, the selected arm/torso does not independently fire when due; it waits until the next available jaw MP3 and then follows after the selected delay, preserving the motor's original random interval for its subsequent actions. This recurrence implementation needs testing over multiple cycles. It is distinct from allowing head, arm and torso to overlap simultaneously, which remains unverified as a complete combination. See [jaw-first experiment](jaw-first-experiment.md).
+
+## Alternating arm or torso after jaw begins
+
+The jaw-first two-second follow-up has been validated separately for both arm and torso. In the latest hardware logs, a later `TORSO command sent` after a successful one-shot event came from the **independent torso schedule**, so don't interpret that as the recurring coordinator.
+
+Studio now optionally supports **Alternate arm or torso when due**: enable both motors and check recurring mode. Rather than sending both at once or starting on every jaw MP3, it waits until each motor's configured random interval is due, starts a single eligible motor two seconds after AAC6 begins, then updates that motor's next due time. When both are due, it favors the one not used on the last successful coordinated jaw action. **The alternating scheduler is not yet field-verified.** Keep global body motor overlap OFF for the first multi-cycle test.

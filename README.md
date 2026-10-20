@@ -124,3 +124,9 @@ A new, opt-in **Jaw first → arm or torso** experiment sends one body-motor `AA
 **October 20, 2026:** Starting the jaw MP3 first and sending the arm command **2 seconds later** allowed the **three-second jaw hold** to continue while the arm completed both movements (~22 seconds). Repeating the experiment with the torso also worked. This validates **jaw+arm and jaw+torso overlap**, not every possible simultaneous body-motor combination. The apparent MP3 interruption when sent second may reflect saved per-file movement metadata, but Skelly's internal priority behavior isn't proven.
 
 Studio now offers two *Jaw first* modes: **one-shot** (one successful motor follow-up per BLE connection) and **opt-in recurring** (selected arm or torso only fires after a jaw clip when that motor's own random interval has elapsed). The recurring timing logic still needs extended real-device testing. See the [jaw-first experiment and results](docs/jaw-first-experiment.md).
+
+### Alternating coordinated jaw + body reactions (experimental scheduler)
+
+The two-second jaw-first sequence was independently verified again with **jaw #12 + arm** and **jaw #13 + torso**. In the second torso log, later torso actions were independent schedule commands, not proof of recurring jaw-first coordination.
+
+Skelly Studio now offers **Alternate arm or torso when due**: turn both motors ON and enable recurring jaw-first follow-up. One eligible motor starts after a jaw MP3 begins; the chosen motor depends on its own random interval and the last successful selection. The alternating scheduler remains opt-in and needs real multi-cycle testing. See [the test procedure](docs/jaw-first-experiment.md).

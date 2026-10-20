@@ -117,10 +117,10 @@ test("Jaw-first experiment is disabled by default and sends one selected motor a
     headEnabled:false,torsoEnabled:false
   }));
   assert.match(arm, /const uint8_t JAW_FOLLOWUP_MOTOR = 1;/);
-  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 &&/);
-  assert.match(arm, /JAW_FOLLOWUP_RECURRING \? dueForRecurring/);
+  assert.match(arm, /jawFollowupPending = jawFollowupChosenMotor != 0 &&/);
+  assert.match(arm, /jawFollowupChosenMotor = chooseJawFollowupMotor\(now\);/);
   assert.match(arm, /bool jawFollowupTestDone = false;/);
-  assert.match(arm, /if \(connected && !JAW_FOLLOWUP_RECURRING\) jawFollowupTestDone = true;/);
+  assert.match(arm, /if \(!JAW_FOLLOWUP_RECURRING\) jawFollowupTestDone = true;/);
   assert.match(arm, /jawFollowupAt = now \+ JAW_FOLLOWUP_DELAY_MS;/);
   assert.match(arm, /JAW-FIRST: sending ARM after MP3 start/);
   assert.match(arm, /startArm\(t\);/);
@@ -141,8 +141,8 @@ test("Recurring jaw-first coordinates to the motor's configured interval", () =>
     armMin:180,armMax:300
   }));
   assert.match(arm, /const bool JAW_FOLLOWUP_RECURRING = true;/);
-  assert.match(arm, /JAW_FOLLOWUP_MOTOR == 1 && reached\(now, nextArmAt\)/);
-  assert.match(arm, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 1\)/);
+  assert.match(arm, /if \(JAW_FOLLOWUP_MOTOR == 1\) return armDue \? 1 : 0;/);
+  assert.match(arm, /JAW_FOLLOWUP_MOTOR == 1 \|\|/);
   assert.match(arm, /JAW-FIRST %s: scheduled/);
   assert.match(arm, /JAW_FOLLOWUP_RECURRING \? "RECURRING" : "ONE-SHOT"/);
   assert.match(arm, /const uint32_t ARM_MIN_INTERVAL_MS = 180000;/);
@@ -152,15 +152,34 @@ test("Recurring jaw-first coordinates to the motor's configured interval", () =>
     torsoMin:120,torsoMax:240
   }));
   assert.match(torso, /const bool JAW_FOLLOWUP_RECURRING = true;/);
-  assert.match(torso, /JAW_FOLLOWUP_MOTOR == 2 && reached\(now, nextTorsoAt\)/);
-  assert.match(torso, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 2\)/);
+  assert.match(torso, /if \(JAW_FOLLOWUP_MOTOR == 2\) return torsoDue \? 2 : 0;/);
+  assert.match(torso, /JAW_FOLLOWUP_MOTOR == 2 \|\|/);
   assert.match(torso, /const uint32_t TORSO_MIN_INTERVAL_MS = 120000;/);
 });
+test("Alternating jaw-first respects independent motor due times and remembers previous selection", () => {
+  const sketch=api.generateSketch(sample({
+    jawEnabled:true,headEnabled:false,armEnabled:true,torsoEnabled:true,
+    jawFollowupMotor:3,jawFollowupRecurring:true,
+    armMin:90,armMax:150,torsoMin:90,torsoMax:150,jawFile:13
+  }));
+  assert.match(sketch, /const uint8_t JAW_FOLLOWUP_MOTOR = 3;/);
+  assert.match(sketch, /const bool JAW_FOLLOWUP_RECURRING = true;/);
+  assert.match(sketch, /const bool armDue = ARM_ENABLED &&/);
+  assert.match(sketch, /const bool torsoDue = TORSO_ENABLED &&/);
+  assert.match(sketch, /lastJawFollowupMotor == 1 \? 2 : 1/);
+  assert.match(sketch, /if \(JAW_FOLLOWUP_MOTOR == 3\)/);
+  assert.match(sketch, /lastJawFollowupMotor = 1;/);
+  assert.match(sketch, /lastJawFollowupMotor = 2;/);
+  assert.match(sketch, /JAW_FOLLOWUP_MOTOR == 3\)\) &&/);
+});
+
 test("Jaw-first validates motor enable and sensible delay", () => {
   assert.throws(() => api.generateSketch(sample({jawFollowupMotor:1})), /Enable the arm switch/);
   assert.throws(() => api.generateSketch(sample({jawFollowupMotor:2})), /Enable the torso switch/);
   assert.throws(() => api.generateSketch(sample({jawEnabled:false,jawFollowupMotor:1,armEnabled:true})), /Enable silent jaw playback/);
-  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:3})), /jaw-first response/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:4})), /jaw-first response/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:3,armEnabled:true,torsoEnabled:true})), /Enable recurring mode/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:3,jawFollowupRecurring:true,armEnabled:true})), /Enable both arm and torso/);
   assert.throws(() => api.generateSketch(sample({jawFollowupDelaySec:0})), /whole number/);
 });
 test("Subtle deliberately disables silent jaw by default", () => {

@@ -67,8 +67,13 @@
           error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
       }
     }
-    if (![0,1,2].includes(config.jawFollowupMotor))
-      error.push("Choose an experimental jaw-first response: OFF, Arm, or Torso.");
+    if (![0,1,2,3].includes(config.jawFollowupMotor))
+      error.push("Choose a jaw-first response: OFF, Arm, Torso, or Alternate.");
+    if (config.jawFollowupMotor === 3 &&
+        (!config.armEnabled || !config.torsoEnabled))
+      error.push("Enable both arm and torso for alternating jaw-first reactions.");
+    if (config.jawFollowupMotor === 3 && !config.jawFollowupRecurring)
+      error.push("Enable recurring mode to alternate arm and torso.");
     if (!Number.isSafeInteger(config.jawFollowupDelaySec) || config.jawFollowupDelaySec < 1 || config.jawFollowupDelaySec > 10)
       error.push("Jaw-first motor delay must be a whole number from 1 to 10 seconds.");
     if(config.jawFollowupMotor && !config.jawEnabled)
@@ -270,7 +275,8 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect arm / torso":"MP3 takes priority"):"Not needed";
-    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":(c.jawFollowupMotor===1?"Arm":"Torso")+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
+    const motorLabel=["Off","Arm","Torso","Arm or torso"][c.jawFollowupMotor] || "Unknown";
+    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";

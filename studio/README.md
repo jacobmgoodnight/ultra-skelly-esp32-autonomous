@@ -62,3 +62,9 @@ Skelly Studio now offers **Jaw first → Arm or Torso** with a selectable **1–
 On the original Ultra Skelly v2, starting the jaw MP3 then sending an arm `AACA` command **2 seconds afterward** let the jaw maintain its three-second hold while both arm motions finished (~22 seconds). Torso started after jaw also worked. These particular overlaps are physically **verified**.
 
 Studio's new **Repeat when the selected motor's own random interval is due** switch is OFF by default. When enabled, the arm or torso stops firing on its independent timer and instead waits for the next jaw MP3 **after its random interval has elapsed**, starting the motor after the chosen delay. Not every MP3 will trigger a motor. The new recurrence mode needs extended testing, especially if additional body motors or head overlap are enabled.
+
+## Alternating jaw-first arm and torso reactions
+
+An optional **Alternate arm or torso when due (recurring)** selection now coordinates *both* motors with MP3 playback, while still sending only one arm or torso command per MP3. Enable both arm and torso and check the Recurring option. Each motor uses its own randomized start target and cooldown; when both are eligible, the controller prefers the motor not selected the preceding time. When neither is eligible, jaw playback continues with no body follow-up. This scheduler is **untested over multiple cycles**, unlike the previously verified one-shot jaw-first arm and torso movements.
+
+The updated serial messages print `JAW-FIRST RECURRING: scheduled ARM/TORSO` when an eligible follow-up is chosen. They print `Head motion disabled` when Head is OFF rather than showing a confusing unused head timer.
