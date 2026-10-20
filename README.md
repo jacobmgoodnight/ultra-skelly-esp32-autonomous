@@ -68,9 +68,9 @@ Intervals are **start-to-start**, not waits after each animation. Because a head
 
 ## Optional torso and arm movements
 
-Skelly Studio now provides separate enable toggles and random start intervals for **torso** and **arm** movement. The **torso-only command** was physically verified (~25 seconds); the **arm-only command is protocol-grounded but unverified**, so it is disabled by default. Haunted turns on torso movement (every 3–6 minutes) but **does not** turn on the arm until the isolated arm test is completed.
+Skelly Studio now provides separate enable toggles and random start intervals for **torso** and **arm** movement. The **torso-only command** was physically verified (~25 seconds); the **arm-only command has now been verified on the physical Skelly (two arm movements taking 22 seconds)**, though it is disabled by default in the checked-in firmware. Haunted turns on **torso movement every 3–6 minutes and arm movement every 6–12 minutes**. Subtle now turns the silent jaw OFF by default.
 
-A shared motor cooldown serializes physical **head/torso/arm commands** so they are never intentionally triggered simultaneously. This means enabling additional body movements can postpone a head command past its original target interval. Jaw MP3 and eyes can still overlap. Always leave stored MP3 movement flags at **0x00**.
+A shared motor cooldown serializes physical **head/torso/arm commands** by default. An **advanced opt-in** permits motor overlap, but simultaneous body motions haven't yet been verified; per-motor cooldown and 600 ms write spacing remain. This means enabling additional body movements can postpone a head command past its original target interval. Jaw MP3 and eyes can still overlap. Always leave stored MP3 movement flags at **0x00**.
 
 See the [body movement safety guide](docs/body-movements.md) and [one-shot arm test](experiments/ArmSingleTest/ArmSingleTest.ino).
 
@@ -102,3 +102,7 @@ The invaluable [Skelly Ultra Web Controller by martinecker](https://github.com/m
 ## License
 
 This repository's original firmware, docs, and included synthesized test audio are shared under the [MIT License](LICENSE). Third-party upstream projects retain their own rights/licenses; no upstream source or images are bundled here.
+
+### Jaw audio personalities
+
+New experimental jaw audio recipes include **three-second wide-open holds** and **whisper-then-gasp** patterns. See the [audio guide](audio/jaw-personalities.md) and [source generator](audio/generate_jaw_clips.py). Upload each MP3 through the community web controller with saved movement flags `0x00`, then enter its device-specific file number in Studio. Unlike head/arm/torso commands, jaw shape is not controlled directly; visual timing must be tested.
