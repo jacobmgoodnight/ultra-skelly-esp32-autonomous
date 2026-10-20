@@ -149,3 +149,10 @@ The most recent protected head-enabled test showed independent HEAD commands alo
 The next isolated test is **jaw MP3 starts → two-second delay → HEAD command**. This copies the proven jaw-first arm/torso command order, but **jaw+head physical overlap is not yet verified**. Skelly Studio now has a dedicated HEAD choice in **Jaw first → body movement**, OFF by default. Start with Head and Jaw ON, Arm/Torso OFF, recurring OFF (one successful test per connection), MP3 #13 and MP3 protection ON. See the [new test guide](docs/jaw-first-head-test.md).
 
 A separate advanced body-motor overlap switch already permits the *possibility* of simultaneous head/arm/torso movements, but the hardware result isn't confirmed. Test motor pairs first; enabling this switch does not guarantee all three joints will move at once.
+
+
+### Head-after-jaw physical result and composite movement experiment
+
+The attempted **jaw MP3 #13 → 2-second delay → HEAD** sequence was run **twice**. The ESP32 logged successful HEAD writes, but the head **did not physically respond** during the jaw-first event. Standalone head movement continued working. Unlike previously verified jaw-first arm and torso, **jaw-first HEAD at two seconds is not a working mode** on the tested prop; Studio now labels it a diagnostic with the failed result. An attended 10-second trial is possible but not yet verified.
+
+The community controller defines head/arm/torso movement as **bits 0x01/0x02/0x04**. New isolated [BodyComboSingleTest.ino](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) sends a *single* compound movement mask, first `0x03` for head+arm (then optional `0x05`, `0x06` and `0x07`). This is a different experiment from sequential BLE writes. Physical simultaneous movement of multiple body parts remains unconfirmed; see the [supervised test guide](docs/body-combo-test.md).
