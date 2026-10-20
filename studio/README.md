@@ -82,3 +82,10 @@ Select **Alternate arm or torso when due** and enable **Repeat when the selected
 **Confirmed at the scheduling/BLE level:** one approximately 30-minute run of **Alternating arm or torso when due** with jaw MP3 #13, 2-second jaw-first follow-up and both body motors enabled. The device connected on its second scan, then serial logs showed arm/torso alternation throughout without logged disconnects, skipped follow-ups or BLE send failures. The exact physical completion of each individual motor cycle was not separately recorded in that log; prior isolated jaw+arm and jaw+torso overlap tests were visually successful.
 
 **Not tested in this run:** head movements, live eye rotation, and sustained unattended operation for hours/days. Keep the original head and eye configurations available for progressive integration tests. Remember the randomized target intervals are start-to-start requests and may be delayed by cooldown or MP3 coordination.
+
+
+## Head + jaw MP3 interrupt fix
+
+In the first test enabling the head alongside recurring jaw-first arm/torso, AAC6 appeared to interrupt active head motion. Because the head held the shared motor cooldown, the arm/torso follow-ups were skipped on every subsequent MP3. This was traced to an omission in jaw MP3 protection: the code waited for arm and torso, but did not wait for head.
+
+The **Protect head + arm + torso from jaw MP3** switch (ON by default, retaining the firmware identifier `JAW_PROTECTS_ARM_TORSO` for compatibility) now defers AAC6 until head motion has ended and blocks standalone head movement while a jaw clip is active/due. It still intentionally permits the jaw-first arm or torso follow-up. **With protection ON, the independent head+jaw overlap toggle is overridden**; motion is sequenced rather than simultaneous, until a separate jaw-first head experiment is performed. The new head-safe scheduler needs a physical test.
