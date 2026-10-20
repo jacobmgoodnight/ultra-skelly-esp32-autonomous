@@ -277,7 +277,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
-    const motorLabel=["Off","Arm","Torso","Arm or torso","Head (untested)"][c.jawFollowupMotor] || "Unknown";
+    const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s test failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
