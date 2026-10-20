@@ -219,6 +219,7 @@
     byId("overlapSummary").textContent=c.overlap?"Allowed":"Avoided";
     for(const id of ["headEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
+    byId("selectedEyeCount").textContent=c.eyeChoices.length+" of 18 selected";
     byId("restOptions").classList.toggle("muted",!c.restEnabled);
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
@@ -231,15 +232,49 @@
       timeline.appendChild(element);
     }
   }
+  // Thumbnails are loaded from the community Web Controller's original images,
+  // not bundled or redistributed. The source includes exactly 18 eye icons.
+  function eyeImageUrl(index) {
+    return "https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_"+index+".png";
+  }
+  function showEyePreview(index) {
+    const image=byId("eyePreviewImage");
+    image.src=eyeImageUrl(index);
+    image.alt="Enlarged preview of Ultra Skelly eye pattern "+index;
+    byId("eyePreviewLabel").textContent="Eye pattern #"+index;
+  }
   function init(){
     const eyeGrid=byId("eyeGrid");
     for(let i=1;i<=18;i++){
+      const card=document.createElement("div");
+      card.className="eye-card";
       const label=document.createElement("label");
       label.className="eye-choice";
-      const input=document.createElement("input");input.type="checkbox";input.value=i;input.checked=true;
-      const text=document.createElement("span");text.textContent=i;
-      label.append(input,text);eyeGrid.append(label);
+      label.title="Toggle eye pattern "+i+" for random rotation";
+      const input=document.createElement("input");
+      input.type="checkbox";input.value=i;input.checked=true;
+      input.setAttribute("aria-label","Include eye pattern "+i);
+      const content=document.createElement("span");
+      content.className="eye-tile";
+      const image=document.createElement("img");
+      image.src=eyeImageUrl(i);
+      image.alt="Eye pattern "+i;
+      image.width=100;image.height=100;
+      image.loading="lazy";image.decoding="async";
+      const number=document.createElement("span");
+      number.className="eye-tile-number";
+      number.textContent="Eye "+String(i).padStart(2,"0");
+      content.append(image,number);
+      label.append(input,content);
+      const zoom=document.createElement("button");
+      zoom.type="button";zoom.className="eye-zoom";
+      zoom.textContent="Preview";
+      zoom.setAttribute("aria-label","Show larger preview of eye pattern "+i);
+      zoom.addEventListener("click",()=>showEyePreview(i));
+      card.append(label,zoom);
+      eyeGrid.append(card);
     }
+    showEyePreview(1);
     for(const el of document.querySelectorAll("input"))el.addEventListener("input",()=>{
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       render();
