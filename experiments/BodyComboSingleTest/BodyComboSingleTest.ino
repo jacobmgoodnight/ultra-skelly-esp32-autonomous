@@ -110,7 +110,7 @@ void setup() {
   // Head=bit0, Arm=bit1, Torso=bit2. CRC computed below.
   uint8_t frame[11] = {0xAA, 0xCA, TEST_MOVEMENT_MASK, 0, 0, 0, 0, 0, 0, 0, 0};
   frame[10] = crc8Skelly(frame, 10);
-  Serial.printf("Requested motors: HEAD=%s ARM=%s TORSO=%s\\n",
+  Serial.printf("Requested motors: HEAD=%s ARM=%s TORSO=%s\n",
                 (TEST_MOVEMENT_MASK & 0x01) ? "YES" : "NO",
                 (TEST_MOVEMENT_MASK & 0x02) ? "YES" : "NO",
                 (TEST_MOVEMENT_MASK & 0x04) ? "YES" : "NO");
