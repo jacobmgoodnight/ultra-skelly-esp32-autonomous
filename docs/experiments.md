@@ -193,3 +193,23 @@ Compound movement request SENT ONCE (not motor-confirmed).
 This validates physical activation of **two different combined bitmasks**, `0x03` (HEAD+ARM) and `0x05` (HEAD+TORSO), without AAC6/jaw playback. The user did not separately time the complete motion for each joint, and we have **not** yet verified HEAD+ARM+TORSO all at once.
 
 **Next test:** `0x06` (ARM+TORSO, CRC `0x81`), with clear joints, jaw disabled, one motor packet only, and observation of both full animations. If it works, consider `0x07` (all three). These are separate from the known unsuccessful jaw-first HEAD while MP3 was playing.
+
+
+## October 20, 2026 — ALL compound body masks physically work, including 0x07
+
+The user completed the pairwise movement matrix and the combined three-motor test using the separate one-shot `BodyComboSingleTest.ino`. Both newly tested masks produced physical movement of the requested body parts:
+
+| Mask | Confirmed physical movement | Sent frame |
+| --- | --- | --- |
+| `0x03` | HEAD + ARM | `AA CA 03 00 00 00 00 00 00 00 D7` |
+| `0x05` | HEAD + TORSO | `AA CA 05 00 00 00 00 00 00 00 44` |
+| `0x06` | **ARM + TORSO** | `AA CA 06 00 00 00 00 00 00 00 81` |
+| `0x07` | **HEAD + ARM + TORSO** | `AA CA 07 00 00 00 00 00 00 00 C2` |
+
+**Physical result:** The user confirmed the `0x06` pair worked, then confirmed **all three movements worked together** for `0x07`. This establishes that multi-bit body commands are genuinely executed on the original Skelly; the report doesn't provide exact physical durations or proof of long-term autonomous combined-motion stability.
+
+**Bluetooth results:** `0x06` connected on its first scan. Before the successful `0x07` attempt, two separate runs scanned and found Skelly but failed connecting; after resetting, a later run connected and sent `0x07` successfully. The diagnostic sketch's earlier scan-retry improvement did not cover the **connection failed** path; it now retries a bounded number of fresh discovery + connection attempts without replaying the motor command.
+
+**Implication for the main controller:** We can now consider a separate opt-in scheduling mode that selects combined masks, rather than relying on multiple rapid individual AACA writes. However MP3 jaw playback remains a separate priority issue: head movement during MP3 #13 failed at 2s and 10s, while jaw-first arm/torso worked. Keep MP3 protection and conservatively lock all body motors until completion when experimenting with compound AACA packets.
+
+See [combined body-motor test guide](body-combo-test.md). The normal autonomous firmware is unchanged by the latest diagnostic update.
