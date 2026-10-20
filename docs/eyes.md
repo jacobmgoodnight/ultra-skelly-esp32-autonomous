@@ -1,6 +1,6 @@
 # Experimental randomized eye expressions
 
-The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. This firmware includes the same frame structure but, at time of publication, we **have not yet observed an eye change triggered by our ESP32 on the real prop**.
+The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. **Confirmed on one real Ultra Skelly v2 (October 19, 2026):** the standalone ESP32 one-shot `AAF9` eye-control test successfully changed the eye design. This test also connected immediately after flashing, without an ESP32 reboot. Random eye rotation running simultaneously with jaw audio remains to be tested.
 
 ## Safe first test
 
@@ -14,7 +14,7 @@ The upstream web controller supports icons **1 through 18** and sends a live `AA
 
 **This is a live eye change, not editing an MP3's saved eye setting.** After the test, you can use the web controller to restore your preferred live eye icon. The source document for the live packet is [app-modular.js](https://github.com/martinecker/SkellyUltraWebController/blob/main/app-modular.js), around the `apEyeGrid` click handler.
 
-## Enable random eyes AFTER the one-shot test works
+## Enable random eyes (one-shot test confirmed)
 
 Open `firmware/SkellyAutonomous/SkellyAutonomous.ino` and set:
 
@@ -29,6 +29,6 @@ This selects an eye ID from 1–18 at random, avoids choosing the same icon twic
 ## Caveats
 
 - Different hardware firmware may handle live eye commands differently.
-- If audio playback reapplies saved eye metadata, the live eye icon may change while or after a mouth file plays. This needs observing on the actual prop.
+- Random eyes during head movement and jaw audio haven't yet been field-tested. Audio playback might reapply saved eye metadata and override a live eye icon; observe this before relying on timed eye changes.
 - Do not test unverified commands while Skelly can strike people, pets, or nearby items.
 - `AAF9` shouldn't be mistaken for the per-file eye metadata editing variant, which includes a file cluster and name.
