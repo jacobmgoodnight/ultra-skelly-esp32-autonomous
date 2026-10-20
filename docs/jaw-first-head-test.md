@@ -1,6 +1,6 @@
 # Jaw MP3 first, then HEAD: isolated hardware test
 
-**Status:** Experimental. Jaw-first **arm** and **torso** movements have been verified, but jaw-first **head** has **not** yet been tested on the physical Ultra Skelly v2. The goal is to find out whether a head command sent after an MP3 starts lets the head complete its ~25-second action **without stopping the mouth movement**.
+**Current result:** Jaw-first HEAD at **2 seconds was tested twice and did not physically move the head**. The HEAD BLE write was logged, and independent head commands work. The original exploratory procedure below is retained for reference; do not use this mode unattended. A 10-second delay is an optional, unverified diagnostic to test whether the block is only at MP3 startup.
 
 ## Motivation
 
