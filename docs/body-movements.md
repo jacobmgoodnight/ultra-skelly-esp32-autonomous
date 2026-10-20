@@ -71,3 +71,8 @@ This gives the active arm/torso animation priority instead of letting AAC6 possi
 **Frequency minimums:** The original 90-second torso and 120-second arm Studio limits were arbitrary conservative limits, not physical limits. Studio now permits **45-second start-to-start** values for either motor. That is higher than the measured active duration plus buffer (torso 25+10=35 s; arm 22+10=32 s). Consider longer intervals to reduce repetitive motor duty, especially with multiple motors enabled.
 
 For reproducible testing, turn on **arm + torso + head overlap**, keep **jaw protection ON**, and set jaw attempts every ~45–60 seconds; observe whether a previously started arm/torso completes its full motion before the mouth begins. Test again with protection OFF only if the prop is attended and the joints are unobstructed.
+
+
+## New experiment: reverse the jaw/body command order
+
+The earlier `AAC6` jaw MP3 play command appeared to stop an already-running arm or torso `AACA` animation. It may be possible to reverse the order: **start jaw MP3 first**, then send one arm or torso `AACA` command **2 seconds later**. That might permit both to operate, or it might instead stop the jaw. Neither outcome is yet verified. Studio exposes the opt-in **Jaw first → arm or torso** setting, and the firmware sends one delayed motor command subject to cooldown and motor enable checks. See [the physical test procedure](jaw-first-experiment.md). Keep default protection ON and jaw-first OFF for normal use until the experiment succeeds.
