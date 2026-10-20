@@ -26,3 +26,18 @@ jobs:
         run: node --test studio/tests/generator.test.cjs
       - name: Verify CRC test vectors
         run: python tests/test_packets.py
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+      - name: Install Espressif ESP32 core (3.3.12)
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Generate representative Arduino sketches
+        run: node studio/tests/export-samples.cjs
+      - name: Compile each generated sketch for ESP32 Dev Module
+        run: |
+          set -e
+          for sketch in .skelly-build/*; do
+            echo "Compiling $sketch"
+            arduino-cli compile --fqbn esp32:esp32:esp32 "$sketch"
+          done
