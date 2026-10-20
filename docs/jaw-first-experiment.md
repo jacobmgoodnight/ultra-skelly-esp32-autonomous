@@ -13,7 +13,7 @@ The controller now offers **Jaw first → arm or torso**, disabled by default:
 - `JAW_FOLLOWUP_MOTOR = 2`: send **torso** after the jaw MP3 starts.
 - `JAW_FOLLOWUP_DELAY_MS = 2000`: configurable between **1 and 10 seconds** in Studio.
 
-The extra `AACA` packet is sent **only once per MP3 playback**, after the delay, if the selected body motor is enabled, out of its own cooldown, and not blocked by the global body-motor lock. Otherwise it is **skipped and logged**. It does not bypass motor safety margins or start both arm and torso simultaneously.
+The extra `AACA` packet is sent **only once successfully per BLE connection** during the first eligible MP3 playback, after the delay, if the selected body motor is enabled, out of its own cooldown, and not blocked by the global body-motor lock. A skipped attempt is **logged** and may be tried on the next MP3; a successful attempt sets a one-shot guard so the arm doesn't inadvertently move every 45–90 seconds with the jaw. Reconnect/reset allows a new experimental attempt. It does not bypass motor safety margins or start both arm and torso simultaneously.
 
 The existing **Protect arm + torso from jaw MP3** mode remains ON by default: it avoids starting MP3 playback in the middle of an arm/torso animation. Jaw-first follow-up is a deliberate exception allowing one motor command *after* playback has already started.
 
