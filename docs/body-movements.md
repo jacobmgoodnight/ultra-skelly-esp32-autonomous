@@ -76,3 +76,9 @@ For reproducible testing, turn on **arm + torso + head overlap**, keep **jaw pro
 ## New experiment: reverse the jaw/body command order
 
 The earlier `AAC6` jaw MP3 play command appeared to stop an already-running arm or torso `AACA` animation. It may be possible to reverse the order: **start jaw MP3 first**, then send one arm or torso `AACA` command **2 seconds later**. That might permit both to operate, or it might instead stop the jaw. Neither outcome is yet verified. Studio exposes the opt-in **Jaw first → arm or torso** setting, and the firmware sends one delayed motor command subject to cooldown and motor enable checks. See [the physical test procedure](jaw-first-experiment.md). Keep default protection ON and jaw-first OFF for normal use until the experiment succeeds.
+
+## Verified jaw-first overlap and new recurring coordination
+
+October 20 hardware tests confirmed that **jaw MP3 → 2-second delay → arm** preserved a 3-second jaw hold and the full ~22-second two-part arm animation. **Jaw MP3 → 2-second delay → torso** also allowed mouth and torso movement together. The reverse order had appeared to interrupt active body commands, so command order matters on this test unit.
+
+Studio provides one-shot follow-ups (default) or an **opt-in recurring frequency-gated follow-up**. In recurring mode, the selected arm/torso does not independently fire when due; it waits until the next available jaw MP3 and then follows after the selected delay, preserving the motor's original random interval for its subsequent actions. This recurrence implementation needs testing over multiple cycles. It is distinct from allowing head, arm and torso to overlap simultaneously, which remains unverified as a complete combination. See [jaw-first experiment](jaw-first-experiment.md).
