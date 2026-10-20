@@ -1,0 +1,28 @@
+name: Skelly Studio smoke tests
+on:
+  push:
+    paths:
+      - "studio/**"
+      - ".github/workflows/studio-checks.yml"
+  pull_request:
+    paths:
+      - "studio/**"
+      - ".github/workflows/studio-checks.yml"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: |
+          node --check studio/app.js
+          node --check studio/template.js
+      - name: Check generated Arduino output and constraints
+        run: node --test studio/tests/generator.test.cjs
+      - name: Verify CRC test vectors
+        run: python tests/test_packets.py
