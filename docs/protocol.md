@@ -55,3 +55,10 @@ On October 20, 2026 the individual `AA CA 02` arm command was verified: **two ar
 The jaw-first HEAD experiment (`AAC6` file #13, then `AA CA 01` two seconds later) was physically unsuccessful on **two** runs despite successful-looking BLE writes; ordinary head motion worked independently. Jaw-first ARM and TORSO *did* move with the mouth. Do not infer physical motor success from `sendFrame` logging.
 
 The community web controller's live movement grid **combines selected bits**: `0x01` head, `0x02` arm, `0x04` torso, and a special `0xFF` ALL value. Combined masks `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso) and `0x07` (all three) are therefore protocol-grounded requests, **not** confirmed concurrent physical animations. They are implemented only in an [isolated one-shot test](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino), not in the default autonomous scheduler.
+
+
+## Physically tested multi-motor AACA mask and head/MP3 arbitration
+
+In the October 20 tests, `AA CA 03 00 00 00 00 00 00 00 D7` (movement mask `0x03 = HEAD + ARM`) **physically moved both requested body parts**, with no MP3 playing. Torso remained still as expected because `0x04` was not set. This directly validates a combined movement **bitmask**, not every possible motor combination. Masks `0x05` (head+torso), `0x06` (arm+torso), and `0x07` (all three) have not yet been verified on this unit.
+
+In contrast, head command `AA CA 01` during ongoing jaw MP3 #13 playback, at both **2-second and 10-second** offsets, was transmitted but **did not physically move the head**. This suggests an MP3-specific suppression/arbitration effect, not a limitation of all combined body-motor commands. Exact firmware internals are unknown.
