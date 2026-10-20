@@ -8,7 +8,8 @@
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
 // ESP32 Dev Module, Arduino-ESP32 3.3.12
 // Torso and arm commands are NEVER sent by this sketch.
-// Eye animation is EXPERIMENTAL and OFF by default until tested.
+// One-shot and randomized eye commands worked on real Skelly hardware.
+// Eye/jaw synchronization below is a NEW option requiring field testing.
 // =============================================================
 
 #define SKELLY_NAME "Ultra Skelly v2"
@@ -45,6 +46,15 @@ const bool EYES_ENABLED = false;
 const uint32_t EYE_MIN_INTERVAL_MS = 120000; // 2 minutes
 const uint32_t EYE_MAX_INTERVAL_MS = 300000; // 5 minutes
 
+// MP3 playback can overwrite a previously selected live eye icon.
+// 0 = leave MP3's eye setting alone
+// 1 = restore the chosen eye shortly after jaw starts and when it ends (default)
+// 2 = choose a new random eye when jaw starts, then keep it after playback
+// Eye/jaw coordination is a NEW feature. Eyes stay OFF until enabled above.
+const uint8_t EYE_JAW_MODE = 1;
+const uint32_t EYE_JAW_START_DELAY_MS = 1200;
+const uint32_t EYE_JAW_END_GRACE_MS = 500;
+
 // Scan five seconds; retry thirty seconds after misses/failures
 const uint32_t SCAN_SECONDS = 5;
 const uint32_t SCAN_RETRY_MS = 30000;
@@ -64,7 +74,11 @@ uint32_t nextMouthAt = 0;
 uint32_t mouthSafeAfter = 0;
 uint32_t mouthPlayingUntil = 0;
 uint32_t nextEyeAt = 0;
-uint8_t lastEye = 0;
+uint8_t lastEye = 0; // Last successfully requested eye icon.
+bool jawEyeStartPending = false;
+bool jawEyeEndPending = false;
+uint32_t jawEyeStartAt = 0;
+uint32_t jawEyeEndAt = 0;
 
 bool reached(uint32_t now, uint32_t when) {
   return (int32_t)(now - when) >= 0;
@@ -120,6 +134,8 @@ void resetConnection() {
   writeChar = nullptr;
   if (client != nullptr && client->isConnected()) client->disconnect();
   nextScanAt = millis(); // Re-scan immediately after power-off.
+  jawEyeStartPending = false;
+  jawEyeEndPending = false;
 }
 
 bool connectToSkelly() {
@@ -155,7 +171,11 @@ bool connectToSkelly() {
   mouthPlayingUntil = now;
   nextMouthAt = now + random(MOUTH_MIN_INTERVAL_MS, MOUTH_MAX_INTERVAL_MS + 1);
   nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);
+  // Establish an eye icon promptly after connection so jaw playback can restore it.
+  if (EYES_ENABLED) nextEyeAt = now + 2000;
   lastEye = 0;
+  jawEyeStartPending = false;
+  jawEyeEndPending = false;
 
   Serial.println("CONNECTED. Head + jaw running independently; torso OFF.");
   Serial.printf("First head in %lu seconds.\n",
@@ -168,10 +188,10 @@ bool connectToSkelly() {
     Serial.println("Jaw OFF: set MOUTH_FILE_SERIAL after uploading the jaw MP3.");
   }
   if (EYES_ENABLED) {
-    Serial.printf("First experimental eye change in ~%lu seconds.\n",
+    Serial.printf("First eye selection in ~%lu seconds.\n",
                   (unsigned long)((nextEyeAt - now) / 1000));
   } else {
-    Serial.println("Experimental eyes OFF (enable only after one-shot test).");
+    Serial.println("Random eyes OFF (enable after confirming eye commands).");
   }
   return true;
 }
@@ -237,6 +257,14 @@ void startMouth(uint32_t now) {
   }
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
   mouthSafeAfter = mouthPlayingUntil + MOUTH_BUFFER_MS;
+  // Stored MP3 metadata may change the eyes. Schedule an AAF9 correction,
+  // without interrupting AAC6 audio or issuing any new motor commands.
+  if (EYES_ENABLED && EYE_JAW_MODE != 0) {
+    jawEyeStartAt = now + EYE_JAW_START_DELAY_MS;
+    jawEyeEndAt = mouthPlayingUntil + EYE_JAW_END_GRACE_MS;
+    jawEyeStartPending = true;
+    jawEyeEndPending = true;
+  }
   const uint32_t jawInterval = random(MOUTH_MIN_INTERVAL_MS,
                                       MOUTH_MAX_INTERVAL_MS + 1);
   nextMouthAt = now + jawInterval; // Start-to-start, not after the clip.
@@ -247,19 +275,23 @@ void startMouth(uint32_t now) {
                 headIsMoving ? " (OVERLAPPING head motion)" : "");
 }
 
+bool sendEyeIcon(uint8_t icon, const char *reason) {
+  // Verified LIVE-eye AAF9 frame. No motor movement is commanded.
+  uint8_t frame[11] = {0xAA, 0xF9, icon, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!sendFrame(frame)) {
+    Serial.println("Eye request failed / disconnected.");
+    resetConnection();
+    return false;
+  }
+  lastEye = icon;
+  Serial.printf("EYES: icon %u (%s).\n", (unsigned)icon, reason);
+  return true;
+}
+
 void changeEyes(uint32_t now) {
-  // Live eye selection protocol: AAF9 <eye> 00 00000000 00 [pad] CRC8.
-  // On-wire bytes: AA F9 eye 00 00 00 00 00 00 00 CRC.
-  // Unlike per-file settings, cluster 0 + empty filename changes live eyes.
   uint8_t eye = (uint8_t)random(1, 19); // inclusive 1-18
   if (eye == lastEye) eye = (uint8_t)((eye % 18) + 1);
-  uint8_t frame[11] = {0xAA, 0xF9, eye, 0, 0, 0, 0, 0, 0, 0, 0};
-  if (!sendFrame(frame)) {
-    Serial.println("Eye change failed / disconnected.");
-    resetConnection();
-    return;
-  }
-  lastEye = eye;
+  if (!sendEyeIcon(eye, "random selection")) return;
   const uint32_t interval = random(EYE_MIN_INTERVAL_MS,
                                     EYE_MAX_INTERVAL_MS + 1);
   nextEyeAt = now + interval;
@@ -291,6 +323,25 @@ void loop() {
     delay(100);
     return;
   }
+
+  // First correct any eye icon that the MP3's saved settings changed.
+  // Use a delayed BLE write so playback has time to apply its metadata.
+  if (connected && EYES_ENABLED && EYE_JAW_MODE != 0) {
+    if (jawEyeStartPending && reached(millis(), jawEyeStartAt)) {
+      jawEyeStartPending = false;
+      if (EYE_JAW_MODE == 2 || lastEye == 0) {
+        changeEyes(millis()); // Coordinated new expression when jaw starts.
+      } else {
+        sendEyeIcon(lastEye, "restored after jaw starts");
+      }
+      delay(250); // Space subsequent WRITE_NR commands.
+    } else if (jawEyeEndPending && reached(millis(), jawEyeEndAt)) {
+      jawEyeEndPending = false;
+      if (lastEye != 0) sendEyeIcon(lastEye, "restored after jaw ends");
+      delay(250);
+    }
+  }
+  if (!connected) { delay(100); return; }
 
   // Independently timed head and jaw: they MAY overlap.
   // The 32 sec head minimum still preserves 25s animation + 7s buffer.
