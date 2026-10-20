@@ -6,8 +6,9 @@
   "use strict";
   const DEFAULTS = Object.freeze({
     headEnabled:true, headMin:32, headMax:60,
-    jawEnabled:true, jawMin:45, jawMax:90, jawFile:12,
+    jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300,
+    restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
@@ -21,6 +22,12 @@
     if (at<0 || source.indexOf(original,at+original.length)!==-1)
       throw new Error("Firmware template changed: missing or repeated anchor "+original.slice(0,45));
     return source.slice(0,at)+replacement+source.slice(at+original.length);
+  }
+
+  function extraFileNumbers(config) {
+    const raw=(config.jawExtras||"").trim();
+    if(!raw)return [];
+    return raw.split(",").map(part=>part.trim()).map(part=>/^\d+$/.test(part)?Number(part):NaN);
   }
   function validate(config) {
     const error=[];
@@ -39,6 +46,22 @@
       error.push("Enter the MP3 serial shown in your own web-controller log (1–65535).");
     if(typeof config.bleName!=="string"||!config.bleName.trim()||config.bleName.length>48||/[\x00-\x1F]/.test(config.bleName))
       error.push("Enter a valid advertised Bluetooth device name (1–48 characters).");
+
+    if(config.jawEnabled) {
+      const pool=[config.jawFile,...extraFileNumbers(config)];
+      if(pool.length>8 || pool.some(n=>!Number.isSafeInteger(n)||n<1||n>65535) ||
+         new Set(pool).size!==pool.length)
+        error.push("Jaw file pool must contain unique file serials 1–65535 (up to eight total), separated by commas.");
+    }
+    if(config.restEnabled) {
+      for(const [label,min,max,floor,ceiling] of [
+        ["Rest frequency",config.restMin,config.restMax,120,3600],
+        ["Rest duration",config.restDurationMin,config.restDurationMax,15,300]
+      ]) {
+        if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||min<floor||max>ceiling||min>max)
+          error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
+      }
+    }
     if(config.eyesEnabled && (!config.eyeChoices.length || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length))
       error.push("Select at least one valid eye design number between 1 and 18.");
     return error;
@@ -66,7 +89,51 @@
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";",
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";\n"+
       "const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";\n"+
-      "const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";");
+
+      "const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";"); 
+    // NEW - rest scheduling defaults OFF, to avoid changing verified movement behavior.
+    out=replaceOnce(out,"const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";",
+      "const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";\n"+
+      "const bool REST_ENABLED = "+Boolean(config.restEnabled)+";\n"+
+      "const uint32_t REST_MIN_INTERVAL_MS = "+(config.restMin*1000)+";\n"+
+      "const uint32_t REST_MAX_INTERVAL_MS = "+(config.restMax*1000)+";\n"+
+      "const uint32_t REST_MIN_DURATION_MS = "+(config.restDurationMin*1000)+";\n"+
+      "const uint32_t REST_MAX_DURATION_MS = "+(config.restDurationMax*1000)+";");
+    out=replaceOnce(out,"uint32_t nextEyeAt = 0;",
+      "uint32_t nextEyeAt = 0;\nuint32_t nextRestAt = 0;\nuint32_t restUntil = 0;");
+    out=replaceOnce(out,
+      "  nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);",
+      "  nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);\n"+
+      "  nextRestAt = now + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
+      "  restUntil = now;");
+    out=replaceOnce(out,
+      "  bool sentHeadThisLoop = false;",
+      "  if (REST_ENABLED && reached(now, nextRestAt) &&\n"+
+      "      reached(now, headMovingUntil) && reached(now, mouthPlayingUntil)) {\n"+
+      "    uint32_t d = random(REST_MIN_DURATION_MS, REST_MAX_DURATION_MS + 1);\n"+
+      "    restUntil = now + d;\n"+
+      "    nextRestAt = restUntil + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
+      "    Serial.printf(\"REST: new animations paused for %lu sec.\\n\", (unsigned long)(d / 1000));\n"+
+      "  }\n"+
+      "  if (REST_ENABLED && !reached(now, restUntil)) { delay(100); return; }\n"+
+      "  bool sentHeadThisLoop = false;");
+    // NEW - choose a random stored MP3 serial from the user-configured pool.
+    const filePool=[config.jawFile,...extraFileNumbers(config)];
+    if(filePool.length>1) {
+      out=replaceOnce(out,"const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";",
+        "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";\n"+
+        "const uint16_t JAW_FILE_POOL[] = {"+filePool.join(", ")+"};\n"+
+        "const size_t JAW_POOL_COUNT = sizeof(JAW_FILE_POOL) / sizeof(JAW_FILE_POOL[0]);");
+      out=replaceOnce(out,"void startMouth(uint32_t now) {",
+        "void startMouth(uint32_t now) {\n"+
+        "  const uint16_t chosenJawFile = JAW_FILE_POOL[random(0, (long)JAW_POOL_COUNT)];");
+      out=replaceOnce(out,"    (uint8_t)(MOUTH_FILE_SERIAL >> 8),",
+        "    (uint8_t)(chosenJawFile >> 8),");
+      out=replaceOnce(out,"    (uint8_t)(MOUTH_FILE_SERIAL & 0xFF),",
+        "    (uint8_t)(chosenJawFile & 0xFF),");
+      out=replaceOnce(out,"                (unsigned)MOUTH_FILE_SERIAL,\n                (unsigned long)(jawInterval / 1000),",
+        "                (unsigned)chosenJawFile,\n                (unsigned long)(jawInterval / 1000),");
+    }
     out=replaceOnce(out,
       "  if (reached(now, nextHeadAt)) {",
       "  if (HEAD_ENABLED && reached(now, nextHeadAt) &&\n"+
@@ -95,7 +162,7 @@
       "// GENERATED WITH SKELLY STUDIO — ultra-skelly-esp32-autonomous",
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
-      "// Eye feature unverified: opt in only after the EyeSingleTest sketch works.",
+      "// Eye AAF9 one-shot VERIFIED on one Skelly; random eye scheduling needs field testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
       ""
     ].join("\n");
@@ -105,16 +172,18 @@
     const n=id=>Number(byId(id).value);
     return {
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
-      jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),
+      jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
+      restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
+      restDurationMin:n("restDurationMin"),restDurationMax:n("restDurationMax"),
       eyesMin:n("eyesMin"),eyesMax:n("eyesMax"),
       bleName:byId("bleName").value,eyeChoices:Array.from(document.querySelectorAll(".eye-choice input:checked")).map(el=>Number(el.value))
     };
   }
   function writeConfig(cfg) {
-    for(const id of ["headMin","headMax","jawMin","jawMax","jawFile","eyesMin","eyesMax","bleName"])
+    for(const id of ["headMin","headMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","jawEnabled","overlap","eyesEnabled"])
+    for(const id of ["headEnabled","jawEnabled","overlap","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
@@ -144,11 +213,13 @@
   function render() {
     const c=readConfig(),errors=validate(c);
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
-    byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · file #"+c.jawFile:"Off";
-    byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · unverified":"Off · experimental";
+    byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
+    byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · random mode testing":"Off · optional";
+    byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("overlapSummary").textContent=c.overlap?"Allowed":"Avoided";
     for(const id of ["headEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
+    byId("restOptions").classList.toggle("muted",!c.restEnabled);
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
     const timeline=byId("timeline");timeline.replaceChildren();
