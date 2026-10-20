@@ -8,7 +8,7 @@
     headEnabled:true, headMin:32, headMax:60,
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:false, armMin:360, armMax:720,
-    bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2,
+    bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
@@ -17,7 +17,7 @@
   const PRESETS = {
     subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false},
     normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2}
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false}
   };
   const byId = id => document.getElementById(id);
   function replaceOnce(source, original, replacement) {
@@ -98,6 +98,7 @@
       ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
       ["const bool JAW_PROTECTS_ARM_TORSO = true;","const bool JAW_PROTECTS_ARM_TORSO = "+Boolean(config.jawProtectBody)+";"],
       ["const uint8_t JAW_FOLLOWUP_MOTOR = 0;","const uint8_t JAW_FOLLOWUP_MOTOR = "+config.jawFollowupMotor+";"],
+      ["const bool JAW_FOLLOWUP_RECURRING = false;","const bool JAW_FOLLOWUP_RECURRING = "+Boolean(config.jawFollowupRecurring)+";"],
       ["const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;","const uint32_t JAW_FOLLOWUP_DELAY_MS = "+(config.jawFollowupDelaySec*1000)+";"],
       ["const uint32_t TORSO_MIN_INTERVAL_MS = 240000;","const uint32_t TORSO_MIN_INTERVAL_MS = "+(config.torsoMin*1000)+";"],
       ["const uint32_t TORSO_MAX_INTERVAL_MS = 420000;","const uint32_t TORSO_MAX_INTERVAL_MS = "+(config.torsoMax*1000)+";"],
@@ -196,7 +197,7 @@
       "// Torso="+config.torsoEnabled+" "+config.torsoMin+"–"+config.torsoMax+"s; arm="+config.armEnabled+" "+config.armMin+"–"+config.armMax+"s",
       "// Head/torso/arm overlap="+config.bodyOverlap+"; measured arm runtime 22 seconds.",
       "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
-      "// Experimental jaw-first followup motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s.",
+      "// Jaw-first motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s; recurring="+config.jawFollowupRecurring+".",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -211,7 +212,7 @@
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
       bodyOverlap:byId("bodyOverlap").checked,jawProtectBody:byId("jawProtectBody").checked,
-      jawFollowupMotor:n("jawFollowupMotor"),jawFollowupDelaySec:n("jawFollowupDelaySec"),
+      jawFollowupMotor:n("jawFollowupMotor"),jawFollowupDelaySec:n("jawFollowupDelaySec"),jawFollowupRecurring:byId("jawFollowupRecurring").checked,
       jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
@@ -223,7 +224,7 @@
   function writeConfig(cfg) {
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
@@ -269,7 +270,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect arm / torso":"MP3 takes priority"):"Not needed";
-    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===1?"Arm after "+c.jawFollowupDelaySec+"s":c.jawFollowupMotor===2?"Torso after "+c.jawFollowupDelaySec+"s":"Off";
+    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":(c.jawFollowupMotor===1?"Arm":"Torso")+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
