@@ -1,6 +1,6 @@
 # Jaw MP3 first, then HEAD: isolated hardware test
 
-**Current result:** Jaw-first HEAD at **2 seconds was tested twice and did not physically move the head**. The HEAD BLE write was logged, and independent head commands work. The original exploratory procedure below is retained for reference; do not use this mode unattended. A 10-second delay is an optional, unverified diagnostic to test whether the block is only at MP3 startup.
+**Current result:** Jaw-first HEAD was tested at both **2 seconds** (twice) and **10 seconds** (once), using jaw MP3 #13. The HEAD BLE command was transmitted in each trial, but the head **did not physically move**. Independent head movement still works. The original exploratory instructions are retained for history; keep this mode OFF for normal use.
 
 ## Motivation
 
@@ -66,6 +66,12 @@ The user ran the isolated HEAD one-shot diagnostic **twice** with **Jaw file #13
 
 **Result: jaw-first HEAD at 2 seconds is TESTED AND DID NOT MOVE THE HEAD on this prop.** This is not a firmware write failure, as shown by the logs; it is consistent with device-level head motion suppression while MP3 playback is active, but the exact reason is unknown. The original guide above describes a proposed test and predates this result. Do not enable jaw-first HEAD in normal Haunted operation.
 
-For an attended follow-up only, try setting the **delay to 10 seconds**, still with jaw #13 and the other motors OFF. If it moves then, the 2-second suppression may be transient. If it still doesn't, the restriction may persist through playback; neither outcome is established yet. The standalone 25-second head command remains the proven working option, with MP3 head protection ON.
+**Follow-up completed:** At a **10-second delay**, jaw MP3 #13 played and the firmware logged the HEAD command, but the head still **did not move**. This rules against a restriction confined only to the first two seconds of playback. The precise cause and any possible head behavior later in the MP3 are unknown. Use the proven standalone 25-second head movement with MP3 protection ON.
 
 A separate [combined body movement sketch](body-combo-test.md) tests whether **one** bitmask command `AA CA 03` can start head+arm simultaneously without MP3 playback; this is distinct from the jaw-first experiment.
+
+## Combined body movement test result
+
+Using the separate [one-shot combined movement sketch](body-combo-test.md), the user sent **`AA CA 03 00 00 00 00 00 00 00 D7`**. Both **head and arm physically moved**. Torso remained stationary because mask `0x03` does not include its `0x04` bit. The composite HEAD+ARM command therefore works without any jaw MP3; this result does **not** contradict the unsuccessful HEAD-after-MP3 test.
+
+The next isolated test is one-shot mask `0x05` for HEAD+TORSO, without MP3.

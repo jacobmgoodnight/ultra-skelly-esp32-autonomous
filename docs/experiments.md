@@ -162,3 +162,14 @@ A printed `HEAD command sent` is confirmation of a BLE write, **not physical mov
 **Status:** one-shot jaw-first HEAD at 2 s **tested, physically unsuccessful**; head-alone and jaw-first ARM/TORSO remain validated. The Studio HEAD diagnostic option remains opt-in and now warns that the 2 s test failed. An optional attended **10-second** delay test could determine whether a brief MP3 startup suppression is responsible.
 
 The upstream movement bitfield has independent **head 0x01, arm 0x02, torso 0x04** bits. To investigate head+body overlap separately *without a jaw MP3*, a new supervised [one-shot combined-mask sketch](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) supports `0x03` head+arm, `0x05` head+torso, `0x06` arm+torso and `0x07` all three. **None of these composite masks has yet been physically tested on this Skelly.** See the [combination guide](body-combo-test.md).
+
+
+## October 20, 2026 — HEAD suppressed during MP3 at 10s; compound HEAD+ARM verified
+
+**Jaw-first HEAD diagnostic:** A third physical trial used jaw MP3 **#13** and a **10,000 ms** head follow-up. The ESP32 printed `JAW-FIRST: sending HEAD after MP3 start` and `HEAD command sent`, but the user again reported **no physical head motion**. Earlier 2,000 ms trials also failed. This establishes that the suppression is not confined to the first two seconds of the MP3, although the specific firmware arbitration rule has not been established. Standalone head motion and protected sequencing still work.
+
+**One-packet multi-motor test:** The dedicated `BodyComboSingleTest.ino` (no MP3) was set to mask **`0x03`** and transmitted **`AA CA 03 00 00 00 00 00 00 00 D7`** after BLE connection. The user **observed both HEAD and ARM moving**. **TORSO stayed still as expected**, since bit `0x04` was not requested. This is the first physically confirmed **combined AACA movement mask** on this prop, distinct from the prior sequential body motor scheduler. The user did not separately report completion times for these two movements.
+
+**BLE discovery friction:** Three successive one-shot runs failed to find the advertising Skelly in the sketch's single 5-second scan. A fourth run found it and connected, after which the motor command was sent once. The isolated test sketch was improved to automatically retry up to **eight 5-second scans**, with a 10-second pause between missed scans, while still sending exactly **one** motor command once connected.
+
+**Next:** Test `0x05` (HEAD + TORSO) as another *single* isolated motor packet, without jaw audio. Then `0x06` (ARM + TORSO), and only if both pairs behave normally consider `0x07` (all three). Do not extrapolate a successful combined body packet to simultaneous HEAD + MP3 mouth movement.

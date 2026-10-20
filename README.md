@@ -156,3 +156,10 @@ A separate advanced body-motor overlap switch already permits the *possibility* 
 The attempted **jaw MP3 #13 → 2-second delay → HEAD** sequence was run **twice**. The ESP32 logged successful HEAD writes, but the head **did not physically respond** during the jaw-first event. Standalone head movement continued working. Unlike previously verified jaw-first arm and torso, **jaw-first HEAD at two seconds is not a working mode** on the tested prop; Studio now labels it a diagnostic with the failed result. An attended 10-second trial is possible but not yet verified.
 
 The community controller defines head/arm/torso movement as **bits 0x01/0x02/0x04**. New isolated [BodyComboSingleTest.ino](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) sends a *single* compound movement mask, first `0x03` for head+arm (then optional `0x05`, `0x06` and `0x07`). This is a different experiment from sequential BLE writes. Physical simultaneous movement of multiple body parts remains unconfirmed; see the [supervised test guide](docs/body-combo-test.md).
+
+
+### Latest hardware result: combined HEAD+ARM works; HEAD-after-MP3 fails even at 10 seconds
+
+Two-second and **10-second** HEAD-after-jaw attempts with MP3 #13 sent their BLE commands but produced **no observed head movement**. The cause remains unknown; use protected standalone head movement instead of the HEAD diagnostic in a normal display.
+
+Separately, a supervised **single `AA CA 03` packet physically moved the HEAD and ARM** on the original Skelly with no jaw MP3 playing. Torso stayed still because its `0x04` bit wasn't selected. The one-shot [combined motor sketch](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now automatically retries Skelly discovery rather than requiring repeated manual resets. Next physical test: set `TEST_MOVEMENT_MASK = 0x05` (**HEAD+TORSO**), then test the remaining pairs before considering all three. [Full results and safety notes](docs/body-combo-test.md).

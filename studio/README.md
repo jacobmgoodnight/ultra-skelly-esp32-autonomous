@@ -103,3 +103,10 @@ The existing **Allow body motor overlap** option can theoretically let head, arm
 **New October 20 result:** the user twice tested **jaw #13 → 2 s delay → HEAD command**. ESP32 serial showed the BLE HEAD packet was sent but the head **did not physically move at that point**. Later independent head movement works. This differs from the confirmed jaw-first ARM and TORSO co-movement. Studio keeps HEAD-after-jaw as a clearly labeled, opt-in **diagnostic**; do not enable it for unattended Haunted mode. For investigation, the delay can be increased to 10 s (unverified).
 
 The upstream `AACA` movement argument is a **bitfield**, so a standalone [BodyComboSingleTest.ino](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) sends a single combined mask rather than sending consecutive commands. Start with `0x03` for head+arm, then follow the [progressive hardware test guide](../docs/body-combo-test.md). Composite simultaneous movement remains **unverified**.
+
+
+## Tested statuses: head during MP3 vs combined body command
+
+**Jaw-first HEAD remains an unsuccessful diagnostic at 2 and 10 seconds.** On the original prop, the device received the `AA CA 01` head packet during jaw MP3 #13 playback but did not visibly move the head. This does **not** affect standalone protected HEAD or the successful jaw-first ARM/TORSO modes. Skelly Studio now labels both failed delays.
+
+**A single `AA CA 03` request physically moved HEAD and ARM together** with no MP3 running. A separate [combined body-motor test sketch](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now retries its Bluetooth discovery automatically after initial scan misses; its default mask is still `0x03`. To test the next combination, change `TEST_MOVEMENT_MASK` to **`0x05`** (HEAD + TORSO). See the [test guide](../docs/body-combo-test.md). These experiments do not change the normal autonomous firmware.
