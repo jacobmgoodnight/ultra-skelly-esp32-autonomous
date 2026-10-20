@@ -12,8 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify ffmpeg
-        run: ffmpeg -version | head -n 1
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
       - name: Generate MP3 audio
         run: python audio/generate_jaw_clips.py
       - name: Check 8 kHz mono 32 kbps audio
