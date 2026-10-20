@@ -75,3 +75,10 @@ The updated serial messages print `JAW-FIRST RECURRING: scheduled ARM/TORSO` whe
 The original Ultra Skelly v2 logged **six consecutive successful jaw-first motor sends** in the sequence **arm, torso, arm, torso, arm, torso**, with recurring mode enabled, MP3 #13, two-second follow-up delay and head OFF. No disconnects or skipped commands were reported in the log excerpt. The scheduler and motor-selection logic have therefore been **field-tested at the BLE command level**; physical completion of *every* cycle and multi-hour reliability are still pending further observation.
 
 Select **Alternate arm or torso when due** and enable **Repeat when the selected motor's own random interval is due** to reproduce this mode. Motor frequencies continue to control eligibility; alternate selection is a preference when both motors are due, not a guarantee that every future session alternates strictly.
+
+
+## Field status — 30-minute recurring alternating test
+
+**Confirmed at the scheduling/BLE level:** one approximately 30-minute run of **Alternating arm or torso when due** with jaw MP3 #13, 2-second jaw-first follow-up and both body motors enabled. The device connected on its second scan, then serial logs showed arm/torso alternation throughout without logged disconnects, skipped follow-ups or BLE send failures. The exact physical completion of each individual motor cycle was not separately recorded in that log; prior isolated jaw+arm and jaw+torso overlap tests were visually successful.
+
+**Not tested in this run:** head movements, live eye rotation, and sustained unattended operation for hours/days. Keep the original head and eye configurations available for progressive integration tests. Remember the randomized target intervals are start-to-start requests and may be delayed by cooldown or MP3 coordination.
