@@ -173,3 +173,23 @@ The upstream movement bitfield has independent **head 0x01, arm 0x02, torso 0x04
 **BLE discovery friction:** Three successive one-shot runs failed to find the advertising Skelly in the sketch's single 5-second scan. A fourth run found it and connected, after which the motor command was sent once. The isolated test sketch was improved to automatically retry up to **eight 5-second scans**, with a 10-second pause between missed scans, while still sending exactly **one** motor command once connected.
 
 **Next:** Test `0x05` (HEAD + TORSO) as another *single* isolated motor packet, without jaw audio. Then `0x06` (ARM + TORSO), and only if both pairs behave normally consider `0x07` (all three). Do not extrapolate a successful combined body packet to simultaneous HEAD + MP3 mouth movement.
+
+
+## October 20, 2026 — compound `0x05` HEAD + TORSO: physically working
+
+Following the successful single-packet HEAD+ARM (`0x03`) test, the user changed `TEST_MOVEMENT_MASK` to **`0x05`** and observed **head and torso move together**. There was **no arm movement**, as expected with bit `0x02` unset. Bluetooth discovery succeeded on the **first** scan with the updated isolated test sketch.
+
+The serial log confirms the request:
+
+```text
+Scanning 5 seconds... attempt 1/8
+Found Skelly: 5a:e8:18:0a:37:16
+CONNECTED
+Requested motors: HEAD=YES ARM=NO TORSO=YES
+Sending ONE compound body command, mask 0x05: AA CA 05 00 00 00 00 00 00 00 44
+Compound movement request SENT ONCE (not motor-confirmed).
+```
+
+This validates physical activation of **two different combined bitmasks**, `0x03` (HEAD+ARM) and `0x05` (HEAD+TORSO), without AAC6/jaw playback. The user did not separately time the complete motion for each joint, and we have **not** yet verified HEAD+ARM+TORSO all at once.
+
+**Next test:** `0x06` (ARM+TORSO, CRC `0x81`), with clear joints, jaw disabled, one motor packet only, and observation of both full animations. If it works, consider `0x07` (all three). These are separate from the known unsuccessful jaw-first HEAD while MP3 was playing.
