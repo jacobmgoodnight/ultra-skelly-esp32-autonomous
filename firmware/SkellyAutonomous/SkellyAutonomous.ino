@@ -52,6 +52,11 @@ const bool JAW_PROTECTS_ARM_TORSO = true;
 // allow jaw + motor together. The reverse (AACA stops jaw) is also possible.
 const uint8_t JAW_FOLLOWUP_MOTOR = 0;
 const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;
+// false = one successful diagnostic test per BLE connection.
+// true = trigger the selected motor only when its own configured random
+// frequency is due; wait for the next jaw clip, not every clip. This
+// periodic coordination is NEW and needs extended hardware testing.
+const bool JAW_FOLLOWUP_RECURRING = false;
 const uint32_t BODY_WRITE_SPACING_MS = 600;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
@@ -235,10 +240,11 @@ bool connectToSkelly() {
   Serial.printf("Body motor overlap %s. Jaw body-protection %s.\n",
                 ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
-  Serial.printf("Jaw-first follow-up: %s after %lu ms (EXPERIMENTAL).\n",
+  Serial.printf("Jaw-first follow-up: %s after %lu ms (%s).\n",
                 JAW_FOLLOWUP_MOTOR == 1 ? "ARM" :
                 JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" : "OFF",
-                (unsigned long)JAW_FOLLOWUP_DELAY_MS);
+                (unsigned long)JAW_FOLLOWUP_DELAY_MS,
+                JAW_FOLLOWUP_RECURRING ? "RECURRING frequency-gated" : "ONE-SHOT");
   Serial.printf("First head in %lu seconds.\n",
                 (unsigned long)((nextHeadAt - now) / 1000));
   if (mouthConfigured()) {
@@ -356,10 +362,16 @@ void startMouth(uint32_t now) {
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
   // Intentional, one-time jaw-first motor experiment. Cancels any previous
   // pending follow-up if the MP3 starts again (normally >20s apart).
-  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 && !jawFollowupTestDone;
+  const bool dueForRecurring =
+      (JAW_FOLLOWUP_MOTOR == 1 && reached(now, nextArmAt)) ||
+      (JAW_FOLLOWUP_MOTOR == 2 && reached(now, nextTorsoAt));
+  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 &&
+                       (JAW_FOLLOWUP_RECURRING ? dueForRecurring
+                                               : !jawFollowupTestDone);
   jawFollowupAt = now + JAW_FOLLOWUP_DELAY_MS;
   if (jawFollowupPending) {
-    Serial.printf("JAW-FIRST ONE-SHOT: scheduled %s %lu ms after MP3 start.\n",
+    Serial.printf("JAW-FIRST %s: scheduled %s %lu ms after MP3 start.\n",
+                  JAW_FOLLOWUP_RECURRING ? "RECURRING" : "ONE-SHOT",
                   JAW_FOLLOWUP_MOTOR == 1 ? "ARM" : "TORSO",
                   (unsigned long)JAW_FOLLOWUP_DELAY_MS);
   }
@@ -453,8 +465,9 @@ void loop() {
   // A controlled jaw-FIRST experiment: AAC6 plays, then one AACA motor packet.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
   // selected motor only; all ordinary scheduled arm/torso commands stay blocked
-  // while the MP3 is active. Only one successful test per BLE connection;
-  // a skipped attempt may try again on the next jaw MP3.
+  // while the MP3 is active. One-shot mode allows one successful test
+  // per BLE connection. In recurring mode, only when its random interval
+  // is due; a skipped attempt can retry on the next jaw MP3.
   if (connected && jawFollowupPending && reached(millis(), jawFollowupAt)) {
     jawFollowupPending = false;
     const uint32_t t = millis();
@@ -476,11 +489,11 @@ void loop() {
     } else if (armSelected) {
       Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
-      if (connected) jawFollowupTestDone = true;
+      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
     } else if (torsoSelected) {
       Serial.println("JAW-FIRST: sending TORSO after MP3 start (experimental).");
       startTorso(t);
-      if (connected) jawFollowupTestDone = true;
+      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
     }
   }
   if (!connected) { delay(100); return; }
@@ -514,12 +527,14 @@ void loop() {
       overdue = now - nextHeadAt;
     }
     if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
+        !(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 2) &&
         reached(now, torsoSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
     if (ARM_ENABLED && reached(now, nextArmAt) &&
+        !(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 1) &&
         reached(now, armSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
       choice = 2;
