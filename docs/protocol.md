@@ -43,7 +43,7 @@ Do not confuse `AAF9` for live eyes with the movement command `AACA` or stored-f
 
 ## Optional body commands and motor serialization
 
-The upstream movement-bit mapping is **head `0x01`**, **arm `0x02`** and **torso `0x04`**. Torso-only `AA CA 04` was physically tested (~25 seconds). Arm-only `AA CA 02` has **not** been physically tested and is disabled by default. All physical body motor commands are sent sequentially, with per-command cooldown. For procedure and conservative durations see [body movement guide](body-movements.md).
+The upstream movement-bit mapping is **head `0x01`**, **arm `0x02`** and **torso `0x04`**. Torso-only `AA CA 04` was physically tested (~25 seconds). Arm-only `AA CA 02` has **been physically tested** (two motions in ~22 seconds) and is disabled by default in checked-in base firmware. All physical body motor commands are sent sequentially, with per-command cooldown. For procedure and conservative durations see [body movement guide](body-movements.md).
 
 ## Arm measured, experimental concurrent body movements
 
