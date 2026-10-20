@@ -1,0 +1,31 @@
+name: Build sample jaw MP3s
+on:
+  push:
+    paths:
+      - "audio/generate_jaw_clips.py"
+      - ".github/workflows/jaw-audio.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify ffmpeg
+        run: ffmpeg -version | head -n 1
+      - name: Generate MP3 audio
+        run: python audio/generate_jaw_clips.py
+      - name: Check 8 kHz mono 32 kbps audio
+        run: |
+          set -e
+          for clip in audio/generated/*.mp3; do
+            ffprobe -v error -show_entries stream=codec_name,sample_rate,channels,bit_rate:format=duration -of default=noprint_wrappers=1 "$clip"
+            test "$(ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1:nokey=1 "$clip")" = 8000
+            test "$(ffprobe -v error -select_streams a:0 -show_entries stream=channels -of default=noprint_wrappers=1:nokey=1 "$clip")" = 1
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jaw-personality-test-mp3s
+          path: audio/generated/*.mp3
+          retention-days: 90
