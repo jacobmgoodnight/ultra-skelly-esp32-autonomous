@@ -113,3 +113,8 @@ New experimental jaw audio recipes include **three-second wide-open holds** and 
 The **Long Open (#13)** and **Whisper Then Gasp (#14)** audio clips each produced verified **three-second mouth holds** on the original test unit. File serial numbers are device-specific. During testing of body motor overlap, stored MP3 playback appeared to **interrupt arm/torso movement**; it may be applying its saved movement flags `0x00`. That hypothesis still needs direct confirmation.
 
 Studio now defaults to **Protect arm + torso from jaw MP3**, which delays jaw playback until those motors have finished and prevents arm/torso starts while the MP3 is playing. Head/jaw overlap remains a separate option. Studio also lowered the **minimum selectable torso and arm frequency to 45 seconds**; the previous 90/120-second settings were conservative UI limits, not Skelly hardware requirements. These priority and frequency changes have yet to undergo extended on-device testing.
+
+
+### Experimental jaw-first arm/torso reaction
+
+A new, opt-in **Jaw first → arm or torso** experiment sends one body-motor `AACA` command after the `AAC6` mouth MP3 has already begun (default delay: **2 seconds**, configurable 1–10). The goal is to test whether reversing command order avoids the observed interruption of body motors by stored MP3 playback. Both the successful simultaneous behavior **and** the possibility of the jaw stopping remain unverified. The default is OFF; this does not alter the existing proven head and jaw behavior. Read the [jaw-first test guide](docs/jaw-first-experiment.md).
