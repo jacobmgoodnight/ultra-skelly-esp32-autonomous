@@ -163,3 +163,10 @@ The community controller defines head/arm/torso movement as **bits 0x01/0x02/0x0
 Two-second and **10-second** HEAD-after-jaw attempts with MP3 #13 sent their BLE commands but produced **no observed head movement**. The cause remains unknown; use protected standalone head movement instead of the HEAD diagnostic in a normal display.
 
 Separately, a supervised **single `AA CA 03` packet physically moved the HEAD and ARM** on the original Skelly with no jaw MP3 playing. Torso stayed still because its `0x04` bit wasn't selected. The one-shot [combined motor sketch](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now automatically retries Skelly discovery rather than requiring repeated manual resets. **HEAD+TORSO `0x05` was subsequently physically verified**: both motors moved after a single command, with no MP3. Next physical test: set `TEST_MOVEMENT_MASK = 0x06` (**ARM+TORSO**), then consider all three only after that final pair works. [Full results and safety notes](docs/body-combo-test.md).
+
+
+### Four for four: combined body-motor masks verified
+
+The original Ultra Skelly v2 has now physically moved **every tested combination** from a single AACA movement bitmask: `0x03` head+arm, `0x05` head+torso, `0x06` arm+torso, and **`0x07` head+arm+torso all together**. These successful one-shot requests were made **without jaw MP3 playback**, and completion times were not individually measured. Future autonomous combined body movements can use these mask commands instead of sending several independent packets, but that feature has **not** been added to the regular scheduler.
+
+The separate [combined body test sketch](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now retries **failed connections as well as missed advertisements**, while still sending exactly one motor frame. See the [test guide and all confirmed masks](docs/body-combo-test.md).
