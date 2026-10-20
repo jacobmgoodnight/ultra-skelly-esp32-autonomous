@@ -53,3 +53,7 @@ A short record of iterative tests performed on one Home Depot Ultra Skelly v2, u
 - Automatic recovery after timer-controlled power-off and power-on.
 - Stability through hours of unattended use; real motor cooldown/heat observation.
 - Optional distinct short and long jaw files with weighted selection; different eye schedules.
+
+## October 2026: optional torso and arm configuration
+
+Re-confirmed that the individual torso command `AA CA 04` previously worked (~25 seconds). The web controller defines arm bit `0x02`, but the standalone arm command has not yet been tested on this particular Skelly. A one-shot test was added; Studio's Haunted preset enables torso but **not arm**, with a global motor cooldown preventing simultaneous head/torso/arm activity. See [body movement guide](body-movements.md).
