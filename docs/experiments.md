@@ -80,3 +80,13 @@ The user tested **AAC6 jaw MP3 first, then AACA arm 2 seconds later** using jaw 
 The posted serial logs contained repeated `JAW-FIRST: scheduled` lines, matching the **earlier** prototype build; the corrected one-shot firmware prints `JAW-FIRST ONE-SHOT: scheduled`. A successful one-shot in that newer build is limited to one per BLE connection.
 
 A new optional **recurring jaw-first** mode now coordinates the selected arm/torso with the next jaw clip **only when its configured random interval is due**. Unlike the proven one-shot sequence, this longer-running scheduler still needs field testing. See [jaw-first testing guide](jaw-first-experiment.md).
+
+## October 20, 2026 — second jaw-first tests, independent movement distinguished
+
+The user ran **jaw file #12 → 2-second delay → arm** with head OFF, torso OFF, arm ON and confirmed the jaw and complete arm animation worked together. Serial Monitor reported `JAW-FIRST ONE-SHOT` and only one coordinated follow-up; a later jaw clip played by itself. In a separate run using **jaw file #13 → 2-second delay → torso** with head OFF and arm OFF, the combined jaw/torso action also worked.
+
+The torso run subsequently logged independent `TORSO command sent` events with random next-torso targets of ~46–50 seconds, plus `JAW deferred: waiting for arm/torso cooldown.` Those **later torso events were standalone timer triggers**, not evidence that recurring jaw-first had been tested. `JAW deferred` means jaw playback was held until the previous torso animation and its buffer finished.
+
+The earlier and present results establish reliable-looking jaw-first arm/torso overlap on this physical prop under these test conditions. Full unattended reliability remains unmeasured.
+
+An opt-in **Alternate arm or torso when due** mode was added to Studio (requires both motors enabled and recurring mode ON). Each motor retains its own random due interval; when both are eligible for a jaw clip the controller prefers the motor not selected on the preceding successful coordinated movement. The actual alternating cadence has **not yet been physically tested**.
