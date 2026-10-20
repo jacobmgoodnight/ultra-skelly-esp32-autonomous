@@ -55,3 +55,19 @@ const uint32_t ARM_MAX_INTERVAL_MS = 720000;   // 12 min
 ```
 
 To opt in, customize the settings in [Skelly Studio](../studio/) and download a generated sketch. No external sensors, phone or Wi-Fi are needed after programming.
+
+## Jaw MP3 interruptions: protecting arm and torso (new experiment)
+
+During an overlap test, the user observed that **stored jaw MP3 playback seemed to stop active arm and torso movement**, despite body-to-body overlapping animations otherwise appearing to work. This may occur because the audio file's saved body-movement flag `0x00` gets reapplied when playback starts. We haven't proven the device firmware's internal priority rules; the `AAC6` request alone doesn't tell us which motors were physically interrupted.
+
+A new controller setting is **`JAW_PROTECTS_ARM_TORSO = true`** (default). In Skelly Studio this appears as **Protect arm + torso from jaw MP3**:
+
+1. When jaw audio becomes due during arm or torso movement, defer playback until both animations and their 10-second safety buffers finish.
+2. While a jaw clip is about to play or is playing, hold newly due arm and torso motor commands until the estimated 21-second MP3 playback ends.
+3. Let head and jaw continue overlapping when the separate **Allow head + jaw together** switch is enabled. Digital eye changes also continue.
+
+This gives the active arm/torso animation priority instead of letting AAC6 possibly truncate it. It may cause **jaw playback to happen later** than its requested random range. Turning the protection OFF restores the older behavior, which may interrupt active motors. The correction needs testing with body-motor overlap ON and serial logging.
+
+**Frequency minimums:** The original 90-second torso and 120-second arm Studio limits were arbitrary conservative limits, not physical limits. Studio now permits **45-second start-to-start** values for either motor. That is higher than the measured active duration plus buffer (torso 25+10=35 s; arm 22+10=32 s). Consider longer intervals to reduce repetitive motor duty, especially with multiple motors enabled.
+
+For reproducible testing, turn on **arm + torso + head overlap**, keep **jaw protection ON**, and set jaw attempts every ~45–60 seconds; observe whether a previously started arm/torso completes its full motion before the mouth begins. Test again with protection OFF only if the prop is attended and the joints are unobstructed.

@@ -106,3 +106,10 @@ This repository's original firmware, docs, and included synthesized test audio a
 ### Jaw audio personalities
 
 New experimental jaw audio recipes include **three-second wide-open holds** and **whisper-then-gasp** patterns. See the [audio guide](audio/jaw-personalities.md) and [source generator](audio/generate_jaw_clips.py). Upload each MP3 through the community web controller with saved movement flags `0x00`, then enter its device-specific file number in Studio. Unlike head/arm/torso commands, jaw shape is not controlled directly; visual timing must be tested.
+
+
+### Confirmed jaw holds and MP3/body movement scheduling (October 2026)
+
+The **Long Open (#13)** and **Whisper Then Gasp (#14)** audio clips each produced verified **three-second mouth holds** on the original test unit. File serial numbers are device-specific. During testing of body motor overlap, stored MP3 playback appeared to **interrupt arm/torso movement**; it may be applying its saved movement flags `0x00`. That hypothesis still needs direct confirmation.
+
+Studio now defaults to **Protect arm + torso from jaw MP3**, which delays jaw playback until those motors have finished and prevents arm/torso starts while the MP3 is playing. Head/jaw overlap remains a separate option. Studio also lowered the **minimum selectable torso and arm frequency to 45 seconds**; the previous 90/120-second settings were conservative UI limits, not Skelly hardware requirements. These priority and frequency changes have yet to undergo extended on-device testing.

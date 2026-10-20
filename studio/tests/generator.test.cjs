@@ -86,9 +86,27 @@ test("Verified 22-second arm uses 0x02 motor bit and per-part cooldown", () => {
 });
 test("Reject dangerously fast body motor intervals", () => {
   assert.throws(() => api.generateSketch(sample({torsoEnabled:true,torsoMin:40})), /Torso:/);
-  assert.throws(() => api.generateSketch(sample({armEnabled:true,armMin:50})), /Arm:/);
+  assert.throws(() => api.generateSketch(sample({armEnabled:true,armMin:40})), /Arm:/);
 });
 
+test("Arm and torso input minimums are conservative 45s, not hardcoded 90s/120s", () => {
+  const sketch=api.generateSketch(sample({
+    torsoEnabled:true,torsoMin:45,torsoMax:55,
+    armEnabled:true,armMin:45,armMax:65
+  }));
+  assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 45000;/);
+  assert.match(sketch, /const uint32_t ARM_MIN_INTERVAL_MS = 45000;/);
+});
+test("Default jaw MP3 protects arm/torso from 0x00 playback metadata", () => {
+  const protectedSketch=api.generateSketch(sample({torsoEnabled:true,armEnabled:true}));
+  assert.match(protectedSketch, /const bool JAW_PROTECTS_ARM_TORSO = true;/);
+  assert.match(protectedSketch, /JAW deferred: waiting for arm\/torso cooldown/);
+  assert.match(protectedSketch, /!blockArmTorsoForJaw/);
+  assert.match(protectedSketch, /reached\(jawNow, torsoSafeAfter\)/);
+  assert.match(protectedSketch, /reached\(jawNow, armSafeAfter\)/);
+  const unprotected=api.generateSketch(sample({jawProtectBody:false}));
+  assert.match(unprotected, /const bool JAW_PROTECTS_ARM_TORSO = false;/);
+});
 test("Subtle deliberately disables silent jaw by default", () => {
   assert.equal(api.PRESETS.subtle.jawEnabled, false);
   const sketch=api.generateSketch(sample({...api.PRESETS.subtle}));

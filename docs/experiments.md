@@ -61,3 +61,14 @@ Re-confirmed that the individual torso command `AA CA 04` previously worked (~25
 ## October 20, 2026: arm action measured
 
 The one-shot arm-only `AA CA 02` command worked. Skelly moved his arm **twice back-to-back**, finishing after **22 seconds**. The controller's arm activity timer now uses 22 seconds plus 10 seconds cooldown. Torso-only had previously been verified (~25 seconds) and doesn't need a repeat solely to validate its command; combinations with other motors are untested. The Studio **Subtle** preset turns off jaw audio; **Haunted** now enables torso and arm but keeps body overlap off by default. Two 20-second jaw-tone files with three-second sustained openings are provided as experimental recipes. See [jaw personality guide](../audio/jaw-personalities.md).
+
+
+## October 20: 3-second jaw holds and MP3/body priority
+
+The user uploaded and verified both new audio recipes on the real Ultra Skelly v2: **file #13** is the Long Open clip and **file #14** is Whisper Then Gasp. Both produced approximately **3-second sustained jaw openings**, with closing between the audio events. These serial numbers are specific to the original test device and are not universal.
+
+When the experimental head/arm/torso body-motor overlap was enabled, those body movements appeared capable of overlapping, but triggering a stored **jaw MP3** seemed to interrupt **arm and torso** motion. Our current hypothesis is that **AAC6 playback reapplies the MP3's saved head/arm/torso movement flags `0x00`**, taking priority over previously started `AACA` commands. This is an observed correlation, **not yet isolated protocol-level proof**. The log shows requests sent, not confirmation that all motors continued to completion.
+
+To test the hypothesis, a new option **Protect arm + torso from jaw MP3** postpones AAC6 until both body animations and safety buffers finish, then pauses new arm/torso commands until jaw audio finishes. Head/jaw overlap remains separately controlled. The protection algorithm is experimental and needs on-device validation.
+
+Previous Studio minimums of **90 seconds torso** and **120 seconds arm** were conservative user-interface restrictions while physical movement was unverified. They were not BLE-protocol limits. New minima are **45 seconds** for each part (vs measured ~25 seconds torso +10 s buffer and 22 seconds arm +10 s buffer). Frequent repetition increases motor duty cycle; use longer intervals for unattended displays.
