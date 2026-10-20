@@ -53,3 +53,11 @@ With **Head OFF**, **Arm OFF**, **Torso ON**, choose **Jaw first → Start torso
 **Concurrent jaw+arm and jaw+torso motion has now been physically verified on the original Skelly.** A complete `AAC6` or `AACA` BLE write alone would not have established that; the observation does. Longer unattended reliability, head-plus-body combinations, and recurring interval coordination still need testing.
 
 This experiment leaves the file's **saved head, arm and torso movement flags at 0x00**. Do not change the MP3 metadata merely to force simultaneous motor animations.
+
+## Additional repeat test and alternating option
+
+A second controlled run confirmed **jaw file #12 with arm**, and **jaw file #13 with torso**, both using a 2-second jaw-first follow-up. Both combinations worked. The arm log says `JAW-FIRST ONE-SHOT`, followed by a second jaw clip with no arm follow-up—as intended. The torso run also had later standalone torso movements with `JAW deferred` messages, indicating jaw/body protection rather than recurring coordination.
+
+**New opt-in selection: Alternate arm or torso when due** (`JAW_FOLLOWUP_MOTOR = 3`, `JAW_FOLLOWUP_RECURRING = true`). Turn ON both arm and torso. Each movement becomes eligible based on its own randomized target; the next MP3 triggers *one* eligible motor after the delay, favoring the opposite motor if both are due. If neither is due, there is no motor follow-up for that clip. Repeating this automatically over multiple cycles is **not yet verified**.
+
+For an initial alternating test, turn Head OFF, Arm ON, Torso ON, Jaw ON (file #13), select Alternate, enable Recurring, and set each motor to **90–150 seconds** and Jaw to **45–60 seconds**. Keep **Protect arm + torso from jaw MP3 ON** and body overlap OFF. Observe at least four eligible jaw events: alternation is a preference when both motors are due, **not** a promise to strictly switch every time or to move on every jaw clip.
