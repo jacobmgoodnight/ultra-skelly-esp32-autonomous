@@ -35,16 +35,20 @@ const uint32_t HEAD_MIN_INTERVAL_MS = 32000;
 const uint32_t HEAD_MAX_INTERVAL_MS = 60000;
 
 // Advanced body movements. Torso AACA 0x04 worked (~25 sec) on original Skelly.
-// Arm AACA 0x02 is supported by upstream protocol, but not yet hardware-tested.
-// OFF by default, including the arm in Haunted until one-shot test succeeds.
+// Arm AACA 0x02 physically tested: two arm motions in 22 seconds.
+// OFF by default in the checked-in firmware. Haunted preset opts into both.
 const bool TORSO_ENABLED = false;
 const bool ARM_ENABLED = false;
+// Advanced opt-in only. When true, body motors may run at the same time.
+// This is NOT hardware-verified: test arm+head, then torso+head, then all.
+const bool ALLOW_BODY_MOTOR_OVERLAP = false;
+const uint32_t BODY_WRITE_SPACING_MS = 600;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
 const uint32_t TORSO_MIN_INTERVAL_MS = 240000;
 const uint32_t TORSO_MAX_INTERVAL_MS = 420000;
-const uint32_t ARM_ANIMATION_MS = 30000; // conservative estimate, verify on hardware
-const uint32_t ARM_BUFFER_MS = 15000;
+const uint32_t ARM_ANIMATION_MS = 22000; // measured: two back-to-back arm movements
+const uint32_t ARM_BUFFER_MS = 10000; // conservative added cooldown (32 s total)
 const uint32_t ARM_MIN_INTERVAL_MS = 360000;
 const uint32_t ARM_MAX_INTERVAL_MS = 720000;
 
@@ -86,7 +90,10 @@ uint32_t nextScanAt = 0;
 uint32_t nextHeadAt = 0;
 uint32_t headSafeAfter = 0;
 uint32_t headMovingUntil = 0;
-uint32_t bodySafeAfter = 0; // Global motor cooldown, serialize head/torso/arm.
+uint32_t bodySafeAfter = 0; // Global lock used when overlap is disabled.
+uint32_t nextBodyWriteAt = 0; // Spacing between motor BLE writes, even with overlap.
+uint32_t torsoSafeAfter = 0;
+uint32_t armSafeAfter = 0;
 uint32_t nextTorsoAt = 0;
 uint32_t nextArmAt = 0;
 uint32_t nextMouthAt = 0;
@@ -187,6 +194,9 @@ bool connectToSkelly() {
   headSafeAfter = now;
   headMovingUntil = now;
   bodySafeAfter = now;
+  nextBodyWriteAt = now;
+  torsoSafeAfter = now;
+  armSafeAfter = now;
   nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
   nextArmAt = now + random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
   mouthSafeAfter = now;
@@ -202,6 +212,8 @@ bool connectToSkelly() {
   Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s. Body motor overlap BLOCKED.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
     TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
+  Serial.printf("Body motor overlap %s (experimental when ON).\n",
+                ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF");
   Serial.printf("First head in %lu seconds.\n",
                 (unsigned long)((nextHeadAt - now) / 1000));
   if (mouthConfigured()) {
@@ -255,6 +267,7 @@ void startHead(uint32_t now) {
   headMovingUntil = now + HEAD_ANIMATION_MS;
   headSafeAfter = now + HEAD_ANIMATION_MS + HEAD_BUFFER_MS;
   bodySafeAfter = headSafeAfter;
+  nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   // Keep original start-to-start timing regardless of jaw playback.
   const uint32_t headInterval = random(HEAD_MIN_INTERVAL_MS,
                                        HEAD_MAX_INTERVAL_MS + 1);
@@ -275,6 +288,8 @@ void startTorso(uint32_t now) {
     return;
   }
   bodySafeAfter = now + TORSO_ANIMATION_MS + TORSO_BUFFER_MS;
+  torsoSafeAfter = bodySafeAfter;
+  nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
   nextTorsoAt = now + interval;
   Serial.printf("TORSO command sent; next torso target in %lu sec.\n",
@@ -282,7 +297,7 @@ void startTorso(uint32_t now) {
 }
 
 void startArm(uint32_t now) {
-  // Command is protocol-grounded but arm-only action is NOT yet field-tested.
+  // Physically verified arm-only action: two back-to-back moves ~22s.
   uint8_t frame[11] = {0xAA, 0xCA, 0x02, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
     Serial.println("Arm send failed / disconnected.");
@@ -290,9 +305,11 @@ void startArm(uint32_t now) {
     return;
   }
   bodySafeAfter = now + ARM_ANIMATION_MS + ARM_BUFFER_MS;
+  armSafeAfter = bodySafeAfter;
+  nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
   nextArmAt = now + interval;
-  Serial.printf("ARM command sent (EXPERIMENTAL); next arm target in %lu sec.\n",
+  Serial.printf("ARM command sent; next arm target in %lu sec.\n",
                 (unsigned long)(interval / 1000));
 }
 
@@ -399,7 +416,9 @@ void loop() {
   if (!connected) { delay(100); return; }
 
   // Independently timed head and jaw: they MAY overlap.
-  // Shared motor lock preserves minimum cool-down across all body parts.
+  // Default: global lock serializes body movements. Advanced override allows
+  // independent motors (never two writes at the same instant), unverified.
+  // Per-part cool-down always applies.
   // Head target may be delayed when torso or arm movement is enabled.
   // The 45 sec jaw minimum prevents replay before the 20s clip finishes.
   bool sentHeadThisLoop = false;
@@ -408,19 +427,23 @@ void loop() {
   // Only ONE physical body motor command may be active at a time.
   // Prioritize the most overdue scheduled movement to avoid starving torso/arm.
   // Jaw audio and digital eyes remain independently scheduled.
-  if (reached(now, bodySafeAfter)) {
+  if (reached(now, nextBodyWriteAt) &&
+      (ALLOW_BODY_MOTOR_OVERLAP || reached(now, bodySafeAfter))) {
     uint8_t choice = 0;
     uint32_t overdue = 0;
-    if (HEAD_ENABLED && reached(now, nextHeadAt)) {
+    if (HEAD_ENABLED && reached(now, nextHeadAt) &&
+        reached(now, headSafeAfter)) {
       choice = 1;
       overdue = now - nextHeadAt;
     }
     if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
+        reached(now, torsoSafeAfter) &&
         (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
     if (ARM_ENABLED && reached(now, nextArmAt) &&
+        reached(now, armSafeAfter) &&
         (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
       choice = 2;
     }
