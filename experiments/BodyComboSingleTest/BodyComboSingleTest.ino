@@ -7,10 +7,10 @@
 // ONE-SHOT COMPOUND BODY MOTOR TEST: EXPERIMENTAL. No jaw MP3 or eye commands.
 // CA payload accepts a movement BITFIELD in community SkellyUltraWebController.
 // Individually verified on this prop: 0x01 HEAD, 0x02 ARM, 0x04 TORSO.
-// Physically verified: 0x03 HEAD+ARM BOTH MOVED together on original Skelly.
-// Not yet tested: 0x05 HEAD+TORSO, 0x06 ARM+TORSO, 0x07 all three.
+// Physically verified: 0x03 HEAD+ARM and 0x05 HEAD+TORSO both moved.
+// Not yet tested: 0x06 ARM+TORSO, 0x07 all three.
 // Run supervised, with stable prop and joints clear.
-// 0x05 = next suggested test, once 0x03 has been observed.
+// 0x06 = next suggested test, once 0x03 and 0x05 have been observed.
 // Unlike sending multiple AACA commands, this sends ONE bitmask command.
 // Only change TEST_MOVEMENT_MASK deliberately, then re-upload/reboot.
 const uint8_t TEST_MOVEMENT_MASK = 0x03;
