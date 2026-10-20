@@ -42,3 +42,12 @@ The project's Pages build and deployment were reported successful by GitHub. The
 ## Experimental jaw audio personalities
 
 Two synthetic waveform recipes can be generated using [audio/generate_jaw_clips.py](../audio/generate_jaw_clips.py). The [jaw personality guide](../audio/jaw-personalities.md) describes the **three-second open hold** and **whisper-then-gasp** clips. Upload each to Skelly, set saved body-movement metadata to `0x00`, and enter its file serial in Studio. Their physical response needs testing.
+
+
+## Jaw MP3 priority and shorter body timing
+
+The original test device confirmed **3-second jaw holds** from the Long Open and Whisper Then Gasp files (original file serials **#13 and #14**, device-specific). When MP3 playback started during arm/torso movement, the user observed an apparent interruption of those body animations. MP3 per-file saved movement flags are a plausible cause, but the internal firmware behavior is not proven.
+
+**Protect arm + torso from jaw MP3** now defaults **ON**. It delays AAC6 playback until active arm/torso motions and their cooldowns end, and pauses new arm/torso starts during the MP3. Head/jaw overlap is controlled separately. Choose OFF only to experiment with MP3-overlapping-body behavior. The new priority scheduling remains hardware-experimental.
+
+Studio's per-part **torso and arm minimum start intervals are now 45 seconds**, reduced from the original conservative 90/120 seconds. Torso needs ~25 seconds to animate plus 10 seconds buffer; arm needs ~22 seconds plus 10 seconds buffer. These are **not minimums imposed by Bluetooth or Skelly itself**. Preset timing remains less frequent for motor longevity.
