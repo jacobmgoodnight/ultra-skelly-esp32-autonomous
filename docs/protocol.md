@@ -69,3 +69,10 @@ In contrast, head command `AA CA 01` during ongoing jaw MP3 #13 playback, at bot
 October 20 physical tests established that **one AACA command can activate multiple body motors** using the combined bitfield. `0x03` activated HEAD+ARM, `0x05` activated HEAD+TORSO, `0x06` activated ARM+TORSO, and **`0x07` activated HEAD+ARM+TORSO**. The latter two were confirmed after the original `0x03` and `0x05` tests. The individual completion durations were not recorded for the combination tests; the observation validates simultaneous activation rather than long-term endurance.
 
 The AACA 0x07 command was `AA CA 07 00 00 00 00 00 00 00 C2`. These physical results are **independent of AAC6 jaw playback**, which wasn't used for the combined-mask tests. The main autonomous controller still uses individual head/arm/torso commands unless and until a separate opt-in compound scheduling mode is implemented.
+
+
+## New experimental live RGB channel commands
+
+The upstream Skelly profile identifies two live lighting channels: `0x00` **Torso Light** and `0x01` **Head Light**. The latter may illuminate the mouth but has not been physically mapped on this user's device. The live-mode commands use tags `AAF2` (static effect mode 1), `AAF3` (brightness 0–255), and `AAF4` (RGB + color cycle OFF). Based on the upstream `app-modular.js`, the RGB request is **13 bytes** (two-byte tag + ten-byte payload + CRC8) and the shorter brightness request is **11 bytes**. F2 static-mode request size depends on the channel as implemented by the upstream code (11 bytes for channel 0; 12 bytes for channel 1).
+
+The new firmware can reapply both live colors after AAC6 playback or, experimentally, during and after it. MP3s may reapply saved per-file light settings but the actual reset and correction behavior is not yet physically verified with these new ESP32 writes. These live commands are **not enabled** in the base sketch. See [setup/testing guide](compound-body-and-lighting.md).
