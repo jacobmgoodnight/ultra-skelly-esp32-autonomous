@@ -1,6 +1,6 @@
 # Optional torso and arm movements
 
-This project started as a silent autonomous **head + jaw** controller. **Torso** and **arm** movements have been added as optional advanced features; both are **OFF by default** in the checked-in firmware.
+This project started as an autonomous **head + jaw** controller. **Torso** and **arm** movements have been added as optional advanced features; both are **OFF by default** in the checked-in firmware.
 
 ## What has been verified
 
@@ -8,7 +8,7 @@ This project started as a silent autonomous **head + jaw** controller. **Torso**
 |---|---|---|---|
 | Head | `AA CA 01 ... CRC` | Tested | ~25 s |
 | Torso | `AA CA 04 ... CRC` | Tested separately | ~25 s |
-| Arm | `AA CA 02 ... CRC` | **Verified on original Skelly** | 30 s *estimate* |
+| Arm | `AA CA 02 ... CRC` | **Verified:** two back-to-back arm movements | **22 s measured** |
 
 **October 20, 2026:** the isolated arm-only test worked, with two consecutive motions taking **22 seconds total**. The movement bit mapping comes from the community [Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js). A supported protocol bit **does not establish** independent physical movement without a test.
 
@@ -24,7 +24,7 @@ This project started as a silent autonomous **head + jaw** controller. **Torso**
 
 ## Safety and scheduling
 
-By default the controller uses a **single body-motor lock**, serializing head, torso and arm commands. The **advanced `ALLOW_BODY_MOTOR_OVERLAP` option** can remove that shared lock while preserving each motor's cooldown and a 600 ms BLE write spacing. The physical result and power/mechanical effects of concurrent body motor commands are **not verified**. Test head+arm, then head+torso, then torso+arm individually before attempting all three; if movements interrupt each other, turn overlap off.
+By default the controller uses a **single body-motor lock**, serializing head, torso and arm commands. The **advanced `ALLOW_BODY_MOTOR_OVERLAP` option** can remove that shared lock while preserving each motor's cooldown and a 600 ms BLE write spacing. The physical result and power/mechanical effects of concurrent body motor commands are **not verified**; `AA CA` may restart or interrupt another movement. Test head+arm, then head+torso, then torso+arm individually before attempting all three; if movements interrupt each other, turn overlap off.
 
 - **Head:** measured ~25 seconds + 7-second buffer = at least 32 seconds before next body command.
 - **Torso:** measured ~25 seconds + 10-second buffer = at least 35 seconds.
