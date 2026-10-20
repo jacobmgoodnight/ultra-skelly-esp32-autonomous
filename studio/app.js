@@ -1,20 +1,22 @@
 /* Skelly Studio — entirely client-side Arduino firmware configurator.
  * Works with the exact upstream-tested firmware copy in template.js.
- * Torso/arm commands are intentionally absent.
+ * Torso and arm are optional; shared motor cooldown prevents concurrent body commands.
  */
 (function () {
   "use strict";
   const DEFAULTS = Object.freeze({
     headEnabled:true, headMin:32, headMax:60,
+    torsoEnabled:false, torsoMin:240, torsoMax:420,
+    armEnabled:false, armMin:360, armMax:720,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
-    subtle:{headMin:65,headMax:120,jawMin:100,jawMax:180,overlap:false},
-    normal:{headMin:32,headMax:60,jawMin:45,jawMax:90,overlap:true},
-    haunted:{headMin:32,headMax:45,jawMin:30,jawMax:60,overlap:true}
+    subtle:{headMin:65,headMax:120,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,overlap:false},
+    normal:{headMin:32,headMax:60,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,overlap:true},
+    haunted:{headMin:32,headMax:45,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:false,overlap:true}
   };
   const byId = id => document.getElementById(id);
   function replaceOnce(source, original, replacement) {
@@ -31,10 +33,12 @@
   }
   function validate(config) {
     const error=[];
-    if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled)
+    if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled && !config.torsoEnabled && !config.armEnabled)
       error.push("Enable at least one movement or eye effect.");
     for(const [name,enabled,min,max,floor] of [
       ["Head",config.headEnabled,config.headMin,config.headMax,32],
+      ["Torso",config.torsoEnabled,config.torsoMin,config.torsoMax,90],
+      ["Arm",config.armEnabled,config.armMin,config.armMax,120],
       ["Jaw",config.jawEnabled,config.jawMin,config.jawMax,22],
       ["Eyes",config.eyesEnabled,config.eyesMin,config.eyesMax,15]
     ]) {
@@ -77,6 +81,13 @@
     const assignments=[
       ["const uint16_t MOUTH_FILE_SERIAL = 12;","const uint16_t MOUTH_FILE_SERIAL = "+config.jawFile+";"],
       ["const bool MOUTH_ENABLED = true;","const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";"],
+      ["const bool HEAD_ENABLED = true;","const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";"],
+      ["const bool TORSO_ENABLED = false;","const bool TORSO_ENABLED = "+Boolean(config.torsoEnabled)+";"],
+      ["const bool ARM_ENABLED = false;","const bool ARM_ENABLED = "+Boolean(config.armEnabled)+";"],
+      ["const uint32_t TORSO_MIN_INTERVAL_MS = 240000;","const uint32_t TORSO_MIN_INTERVAL_MS = "+(config.torsoMin*1000)+";"],
+      ["const uint32_t TORSO_MAX_INTERVAL_MS = 420000;","const uint32_t TORSO_MAX_INTERVAL_MS = "+(config.torsoMax*1000)+";"],
+      ["const uint32_t ARM_MIN_INTERVAL_MS = 360000;","const uint32_t ARM_MIN_INTERVAL_MS = "+(config.armMin*1000)+";"],
+      ["const uint32_t ARM_MAX_INTERVAL_MS = 720000;","const uint32_t ARM_MAX_INTERVAL_MS = "+(config.armMax*1000)+";"],
       ["const bool EYES_ENABLED = false;","const bool EYES_ENABLED = "+Boolean(config.eyesEnabled)+";"],
       ["const uint8_t EYE_JAW_MODE = 1;","const uint8_t EYE_JAW_MODE = "+config.eyeJawMode+";"],
       ["const uint32_t HEAD_MIN_INTERVAL_MS = 32000;","const uint32_t HEAD_MIN_INTERVAL_MS = "+(config.headMin*1000)+";"],
@@ -91,8 +102,6 @@
     out=replaceOnce(out,
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";",
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";\n"+
-      "const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";\n"+
-
       "const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";"); 
     // NEW - rest scheduling defaults OFF, to avoid changing verified movement behavior.
     out=replaceOnce(out,"const bool ALLOW_HEAD_JAW_OVERLAP = "+Boolean(config.overlap)+";",
@@ -112,7 +121,7 @@
     out=replaceOnce(out,
       "  bool sentHeadThisLoop = false;",
       "  if (REST_ENABLED && reached(now, nextRestAt) &&\n"+
-      "      reached(now, headMovingUntil) && reached(now, mouthPlayingUntil)) {\n"+
+      "      reached(now, bodySafeAfter) && reached(now, mouthPlayingUntil)) {\n"+
       "    uint32_t d = random(REST_MIN_DURATION_MS, REST_MAX_DURATION_MS + 1);\n"+
       "    restUntil = now + d;\n"+
       "    nextRestAt = restUntil + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
@@ -137,10 +146,13 @@
       out=replaceOnce(out,"                (unsigned)MOUTH_FILE_SERIAL,\n                (unsigned long)(jawInterval / 1000),",
         "                (unsigned)chosenJawFile,\n                (unsigned long)(jawInterval / 1000),");
     }
+    // Head, torso and arm share the global body-motor scheduler. When
+    // disabling jaw overlap, delay HEAD command at its selected dispatch point.
     out=replaceOnce(out,
-      "  if (reached(now, nextHeadAt)) {",
-      "  if (HEAD_ENABLED && reached(now, nextHeadAt) &&\n"+
-      "      (ALLOW_HEAD_JAW_OVERLAP || !mouthConfigured() || reached(now, mouthPlayingUntil))) {");
+      "    if (choice == 1) {",
+      "    if (choice == 1 && (!ALLOW_HEAD_JAW_OVERLAP && mouthConfigured() && !reached(now, mouthPlayingUntil))) {\n"+
+      "      // Wait until jaw clip ends rather than starting head movement.\n"+
+      "    } else if (choice == 1) {");
     out=replaceOnce(out,
       "  if (mouthConfigured() && reached(millis(), nextMouthAt) &&\n      reached(millis(), mouthSafeAfter)) {",
       "  if (mouthConfigured() && reached(millis(), nextMouthAt) &&\n"+
@@ -164,6 +176,8 @@
     const stamp=[
       "// GENERATED WITH SKELLY STUDIO — ultra-skelly-esp32-autonomous",
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
+      "// Torso="+config.torsoEnabled+" "+config.torsoMin+"–"+config.torsoMax+"s; arm="+config.armEnabled+" "+config.armMin+"–"+config.armMax+"s",
+      "// Head/torso/arm are serialized, not overlapped. Arm command needs on-device test.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -175,6 +189,8 @@
     const n=id=>Number(byId(id).value);
     return {
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
+      torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
+      armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
       jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
@@ -184,9 +200,9 @@
     };
   }
   function writeConfig(cfg) {
-    for(const id of ["headMin","headMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
+    for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","jawEnabled","overlap","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
@@ -201,9 +217,21 @@
       for(let j=0;j<70;j++){t+=between(min,max);if(t>=300)break;events.push({kind,time:t,duration})}
     };
     add("head",c.headEnabled,c.headMin,c.headMax,25);
+    add("torso",c.torsoEnabled,c.torsoMin,c.torsoMax,25);
+    add("arm",c.armEnabled,c.armMin,c.armMax,30);
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
+    // Illustrative global motor serialization (real controller prioritizes
+    // overdue movements; exact future times are inherently unpredictable).
+    let bodyAvailableAt=0;
+    for(const ev of events) {
+      if(["head","torso","arm"].includes(ev.kind)){
+        ev.time=Math.max(ev.time,bodyAvailableAt);
+        const cooldown=ev.kind==="head"?32:ev.kind==="torso"?35:45;
+        bodyAvailableAt=ev.time+cooldown;
+      }
+    }
     if(!c.overlap&&c.headEnabled&&c.jawEnabled){
       let headUntil=0,jawUntil=0;
       for(const e of events){
@@ -216,12 +244,14 @@
   function render() {
     const c=readConfig(),errors=validate(c);
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
+    byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
+    byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec · experimental":"Off";
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("overlapSummary").textContent=c.overlap?"Allowed":"Avoided";
-    for(const id of ["headEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
     byId("selectedEyeCount").textContent=c.eyeChoices.length+" of 18 selected";
     byId("restOptions").classList.toggle("muted",!c.restEnabled);

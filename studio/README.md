@@ -7,6 +7,7 @@ This is a **beta** graphical configuration tool for the [Ultra Skelly ESP32 Auto
 ## What it does
 
 - Pick Subtle, Normal or Haunted presets, or enter independent random **start-to-start** intervals.
+- Enable optional **torso movement** (previously verified for ~25 s) or **arm movement** (protocol supported, not yet hardware-tested). Each has a separate random interval and all body-motor commands are serialized with safety cooldown. **Haunted enables torso by default, but leaves the arm OFF.** See the [body safety guide](../docs/body-movements.md).
 - Switch head and jaw on or off, and choose whether their animations may overlap.
 - Supply **your jaw MP3's file serial**; it is not a Bluetooth MAC address.
 - Choose the Skelly BLE *advertised name* (default `Ultra Skelly v2`); the ESP32 discovers the address itself.
@@ -18,7 +19,7 @@ This is a **beta** graphical configuration tool for the [Ultra Skelly ESP32 Auto
 - Preview an illustrative 5-minute schedule; **not a prediction**, because actual firmware uses fresh randomness and device timing.
 - Download a complete `SkellyAutonomous.ino` file or inspect/copy the sketch.
 
-The generator starts from a snapshot of the existing ESP32 firmware as of October 19, 2026, rather than implementing a second BLE client. Its output preserves the tested head animation safety minimum of **32 seconds** and jaw clip scheduling minimum of **22 seconds**. Only allowed settings and scheduler options are changed.
+The generator starts from the project's current Arduino firmware rather than implementing a second BLE client. Its output preserves the tested head animation safety minimum of **32 seconds** and jaw clip scheduling minimum of **22 seconds**. Only allowed settings and scheduler options are changed.
 
 ## Important before use
 

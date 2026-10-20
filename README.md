@@ -66,6 +66,14 @@ const uint32_t EYE_MAX_INTERVAL_MS = 300000;
 
 Intervals are **start-to-start**, not waits after each animation. Because a head animation is ~25 seconds and has a 7-second margin, lowering head minimum below **32 seconds** is discouraged.
 
+## Optional torso and arm movements
+
+Skelly Studio now provides separate enable toggles and random start intervals for **torso** and **arm** movement. The **torso-only command** was physically verified (~25 seconds); the **arm-only command is protocol-grounded but unverified**, so it is disabled by default. Haunted turns on torso movement (every 3–6 minutes) but **does not** turn on the arm until the isolated arm test is completed.
+
+A shared motor cooldown serializes physical **head/torso/arm commands** so they are never intentionally triggered simultaneously. This means enabling additional body movements can postpone a head command past its original target interval. Jaw MP3 and eyes can still overlap. Always leave stored MP3 movement flags at **0x00**.
+
+See the [body movement safety guide](docs/body-movements.md) and [one-shot arm test](experiments/ArmSingleTest/ArmSingleTest.ino).
+
 ## Skelly Studio — browser-based configurator (beta)
 
 Want to choose randomized movement timing without editing Arduino C++ yourself? **[Open the Skelly Studio website](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/)** — the homepage opens the configurator. GitHub reported a successful Pages deployment in October 2026.
@@ -85,7 +93,7 @@ Studio allows head/jaw timing, optional overlap, BLE-name discovery, **18 actual
 
 **Verified on one real prop:** BLE connection; service `AE00` and write characteristic `AE01`; head-only packet; torso-only packet in an isolated test; stored MP3 file listing; AAC6 playback of file #12; disabling per-file movement flags (`0x00`) leaves mouth motion; short audio bursts make jaw movements shorter; head and jaw can run concurrently.
 
-**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, eye restoration after MP3 playback, coordinated new-eye-on-jaw reactions, multi-file jaw playback and idle-break scheduling. MP3 playback has been observed restoring its saved eye design. **One-shot and randomized eye changes have both been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
+**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, eye restoration after MP3 playback, coordinated new-eye-on-jaw reactions, multi-file jaw playback, idle-break scheduling and optional arm movement. MP3 playback has been observed restoring its saved eye design. **One-shot and randomized eye changes have both been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
 
 ## Credits and project relationship
 
