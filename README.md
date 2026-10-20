@@ -170,3 +170,12 @@ Separately, a supervised **single `AA CA 03` packet physically moved the HEAD an
 The original Ultra Skelly v2 has now physically moved **every tested combination** from a single AACA movement bitmask: `0x03` head+arm, `0x05` head+torso, `0x06` arm+torso, and **`0x07` head+arm+torso all together**. These successful one-shot requests were made **without jaw MP3 playback**, and completion times were not individually measured. Future autonomous combined body movements can use these mask commands instead of sending several independent packets, but that feature has **not** been added to the regular scheduler.
 
 The separate [combined body test sketch](experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now retries **failed connections as well as missed advertisements**, while still sending exactly one motor frame. See the [test guide and all confirmed masks](docs/body-combo-test.md).
+
+
+## New opt-in features: random combined movement and live RGB lighting
+
+Skelly Studio can now generate an autonomous controller that occasionally sends **one combined AACA movement bitmask** (random choice of `0x03`, `0x05`, `0x06`, or `0x07`). All four bitmasks physically activated the selected motors in one-shot tests, including full head+arm+torso motion. The new repeated random combined scheduler is **not yet field-tested**; keep it OFF until tested. It replaces independent body-motion scheduling when enabled and cannot be combined with jaw-first coordinated motor follow-ups. Conservative per-motor and shared cooldowns and jaw MP3 protection remain enabled by default.
+
+Studio also offers **optional static RGB control** for the original controller's two lighting channels: channel 0 **Torso Light**, channel 1 **Head Light** (possibly the mouth illumination; physical mapping **unverified**). Colors, brightness, and optional restoration **after** jaw MP3 playback or **during + after** are configurable. This live lighting is based on upstream `AAF2`/`AAF3`/`AAF4` packet layouts, but its behavior and potential MP3 overrides need an on-device test. **Lighting is OFF by default**.
+
+[Compound movement and live RGB setup/testing guide](docs/compound-body-and-lighting.md).

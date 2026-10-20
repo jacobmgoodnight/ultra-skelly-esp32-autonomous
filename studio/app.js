@@ -9,15 +9,17 @@
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:false, armMin:360, armMax:720,
     bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
+    compoundEnabled:false,compoundMin:180,compoundMax:360,compoundMasks:[3,5,6,7],
+    lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:180,headBrightness:180,lightRestoreMode:1,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
-    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false},
-    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false}
+    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,compoundEnabled:false,lightsEnabled:false},
+    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,compoundEnabled:false,lightsEnabled:false},
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   function replaceOnce(source, original, replacement) {
@@ -34,7 +36,7 @@
   }
   function validate(config) {
     const error=[];
-    if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled && !config.torsoEnabled && !config.armEnabled)
+    if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled && !config.torsoEnabled && !config.armEnabled && !config.lightsEnabled)
       error.push("Enable at least one movement or eye effect.");
     for(const [name,enabled,min,max,floor] of [
       ["Head",config.headEnabled,config.headMin,config.headMax,32],
@@ -66,6 +68,27 @@
         if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||min<floor||max>ceiling||min>max)
           error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
       }
+    }
+    if (config.compoundEnabled) {
+      if(config.jawFollowupMotor!==0) error.push("Compound body mode and jaw-first reactions are separate modes; turn one OFF.");
+      if(config.jawEnabled && !config.jawProtectBody) error.push("Compound body movements require MP3 body protection when jaw playback is enabled.");
+      if(!Number.isSafeInteger(config.compoundMin) || !Number.isSafeInteger(config.compoundMax) ||
+         config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax)
+        error.push("Combined movement frequency must be 45–3600 seconds.");
+      const enabled=(config.headEnabled?1:0)|(config.armEnabled?2:0)|(config.torsoEnabled?4:0);
+      if(!Array.isArray(config.compoundMasks) || !config.compoundMasks.length ||
+         config.compoundMasks.some(m=>![3,5,6,7].includes(m) || (m&~enabled)!==0) ||
+         new Set(config.compoundMasks).size!==config.compoundMasks.length)
+        error.push("Select at least one combined mask using only enabled head, arm, and torso motors.");
+    }
+    if (config.lightsEnabled) {
+      if(!/^#[0-9a-f]{6}$/i.test(config.torsoColor||"") ||
+         !/^#[0-9a-f]{6}$/i.test(config.headColor||""))
+        error.push("Lighting colors must be six-digit hexadecimal colors.");
+      if(![config.torsoBrightness,config.headBrightness].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=255))
+        error.push("Lighting brightness must be 0–255.");
+      if(![0,1,2].includes(config.lightRestoreMode))
+        error.push("Choose a valid MP3 lighting restore behavior.");
     }
     if (![0,1,2,3,4].includes(config.jawFollowupMotor))
       error.push("Choose a jaw-first response: OFF, Arm, Torso, Alternate, or Head.");
@@ -103,6 +126,19 @@
       ["const bool TORSO_ENABLED = false;","const bool TORSO_ENABLED = "+Boolean(config.torsoEnabled)+";"],
       ["const bool ARM_ENABLED = false;","const bool ARM_ENABLED = "+Boolean(config.armEnabled)+";"],
       ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
+      ["const bool COMPOUND_BODY_ENABLED = false;","const bool COMPOUND_BODY_ENABLED = "+Boolean(config.compoundEnabled)+";"],
+      ["const uint8_t COMPOUND_BODY_MASKS[] = {0x03, 0x05, 0x06, 0x07};",
+       "const uint8_t COMPOUND_BODY_MASKS[] = {"+(config.compoundMasks.length?config.compoundMasks:[3]).map(x=>"0x"+x.toString(16).padStart(2,"0")).join(", ")+"};"],
+      ["const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = 180000;","const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = "+config.compoundMin*1000+";"],
+      ["const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 360000;","const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = "+config.compoundMax*1000+";"],
+      ["const bool LIGHTS_ENABLED = false;","const bool LIGHTS_ENABLED = "+Boolean(config.lightsEnabled)+";"],
+      ["const uint8_t TORSO_LIGHT_R = 255, TORSO_LIGHT_G = 0, TORSO_LIGHT_B = 0;",
+       "const uint8_t TORSO_LIGHT_R = "+parseInt(config.torsoColor.slice(1,3),16)+", TORSO_LIGHT_G = "+parseInt(config.torsoColor.slice(3,5),16)+", TORSO_LIGHT_B = "+parseInt(config.torsoColor.slice(5,7),16)+";"],
+      ["const uint8_t HEAD_LIGHT_R = 255, HEAD_LIGHT_G = 96, HEAD_LIGHT_B = 0;",
+       "const uint8_t HEAD_LIGHT_R = "+parseInt(config.headColor.slice(1,3),16)+", HEAD_LIGHT_G = "+parseInt(config.headColor.slice(3,5),16)+", HEAD_LIGHT_B = "+parseInt(config.headColor.slice(5,7),16)+";"],
+      ["const uint8_t TORSO_LIGHT_BRIGHTNESS = 180;","const uint8_t TORSO_LIGHT_BRIGHTNESS = "+config.torsoBrightness+";"],
+      ["const uint8_t HEAD_LIGHT_BRIGHTNESS = 180;","const uint8_t HEAD_LIGHT_BRIGHTNESS = "+config.headBrightness+";"],
+      ["const uint8_t LIGHT_RESTORE_MODE = 1;","const uint8_t LIGHT_RESTORE_MODE = "+config.lightRestoreMode+";"],
       ["const bool JAW_PROTECTS_ARM_TORSO = true;","const bool JAW_PROTECTS_ARM_TORSO = "+Boolean(config.jawProtectBody)+";"],
       ["const uint8_t JAW_FOLLOWUP_MOTOR = 0;","const uint8_t JAW_FOLLOWUP_MOTOR = "+config.jawFollowupMotor+";"],
       ["const bool JAW_FOLLOWUP_RECURRING = false;","const bool JAW_FOLLOWUP_RECURRING = "+Boolean(config.jawFollowupRecurring)+";"],
@@ -205,6 +241,8 @@
       "// Head/torso/arm overlap="+config.bodyOverlap+"; measured arm runtime 22 seconds.",
       "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
       "// Jaw-first motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s; recurring="+config.jawFollowupRecurring+".",
+      "// Compound body="+config.compoundEnabled+" masks="+config.compoundMasks.join(",")+" interval="+config.compoundMin+"-"+config.compoundMax+"s.",
+      "// Live RGB channels (0=torso, 1=head/mouth)="+config.lightsEnabled+"; restore="+config.lightRestoreMode+"; color behavior unverified.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -219,6 +257,10 @@
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
       bodyOverlap:byId("bodyOverlap").checked,jawProtectBody:byId("jawProtectBody").checked,
+      compoundEnabled:byId("compoundEnabled").checked,compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
+      compoundMasks:Array.from(document.querySelectorAll(".compound-choice:checked")).map(el=>Number(el.value)),
+      lightsEnabled:byId("lightsEnabled").checked,torsoColor:byId("torsoColor").value,headColor:byId("headColor").value,
+      torsoBrightness:n("torsoBrightness"),headBrightness:n("headBrightness"),lightRestoreMode:n("lightRestoreMode"),
       jawFollowupMotor:n("jawFollowupMotor"),jawFollowupDelaySec:n("jawFollowupDelaySec"),jawFollowupRecurring:byId("jawFollowupRecurring").checked,
       jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
@@ -229,10 +271,11 @@
     };
   }
   function writeConfig(cfg) {
-    for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
+    for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","compoundMin","compoundMax","torsoColor","headColor","torsoBrightness","headBrightness","lightRestoreMode","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
+    if(cfg.compoundMasks)document.querySelectorAll(".compound-choice").forEach(el=>el.checked=cfg.compoundMasks.includes(Number(el.value)));
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
   }
@@ -245,9 +288,10 @@
       let t=0;
       for(let j=0;j<70;j++){t+=between(min,max);if(t>=300)break;events.push({kind,time:t,duration})}
     };
-    add("head",c.headEnabled,c.headMin,c.headMax,25);
-    add("torso",c.torsoEnabled,c.torsoMin,c.torsoMax,25);
-    add("arm",c.armEnabled,c.armMin,c.armMax,22);
+    add("head",c.headEnabled&&!c.compoundEnabled,c.headMin,c.headMax,25);
+    add("torso",c.torsoEnabled&&!c.compoundEnabled,c.torsoMin,c.torsoMax,25);
+    add("arm",c.armEnabled&&!c.compoundEnabled,c.armMin,c.armMax,22);
+    add("compound",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
@@ -275,7 +319,9 @@
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
-    byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
+    byId("bodyOverlapSummary").textContent=c.compoundEnabled?"Compound mask mode":c.bodyOverlap?"Allowed · experimental":"Serialized · default";
+    byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
+    byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:"Off";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");

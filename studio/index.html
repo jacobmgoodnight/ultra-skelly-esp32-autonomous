@@ -67,8 +67,42 @@
         <p>OFF = one successful diagnostic run per BLE connection. ON = coordinated recurring movement: the arm or torso waits until its configured interval has elapsed, then starts <strong>after the next jaw MP3</strong>. Not every jaw clip triggers a motor. Recurring mode needs extended testing.</p>
         <p id="jawFollowupHelp"><strong>Arm/torso jaw-first overlap is confirmed.</strong> Jaw-first HEAD was tested with file #13 at BOTH 2 seconds and 10 seconds after MP3 start: the command was SENT, but head motion did not start. Standalone head movement works. Keep this diagnostic OFF for normal operation. The cause remains unknown; jaw-first ARM and TORSO work. The Alternating arm/torso option requires both motors enabled and recurring mode ON. <a href="../docs/jaw-first-head-test.md">Head test instructions</a>.</p>
       </div>
-      <div class="overlap-row"><div><strong>Allow body motor overlap <span class="experimental">ADVANCED / UNTESTED</span></strong><p>Allow head, torso and arm animations to run at the same time. Each still has its own cooldown, and commands are spaced by 600 ms. OFF in all presets until combinations are tested.</p></div><label class="switch"><input type="checkbox" id="bodyOverlap"><span></span><span class="sr-only">Allow simultaneous body motor movements (advanced and experimental)</span></label></div>
+      <div class="overlap-row"><div><strong>Allow separate motor-command overlap <span class="experimental">ADVANCED</span></strong><p>Send individually scheduled head, torso and arm commands while another motor is still moving. Physical combined-mask commands are verified separately; this older separate-write scheduler remains experimental. Ignored when combined mode is ON.</p></div><label class="switch"><input type="checkbox" id="bodyOverlap"><span></span><span class="sr-only">Allow simultaneous body motor movements (advanced and experimental)</span></label></div>
+      <div class="eye-sync-control" style="margin:18px 0">
+        <label class="freq-inline"><input id="compoundEnabled" type="checkbox"> <strong>Random combined body movements <span class="experimental">MASKS VERIFIED · AUTOMATION NEW</span></strong></label>
+        <p>Replaces independently scheduled head/arm/torso movements with a single randomized AACA bitmask. The 0x03, 0x05, 0x06 and 0x07 commands were all physically verified. New autonomous random scheduling needs a field test. This is separate from jaw-first reactions.</p>
+        <label>Combined action every <input id="compoundMin" type="number" min="45" max="3600" value="180" aria-label="Combined movement minimum seconds"> to <input id="compoundMax" type="number" min="45" max="3600" value="360" aria-label="Combined movement maximum seconds"> seconds</label>
+        <p>Randomly choose from these allowed combinations (all selected motors must be enabled above):</p>
+        <div class="field-row">
+          <label><input class="compound-choice" type="checkbox" value="3" checked> Head + Arm</label>
+          <label><input class="compound-choice" type="checkbox" value="5" checked> Head + Torso</label>
+          <label><input class="compound-choice" type="checkbox" value="6" checked> Arm + Torso</label>
+          <label><input class="compound-choice" type="checkbox" value="7" checked> All three</label>
+        </div>
+        <p>Keep jaw MP3 body protection ON. The random chooser never sends a multi-motor packet during active jaw playback. To preserve the proven jaw-first alternating routine, leave this option OFF.</p>
+      </div>
       <div class="overlap-row"><div><strong>Allow independent head + jaw overlap</strong><p>Only applies when MP3 body protection is OFF. On this Skelly, playing an MP3 during a head animation appears to interrupt it. Keep protection ON until jaw-first head movement is separately tested.</p></div><label class="switch"><input type="checkbox" id="overlap" checked><span></span><span class="sr-only">Allow head and jaw overlap</span></label></div>
+    </section>
+    <section class="panel">
+      <div class="section-head"><div><span class="step">03</span><h2>Torso and head/mouth lighting <span class="experimental">LIVE RGB TESTING</span></h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
+      <p class="small-description">The community controller identifies channel 0 as <strong>Torso Light</strong> and channel 1 as <strong>Head Light</strong> (possibly the mouth illumination). The exact physical LEDs affected and MP3 reset behavior need testing. Settings are OFF by default.</p>
+      <div class="eye-sync-control">
+        <div class="field-row">
+          <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
+          <label>Brightness (0–255) <input type="number" id="torsoBrightness" min="0" max="255" value="180" aria-label="Torso brightness"></label>
+        </div>
+        <div class="field-row">
+          <label>Head / mouth RGB <input type="color" id="headColor" value="#ff6000" aria-label="Head or mouth light color"></label>
+          <label>Brightness (0–255) <input type="number" id="headBrightness" min="0" max="255" value="180" aria-label="Head light brightness"></label>
+        </div>
+        <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
+        <select id="lightRestoreMode">
+          <option value="0">Apply colors at connection only</option>
+          <option value="1" selected>Restore after MP3 ends (safer first test)</option>
+          <option value="2">Restore during and after MP3 (experimental)</option>
+        </select>
+        <p>Each update sends static mode (F2), brightness (F3) and RGB (F4) to each channel, one write at a time. MP3s may override live colors using saved per-file settings. The during-playback option could affect audio or movement and has not been physically verified.</p>
+      </div>
     </section>
     <section class="panel eye-panel">
       <div class="section-head"><div><span class="step">03</span><h2>Eye expressions <span class="experimental">RANDOM MODE IN TESTING</span></h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable experimental eye changes</span></label></div>
@@ -93,7 +127,7 @@
         <p class="eye-credit">Previews are loaded from the <a href="https://github.com/martinecker/SkellyUltraWebController" rel="noopener" target="_blank">Skelly Ultra Web Controller</a> project, not copied into this repository. An internet connection is needed to display them; the Arduino generator works offline.</p>
         <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button><a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">View eye designs ↗</a></div>
       </div>
-      <div class="notice"><strong>Torso and arm: OPTIONAL.</strong> Body motors use a global cooldown by default; experimental overlap is optional. Arm-only movement is verified at 22 seconds, but simultaneous body combinations remain untested. On every jaw MP3, keep stored movement flags at 0x00.</div>
+      <div class="notice"><strong>Torso and arm: OPTIONAL.</strong> Body motors use a global cooldown by default; separate-write overlap is optional. All four compound movement masks are now physically verified, but randomly scheduled compound mode is new. On every jaw MP3, keep stored movement flags at 0x00.</div>
     </section>
     <section class="panel">
       <div class="section-head"><div><span class="step">04</span><h2>Occasional idle breaks <span class="experimental">NEW</span></h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
@@ -112,9 +146,9 @@
   <aside class="output">
     <div class="panel output-panel">
       <span class="eyebrow">YOUR GENERATED CONTROLLER</span><h2>Ready for the haunting?</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST EXPERIMENT</span><strong id="jawFollowupSummary">Off</strong></div></div>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST EXPERIMENT</span><strong id="jawFollowupSummary">Off</strong></div></div>
       <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
-      <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
+      <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot compound"></i> Combined</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
       <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>
       <div class="timeline-axis"><span>0:00</span><span>2:30</span><span>5:00</span></div>
       <div class="error" id="error" role="alert" hidden></div>

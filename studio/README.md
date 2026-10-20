@@ -110,3 +110,10 @@ The upstream `AACA` movement argument is a **bitfield**, so a standalone [BodyCo
 **Jaw-first HEAD remains an unsuccessful diagnostic at 2 and 10 seconds.** On the original prop, the device received the `AA CA 01` head packet during jaw MP3 #13 playback but did not visibly move the head. This does **not** affect standalone protected HEAD or the successful jaw-first ARM/TORSO modes. Skelly Studio now labels both failed delays.
 
 **A single `AA CA 03` request physically moved HEAD and ARM together** with no MP3 running. A separate [combined body-motor test sketch](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now retries its Bluetooth discovery automatically after initial scan misses; its default mask is still `0x03`. To test the next combination, change `TEST_MOVEMENT_MASK` to **`0x05`** (HEAD + TORSO). See the [test guide](../docs/body-combo-test.md). These experiments do not change the normal autonomous firmware.
+
+
+## Random combined movements and torso/head RGB lighting
+
+A new opt-in **Random combined body movements** controller mode sends one of the user's allowed `AACA` masks (`0x03`, `0x05`, `0x06`, `0x07`) every randomized 180–360 seconds by default, preserving the longest requested body motor cooldown. All masks were individually verified on the prop, but the new repeating scheduler still needs extended field testing. The old independently timed body movements are suppressed while this mode is enabled. It cannot be used at the same time as the verified jaw-first reaction scheduler.
+
+A separate **Torso and head/mouth lighting** section controls live color and brightness for channel 0 (torso light) and channel 1 (head light, potentially mouth LEDs). Live F2 static mode, F3 brightness, and F4 RGB are emitted sequentially after BLE connection. Restore choices are: connection only, after MP3 (conservative), or during + after MP3 (experimental). Lighting remains OFF by default. This color feature is protocol-derived but **not physically verified on the ESP32**; custom MP3 files may reapply saved light settings. [Detailed testing guide](../docs/compound-body-and-lighting.md).
