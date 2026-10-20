@@ -58,3 +58,14 @@ We should first test **head+arm**, then **head+torso**, then **arm+torso** under
 ## Why Bluetooth retried during the prior test
 
 The last provided run logged two BLE connection failures and one scan miss before eventually establishing a valid connection. Commands ran after it connected. Those failures are a separate BLE acquisition issue, not evidence that the motor scheduler was wrong; continue monitoring the retry behavior if it becomes frequent.
+
+
+## Physical result — October 20, 2026: two 2-second head trials unsuccessful
+
+The user ran the isolated HEAD one-shot diagnostic **twice** with **Jaw file #13**, Head ON, Arm/Torso OFF, MP3 protection ON, delay **2 seconds**. Both sessions logged the scheduled `AAC6` playback, followed by `JAW-FIRST: sending HEAD after MP3 start` and `HEAD command sent`. **The user observed that the head did not physically move immediately after jaw playback began.** Later ordinary independent head actions were sent and reportedly worked, so the known HEAD command and motor can work when they are not following MP3 playback.
+
+**Result: jaw-first HEAD at 2 seconds is TESTED AND DID NOT MOVE THE HEAD on this prop.** This is not a firmware write failure, as shown by the logs; it is consistent with device-level head motion suppression while MP3 playback is active, but the exact reason is unknown. The original guide above describes a proposed test and predates this result. Do not enable jaw-first HEAD in normal Haunted operation.
+
+For an attended follow-up only, try setting the **delay to 10 seconds**, still with jaw #13 and the other motors OFF. If it moves then, the 2-second suppression may be transient. If it still doesn't, the restriction may persist through playback; neither outcome is established yet. The standalone 25-second head command remains the proven working option, with MP3 head protection ON.
+
+A separate [combined body movement sketch](body-combo-test.md) tests whether **one** bitmask command `AA CA 03` can start head+arm simultaneously without MP3 playback; this is distinct from the jaw-first experiment.
