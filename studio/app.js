@@ -128,7 +128,7 @@
       ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
       ["const bool COMPOUND_BODY_ENABLED = false;","const bool COMPOUND_BODY_ENABLED = "+Boolean(config.compoundEnabled)+";"],
       ["const uint8_t COMPOUND_BODY_MASKS[] = {0x03, 0x05, 0x06, 0x07};",
-       "const uint8_t COMPOUND_BODY_MASKS[] = {"+config.compoundMasks.map(x=>"0x"+x.toString(16).padStart(2,"0")).join(", ")+"};"],
+       "const uint8_t COMPOUND_BODY_MASKS[] = {"+(config.compoundMasks.length?config.compoundMasks:[3]).map(x=>"0x"+x.toString(16).padStart(2,"0")).join(", ")+"};"],
       ["const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = 180000;","const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = "+config.compoundMin*1000+";"],
       ["const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 360000;","const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = "+config.compoundMax*1000+";"],
       ["const bool LIGHTS_ENABLED = false;","const bool LIGHTS_ENABLED = "+Boolean(config.lightsEnabled)+";"],
@@ -291,7 +291,7 @@
     add("head",c.headEnabled&&!c.compoundEnabled,c.headMin,c.headMax,25);
     add("torso",c.torsoEnabled&&!c.compoundEnabled,c.torsoMin,c.torsoMax,25);
     add("arm",c.armEnabled&&!c.compoundEnabled,c.armMin,c.armMax,22);
-    add("head",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
+    add("compound",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
