@@ -44,3 +44,7 @@ Do not confuse `AAF9` for live eyes with the movement command `AACA` or stored-f
 ## Optional body commands and motor serialization
 
 The upstream movement-bit mapping is **head `0x01`**, **arm `0x02`** and **torso `0x04`**. Torso-only `AA CA 04` was physically tested (~25 seconds). Arm-only `AA CA 02` has **not** been physically tested and is disabled by default. All physical body motor commands are sent sequentially, with per-command cooldown. For procedure and conservative durations see [body movement guide](body-movements.md).
+
+## Arm measured, experimental concurrent body movements
+
+On October 20, 2026 the individual `AA CA 02` arm command was verified: **two arm movements taking 22 seconds total**. The torso-only `AA CA 04` action had previously taken ~25 seconds. The controller now provides an advanced opt-in `ALLOW_BODY_MOTOR_OVERLAP` setting. It bypasses the shared body-motor lock but preserves independent cooldown periods (head 25+7 seconds, torso 25+10, arm 22+10) and inserts at least 600 milliseconds between body BLE commands. Simultaneous head/torso/arm behavior is not verified. Review [body-movement guide](body-movements.md).

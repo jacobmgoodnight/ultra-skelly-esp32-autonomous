@@ -7,7 +7,8 @@ This is a **beta** graphical configuration tool for the [Ultra Skelly ESP32 Auto
 ## What it does
 
 - Pick Subtle, Normal or Haunted presets, or enter independent random **start-to-start** intervals.
-- Enable optional **torso movement** (previously verified for ~25 s) or **arm movement** (protocol supported, not yet hardware-tested). Each has a separate random interval and all body-motor commands are serialized with safety cooldown. **Haunted enables torso by default, but leaves the arm OFF.** See the [body safety guide](../docs/body-movements.md).
+- Enable optional **torso movement** (previously verified for ~25 s) or **arm movement** (now verified: two motions taking 22 seconds). Each has a separate random interval and all body-motor commands are serialized with safety cooldown. The advanced body-overlap switch permits overlapping head/torso/arm motion (not yet tested together), preserving per-motor cooldown and 600 ms spacing between BLE writes. **Haunted enables both torso and arm by default**, but keeps advanced body-motor overlap OFF pending simultaneous-movement tests. See the [body safety guide](../docs/body-movements.md).
+- **Subtle turns the silent jaw OFF by default.** Normal and Haunted turn the jaw on. You can override any preset.
 - Switch head and jaw on or off, and choose whether their animations may overlap.
 - Supply **your jaw MP3's file serial**; it is not a Bluetooth MAC address.
 - Choose the Skelly BLE *advertised name* (default `Ultra Skelly v2`); the ESP32 discovers the address itself.
@@ -37,3 +38,7 @@ This configurator is a **beta**. GitHub Actions run JavaScript syntax checks, ge
 ## Hosting on GitHub Pages
 
 The project's Pages build and deployment were reported successful by GitHub. The repository now includes a root `index.html` that redirects visitors to `/studio/`. When Pages deploys a change, allow a little time for it to propagate; if a browser still shows 404, refresh without cache and inspect **Settings → Pages** and **Actions → pages build and deployment**. GitHub's source-file view of `index.html` is **code, not a rendered preview**. For an immediate local preview, use **Code → Download ZIP** on GitHub, extract, and double-click `studio/index.html`. This app requires no build pipeline, backend, tokens or third-party API.
+
+## Experimental jaw audio personalities
+
+Two synthetic waveform recipes can be generated using [audio/generate_jaw_clips.py](../audio/generate_jaw_clips.py). The [jaw personality guide](../audio/jaw-personalities.md) describes the **three-second open hold** and **whisper-then-gasp** clips. Upload each to Skelly, set saved body-movement metadata to `0x00`, and enter its file serial in Studio. Their physical response needs testing.

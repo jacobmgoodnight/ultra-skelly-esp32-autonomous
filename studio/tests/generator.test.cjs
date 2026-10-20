@@ -55,20 +55,22 @@ test("eyes option respects selected eye designs and avoids forced torso animatio
   assert.match(sketch, /const uint32_t ARM_MIN_INTERVAL_MS = 360000;/);
 });
 
-test("Haunted preset opts into verified torso but keeps unverified arm disabled", () => {
+test("Haunted enables verified torso and arm but keeps advanced overlap OFF", () => {
   assert.equal(api.PRESETS.haunted.torsoEnabled, true);
-  assert.equal(api.PRESETS.haunted.armEnabled, false);
+  assert.equal(api.PRESETS.haunted.armEnabled, true);
+  assert.equal(api.PRESETS.haunted.bodyOverlap, false);
   assert.equal(api.PRESETS.normal.torsoEnabled, false);
   assert.equal(api.PRESETS.subtle.torsoEnabled, false);
   const sketch = api.generateSketch(sample({...api.PRESETS.haunted}));
   assert.match(sketch, /const bool TORSO_ENABLED = true;/);
-  assert.match(sketch, /const bool ARM_ENABLED = false;/);
+  assert.match(sketch, /const bool ARM_ENABLED = true;/);
+  assert.match(sketch, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
   assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 180000;/);
   assert.match(sketch, /const uint32_t TORSO_MAX_INTERVAL_MS = 360000;/);
   assert.match(sketch, /if \(TORSO_ENABLED && reached\(now, nextTorsoAt\)/);
-  assert.match(sketch, /if \(reached\(now, bodySafeAfter\)\)/);
+  assert.match(sketch, /ALLOW_BODY_MOTOR_OVERLAP \|\| reached\(now, bodySafeAfter\)/);
 });
-test("Opt-in arm is separate and uses only the upstream 0x02 arm bit", () => {
+test("Verified 22-second arm uses 0x02 motor bit and per-part cooldown", () => {
   const sketch = api.generateSketch(sample({
     headEnabled:false, jawEnabled:false, eyesEnabled:false,
     armEnabled:true, armMin:300,armMax:600
@@ -78,12 +80,34 @@ test("Opt-in arm is separate and uses only the upstream 0x02 arm bit", () => {
   assert.match(sketch, /const uint32_t ARM_MIN_INTERVAL_MS = 300000;/);
   assert.match(sketch, /0xAA, 0xCA, 0x02/);
   assert.match(sketch, /bodySafeAfter = now \+ ARM_ANIMATION_MS \+ ARM_BUFFER_MS/);
+  assert.match(sketch, /const uint32_t ARM_ANIMATION_MS = 22000;/);
+  assert.match(sketch, /const uint32_t ARM_BUFFER_MS = 10000;/);
+  assert.match(sketch, /armSafeAfter = bodySafeAfter;/);
 });
 test("Reject dangerously fast body motor intervals", () => {
   assert.throws(() => api.generateSketch(sample({torsoEnabled:true,torsoMin:40})), /Torso:/);
   assert.throws(() => api.generateSketch(sample({armEnabled:true,armMin:50})), /Arm:/);
 });
 
+test("Subtle deliberately disables silent jaw by default", () => {
+  assert.equal(api.PRESETS.subtle.jawEnabled, false);
+  const sketch=api.generateSketch(sample({...api.PRESETS.subtle}));
+  assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
+  assert.match(sketch, /const bool TORSO_ENABLED = false;/);
+  assert.match(sketch, /const bool ARM_ENABLED = false;/);
+  assert.equal(api.PRESETS.normal.jawEnabled, true);
+  assert.equal(api.PRESETS.haunted.jawEnabled, true);
+});
+test("Advanced body overlap permits independent motor timers but defaults off", () => {
+  const normal=api.generateSketch(sample());
+  assert.match(normal, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
+  const advanced=api.generateSketch(sample({bodyOverlap:true,torsoEnabled:true,armEnabled:true}));
+  assert.match(advanced, /const bool ALLOW_BODY_MOTOR_OVERLAP = true;/);
+  assert.match(advanced, /const uint32_t BODY_WRITE_SPACING_MS = 600;/);
+  assert.match(advanced, /reached\(now, torsoSafeAfter\)/);
+  assert.match(advanced, /reached\(now, armSafeAfter\)/);
+  assert.match(advanced, /reached\(now, headSafeAfter\)/);
+});
 test("jaw playback can restore selected eyes or coordinate a new eye", () => {
   const restored = api.generateSketch(sample({eyesEnabled:true,eyeJawMode:1}));
   assert.match(restored, /const uint8_t EYE_JAW_MODE = 1;/);

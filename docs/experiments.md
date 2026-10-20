@@ -57,3 +57,7 @@ A short record of iterative tests performed on one Home Depot Ultra Skelly v2, u
 ## October 2026: optional torso and arm configuration
 
 Re-confirmed that the individual torso command `AA CA 04` previously worked (~25 seconds). The web controller defines arm bit `0x02`, but the standalone arm command has not yet been tested on this particular Skelly. A one-shot test was added; Studio's Haunted preset enables torso but **not arm**, with a global motor cooldown preventing simultaneous head/torso/arm activity. See [body movement guide](body-movements.md).
+
+## October 20, 2026: arm action measured
+
+The one-shot arm-only `AA CA 02` command worked. Skelly moved his arm **twice back-to-back**, finishing after **22 seconds**. The controller's arm activity timer now uses 22 seconds plus 10 seconds cooldown. Torso-only had previously been verified (~25 seconds) and doesn't need a repeat solely to validate its command; combinations with other motors are untested. The Studio **Subtle** preset turns off jaw audio; **Haunted** now enables torso and arm but keeps body overlap off by default. Two 20-second jaw-tone files with three-second sustained openings are provided as experimental recipes. See [jaw personality guide](../audio/jaw-personalities.md).

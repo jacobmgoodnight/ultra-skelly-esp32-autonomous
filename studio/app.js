@@ -8,15 +8,16 @@
     headEnabled:true, headMin:32, headMax:60,
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:false, armMin:360, armMax:720,
+    bodyOverlap:false,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
-    subtle:{headMin:65,headMax:120,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,overlap:false},
-    normal:{headMin:32,headMax:60,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,overlap:true},
-    haunted:{headMin:32,headMax:45,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:false,overlap:true}
+    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false},
+    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true},
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true}
   };
   const byId = id => document.getElementById(id);
   function replaceOnce(source, original, replacement) {
@@ -84,6 +85,7 @@
       ["const bool HEAD_ENABLED = true;","const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";"],
       ["const bool TORSO_ENABLED = false;","const bool TORSO_ENABLED = "+Boolean(config.torsoEnabled)+";"],
       ["const bool ARM_ENABLED = false;","const bool ARM_ENABLED = "+Boolean(config.armEnabled)+";"],
+      ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
       ["const uint32_t TORSO_MIN_INTERVAL_MS = 240000;","const uint32_t TORSO_MIN_INTERVAL_MS = "+(config.torsoMin*1000)+";"],
       ["const uint32_t TORSO_MAX_INTERVAL_MS = 420000;","const uint32_t TORSO_MAX_INTERVAL_MS = "+(config.torsoMax*1000)+";"],
       ["const uint32_t ARM_MIN_INTERVAL_MS = 360000;","const uint32_t ARM_MIN_INTERVAL_MS = "+(config.armMin*1000)+";"],
@@ -121,7 +123,9 @@
     out=replaceOnce(out,
       "  bool sentHeadThisLoop = false;",
       "  if (REST_ENABLED && reached(now, nextRestAt) &&\n"+
-      "      reached(now, bodySafeAfter) && reached(now, mouthPlayingUntil)) {\n"+
+      "      reached(now, bodySafeAfter) && reached(now, mouthPlayingUntil) &&\n"+
+      "      reached(now, headSafeAfter) && reached(now, torsoSafeAfter) &&\n"+
+      "      reached(now, armSafeAfter)) {\n"+
       "    uint32_t d = random(REST_MIN_DURATION_MS, REST_MAX_DURATION_MS + 1);\n"+
       "    restUntil = now + d;\n"+
       "    nextRestAt = restUntil + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
@@ -177,7 +181,7 @@
       "// GENERATED WITH SKELLY STUDIO — ultra-skelly-esp32-autonomous",
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
       "// Torso="+config.torsoEnabled+" "+config.torsoMin+"–"+config.torsoMax+"s; arm="+config.armEnabled+" "+config.armMin+"–"+config.armMax+"s",
-      "// Head/torso/arm are serialized, not overlapped. Arm command needs on-device test.",
+      "// Head/torso/arm overlap="+config.bodyOverlap+"; measured arm runtime 22 seconds.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -191,6 +195,7 @@
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
+      bodyOverlap:byId("bodyOverlap").checked,
       jawEnabled:byId("jawEnabled").checked,jawMin:n("jawMin"),jawMax:n("jawMax"),jawFile:n("jawFile"),jawExtras:byId("jawExtras").value,
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
@@ -202,7 +207,7 @@
   function writeConfig(cfg) {
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
@@ -218,7 +223,7 @@
     };
     add("head",c.headEnabled,c.headMin,c.headMax,25);
     add("torso",c.torsoEnabled,c.torsoMin,c.torsoMax,25);
-    add("arm",c.armEnabled,c.armMin,c.armMax,30);
+    add("arm",c.armEnabled,c.armMin,c.armMax,22);
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
@@ -226,9 +231,9 @@
     // overdue movements; exact future times are inherently unpredictable).
     let bodyAvailableAt=0;
     for(const ev of events) {
-      if(["head","torso","arm"].includes(ev.kind)){
+      if(!c.bodyOverlap && ["head","torso","arm"].includes(ev.kind)){
         ev.time=Math.max(ev.time,bodyAvailableAt);
-        const cooldown=ev.kind==="head"?32:ev.kind==="torso"?35:45;
+        const cooldown=ev.kind==="head"?32:ev.kind==="torso"?35:32;
         bodyAvailableAt=ev.time+cooldown;
       }
     }
@@ -245,7 +250,8 @@
     const c=readConfig(),errors=validate(c);
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
-    byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec · experimental":"Off";
+    byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
+    byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
