@@ -110,15 +110,17 @@ test("Default jaw MP3 protects arm/torso from 0x00 playback metadata", () => {
 test("Jaw-first experiment is disabled by default and sends one selected motor after AAC6", () => {
   const normal=api.generateSketch(sample());
   assert.match(normal, /const uint8_t JAW_FOLLOWUP_MOTOR = 0;/);
+  assert.match(normal, /const bool JAW_FOLLOWUP_RECURRING = false;/);
   assert.match(normal, /const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;/);
   const arm=api.generateSketch(sample({
     jawEnabled:true,armEnabled:true,jawFollowupMotor:1,jawFollowupDelaySec:2,
     headEnabled:false,torsoEnabled:false
   }));
   assert.match(arm, /const uint8_t JAW_FOLLOWUP_MOTOR = 1;/);
-  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 && !jawFollowupTestDone;/);
+  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 &&/);
+  assert.match(arm, /JAW_FOLLOWUP_RECURRING \? dueForRecurring/);
   assert.match(arm, /bool jawFollowupTestDone = false;/);
-  assert.match(arm, /if \(connected\) jawFollowupTestDone = true;/);
+  assert.match(arm, /if \(connected && !JAW_FOLLOWUP_RECURRING\) jawFollowupTestDone = true;/);
   assert.match(arm, /jawFollowupAt = now \+ JAW_FOLLOWUP_DELAY_MS;/);
   assert.match(arm, /JAW-FIRST: sending ARM after MP3 start/);
   assert.match(arm, /startArm\(t\);/);
@@ -131,6 +133,28 @@ test("Jaw-first experiment is disabled by default and sends one selected motor a
   assert.match(torso, /const uint32_t JAW_FOLLOWUP_DELAY_MS = 4000;/);
   assert.match(torso, /JAW-FIRST: sending TORSO after MP3 start/);
   assert.match(torso, /startTorso\(t\);/);
+});
+test("Recurring jaw-first coordinates to the motor's configured interval", () => {
+  const arm=api.generateSketch(sample({
+    headEnabled:false,armEnabled:true,jawEnabled:true,
+    jawFile:13,jawFollowupMotor:1,jawFollowupRecurring:true,
+    armMin:180,armMax:300
+  }));
+  assert.match(arm, /const bool JAW_FOLLOWUP_RECURRING = true;/);
+  assert.match(arm, /JAW_FOLLOWUP_MOTOR == 1 && reached\(now, nextArmAt\)/);
+  assert.match(arm, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 1\)/);
+  assert.match(arm, /JAW-FIRST %s: scheduled/);
+  assert.match(arm, /JAW_FOLLOWUP_RECURRING \? "RECURRING" : "ONE-SHOT"/);
+  assert.match(arm, /const uint32_t ARM_MIN_INTERVAL_MS = 180000;/);
+  const torso=api.generateSketch(sample({
+    headEnabled:false,torsoEnabled:true,jawEnabled:true,
+    jawFile:14,jawFollowupMotor:2,jawFollowupRecurring:true,
+    torsoMin:120,torsoMax:240
+  }));
+  assert.match(torso, /const bool JAW_FOLLOWUP_RECURRING = true;/);
+  assert.match(torso, /JAW_FOLLOWUP_MOTOR == 2 && reached\(now, nextTorsoAt\)/);
+  assert.match(torso, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 2\)/);
+  assert.match(torso, /const uint32_t TORSO_MIN_INTERVAL_MS = 120000;/);
 });
 test("Jaw-first validates motor enable and sensible delay", () => {
   assert.throws(() => api.generateSketch(sample({jawFollowupMotor:1})), /Enable the arm switch/);
