@@ -50,6 +50,15 @@
       <p class="small-description"><strong>Verified on an Ultra Skelly v2:</strong> both a one-shot eye change and randomized eye changes from the ESP32 work. Different firmware versions may behave differently; the mouth clip could reapply its saved eye setting. <a href="../docs/eyes.md">Eye notes ↗</a></p>
       <div id="eyeOptions" class="eye-advanced muted">
         <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
+        <div class="eye-sync-control">
+          <label for="eyeJawMode"><strong>When a jaw MP3 plays</strong></label>
+          <select id="eyeJawMode" aria-describedby="eyeJawHelp">
+            <option value="1" selected>Keep my selected eye expression</option>
+            <option value="2">Choose a new random eye expression</option>
+            <option value="0">Let the MP3 control the eyes</option>
+          </select>
+          <p id="eyeJawHelp">MP3 playback can reset the eyes. The first two modes send an eye update shortly after playback starts and after the approximately 20-second clip ends. This synchronization is new and needs testing.</p>
+        </div>
         <span class="field-caption">Choose which eye designs appear in the random rotation. Select a thumbnail to toggle it; use the preview button to enlarge it.</span>
         <div class="eye-spotlight" aria-live="polite">
           <img id="eyePreviewImage" src="https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">

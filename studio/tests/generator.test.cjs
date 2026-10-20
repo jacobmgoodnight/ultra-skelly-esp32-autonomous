@@ -49,6 +49,21 @@ test("eyes option respects selected eye designs and avoids forced torso animatio
   assert.doesNotMatch(sketch, /uint8_t frame\[11\] = \{0xAA, 0xCA, 0x04/);
 });
 
+test("jaw playback can restore selected eyes or coordinate a new eye", () => {
+  const restored = api.generateSketch(sample({eyesEnabled:true,eyeJawMode:1}));
+  assert.match(restored, /const uint8_t EYE_JAW_MODE = 1;/);
+  assert.match(restored, /jawEyeStartAt = now \+ EYE_JAW_START_DELAY_MS;/);
+  assert.match(restored, /jawEyeEndAt = mouthPlayingUntil \+ EYE_JAW_END_GRACE_MS;/);
+  assert.match(restored, /sendEyeIcon\(lastEye, "restored after jaw starts"\)/);
+  assert.match(restored, /sendEyeIcon\(lastEye, "restored after jaw ends"\)/);
+  const coordinated = api.generateSketch(sample({eyesEnabled:true,eyeJawMode:2}));
+  assert.match(coordinated, /const uint8_t EYE_JAW_MODE = 2;/);
+  assert.match(coordinated, /EYE_JAW_MODE == 2 \|\| lastEye == 0/);
+  const mp3Controls = api.generateSketch(sample({eyesEnabled:true,eyeJawMode:0}));
+  assert.match(mp3Controls, /const uint8_t EYE_JAW_MODE = 0;/);
+  assert.throws(() => api.generateSketch(sample({eyeJawMode:3})), /eye\/jaw behavior/);
+});
+
 test("jaw file pool uses user-configured serials in AAC6 packets", () => {
   const sketch = api.generateSketch(sample({
     jawFile: 12, jawExtras: "13, 14", overlap: false

@@ -23,3 +23,10 @@
 .eye-credit{font-size:11px;line-height:1.5;color:var(--muted);margin:12px 0 0}
 @media(max-width:720px){.eye-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.eye-spotlight>img{width:95px;height:95px}}
 @media(max-width:360px){.eye-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eye-spotlight{gap:10px}.eye-spotlight>img{width:80px;height:80px}}
+
+/* Eye/jaw coordination selector */
+.eye-sync-control{margin:17px 0 15px;padding:13px 14px;background:#0d1421;border:1px solid #394762;border-radius:11px;display:grid;gap:7px}
+.eye-sync-control label{font-size:13px;color:#f0eafa}
+.eye-sync-control select{display:block;width:100%;min-width:0;background:#1d283d;color:#f5f0ff;border:1px solid #5c4b83;padding:11px 13px;border-radius:9px}
+.eye-sync-control select:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.eye-sync-control p{font-size:11.5px;line-height:1.55;color:var(--muted);margin:0}

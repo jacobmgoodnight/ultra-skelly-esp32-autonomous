@@ -72,7 +72,7 @@ Want to choose randomized movement timing without editing Arduino C++ yourself? 
 
 **GitHub's HTML source viewer shows code, not a running webpage.** To preview immediately before Pages is enabled, click **Code → Download ZIP**, extract it, and open **`studio/index.html`** in your browser. All assets are local to `studio/`.
 
-Studio allows head/jaw timing, optional overlap, BLE-name discovery, **18 actual eye-design previews and confirmed randomized eye selection**, multiple stored jaw-file serials, and occasional idle breaks. The eye thumbnails are linked from the [community web controller's original images](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), not bundled here. **The jaw-file pool and idle scheduler are new experimental options.** JavaScript generator tests pass, but generated Arduino variants still require compilation and on-device testing. Your original checked-in firmware remains the known-good baseline.
+Studio allows head/jaw timing, optional overlap, BLE-name discovery, **18 actual eye-design previews and confirmed randomized eye selection**, multiple stored jaw-file serials, and occasional idle breaks. The latest beta also lets Skelly **restore the previously selected eyes after a jaw MP3** or **pick a new expression when the jaw starts**. The MP3 override was observed in hardware; these new correction modes are unverified. The eye thumbnails are linked from the [community web controller's original images](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), not bundled here. **The jaw-file pool and idle scheduler are new experimental options.** JavaScript generator tests pass, but generated Arduino variants still require compilation and on-device testing. Your original checked-in firmware remains the known-good baseline.
 
 
 - [Assembly, Arduino, and Bluetooth setup](docs/setup.md)
@@ -85,7 +85,7 @@ Studio allows head/jaw timing, optional overlap, BLE-name discovery, **18 actual
 
 **Verified on one real prop:** BLE connection; service `AE00` and write characteristic `AE01`; head-only packet; torso-only packet in an isolated test; stored MP3 file listing; AAC6 playback of file #12; disabling per-file movement flags (`0x00`) leaves mouth motion; short audio bursts make jaw movements shorter; head and jaw can run concurrently.
 
-**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, whether jaw MP3 playback overrides live eye selection, multi-file jaw playback and idle-break scheduling. **One-shot and randomized eye changes have both been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
+**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, eye restoration after MP3 playback, coordinated new-eye-on-jaw reactions, multi-file jaw playback and idle-break scheduling. MP3 playback has been observed restoring its saved eye design. **One-shot and randomized eye changes have both been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
 
 ## Credits and project relationship
 

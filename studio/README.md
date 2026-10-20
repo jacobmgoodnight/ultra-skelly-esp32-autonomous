@@ -10,7 +10,8 @@ This is a **beta** graphical configuration tool for the [Ultra Skelly ESP32 Auto
 - Switch head and jaw on or off, and choose whether their animations may overlap.
 - Supply **your jaw MP3's file serial**; it is not a Bluetooth MAC address.
 - Choose the Skelly BLE *advertised name* (default `Ultra Skelly v2`); the ESP32 discovers the address itself.
-- Opt in to randomized eye expressions, choose which of 18 supported icon numbers may appear, and control their timing. **Both one-shot and randomized ESP32 eye changes were verified on the original Ultra Skelly v2.** Whether a jaw MP3 can temporarily override a live eye design needs a separate controlled test.
+- Opt in to randomized eye expressions, choose which of 18 supported icon numbers may appear, and control their timing. **Both one-shot and randomized ESP32 eye changes were verified on the original Ultra Skelly v2.** The original tester observed that starting a jaw MP3 **does appear to restore its saved eye design**. New eye/jaw coordination modes attempt to handle this; they still need real-device testing.
+- Set **what eyes do when the jaw starts**: use the MP3's saved eye, restore the currently selected random eye, or switch to another selected eye and keep that expression. The last two modes send live AAF9 eye commands after playback begins and after the ~20-second clip ends; this is experimental.
 - Choose from **18 real eye-pattern thumbnails** in the app. The images are linked from [martinecker's Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), not copied into this repository. Image previews require internet; sketch generation does not.
 - Add up to **eight** uploaded jaw MP3 file serial numbers to randomly switch between different jaw personalities (new, needs device testing). Each stored file must have saved motor movement flags `0x00`.
 - Enable optional **idle breaks** to pause newly triggered movements for a randomized time once any active animation has finished (new, needs device testing).
@@ -21,7 +22,7 @@ The generator starts from a snapshot of the existing ESP32 firmware as of Octobe
 
 ## Important before use
 
-1. **Eyes are off by default.** One-shot and randomized eye changes both worked on the test Skelly. Try the [one-shot eye test](../experiments/EyeSingleTest/EyeSingleTest.ino) on your device if you want to verify compatibility. Audio playback could change the eyes back to the file's saved icon.
+1. **Eyes are off by default.** One-shot and randomized eye changes both worked on the test Skelly. Try the [one-shot eye test](../experiments/EyeSingleTest/EyeSingleTest.ino) on your device if you want to verify compatibility. Audio playback was observed changing the eyes back to the file's saved icon. Eye restoration/reaction options need device testing; the configured MP3 duration is approximately 21 seconds.
 2. **Torso and arm commands remain disabled.** On your MP3 set the saved movement flag to **0x00** in the [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/) before using jaw playback.
 3. **No MAC address entry** is needed: scanning is by BLE name. `MOUTH_FILE_SERIAL` is a separate *per-file* number.
 4. Generated code is **not compiled in the browser**. Download, open in Arduino IDE, compile/upload to ESP32 Dev Module (tested framework 3.3.12), and monitor serial output at 115200.

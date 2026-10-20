@@ -1,6 +1,6 @@
 # Experimental randomized eye expressions
 
-The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. **Confirmed on one real Ultra Skelly v2 (October 19, 2026):** the standalone ESP32 one-shot `AAF9` eye-control test successfully changed the eye design. This test also connected immediately after flashing, without an ESP32 reboot. **Update from the user's next on-device test:** randomized eye switching from the ESP32 also worked. The tester did not have to reboot the ESP32 after flashing. A separate, controlled test of whether a stored jaw MP3 can temporarily override the eye icon has not yet been completed.
+The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. **Confirmed on one real Ultra Skelly v2 (October 19, 2026):** the standalone ESP32 one-shot `AAF9` eye-control test successfully changed the eye design. This test also connected immediately after flashing, without an ESP32 reboot. **Update from the user's next on-device test:** randomized eye switching from the ESP32 also worked. The tester did not have to reboot the ESP32 after flashing. **New observation:** playing the jaw MP3 appears to restore a different saved eye design, overriding a live expression. Eye restoration and coordinated eye changes have been added as an optional workaround but have **not yet been physically verified**.
 
 ## Safe first test
 
@@ -26,10 +26,30 @@ const uint32_t EYE_MAX_INTERVAL_MS = 300000;
 
 This selects an eye ID from 1–18 at random, avoids choosing the same icon twice in a row, and requests new expressions every 2–5 minutes. It does **not** schedule torso/arm movements. The head and mouth schedules continue independently.
 
+## Fixing eye changes caused by jaw MP3 playback (new test feature)
+
+Each uploaded MP3 may include its own eye design. When playback begins, the file can override the previously selected live eye expression. This was observed on the original Skelly.
+
+The ESP32 controller now remembers the last eye icon it requested, then can issue live-eye AAF9 commands after AAC6 audio playback begins and after the **approximately 20-second** jaw clip ends. In the sketch:
+
+```cpp
+const bool EYES_ENABLED = false;   // Enable after testing on your Skelly
+const uint8_t EYE_JAW_MODE = 1;    // 0: MP3 controls, 1: restore, 2: new eye on jaw
+```
+
+- **Mode 0 — Use saved MP3 eye setting:** Do not restore an eye just because jaw audio starts. The normal randomized eye timer still runs.
+- **Mode 1 — Keep chosen expression (default when eyes enabled):** Reapply the previously chosen live eye about **1.2 seconds** after MP3 starts, and again shortly after the assumed 21-second clip playback finishes.
+- **Mode 2 — React to mouth movement:** Choose a new random eye when the MP3 begins (after a short delay), then reapply that eye after playback ends.
+
+The controller also sends its first live eye selection **about two seconds after a BLE connection** when eyes are enabled, so a current eye exists before the first jaw clip. This feature adds no torso or arm commands.
+
+**Status:** Modes 1 and 2 are experimental. The current clip length assumption is **21 seconds**; if you upload longer or shorter MP3 files, adjust `MOUTH_CLIP_MS` and retest. Multiple stored MP3s should be roughly the same length unless the firmware later adds per-file durations. The Web Controller can also edit the eye setting stored with each MP3, which offers another way to avoid switching.
+
 ## Caveats
 
 - Different hardware firmware may handle live eye commands differently.
-- Random eye changes have worked on the original Skelly. **Whether MP3 playback overrides live eye changes** has not been separately isolated; the uploaded jaw file has its own eye setting that might temporarily take precedence.
+- Random eyes work, but the tester observed that MP3 playback **appears to reset the live eyes** to the file's saved eye design.
+- The new controller option `EYE_JAW_MODE` tries to compensate, but the timing and resulting appearance still need testing on the real Skelly.
 - Do not test unverified commands while Skelly can strike people, pets, or nearby items.
 - `AAF9` shouldn't be mistaken for the per-file eye metadata editing variant, which includes a file cluster and name.
 

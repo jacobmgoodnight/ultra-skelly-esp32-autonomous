@@ -7,7 +7,7 @@
   const DEFAULTS = Object.freeze({
     headEnabled:true, headMin:32, headMax:60,
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
-    overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300,
+    overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
@@ -62,6 +62,8 @@
           error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
       }
     }
+    if (![0,1,2].includes(config.eyeJawMode))
+      error.push("Choose a valid eye/jaw behavior (0, 1 or 2).");
     if(config.eyesEnabled && (!config.eyeChoices.length || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length))
       error.push("Select at least one valid eye design number between 1 and 18.");
     return error;
@@ -76,6 +78,7 @@
       ["const uint16_t MOUTH_FILE_SERIAL = 12;","const uint16_t MOUTH_FILE_SERIAL = "+config.jawFile+";"],
       ["const bool MOUTH_ENABLED = true;","const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";"],
       ["const bool EYES_ENABLED = false;","const bool EYES_ENABLED = "+Boolean(config.eyesEnabled)+";"],
+      ["const uint8_t EYE_JAW_MODE = 1;","const uint8_t EYE_JAW_MODE = "+config.eyeJawMode+";"],
       ["const uint32_t HEAD_MIN_INTERVAL_MS = 32000;","const uint32_t HEAD_MIN_INTERVAL_MS = "+(config.headMin*1000)+";"],
       ["const uint32_t HEAD_MAX_INTERVAL_MS = 60000;","const uint32_t HEAD_MAX_INTERVAL_MS = "+(config.headMax*1000)+";"],
       ["const uint32_t MOUTH_MIN_INTERVAL_MS = 45000;","const uint32_t MOUTH_MIN_INTERVAL_MS = "+(config.jawMin*1000)+";"],
@@ -162,7 +165,7 @@
       "// GENERATED WITH SKELLY STUDIO — ultra-skelly-esp32-autonomous",
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
-      "// Eye AAF9 one-shot VERIFIED on one Skelly; random eye scheduling needs field testing.",
+      "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
       ""
     ].join("\n");
@@ -176,12 +179,12 @@
       overlap:byId("overlap").checked,eyesEnabled:byId("eyesEnabled").checked,
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
       restDurationMin:n("restDurationMin"),restDurationMax:n("restDurationMax"),
-      eyesMin:n("eyesMin"),eyesMax:n("eyesMax"),
+      eyesMin:n("eyesMin"),eyesMax:n("eyesMax"),eyeJawMode:n("eyeJawMode"),
       bleName:byId("bleName").value,eyeChoices:Array.from(document.querySelectorAll(".eye-choice input:checked")).map(el=>Number(el.value))
     };
   }
   function writeConfig(cfg) {
-    for(const id of ["headMin","headMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","restMin","restMax","restDurationMin","restDurationMax","bleName"])
+    for(const id of ["headMin","headMax","jawMin","jawMax","jawFile","jawExtras","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
     for(const id of ["headEnabled","jawEnabled","overlap","eyesEnabled","restEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
@@ -214,7 +217,8 @@
     const c=readConfig(),errors=validate(c);
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
-    byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · random mode testing":"Off · optional";
+    const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
+    byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("overlapSummary").textContent=c.overlap?"Allowed":"Avoided";
     for(const id of ["headEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
@@ -275,7 +279,7 @@
       eyeGrid.append(card);
     }
     showEyePreview(1);
-    for(const el of document.querySelectorAll("input"))el.addEventListener("input",()=>{
+    for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       render();
     });
