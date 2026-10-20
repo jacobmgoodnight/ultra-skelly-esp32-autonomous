@@ -114,3 +114,16 @@ JAW-FIRST: sending TORSO after MP3 start
 This is **six of six successful BLE command dispatches**, alternating **3 arm / 3 torso**, with no logged skips, motor-cooldown failures, or disconnects in the excerpt. Random *next motor target* intervals were **arm 69, 77, 71 seconds** and **torso 71, 60, 82 seconds**. Jaw target intervals were roughly **45–54 seconds**. These are logged scheduling targets, not externally measured completion times.
 
 **Status:** recurring alternating *command scheduling verified on the real ESP32 over multiple cycles*. Previous hardware tests independently verified that jaw-first arm and torso motions work together. The new log alone cannot confirm that each physical movement completed, nor unattended reliability over hours. The exact **two-second** inter-command spacing is configured and logged, but no timestamped trace was provided to measure its accuracy independently.
+
+
+## October 20, 2026 — 30-minute alternating jaw-first endurance run
+
+**Test configuration:** Ultra Skelly v2, ESP32 BLE, **head OFF, eyes OFF, jaw ON, torso ON, arm ON**; jaw MP3 file **#13** (original device only); **body motor overlap OFF**, **jaw body-protection ON**, **JAW_FOLLOWUP_MOTOR = ALTERNATING**, **recurring frequency-gated** and **2,000 ms follow-up delay**.
+
+**Connection:** One initial scan did not find the prop. The next scan discovered it and connected after scanning finished. No BLE disconnect, reconnection, or frame-send failure was logged after connection.
+
+**Observed over the user's approximately 30-minute run:** one initial jaw-only play, then repeated `JAW-FIRST RECURRING: scheduled ARM/TORSO` messages, each followed by jaw playback and `JAW-FIRST: sending ARM/TORSO after MP3 start`, in an uninterrupted ARM → TORSO → ARM → TORSO pattern for the remainder of the supplied excerpt. The log shows **more than thirty** successful-looking coordinated BLE dispatches and no reported skipped follow-ups. Arm *next target* intervals in the log were approximately 60–88 seconds, torso next targets approximately 60–84 seconds, and jaw next targets roughly 45–59 seconds. These are targets printed by the scheduler, not independent timestamps or measured physical durations.
+
+**Validation status:** The **alternating recurrence and BLE dispatch scheduler has now passed a ~30-minute field run**. Earlier tests separately confirmed physical jaw+arm and jaw+torso co-motion and the jaw's 3-second hold. This serial log does **not** independently verify that *every* movement physically completed, rule out occasional MP3 eye resets (eyes were OFF), establish long-term motor endurance, or establish full head+body+jaw concurrency (head was OFF). Those remain distinct follow-up tests.
+
+**Next test:** Enable head with its known-safe 32–60-second timing while keeping the alternating jaw/body setup. Observe visually whether head, jaw and the selected arm/torso remain uninterrupted, especially when their scheduled start times are close. Optionally add eyes in a separate test before turning on everything for extended unattended operation.
