@@ -67,7 +67,7 @@ test("Haunted enables verified torso and arm but keeps advanced overlap OFF", ()
   assert.match(sketch, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
   assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 180000;/);
   assert.match(sketch, /const uint32_t TORSO_MAX_INTERVAL_MS = 360000;/);
-  assert.match(sketch, /if \(TORSO_ENABLED && reached\(now, nextTorsoAt\)/);
+  assert.match(sketch, /if \(!COMPOUND_BODY_ENABLED && TORSO_ENABLED && reached\(now, nextTorsoAt\)/);
   assert.match(sketch, /ALLOW_BODY_MOTOR_OVERLAP \|\| reached\(now, bodySafeAfter\)/);
 });
 test("Verified 22-second arm uses 0x02 motor bit and per-part cooldown", () => {
@@ -132,6 +132,44 @@ test("MP3 protection now includes the head, to preserve arm/torso follow-ups", (
       "Timeline should not imply overlapping head+jaw when protection is on");
 });
 
+test("Compound body mode emits one tested bitmask and conservative body cooldown", () => {
+  const sketch=api.generateSketch(sample({
+    headEnabled:true,armEnabled:true,torsoEnabled:true,
+    compoundEnabled:true,compoundMasks:[3,5,7],compoundMin:180,compoundMax:240,
+    jawFollowupMotor:0,jawProtectBody:true
+  }));
+  assert.match(sketch,/const bool COMPOUND_BODY_ENABLED = true;/);
+  assert.match(sketch,/const uint8_t COMPOUND_BODY_MASKS\[\] = \{0x03, 0x05, 0x07\};/);
+  assert.match(sketch,/const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = 180000;/);
+  assert.match(sketch,/const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 240000;/);
+  assert.match(sketch,/uint8_t frame\[11\] = \{0xAA, 0xCA, mask,/);
+  assert.match(sketch,/duration = max\(duration, TORSO_ANIMATION_MS \+ TORSO_BUFFER_MS\);/);
+  assert.match(sketch,/if \(!COMPOUND_BODY_ENABLED && HEAD_ENABLED/);
+  assert.match(sketch,/if \(!COMPOUND_BODY_ENABLED && ARM_ENABLED/);
+  assert.throws(()=>api.generateSketch(sample({compoundEnabled:true,compoundMasks:[7]})),/enabled head, arm, and torso/);
+  assert.throws(()=>api.generateSketch(sample({headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,compoundMasks:[3],jawFollowupMotor:1})),/separate modes/);
+  assert.throws(()=>api.generateSketch(sample({headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,compoundMasks:[]})),/Select at least one combined mask/);
+});
+test("RGB lighting emits both live channels with mode, brightness and correct 13-byte F4 packet", () => {
+  const sketch=api.generateSketch(sample({
+    lightsEnabled:true,torsoColor:"#12abef",headColor:"#aabbcc",
+    torsoBrightness:17,headBrightness:204,lightRestoreMode:2
+  }));
+  assert.match(sketch,/const bool LIGHTS_ENABLED = true;/);
+  assert.match(sketch,/TORSO_LIGHT_R = 18, TORSO_LIGHT_G = 171, TORSO_LIGHT_B = 239;/);
+  assert.match(sketch,/HEAD_LIGHT_R = 170, HEAD_LIGHT_G = 187, HEAD_LIGHT_B = 204;/);
+  assert.match(sketch,/const uint8_t TORSO_LIGHT_BRIGHTNESS = 17;/);
+  assert.match(sketch,/const uint8_t HEAD_LIGHT_BRIGHTNESS = 204;/);
+  assert.match(sketch,/const uint8_t LIGHT_RESTORE_MODE = 2;/);
+  assert.match(sketch,/uint8_t frame\[13\] = \{0xAA, 0xF4, channel, r, g, b,/);
+  assert.match(sketch,/ok = sendVariableFrame\(frame, 13\);/);
+  assert.match(sketch,/if \(LIGHT_RESTORE_MODE == 2\) queueLightSequence\(now, 3000\);/);
+  assert.match(sketch,/lightRestoreAt = mouthPlayingUntil \+ 500;/);
+  assert.throws(()=>api.generateSketch(sample({lightsEnabled:true,headColor:"#123"})),/six-digit hexadecimal/);
+  assert.throws(()=>api.generateSketch(sample({lightsEnabled:true,torsoBrightness:256})),/brightness must be 0/);
+  assert.equal(api.DEFAULTS.lightsEnabled,false);
+  assert.equal(api.DEFAULTS.compoundEnabled,false);
+});
 test("Jaw-first experiment is disabled by default and sends one selected motor after AAC6", () => {
   const normal=api.generateSketch(sample());
   assert.match(normal, /const uint8_t JAW_FOLLOWUP_MOTOR = 0;/);
