@@ -77,3 +77,12 @@ This establishes that the **recurring selector and command dispatch** work on th
 The user subsequently operated the **ALTERNATING + recurring** configuration for **approximately 30 minutes** with jaw MP3 #13, head OFF, eyes OFF, arm and torso ON, and jaw-body protection ON. Serial Monitor repeatedly showed jaw playback followed by a two-second-scheduled arm or torso request in a consistent ARM/TORSO alternating pattern. One initial BLE scan missed the prop and the next connected; **no dropouts or failed sends were reported after connection**.
 
 This extends the alternating *command-scheduling* evidence beyond the initial six-cycle test. Individual jaw-first arm and jaw-first torso physical motions were verified in earlier tests, but the serial log alone is not a measurement that every moving part completed all cycles. The next meaningful integration test is to **re-enable head movement** and observe whether its start interferes with ongoing jaw/arm/torso actions. Eyes were OFF during this 30-minute run and need to be evaluated separately alongside the full-motion configuration.
+
+
+## Head-enabled regression and correction
+
+The first head-enabled integration run revealed that AAC6 jaw MP3 playback **interrupted the head**, and the subsequent arm/torso coordination repeatedly logged `JAW-FIRST: skipped; motor cooldown or body lock active.` The head owned the 32-second global lock, but the previous MP3 protection only waited for arm/torso cooldowns, **not head**. In recurring mode standalone arm and torso timers were disabled, so both stayed still.
+
+The updated default MP3 protection now covers **head + arm + torso**. It postpones AAC6 until ongoing body motion and cooldown finish and blocks new standalone body starts while jaw playback is active or due. The jaw-first arm/torso follow-up remains the tested exception, so the order is now: **finish head → AAC6 jaw → 2-second delay → eligible arm or torso**. This deliberately **does not create concurrent head + jaw movement**; the earlier independent overlap toggle is superseded when MP3 protection is ON. The corrected full-body sequence still needs physical testing.
+
+For the next session keep `JAW_PROTECTS_ARM_TORSO=true`, global body overlap OFF, head ON at 60–90s, jaw #13 at 45–60s, arm/torso ON at 90–150s, jaw-first ALTERNATING and recurring ON at 2s. With this protection, jaw events may run later than their requested target intervals, but should no longer cut head motion short.
