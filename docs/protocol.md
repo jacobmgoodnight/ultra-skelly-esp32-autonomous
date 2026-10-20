@@ -43,8 +43,15 @@ Do not confuse `AAF9` for live eyes with the movement command `AACA` or stored-f
 
 ## Optional body commands and motor serialization
 
-The upstream movement-bit mapping is **head `0x01`**, **arm `0x02`** and **torso `0x04`**. Torso-only `AA CA 04` was physically tested (~25 seconds). Arm-only `AA CA 02` has **not** been physically tested and is disabled by default. All physical body motor commands are sent sequentially, with per-command cooldown. For procedure and conservative durations see [body movement guide](body-movements.md).
+The upstream movement-bit mapping is **head `0x01`**, **arm `0x02`** and **torso `0x04`**. Torso-only `AA CA 04` was physically tested (~25 seconds). Arm-only `AA CA 02` has **been physically tested** (two motions in ~22 seconds) and is disabled by default in checked-in base firmware. All physical body motor commands are sent sequentially, with per-command cooldown. For procedure and conservative durations see [body movement guide](body-movements.md).
 
 ## Arm measured, experimental concurrent body movements
 
 On October 20, 2026 the individual `AA CA 02` arm command was verified: **two arm movements taking 22 seconds total**. The torso-only `AA CA 04` action had previously taken ~25 seconds. The controller now provides an advanced opt-in `ALLOW_BODY_MOTOR_OVERLAP` setting. It bypasses the shared body-motor lock but preserves independent cooldown periods (head 25+7 seconds, torso 25+10, arm 22+10) and inserts at least 600 milliseconds between body BLE commands. Simultaneous head/torso/arm behavior is not verified. Review [body-movement guide](body-movements.md).
+
+
+## Jaw-first head failure and combined AACA movement bitmasks (October 20)
+
+The jaw-first HEAD experiment (`AAC6` file #13, then `AA CA 01` two seconds later) was physically unsuccessful on **two** runs despite successful-looking BLE writes; ordinary head motion worked independently. Jaw-first ARM and TORSO *did* move with the mouth. Do not infer physical motor success from `sendFrame` logging.
+
+The community web controller's live movement grid **combines selected bits**: `0x01` head, `0x02` arm, `0x04` torso, and a special `0xFF` ALL value. Combined masks `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso) and `0x07` (all three) are therefore protocol-grounded requests, **not** confirmed concurrent physical animations. They are implemented only in an [isolated one-shot test](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino), not in the default autonomous scheduler.

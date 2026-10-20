@@ -96,3 +96,10 @@ The **Protect head + arm + torso from jaw MP3** switch (ON by default, retaining
 Studio now includes **Start HEAD after jaw MP3 begins (UNTESTED)** in the Jaw first → body movement selector. Run it with **Head ON**, **Jaw ON file #13**, **Arm/Torso OFF**, **2-second delay**, **recurring OFF**, MP3 body protection ON, eyes OFF, and body overlap OFF. The first successful follow-up is intentionally one-shot per BLE connection and temporarily suppresses regular head scheduling until it fires. Afterward, independent head scheduling resumes. Verify visually that the jaw still holds for 3 seconds and the head completes its ~25-second movement. Instructions: [jaw-first head test](../docs/jaw-first-head-test.md).
 
 The existing **Allow body motor overlap** option can theoretically let head, arm and torso run concurrently (one BLE motor command per write, 600ms spacing, and per-motor cooldown). Physical concurrent movement of all three has not been verified. Test pairwise combinations first. The latest head-enabled alternating jaw-first log showed head commands and coordinated arm/torso commands successfully sent, with MP3 protection occasionally deferring playback while head finished.
+
+
+## Head-after-jaw result and isolated combined motor packet test
+
+**New October 20 result:** the user twice tested **jaw #13 → 2 s delay → HEAD command**. ESP32 serial showed the BLE HEAD packet was sent but the head **did not physically move at that point**. Later independent head movement works. This differs from the confirmed jaw-first ARM and TORSO co-movement. Studio keeps HEAD-after-jaw as a clearly labeled, opt-in **diagnostic**; do not enable it for unattended Haunted mode. For investigation, the delay can be increased to 10 s (unverified).
+
+The upstream `AACA` movement argument is a **bitfield**, so a standalone [BodyComboSingleTest.ino](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) sends a single combined mask rather than sending consecutive commands. Start with `0x03` for head+arm, then follow the [progressive hardware test guide](../docs/body-combo-test.md). Composite simultaneous movement remains **unverified**.

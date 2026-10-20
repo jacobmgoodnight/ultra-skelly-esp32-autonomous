@@ -3,10 +3,12 @@ on:
   push:
     paths:
       - "studio/**"
+      - "experiments/BodyComboSingleTest/**"
       - ".github/workflows/studio-checks.yml"
   pull_request:
     paths:
       - "studio/**"
+      - "experiments/BodyComboSingleTest/**"
       - ".github/workflows/studio-checks.yml"
 permissions:
   contents: read
@@ -41,3 +43,6 @@ jobs:
             echo "Compiling $sketch"
             arduino-cli compile --fqbn esp32:esp32:esp32 "$sketch"
           done
+      - name: Compile isolated compound motor test (HEAD+ARM first)
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest

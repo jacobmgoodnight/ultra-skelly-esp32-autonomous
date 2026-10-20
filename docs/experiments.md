@@ -151,3 +151,14 @@ Independent head movements appear to be interrupted by AAC6 when MP3 playback st
 ### Full body overlaps
 
 The advanced global body overlap setting permits *separately scheduled* HEAD, ARM and TORSO commands to begin while other motors are still moving, subject to their individual cooldowns and 600ms BLE-write spacing. It does **not** prove the prop physically supports all movements at once. Test pairwise combinations with jaw OFF, then all three attended. Do not equate the verified jaw+arm/torso combination with verified head+arm+torso concurrency.
+
+
+## October 20, 2026 — jaw-first HEAD sent, but motor did not move (two trials)
+
+The user ran two isolated jaw-first HEAD sessions: **Head ON**, **Jaw file #13 ON**, **Arm/Torso OFF**, **body overlap OFF**, MP3 protection ON, one-shot HEAD follow-up at **2 seconds**. Both logs printed `JAW-FIRST ONE-SHOT: scheduled HEAD`, `JAW command sent (file #13)`, `JAW-FIRST: sending HEAD after MP3 start (UNTESTED)`, and `HEAD command sent`. The user observed the head **did not actually move immediately after the jaw began**, whereas subsequent ordinary HEAD commands were transmitted and the original standalone head movement has been physically verified in prior testing.
+
+A printed `HEAD command sent` is confirmation of a BLE write, **not physical movement**. The observation disproves the assumption that the successful jaw-first ARM and TORSO ordering automatically works for HEAD. Possible explanations include MP3 playback suspending head motion or distinct motor-priority logic in Skelly's controller; these are hypotheses, not proven internal behavior.
+
+**Status:** one-shot jaw-first HEAD at 2 s **tested, physically unsuccessful**; head-alone and jaw-first ARM/TORSO remain validated. The Studio HEAD diagnostic option remains opt-in and now warns that the 2 s test failed. An optional attended **10-second** delay test could determine whether a brief MP3 startup suppression is responsible.
+
+The upstream movement bitfield has independent **head 0x01, arm 0x02, torso 0x04** bits. To investigate head+body overlap separately *without a jaw MP3*, a new supervised [one-shot combined-mask sketch](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) supports `0x03` head+arm, `0x05` head+torso, `0x06` arm+torso and `0x07` all three. **None of these composite masks has yet been physically tested on this Skelly.** See the [combination guide](body-combo-test.md).
