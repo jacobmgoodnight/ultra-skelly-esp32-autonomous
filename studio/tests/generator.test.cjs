@@ -116,7 +116,7 @@ test("rest mode schedules only after active animations finish", () => {
     restDurationMin: 25, restDurationMax: 60
   }));
   assert.match(sketch, /const bool REST_ENABLED = true;/);
-  assert.match(sketch, /reached\(now, headMovingUntil\) && reached\(now, mouthPlayingUntil\)/);
+  assert.match(sketch, /reached\(now, bodySafeAfter\) && reached\(now, mouthPlayingUntil\)/);
   assert.match(sketch, /nextRestAt = restUntil \+ random\(/);
 });
 
