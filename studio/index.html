@@ -19,7 +19,7 @@
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
   <h1>Make your Skelly<br><em>come alive.</em></h1>
   <p>Choose the movements, set their random timing, and generate a complete Arduino sketch for an ESP32. No phone app, Wi-Fi, account, or coding required after setup.</p>
-  <div class="chips"><span>✓ Verified head + jaw</span><span>↔ Optional overlap</span><span>◉ Experimental eyes</span><span>♻ BLE reconnection</span></div>
+  <div class="chips"><span>✓ Verified head + jaw</span><span>↔ Optional overlap</span><span>◉ Eye control confirmed</span><span>♻ BLE reconnection</span></div>
 </section>
 <main class="layout">
   <div class="controls">
@@ -40,14 +40,14 @@
       <div class="movement-block">
         <div class="movement-top"><div class="movement-label"><span class="movement-icon">〰</span><div><strong>Silent jaw animation</strong><small>Requires an uploaded MP3 with movement flags 0x00</small></div></div><label class="switch"><input type="checkbox" id="jawEnabled" checked><span></span><span class="sr-only">Enable jaw movement</span></label></div>
         <div class="frequency" data-for="jawEnabled"><label>Start every <input id="jawMin" type="number" min="22" max="3600" value="45" inputmode="numeric" aria-label="Jaw minimum seconds"> to <input id="jawMax" type="number" min="22" max="3600" value="90" inputmode="numeric" aria-label="Jaw maximum seconds"> seconds</label>
-          <div class="field-row"><label for="jawFile">MP3 file serial <input id="jawFile" type="number" min="1" max="65535" value="12" inputmode="numeric"></label><span class="helper">Find yours in the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a> log. #12 is only an example.</span></div>
+          <div class="field-row"><label for="jawFile">MP3 file serial <input id="jawFile" type="number" min="1" max="65535" value="12" inputmode="numeric"></label><span class="helper">Find yours in the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a> log. #12 is only an example.</span></div><label class="single-field" for="jawExtras">Additional jaw MP3 file serials (optional)<input id="jawExtras" type="text" value="" placeholder="e.g. 13, 14"></label><p class="small-description">Randomly choose from uploaded jaw clips. Set saved movement flags to <strong>0x00 on EVERY clip</strong>. Multiple-file selection is newly implemented and needs testing.</p>
         </div>
       </div>
       <div class="overlap-row"><div><strong>Allow head + jaw together</strong><p>When enabled, each animation keeps its own schedule. Verified on a real Skelly.</p></div><label class="switch"><input type="checkbox" id="overlap" checked><span></span><span class="sr-only">Allow head and jaw overlap</span></label></div>
     </section>
     <section class="panel eye-panel">
-      <div class="section-head"><div><span class="step">03</span><h2>Eye expressions <span class="experimental">EXPERIMENTAL</span></h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable experimental eye changes</span></label></div>
-      <p class="small-description">The upstream web controller supports 18 icons. ESP32 eye control is <strong>not yet verified on this Skelly</strong>. First run the <a href="../experiments/EyeSingleTest/EyeSingleTest.ino" target="_blank">one-shot eye test</a>.</p>
+      <div class="section-head"><div><span class="step">03</span><h2>Eye expressions <span class="experimental">RANDOM MODE IN TESTING</span></h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable experimental eye changes</span></label></div>
+      <p class="small-description"><strong>ESP32 eye control worked on the real Skelly!</strong> The one-shot test changed the eyes without requiring a reset after flashing. Random eye rotation alongside jaw audio still needs testing. <a href="../docs/eyes.md">Eye notes ↗</a></p>
       <div id="eyeOptions" class="eye-advanced muted">
         <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
         <span class="field-caption">Include these eye designs in the random rotation:</span>
@@ -57,7 +57,15 @@
       <div class="notice"><strong>Torso and arms: OFF.</strong> This generator never schedules torso or arm movements. They remain outside the tested everyday setup.</div>
     </section>
     <section class="panel">
-      <div class="section-head"><div><span class="step">04</span><h2>Bluetooth settings</h2></div></div>
+      <div class="section-head"><div><span class="step">04</span><h2>Occasional idle breaks <span class="experimental">NEW</span></h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
+      <p class="small-description">Adds unpredictable quiet stretches. Skelly finishes active animations before resting. New feature: test it on your ESP32 before leaving it unattended.</p>
+      <div id="restOptions" class="eye-advanced muted">
+        <label class="freq-inline">After every <input type="number" id="restMin" value="180" min="120" max="3600" aria-label="Rest interval minimum seconds"> to <input type="number" id="restMax" value="420" min="120" max="3600" aria-label="Rest interval maximum seconds"> seconds, take a break</label>
+        <label class="freq-inline" style="margin-top:12px">Rest for <input type="number" id="restDurationMin" value="25" min="15" max="300" aria-label="Rest duration minimum seconds"> to <input type="number" id="restDurationMax" value="60" min="15" max="300" aria-label="Rest duration maximum seconds"> seconds</label>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-head"><div><span class="step">05</span><h2>Bluetooth settings</h2></div></div>
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>
     </section>
@@ -65,7 +73,7 @@
   <aside class="output">
     <div class="panel output-panel">
       <span class="eyebrow">YOUR GENERATED CONTROLLER</span><h2>Ready for the haunting?</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · experimental</strong></div><div><span>OVERLAP</span><strong id="overlapSummary">Allowed</strong></div></div>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>OVERLAP</span><strong id="overlapSummary">Allowed</strong></div></div>
       <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
       <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot eyes"></i> Eyes</span></div>
       <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>
@@ -73,7 +81,7 @@
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
-      <p class="small-description">Generated entirely in your browser. Firmware starts from the project's tested head/jaw controller; eyes are optional and off by default.</p>
+      <p class="small-description">Generated entirely in your browser. Firmware starts from the tested head/jaw controller. New jaw-pool and idle-break options still need hardware testing.</p>
       <details class="instructions"><summary>After downloading</summary><ol><li>Open the file in Arduino IDE using <strong>ESP32 Dev Module</strong>.</li><li>Power on Skelly, and close any other Bluetooth controller.</li><li>Upload to your ESP32 and open Serial Monitor at <strong>115200</strong>.</li><li>If it doesn't connect after flashing, try the board's EN/RESET button; scan retry happens automatically.</li></ol><p><a href="../docs/setup.md">Read complete setup guide ↗</a></p></details>
     </div>
   </aside>
