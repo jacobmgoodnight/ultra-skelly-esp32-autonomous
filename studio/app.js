@@ -71,6 +71,7 @@
     }
     if (config.compoundEnabled) {
       if(config.jawFollowupMotor!==0) error.push("Compound body mode and jaw-first reactions are separate modes; turn one OFF.");
+      if(config.jawEnabled && !config.jawProtectBody) error.push("Compound body movements require MP3 body protection when jaw playback is enabled.");
       if(!Number.isSafeInteger(config.compoundMin) || !Number.isSafeInteger(config.compoundMax) ||
          config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax)
         error.push("Combined movement frequency must be 45–3600 seconds.");
