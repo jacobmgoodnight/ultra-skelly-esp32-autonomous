@@ -253,8 +253,12 @@ bool connectToSkelly() {
                 JAW_FOLLOWUP_MOTOR == 3 ? "ALTERNATING" : "OFF",
                 (unsigned long)JAW_FOLLOWUP_DELAY_MS,
                 JAW_FOLLOWUP_RECURRING ? "RECURRING frequency-gated" : "ONE-SHOT");
-  Serial.printf("First head in %lu seconds.\n",
-                (unsigned long)((nextHeadAt - now) / 1000));
+  if (HEAD_ENABLED) {
+    Serial.printf("First head in %lu seconds.\n",
+                  (unsigned long)((nextHeadAt - now) / 1000));
+  } else {
+    Serial.println("Head motion disabled.");
+  }
   if (mouthConfigured()) {
     Serial.printf("Jaw file serial %u; first attempt in ~%lu seconds.\n",
                   (unsigned)MOUTH_FILE_SERIAL,
@@ -388,8 +392,8 @@ void startMouth(uint32_t now) {
   }
   jawDelayNotified = false;
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
-  // Intentional, one-time jaw-first motor experiment. Cancels any previous
-  // pending follow-up if the MP3 starts again (normally >20s apart).
+  // Choose one motor for this MP3, if one-shot or random-frequency-gated
+  // coordination is due. New playback replaces an unserved pending event.
   jawFollowupChosenMotor = chooseJawFollowupMotor(now);
   jawFollowupPending = jawFollowupChosenMotor != 0 &&
                        (JAW_FOLLOWUP_RECURRING || !jawFollowupTestDone);
