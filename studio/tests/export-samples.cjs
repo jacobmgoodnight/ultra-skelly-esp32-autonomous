@@ -11,6 +11,8 @@ const generator = ctx.window.SkellyStudioGenerator;
 const base = {...generator.DEFAULTS, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
   Normal: {},
+  HauntedWithTorso: {torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:false,headMin:32,headMax:45,jawMin:30,jawMax:60},
+  ArmOnlyExperimental: {headEnabled:false,jawEnabled:false,eyesEnabled:false,torsoEnabled:false,armEnabled:true,armMin:360,armMax:720},
   SubtleHeadOnly: {jawEnabled:false, headMin:65, headMax:120},
   RandomEyes: {eyesEnabled:true,eyeMin:30,eyesMin:30,eyesMax:60,eyeChoices:[1,2,5,12]},
   JawPoolAndRest: {jawExtras:"13,14",restEnabled:true,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,overlap:false},
