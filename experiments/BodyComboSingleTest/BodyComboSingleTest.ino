@@ -7,10 +7,10 @@
 // ONE-SHOT COMPOUND BODY MOTOR TEST: EXPERIMENTAL. No jaw MP3 or eye commands.
 // CA payload accepts a movement BITFIELD in community SkellyUltraWebController.
 // Individually verified on this prop: 0x01 HEAD, 0x02 ARM, 0x04 TORSO.
-// Physically verified: 0x03 HEAD+ARM and 0x05 HEAD+TORSO both moved.
-// Not yet tested: 0x06 ARM+TORSO, 0x07 all three.
+// Physically verified on this prop: 0x03 HEAD+ARM, 0x05 HEAD+TORSO,
+// 0x06 ARM+TORSO, and 0x07 ALL THREE. Each was sent as a single AACA frame.
+// Physical movement was observed; individual cycle durations were not timed.
 // Run supervised, with stable prop and joints clear.
-// 0x06 = next suggested test, once 0x03 and 0x05 have been observed.
 // Unlike sending multiple AACA commands, this sends ONE bitmask command.
 // Only change TEST_MOVEMENT_MASK deliberately, then re-upload/reboot.
 const uint8_t TEST_MOVEMENT_MASK = 0x03;
@@ -53,35 +53,69 @@ void setup() {
   scanner = BLEDevice::getScan();
   scanner->setAdvertisedDeviceCallbacks(new ScanCB());
   scanner->setActiveScan(true);
-  // The original one-shot sketch forced a manual reset after every 5-second
-  // scan miss. The physical 0x03 test needed FOUR resets before discovery.
-  // Retry discovery without ever repeating the motor command.
+  // Retry BLE advertisement *and* failed connections. Earlier tests showed
+  // scanning can find Skelly but the subsequent connection still fail.
+  // Each attempt uses a NEW BLE client and freshly discovered advertisement;
+  // neither a scan retry nor a connect retry may send any motor packet.
+  const uint8_t MAX_CONNECT_ATTEMPTS = 4;
   const uint8_t MAX_SCAN_ATTEMPTS = 8;
-  const uint32_t SCAN_RETRY_DELAY_MS = 10000;
-  for (uint8_t attempt = 1; attempt <= MAX_SCAN_ATTEMPTS && !foundDevice;
-       ++attempt) {
-    Serial.printf("Scanning 5 seconds... attempt %u/%u\n",
-                  attempt, MAX_SCAN_ATTEMPTS);
-    scanner->start(5, false); // Synchronous: connection AFTER scan returns.
-    Serial.println("Scan finished.");
-    if (!foundDevice && attempt < MAX_SCAN_ATTEMPTS) {
+  const uint32_t RETRY_DELAY_MS = 10000;
+  bool established = false;
+  for (uint8_t connectionAttempt = 1;
+       connectionAttempt <= MAX_CONNECT_ATTEMPTS && !established;
+       ++connectionAttempt) {
+    if (foundDevice) {
+      delete foundDevice;
+      foundDevice = nullptr;
+    }
+    scanner->clearResults();
+    for (uint8_t scanAttempt = 1;
+         scanAttempt <= MAX_SCAN_ATTEMPTS && !foundDevice;
+         ++scanAttempt) {
+      Serial.printf("Scanning 5 seconds... attempt %u/%u (connection %u/%u)\n",
+                    scanAttempt, MAX_SCAN_ATTEMPTS,
+                    connectionAttempt, MAX_CONNECT_ATTEMPTS);
+      scanner->start(5, false); // Blocking: connect AFTER scan returns.
+      Serial.println("Scan finished.");
+      if (!foundDevice && scanAttempt < MAX_SCAN_ATTEMPTS) {
+        scanner->clearResults();
+        Serial.println("Skelly not found; retrying scan in 10 seconds.");
+        delay(RETRY_DELAY_MS);
+      }
+    }
+
+    if (!foundDevice) {
+      Serial.println("Skelly not found after 8 scans.");
+      break; // No connection possible without an advertisement.
+    }
+
+    delay(500); // Allow BLE scanning/advertising to settle.
+    BLEClient* candidate = BLEDevice::createClient();
+    Serial.printf("Connecting AFTER scan... attempt %u/%u\n",
+                  connectionAttempt, MAX_CONNECT_ATTEMPTS);
+    if (candidate && candidate->connect(foundDevice)) {
+      client = candidate;
+      established = true;
+    } else {
+      Serial.println("Connection failed; will rescan and retry automatically.");
+      if (candidate) {
+        if (candidate->isConnected()) candidate->disconnect();
+        delete candidate;
+      }
+      // Never retain stale advertised-device data across a failed connection.
+      delete foundDevice;
+      foundDevice = nullptr;
       scanner->clearResults();
-      Serial.println("Skelly not found; retrying scan in 10 seconds.");
-      delay(SCAN_RETRY_DELAY_MS);
+      if (connectionAttempt < MAX_CONNECT_ATTEMPTS) {
+        Serial.println("Next connection attempt in 10 seconds.");
+        delay(RETRY_DELAY_MS);
+      }
     }
   }
 
-  if (!foundDevice) {
-    Serial.println("Skelly not found after 8 scans. Check power and BLE apps; reset ESP32 to retry.");
-    return;
-  }
-
-  delay(500);
-  client = BLEDevice::createClient();
-  Serial.println("Connecting AFTER scan...");
-  if (!client->connect(foundDevice)) {
-    Serial.println("Connection failed. Close phone/web app and reset ESP32.");
-    return;
+  if (!established) {
+    Serial.println("Could not connect. Close other BLE apps, check Skelly power, then reset ESP32.");
+    return; // No motor command was sent.
   }
   Serial.println("CONNECTED");
   BLERemoteService* service = client->getService(SERVICE_UUID);
