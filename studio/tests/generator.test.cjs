@@ -101,7 +101,7 @@ test("Default jaw MP3 protects arm/torso from 0x00 playback metadata", () => {
   const protectedSketch=api.generateSketch(sample({torsoEnabled:true,armEnabled:true}));
   assert.match(protectedSketch, /const bool JAW_PROTECTS_ARM_TORSO = true;/);
   assert.match(protectedSketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
-  assert.match(protectedSketch, /!blockArmTorsoForJaw/);
+  assert.match(protectedSketch, /!blockBodyForJaw/);
   assert.match(protectedSketch, /reached\(jawNow, torsoSafeAfter\)/);
   assert.match(protectedSketch, /reached\(jawNow, armSafeAfter\)/);
   const unprotected=api.generateSketch(sample({jawProtectBody:false}));
@@ -123,7 +123,7 @@ test("MP3 protection now includes the head, to preserve arm/torso follow-ups", (
   assert.match(sketch, /reached\(jawNow, bodySafeAfter\)/);
   assert.match(sketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
   assert.match(sketch, /reached\(now, headSafeAfter\) && !blockBodyForJaw/);
-  assert.match(sketch, /JAW-FIRST RECURRING/);
+  assert.match(sketch, /JAW-FIRST %s: scheduled/);
   const sampleSchedule=api.simulateSchedule(config);
   const head=sampleSchedule.filter(x=>x.kind==="head");
   const jaw=sampleSchedule.filter(x=>x.kind==="jaw");
