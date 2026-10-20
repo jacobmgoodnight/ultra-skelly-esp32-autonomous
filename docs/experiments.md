@@ -138,3 +138,16 @@ After successful 30-minute alternating jaw/arm/torso scheduling with head OFF, t
 **Fix:** With MP3 body protection ON, now hold jaw AAC6 while **head, arm, or torso** is within its animation-and-safety-buffer window, and block new standalone **head/arm/torso** starts while MP3 playback is due or active. A jaw-first coordinated arm or torso is still the single deliberate exception after AAC6 starts. Serial now logs `JAW deferred: waiting for head/arm/torso cooldown.` when required. This change overrides the independent head+jaw overlap toggle when protection is ON; head and jaw take turns. It is **new firmware**, compiled/tested in CI but requires physical revalidation on this Skelly.
 
 **Recommended next run:** Head ON at 60–90s, jaw ON file #13 at 45–60s, arm+torso ON at 90–150s each, recurring alternating jaw-first 2s, body overlap OFF, protect head/arm/torso from MP3 ON, eyes OFF. Look for complete head animation followed by a deferred jaw (if due), and subsequent `JAW-FIRST: sending ARM/TORSO`. Check physically that neither motion gets cut short.
+
+
+## October 20, 2026 — head enabled with alternating arm/torso: protected sequencing worked
+
+Follow-up to the first head-enabled conflict: The user ran **Head ON, Jaw ON, Torso ON, Arm ON**, jaw file **#13**, recurring jaw-first **ALTERNATING** with 2-second delay, body overlap OFF and head/arm/torso MP3 protection ON. After two BLE connection failures and an intervening scan miss, it connected on a later attempt. Post-connection logs included multiple `HEAD command sent`, `JAW-FIRST RECURRING: scheduled ARM/TORSO`, `JAW-FIRST: sending ARM/TORSO` and `JAW deferred: waiting for head/arm/torso cooldown.` No motor-lock follow-up skips were reported in the excerpt. The user said this **seemed to work**, which supports the head-safe sequencing correction; every physical animation's completion was not individually measured.
+
+### Next targeted experiment: jaw MP3 first, head ~2 seconds later
+
+Independent head movements appear to be interrupted by AAC6 when MP3 playback starts mid-head action. Previous *jaw-first* arm and torso commands worked, so an opt-in **HEAD after jaw** mode has been added as a new, **unverified** option. Use head ON, arm/torso OFF, MP3 #13 ON, 2s delay, one-shot recurring OFF, MP3 protection ON, and body overlap OFF. The firmware temporarily blocks independent head triggers until the first successful one-shot follow-up, preventing an accidental global body-lock conflict. Then it resumes independent head activity. Record whether the 3-second mouth hold continues and the 25-second head animation completes. See [head test instructions](jaw-first-head-test.md).
+
+### Full body overlaps
+
+The advanced global body overlap setting permits *separately scheduled* HEAD, ARM and TORSO commands to begin while other motors are still moving, subject to their individual cooldowns and 600ms BLE-write spacing. It does **not** prove the prop physically supports all movements at once. Test pairwise combinations with jaw OFF, then all three attended. Do not equate the verified jaw+arm/torso combination with verified head+arm+torso concurrency.

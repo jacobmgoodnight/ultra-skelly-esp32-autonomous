@@ -89,3 +89,10 @@ Select **Alternate arm or torso when due** and enable **Repeat when the selected
 In the first test enabling the head alongside recurring jaw-first arm/torso, AAC6 appeared to interrupt active head motion. Because the head held the shared motor cooldown, the arm/torso follow-ups were skipped on every subsequent MP3. This was traced to an omission in jaw MP3 protection: the code waited for arm and torso, but did not wait for head.
 
 The **Protect head + arm + torso from jaw MP3** switch (ON by default, retaining the firmware identifier `JAW_PROTECTS_ARM_TORSO` for compatibility) now defers AAC6 until head motion has ended and blocks standalone head movement while a jaw clip is active/due. It still intentionally permits the jaw-first arm or torso follow-up. **With protection ON, the independent head+jaw overlap toggle is overridden**; motion is sequenced rather than simultaneous, until a separate jaw-first head experiment is performed. The new head-safe scheduler needs a physical test.
+
+
+## Jaw-first HEAD test (new, not physically verified)
+
+Studio now includes **Start HEAD after jaw MP3 begins (UNTESTED)** in the Jaw first → body movement selector. Run it with **Head ON**, **Jaw ON file #13**, **Arm/Torso OFF**, **2-second delay**, **recurring OFF**, MP3 body protection ON, eyes OFF, and body overlap OFF. The first successful follow-up is intentionally one-shot per BLE connection and temporarily suppresses regular head scheduling until it fires. Afterward, independent head scheduling resumes. Verify visually that the jaw still holds for 3 seconds and the head completes its ~25-second movement. Instructions: [jaw-first head test](../docs/jaw-first-head-test.md).
+
+The existing **Allow body motor overlap** option can theoretically let head, arm and torso run concurrently (one BLE motor command per write, 600ms spacing, and per-motor cooldown). Physical concurrent movement of all three has not been verified. Test pairwise combinations first. The latest head-enabled alternating jaw-first log showed head commands and coordinated arm/torso commands successfully sent, with MP3 protection occasionally deferring playback while head finished.

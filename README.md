@@ -140,3 +140,12 @@ The original Ultra Skelly v2 completed an approximately **30-minute** ESP32 run 
 ### Fix: head + jaw interruption starved alternating arm/torso actions
 
 A head-enabled integration test showed jaw MP3 playback appeared to stop the head. The logs then showed the arm/torso follow-up was always **skipped because the head held the global motor cooldown**. The controller now treats the head like the other body motors for default AAC6 protection: finish current body motion, play the jaw MP3, then allow the proven jaw-first arm or torso action after two seconds. While this protection is enabled, independent head/jaw simultaneous operation is intentionally disabled; enabling the old head+jaw overlap switch does not override protection. The change addresses a scheduling problem, **not** a motor failure, and requires a follow-up physical test. See the [experiment log](docs/experiments.md).
+
+
+### New experimental jaw-first HEAD motion
+
+The most recent protected head-enabled test showed independent HEAD commands alongside successful alternating jaw-first arm/torso dispatch, without the earlier body-lock skip pattern. The user reported that the setup seemed to work after several initial Bluetooth connection retries.
+
+The next isolated test is **jaw MP3 starts → two-second delay → HEAD command**. This copies the proven jaw-first arm/torso command order, but **jaw+head physical overlap is not yet verified**. Skelly Studio now has a dedicated HEAD choice in **Jaw first → body movement**, OFF by default. Start with Head and Jaw ON, Arm/Torso OFF, recurring OFF (one successful test per connection), MP3 #13 and MP3 protection ON. See the [new test guide](docs/jaw-first-head-test.md).
+
+A separate advanced body-motor overlap switch already permits the *possibility* of simultaneous head/arm/torso movements, but the hardware result isn't confirmed. Test motor pairs first; enabling this switch does not guarantee all three joints will move at once.

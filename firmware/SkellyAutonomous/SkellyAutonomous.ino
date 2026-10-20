@@ -50,8 +50,9 @@ const bool ALLOW_BODY_MOTOR_OVERLAP = false;
 // Name retained for compatibility with existing Studio sketches.
 const bool JAW_PROTECTS_ARM_TORSO = true;
 // EXPERIMENTAL: deliberately send AACA AFTER AAC6 playback begins.
-// 0 = disabled (default); 1 = arm; 2 = torso; 3 = alternate when due.
-// Mode 3 takes at most one motor per MP3 and requires recurrence in Studio.
+// 0 = disabled (default); 1 = arm; 2 = torso; 3 = alternate arm/torso;
+// 4 = HEAD after jaw (UNTESTED). Only ONE motor follows each MP3.
+// Mode 3 requires recurrence in Studio. All modes are OFF by default.
 // If AAC6 applies 0x00 movement flags only once at playback start, this may
 // allow jaw + motor together. The reverse (AACA stops jaw) is also possible.
 const uint8_t JAW_FOLLOWUP_MOTOR = 0;
@@ -123,7 +124,7 @@ uint8_t lastEye = 0; // Last successfully requested eye icon.
 bool jawDelayNotified = false;
 bool jawFollowupPending = false;
 bool jawFollowupTestDone = false; // One successful test per BLE connection.
-uint8_t jawFollowupChosenMotor = 0; // Choice for this MP3: 0/1/2.
+uint8_t jawFollowupChosenMotor = 0; // Choice for this MP3: 0/off, 1/arm, 2/torso, 4/head.
 uint8_t lastJawFollowupMotor = 0; // Last successfully sent follow-up motor.
 uint32_t jawFollowupAt = 0;
 bool jawEyeStartPending = false;
@@ -253,7 +254,8 @@ bool connectToSkelly() {
   Serial.printf("Jaw-first follow-up: %s after %lu ms (%s).\n",
                 JAW_FOLLOWUP_MOTOR == 1 ? "ARM" :
                 JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" :
-                JAW_FOLLOWUP_MOTOR == 3 ? "ALTERNATING" : "OFF",
+                JAW_FOLLOWUP_MOTOR == 3 ? "ALTERNATING" :
+                JAW_FOLLOWUP_MOTOR == 4 ? "HEAD (EXPERIMENTAL)" : "OFF",
                 (unsigned long)JAW_FOLLOWUP_DELAY_MS,
                 JAW_FOLLOWUP_RECURRING ? "RECURRING frequency-gated" : "ONE-SHOT");
   if (HEAD_ENABLED) {
@@ -365,10 +367,13 @@ void startArm(uint32_t now) {
 // jaw-first event. Actual cooldown / body-lock checks happen before sending.
 uint8_t chooseJawFollowupMotor(uint32_t now) {
   if (JAW_FOLLOWUP_MOTOR == 0) return 0;
+  const bool headDue = HEAD_ENABLED &&
+      (!JAW_FOLLOWUP_RECURRING || reached(now, nextHeadAt));
   const bool armDue = ARM_ENABLED &&
       (!JAW_FOLLOWUP_RECURRING || reached(now, nextArmAt));
   const bool torsoDue = TORSO_ENABLED &&
       (!JAW_FOLLOWUP_RECURRING || reached(now, nextTorsoAt));
+  if (JAW_FOLLOWUP_MOTOR == 4) return headDue ? 4 : 0;
   if (JAW_FOLLOWUP_MOTOR == 1) return armDue ? 1 : 0;
   if (JAW_FOLLOWUP_MOTOR == 2) return torsoDue ? 2 : 0;
   if (JAW_FOLLOWUP_MOTOR == 3) {
@@ -404,7 +409,8 @@ void startMouth(uint32_t now) {
   if (jawFollowupPending) {
     Serial.printf("JAW-FIRST %s: scheduled %s %lu ms after MP3 start.\n",
                   JAW_FOLLOWUP_RECURRING ? "RECURRING" : "ONE-SHOT",
-                  jawFollowupChosenMotor == 1 ? "ARM" : "TORSO",
+                  jawFollowupChosenMotor == 1 ? "ARM" :
+                  jawFollowupChosenMotor == 2 ? "TORSO" : "HEAD",
                   (unsigned long)JAW_FOLLOWUP_DELAY_MS);
   }
   mouthSafeAfter = mouthPlayingUntil + MOUTH_BUFFER_MS;
@@ -494,7 +500,7 @@ void loop() {
   }
   if (!connected) { delay(100); return; }
 
-  // A controlled jaw-FIRST experiment: AAC6 plays, then one AACA motor packet.
+  // Jaw-first motor command: AAC6 plays before one selected AACA frame.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
   // selected motor only; all ordinary scheduled arm/torso commands stay blocked
   // while the MP3 is active. One-shot mode allows one successful test
@@ -506,10 +512,13 @@ void loop() {
     const bool clipActive = !reached(t, mouthPlayingUntil);
     const bool armSelected = (jawFollowupChosenMotor == 1);
     const bool torsoSelected = (jawFollowupChosenMotor == 2);
+    const bool headSelected = (jawFollowupChosenMotor == 4);
     const bool selectedEnabled = (armSelected && ARM_ENABLED) ||
-                                 (torsoSelected && TORSO_ENABLED);
+                                 (torsoSelected && TORSO_ENABLED) ||
+                                 (headSelected && HEAD_ENABLED);
     const bool motorReady = (armSelected && reached(t, armSafeAfter)) ||
-                            (torsoSelected && reached(t, torsoSafeAfter));
+                            (torsoSelected && reached(t, torsoSafeAfter)) ||
+                            (headSelected && reached(t, headSafeAfter));
     const bool lockReady = ALLOW_BODY_MOTOR_OVERLAP ||
                            reached(t, bodySafeAfter);
     if (!clipActive) {
@@ -518,6 +527,13 @@ void loop() {
       Serial.println("JAW-FIRST: skipped; selected motor is OFF.");
     } else if (!motorReady || !lockReady || !reached(t, nextBodyWriteAt)) {
       Serial.println("JAW-FIRST: skipped; motor cooldown or body lock active.");
+    } else if (headSelected) {
+      // AACA head-only after AAC6, exactly like the verified jaw-first arm
+      // and torso order. No independent head request is allowed to preempt
+      // the one-shot trial. Head/jaw physical overlap is NOT yet verified.
+      Serial.println("JAW-FIRST: sending HEAD after MP3 start (UNTESTED).");
+      startHead(t);
+      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
     } else if (armSelected) {
       Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
@@ -561,6 +577,10 @@ void loop() {
     uint8_t choice = 0;
     uint32_t overdue = 0;
     if (HEAD_ENABLED && reached(now, nextHeadAt) &&
+        // In head-first diagnostic mode, don't let a standalone HEAD
+        // preempt the one-shot trial; recurring mode always coordinates it.
+        !(JAW_FOLLOWUP_MOTOR == 4 &&
+          (JAW_FOLLOWUP_RECURRING || !jawFollowupTestDone)) &&
         reached(now, headSafeAfter) && !blockBodyForJaw) {
       choice = 1;
       overdue = now - nextHeadAt;

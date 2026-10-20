@@ -67,8 +67,8 @@
           error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
       }
     }
-    if (![0,1,2,3].includes(config.jawFollowupMotor))
-      error.push("Choose a jaw-first response: OFF, Arm, Torso, or Alternate.");
+    if (![0,1,2,3,4].includes(config.jawFollowupMotor))
+      error.push("Choose a jaw-first response: OFF, Arm, Torso, Alternate, or Head.");
     if (config.jawFollowupMotor === 3 &&
         (!config.armEnabled || !config.torsoEnabled))
       error.push("Enable both arm and torso for alternating jaw-first reactions.");
@@ -82,6 +82,8 @@
       error.push("Enable the arm switch to test Arm after jaw.");
     if(config.jawFollowupMotor===2 && !config.torsoEnabled)
       error.push("Enable the torso switch to test Torso after jaw.");
+    if(config.jawFollowupMotor===4 && !config.headEnabled)
+      error.push("Enable the head switch to test Head after jaw.");
     if (![0,1,2].includes(config.eyeJawMode))
       error.push("Choose a valid eye/jaw behavior (0, 1 or 2).");
     if(config.eyesEnabled && (!config.eyeChoices.length || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length))
@@ -275,7 +277,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
-    const motorLabel=["Off","Arm","Torso","Arm or torso"][c.jawFollowupMotor] || "Unknown";
+    const motorLabel=["Off","Arm","Torso","Arm or torso","Head (untested)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
