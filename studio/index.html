@@ -47,11 +47,16 @@
     </section>
     <section class="panel eye-panel">
       <div class="section-head"><div><span class="step">03</span><h2>Eye expressions <span class="experimental">RANDOM MODE IN TESTING</span></h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable experimental eye changes</span></label></div>
-      <p class="small-description"><strong>ESP32 eye control worked on the real Skelly!</strong> The one-shot test changed the eyes without requiring a reset after flashing. Random eye rotation alongside jaw audio still needs testing. <a href="../docs/eyes.md">Eye notes ↗</a></p>
+      <p class="small-description"><strong>Verified on an Ultra Skelly v2:</strong> both a one-shot eye change and randomized eye changes from the ESP32 work. Different firmware versions may behave differently; the mouth clip could reapply its saved eye setting. <a href="../docs/eyes.md">Eye notes ↗</a></p>
       <div id="eyeOptions" class="eye-advanced muted">
         <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
-        <span class="field-caption">Include these eye designs in the random rotation:</span>
-        <div id="eyeGrid" class="eye-grid" role="group" aria-label="Permitted eye design numbers"></div>
+        <span class="field-caption">Choose which eye designs appear in the random rotation. Select a thumbnail to toggle it; use the preview button to enlarge it.</span>
+        <div class="eye-spotlight" aria-live="polite">
+          <img id="eyePreviewImage" src="https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">
+          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Tap <strong>Preview</strong> under any eye to see it here. Check the patterns you want Skelly to rotate through.</p><span id="selectedEyeCount">18 of 18 selected</span></div>
+        </div>
+        <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
+        <p class="eye-credit">Previews are loaded from the <a href="https://github.com/martinecker/SkellyUltraWebController" rel="noopener" target="_blank">Skelly Ultra Web Controller</a> project, not copied into this repository. An internet connection is needed to display them; the Arduino generator works offline.</p>
         <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button><a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">View eye designs ↗</a></div>
       </div>
       <div class="notice"><strong>Torso and arms: OFF.</strong> This generator never schedules torso or arm movements. They remain outside the tested everyday setup.</div>

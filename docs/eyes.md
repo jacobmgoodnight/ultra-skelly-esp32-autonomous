@@ -1,6 +1,6 @@
 # Experimental randomized eye expressions
 
-The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. **Confirmed on one real Ultra Skelly v2 (October 19, 2026):** the standalone ESP32 one-shot `AAF9` eye-control test successfully changed the eye design. This test also connected immediately after flashing, without an ESP32 reboot. Random eye rotation running simultaneously with jaw audio remains to be tested.
+The upstream web controller supports icons **1 through 18** and sends a live `AAF9` frame. **Confirmed on one real Ultra Skelly v2 (October 19, 2026):** the standalone ESP32 one-shot `AAF9` eye-control test successfully changed the eye design. This test also connected immediately after flashing, without an ESP32 reboot. **Update from the user's next on-device test:** randomized eye switching from the ESP32 also worked. The tester did not have to reboot the ESP32 after flashing. A separate, controlled test of whether a stored jaw MP3 can temporarily override the eye icon has not yet been completed.
 
 ## Safe first test
 
@@ -14,7 +14,7 @@ The upstream web controller supports icons **1 through 18** and sends a live `AA
 
 **This is a live eye change, not editing an MP3's saved eye setting.** After the test, you can use the web controller to restore your preferred live eye icon. The source document for the live packet is [app-modular.js](https://github.com/martinecker/SkellyUltraWebController/blob/main/app-modular.js), around the `apEyeGrid` click handler.
 
-## Enable random eyes (one-shot test confirmed)
+## Enable random eyes (one-shot and random changes confirmed)
 
 Open `firmware/SkellyAutonomous/SkellyAutonomous.ino` and set:
 
@@ -29,6 +29,10 @@ This selects an eye ID from 1–18 at random, avoids choosing the same icon twic
 ## Caveats
 
 - Different hardware firmware may handle live eye commands differently.
-- Random eyes during head movement and jaw audio haven't yet been field-tested. Audio playback might reapply saved eye metadata and override a live eye icon; observe this before relying on timed eye changes.
+- Random eye changes have worked on the original Skelly. **Whether MP3 playback overrides live eye changes** has not been separately isolated; the uploaded jaw file has its own eye setting that might temporarily take precedence.
 - Do not test unverified commands while Skelly can strike people, pets, or nearby items.
 - `AAF9` shouldn't be mistaken for the per-file eye metadata editing variant, which includes a file cluster and name.
+
+## Preview what eye IDs 1–18 look like
+
+[Skelly Studio](../studio/) now shows an actual thumbnail for each numbered eye design. Select the patterns you want in your ESP32's random rotation and use **Preview** to enlarge any image. Thumbnails are requested live from the [Skelly Ultra Web Controller's original image files](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), with attribution; they are not copied into our repository. They require internet access, but generating an Arduino sketch still works offline.

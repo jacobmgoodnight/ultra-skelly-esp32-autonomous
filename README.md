@@ -4,7 +4,7 @@
 
 This is a standalone, hobby-built **BLE client** for the Home Depot 6.5-ft *Ultra Skelly v2*. Power the ESP32 continuously from USB; let Skelly's existing timer handle Skelly's own power. When Skelly becomes available, the ESP32 finds its Bluetooth advertisement and connects. The ESP32 uses Bluetooth rather than freeing Skelly from Bluetooth entirely: the phone is replaced as the BLE controller.
 
-> **Project state (October 2026):** Head and jaw animations, with overlapping movement, were tested successfully on one Ultra Skelly v2. Torso command also worked but is intentionally absent from the main controller. Automatic power-cycle reconnection is implemented but has not been end-to-end verified on every firmware. The standalone eye test also connected immediately after flashing without an ESP32 reboot. **A one-shot ESP32 eye-design change has now been verified on the real prop; scheduled/random eyes still need field testing and remain disabled by default.**
+> **Project state (October 2026):** Head and jaw animations, with overlapping movement, were tested successfully on one Ultra Skelly v2. Torso command also worked but is intentionally absent from the main controller. Automatic power-cycle reconnection is implemented but has not been end-to-end verified on every firmware. The standalone eye test also connected immediately after flashing without an ESP32 reboot. **Both one-shot and randomized ESP32 eye-design changes have now been verified on the real prop!** Eye changes are still OFF by default so new owners can enable them intentionally. It is not yet known whether jaw MP3 playback can override a live eye design.
 
 ## Demo behavior
 
@@ -14,7 +14,7 @@ This is a standalone, hobby-built **BLE client** for the Home Depot 6.5-ft *Ultr
 | Jaw | Plays an uploaded ~20-second MP3 with short, irregular silent-to-the-speaker bursts, every 45–90 sec | Tested on real Skelly |
 | Head + jaw | Independent start-to-start schedules; may overlap | Tested simultaneously |
 | Arm / torso | Not commanded from main firmware | Torso-only command was separately tested |
-| Eye expressions | 18 selectable designs; optional random changes every 2–5 min | **One-shot eye control worked on the real prop.** Random changes with jaw audio still need testing; OFF by default |
+| Eye expressions | 18 selectable eye designs; optional random changes every 2–5 min | **One-shot and randomized eye control both worked on the real prop**; OFF by default |
 | BLE reconnect | Five-second scan; 30-second retry after misses; rescan on disconnect | Implemented in code; power-cycle behavior may vary |
 
 The audio file itself is not completely silent: the *physical volume knob on the prop* can be set to zero while its jaw still reacts to playback. If you want audible audio, leave the knob turned up; if you want silent animation, turn it down as tested. Do not assume setting the software volume to zero works the same way.
@@ -68,11 +68,11 @@ Intervals are **start-to-start**, not waits after each animation. Because a head
 
 ## Skelly Studio — browser-based configurator (beta)
 
-Want to choose randomized movement timing without editing Arduino C++ yourself? Open **[Skelly Studio](studio/index.html)** in the repository or load it from a GitHub Pages deployment: **https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/** (requires enabling GitHub Pages in **Settings → Pages**, source `main` / `/(root)`).
+Want to choose randomized movement timing without editing Arduino C++ yourself? **[Open the Skelly Studio website](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/)** — the homepage opens the configurator. GitHub reported a successful Pages deployment in October 2026.
 
 **GitHub's HTML source viewer shows code, not a running webpage.** To preview immediately before Pages is enabled, click **Code → Download ZIP**, extract it, and open **`studio/index.html`** in your browser. All assets are local to `studio/`.
 
-Studio allows head/jaw timing, optional overlap, BLE-name discovery, verified live eye-command selection (random rotation still needs field testing), multiple stored jaw-file serials, and occasional idle breaks. **The jaw-file pool and idle scheduler are new experimental options.** JavaScript generator tests pass, but generated Arduino variants still require compilation and on-device testing. Your original checked-in firmware remains the known-good baseline.
+Studio allows head/jaw timing, optional overlap, BLE-name discovery, **18 actual eye-design previews and confirmed randomized eye selection**, multiple stored jaw-file serials, and occasional idle breaks. The eye thumbnails are linked from the [community web controller's original images](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), not bundled here. **The jaw-file pool and idle scheduler are new experimental options.** JavaScript generator tests pass, but generated Arduino variants still require compilation and on-device testing. Your original checked-in firmware remains the known-good baseline.
 
 
 - [Assembly, Arduino, and Bluetooth setup](docs/setup.md)
@@ -85,7 +85,7 @@ Studio allows head/jaw timing, optional overlap, BLE-name discovery, verified li
 
 **Verified on one real prop:** BLE connection; service `AE00` and write characteristic `AE01`; head-only packet; torso-only packet in an isolated test; stored MP3 file listing; AAC6 playback of file #12; disabling per-file movement flags (`0x00`) leaves mouth motion; short audio bursts make jaw movements shorter; head and jaw can run concurrently.
 
-**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, scheduled/random eye changes combined with jaw playback, multi-file jaw playback and idle-break scheduling. The isolated live-eye command `AAF9` **has been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
+**Implemented, still needs more field testing:** BLE reconnect after power loss, prolonged unattended stability, whether jaw MP3 playback overrides live eye selection, multi-file jaw playback and idle-break scheduling. **One-shot and randomized eye changes have both been confirmed working from the ESP32**. Community protocol implementations may differ between hardware/firmware versions.
 
 ## Credits and project relationship
 
