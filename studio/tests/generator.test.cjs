@@ -100,13 +100,38 @@ test("Arm and torso input minimums are conservative 45s, not hardcoded 90s/120s"
 test("Default jaw MP3 protects arm/torso from 0x00 playback metadata", () => {
   const protectedSketch=api.generateSketch(sample({torsoEnabled:true,armEnabled:true}));
   assert.match(protectedSketch, /const bool JAW_PROTECTS_ARM_TORSO = true;/);
-  assert.match(protectedSketch, /JAW deferred: waiting for arm\/torso cooldown/);
-  assert.match(protectedSketch, /!blockArmTorsoForJaw/);
+  assert.match(protectedSketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
+  assert.match(protectedSketch, /!blockBodyForJaw/);
   assert.match(protectedSketch, /reached\(jawNow, torsoSafeAfter\)/);
   assert.match(protectedSketch, /reached\(jawNow, armSafeAfter\)/);
   const unprotected=api.generateSketch(sample({jawProtectBody:false}));
   assert.match(unprotected, /const bool JAW_PROTECTS_ARM_TORSO = false;/);
 });
+test("MP3 protection now includes the head, to preserve arm/torso follow-ups", () => {
+  const config=sample({
+    headEnabled:true, jawEnabled:true, armEnabled:true,torsoEnabled:true,
+    jawProtectBody:true,overlap:true,bodyOverlap:false,
+    jawFile:13,jawFollowupMotor:3,jawFollowupRecurring:true
+  });
+  const sketch=api.generateSketch(config);
+  assert.match(sketch, /const bool JAW_PROTECTS_ARM_TORSO = true;/);
+  assert.match(sketch, /!blockBodyForJaw/);
+  assert.match(sketch, /const bool blockBodyForJaw =/);
+  assert.match(sketch, /reached\(jawNow, headSafeAfter\)/);
+  assert.match(sketch, /reached\(jawNow, torsoSafeAfter\)/);
+  assert.match(sketch, /reached\(jawNow, armSafeAfter\)/);
+  assert.match(sketch, /reached\(jawNow, bodySafeAfter\)/);
+  assert.match(sketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
+  assert.match(sketch, /reached\(now, headSafeAfter\) && !blockBodyForJaw/);
+  assert.match(sketch, /JAW-FIRST %s: scheduled/);
+  const sampleSchedule=api.simulateSchedule(config);
+  const head=sampleSchedule.filter(x=>x.kind==="head");
+  const jaw=sampleSchedule.filter(x=>x.kind==="jaw");
+  for(const h of head)for(const j of jaw)
+    assert.ok(h.time + 25 <= j.time || j.time + 21 <= h.time,
+      "Timeline should not imply overlapping head+jaw when protection is on");
+});
+
 test("Jaw-first experiment is disabled by default and sends one selected motor after AAC6", () => {
   const normal=api.generateSketch(sample());
   assert.match(normal, /const uint8_t JAW_FOLLOWUP_MOTOR = 0;/);

@@ -259,7 +259,7 @@
         bodyAvailableAt=ev.time+cooldown;
       }
     }
-    if(!c.overlap&&c.headEnabled&&c.jawEnabled){
+    if((!c.overlap||c.jawProtectBody)&&c.headEnabled&&c.jawEnabled){
       let headUntil=0,jawUntil=0;
       for(const e of events){
         if(e.kind==="head"){e.time=Math.max(e.time,jawUntil);headUntil=e.time+25}
@@ -274,14 +274,14 @@
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.bodyOverlap?"Allowed · experimental":"Serialized · default";
-    byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect arm / torso":"MP3 takes priority"):"Not needed";
+    byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
-    byId("overlapSummary").textContent=c.overlap?"Allowed":"Avoided";
+    byId("overlapSummary").textContent=(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
     byId("selectedEyeCount").textContent=c.eyeChoices.length+" of 18 selected";

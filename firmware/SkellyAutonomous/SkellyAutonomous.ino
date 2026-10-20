@@ -42,9 +42,12 @@ const bool ARM_ENABLED = false;
 // Advanced opt-in only. When true, body motors may run at the same time.
 // This is NOT hardware-verified: test arm+head, then torso+head, then all.
 const bool ALLOW_BODY_MOTOR_OVERLAP = false;
-// AAC6 playback appears to apply saved per-file body flags (0x00), interrupting
-// arm/torso motion. When enabled, defer AAC6 until these motors finish, then
-// prevent new arm/torso starts during the MP3. Head/jaw overlap is separate.
+// AAC6 playback appears to reapply the MP3's saved movement flags (0x00)
+// and can interrupt head, torso or arm motion. With protection ON, finish
+// any current body animation (including head) before starting the MP3, and
+// defer new standalone body moves while AAC6 is due or playing. Verified
+// jaw-first ARM/TORSO follow-ups are allowed as deliberate exceptions.
+// Name retained for compatibility with existing Studio sketches.
 const bool JAW_PROTECTS_ARM_TORSO = true;
 // EXPERIMENTAL: deliberately send AACA AFTER AAC6 playback begins.
 // 0 = disabled (default); 1 = arm; 2 = torso; 3 = alternate when due.
@@ -244,7 +247,7 @@ bool connectToSkelly() {
   Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
     TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
-  Serial.printf("Body motor overlap %s. Jaw body-protection %s.\n",
+  Serial.printf("Body motor overlap %s. Jaw protection (head/arm/torso) %s.\n",
                 ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
   Serial.printf("Jaw-first follow-up: %s after %lu ms (%s).\n",
@@ -533,22 +536,23 @@ void loop() {
   }
   if (!connected) { delay(100); return; }
 
-  // Independently timed head and jaw: they MAY overlap.
-  // Default: global lock serializes body movements. Advanced override allows
-  // independent motors (never two writes at the same instant), unverified.
-  // Per-part cool-down always applies.
-  // Head target may be delayed when torso or arm movement is enabled.
-  // The 45 sec jaw minimum prevents replay before the 20s clip finishes.
+  // Head and jaw may overlap only with MP3 body protection explicitly OFF.
+  // With protection ON, AAC6 must not interrupt an active head/arm/torso
+  // animation. Jaw-first arm/torso follow-ups remain the tested exception.
+  // Physical body motors share one lock by default; independent cooldowns
+  // always apply. Jaw timing targets may be delayed to preserve motor motion.
   bool sentHeadThisLoop = false;
   bool sentBodyThisLoop = false;
   bool sentMouthThisLoop = false;
-  // An AAC6 stored MP3 appears to apply saved movement flags and interrupt an
-  // active arm/torso animation. When configured, give a due jaw clip priority
-  // only once both motors are idle. Head can still overlap jaw independently.
+  // AAC6 playback can interrupt any existing AACA body animation.
+  // If a jaw clip is due or still playing, do not START standalone body
+  // movement. When a head command is already running, defer AAC6 instead.
+  // This prevents the old two-second follow-up from being rejected due to
+  // the head's shared cooldown lock.
   const bool jawReady = mouthConfigured() &&
                         reached(now, nextMouthAt) &&
                         reached(now, mouthSafeAfter);
-  const bool blockArmTorsoForJaw =
+  const bool blockBodyForJaw =
       JAW_PROTECTS_ARM_TORSO &&
       (!reached(now, mouthPlayingUntil) || jawReady);
   // Select the most overdue eligible body command; independent when allowed.
@@ -557,14 +561,14 @@ void loop() {
     uint8_t choice = 0;
     uint32_t overdue = 0;
     if (HEAD_ENABLED && reached(now, nextHeadAt) &&
-        reached(now, headSafeAfter)) {
+        reached(now, headSafeAfter) && !blockBodyForJaw) {
       choice = 1;
       overdue = now - nextHeadAt;
     }
     if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
-        reached(now, torsoSafeAfter) && !blockArmTorsoForJaw &&
+        reached(now, torsoSafeAfter) && !blockBodyForJaw &&
         (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
       choice = 4;
       overdue = now - nextTorsoAt;
@@ -572,7 +576,7 @@ void loop() {
     if (ARM_ENABLED && reached(now, nextArmAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
-        reached(now, armSafeAfter) && !blockArmTorsoForJaw &&
+        reached(now, armSafeAfter) && !blockBodyForJaw &&
         (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
       choice = 2;
     }
@@ -597,14 +601,18 @@ void loop() {
 
   if (mouthConfigured() && reached(millis(), nextMouthAt) &&
       reached(millis(), mouthSafeAfter)) {
-    // Avoid triggering the stored MP3's movement metadata during arm or torso
-    // animation. Wait through the 10-second buffer, then play AAC6 as usual.
+    // Avoid playing an MP3 while any head/torso/arm animation or safety
+    // buffer is active. Previously only arm/torso were checked, so head
+    // kept getting interrupted and the jaw-first follow-up was skipped.
     const uint32_t jawNow = millis();
-    const bool torsoArmReady = reached(jawNow, torsoSafeAfter) &&
-                               reached(jawNow, armSafeAfter);
-    if (JAW_PROTECTS_ARM_TORSO && !torsoArmReady) {
+    const bool bodyMotorsReady = reached(jawNow, headSafeAfter) &&
+                                 reached(jawNow, torsoSafeAfter) &&
+                                 reached(jawNow, armSafeAfter) &&
+                                 (ALLOW_BODY_MOTOR_OVERLAP ||
+                                  reached(jawNow, bodySafeAfter));
+    if (JAW_PROTECTS_ARM_TORSO && !bodyMotorsReady) {
       if (!jawDelayNotified) {
-        Serial.println("JAW deferred: waiting for arm/torso cooldown.");
+        Serial.println("JAW deferred: waiting for head/arm/torso cooldown.");
         jawDelayNotified = true;
       }
     } else {
