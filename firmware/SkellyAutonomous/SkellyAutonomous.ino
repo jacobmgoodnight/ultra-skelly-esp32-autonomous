@@ -47,7 +47,8 @@ const bool ALLOW_BODY_MOTOR_OVERLAP = false;
 // prevent new arm/torso starts during the MP3. Head/jaw overlap is separate.
 const bool JAW_PROTECTS_ARM_TORSO = true;
 // EXPERIMENTAL: deliberately send AACA AFTER AAC6 playback begins.
-// 0 = disabled (default); 1 = arm; 2 = torso. Choose ONE motor at a time.
+// 0 = disabled (default); 1 = arm; 2 = torso; 3 = alternate when due.
+// Mode 3 takes at most one motor per MP3 and requires recurrence in Studio.
 // If AAC6 applies 0x00 movement flags only once at playback start, this may
 // allow jaw + motor together. The reverse (AACA stops jaw) is also possible.
 const uint8_t JAW_FOLLOWUP_MOTOR = 0;
@@ -119,6 +120,8 @@ uint8_t lastEye = 0; // Last successfully requested eye icon.
 bool jawDelayNotified = false;
 bool jawFollowupPending = false;
 bool jawFollowupTestDone = false; // One successful test per BLE connection.
+uint8_t jawFollowupChosenMotor = 0; // Choice for this MP3: 0/1/2.
+uint8_t lastJawFollowupMotor = 0; // Last successfully sent follow-up motor.
 uint32_t jawFollowupAt = 0;
 bool jawEyeStartPending = false;
 bool jawEyeEndPending = false;
@@ -182,6 +185,8 @@ void resetConnection() {
   jawDelayNotified = false;
   jawFollowupPending = false;
   jawFollowupTestDone = false;
+  jawFollowupChosenMotor = 0;
+  lastJawFollowupMotor = 0;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 }
@@ -231,6 +236,8 @@ bool connectToSkelly() {
   jawDelayNotified = false;
   jawFollowupPending = false;
   jawFollowupTestDone = false;
+  jawFollowupChosenMotor = 0;
+  lastJawFollowupMotor = 0;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
@@ -242,7 +249,8 @@ bool connectToSkelly() {
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
   Serial.printf("Jaw-first follow-up: %s after %lu ms (%s).\n",
                 JAW_FOLLOWUP_MOTOR == 1 ? "ARM" :
-                JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" : "OFF",
+                JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" :
+                JAW_FOLLOWUP_MOTOR == 3 ? "ALTERNATING" : "OFF",
                 (unsigned long)JAW_FOLLOWUP_DELAY_MS,
                 JAW_FOLLOWUP_RECURRING ? "RECURRING frequency-gated" : "ONE-SHOT");
   Serial.printf("First head in %lu seconds.\n",
@@ -344,6 +352,26 @@ void startArm(uint32_t now) {
                 (unsigned long)(interval / 1000));
 }
 
+// Select at most one motor after a jaw MP3. In recurring mode each motor
+// must be due by its own randomized start-to-start interval. When both
+// motors are due, prefer the one not selected on the preceding successful
+// jaw-first event. Actual cooldown / body-lock checks happen before sending.
+uint8_t chooseJawFollowupMotor(uint32_t now) {
+  if (JAW_FOLLOWUP_MOTOR == 0) return 0;
+  const bool armDue = ARM_ENABLED &&
+      (!JAW_FOLLOWUP_RECURRING || reached(now, nextArmAt));
+  const bool torsoDue = TORSO_ENABLED &&
+      (!JAW_FOLLOWUP_RECURRING || reached(now, nextTorsoAt));
+  if (JAW_FOLLOWUP_MOTOR == 1) return armDue ? 1 : 0;
+  if (JAW_FOLLOWUP_MOTOR == 2) return torsoDue ? 2 : 0;
+  if (JAW_FOLLOWUP_MOTOR == 3) {
+    if (armDue && torsoDue) return lastJawFollowupMotor == 1 ? 2 : 1;
+    if (armDue) return 1;
+    if (torsoDue) return 2;
+  }
+  return 0;
+}
+
 void startMouth(uint32_t now) {
   // AAC6 payload: 2-byte big-endian file serial, 01 = play,
   // remaining 5 bytes zero, CRC8 calculated automatically.
@@ -362,17 +390,14 @@ void startMouth(uint32_t now) {
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
   // Intentional, one-time jaw-first motor experiment. Cancels any previous
   // pending follow-up if the MP3 starts again (normally >20s apart).
-  const bool dueForRecurring =
-      (JAW_FOLLOWUP_MOTOR == 1 && reached(now, nextArmAt)) ||
-      (JAW_FOLLOWUP_MOTOR == 2 && reached(now, nextTorsoAt));
-  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0 &&
-                       (JAW_FOLLOWUP_RECURRING ? dueForRecurring
-                                               : !jawFollowupTestDone);
+  jawFollowupChosenMotor = chooseJawFollowupMotor(now);
+  jawFollowupPending = jawFollowupChosenMotor != 0 &&
+                       (JAW_FOLLOWUP_RECURRING || !jawFollowupTestDone);
   jawFollowupAt = now + JAW_FOLLOWUP_DELAY_MS;
   if (jawFollowupPending) {
     Serial.printf("JAW-FIRST %s: scheduled %s %lu ms after MP3 start.\n",
                   JAW_FOLLOWUP_RECURRING ? "RECURRING" : "ONE-SHOT",
-                  JAW_FOLLOWUP_MOTOR == 1 ? "ARM" : "TORSO",
+                  jawFollowupChosenMotor == 1 ? "ARM" : "TORSO",
                   (unsigned long)JAW_FOLLOWUP_DELAY_MS);
   }
   mouthSafeAfter = mouthPlayingUntil + MOUTH_BUFFER_MS;
@@ -472,8 +497,8 @@ void loop() {
     jawFollowupPending = false;
     const uint32_t t = millis();
     const bool clipActive = !reached(t, mouthPlayingUntil);
-    const bool armSelected = (JAW_FOLLOWUP_MOTOR == 1);
-    const bool torsoSelected = (JAW_FOLLOWUP_MOTOR == 2);
+    const bool armSelected = (jawFollowupChosenMotor == 1);
+    const bool torsoSelected = (jawFollowupChosenMotor == 2);
     const bool selectedEnabled = (armSelected && ARM_ENABLED) ||
                                  (torsoSelected && TORSO_ENABLED);
     const bool motorReady = (armSelected && reached(t, armSafeAfter)) ||
@@ -489,11 +514,17 @@ void loop() {
     } else if (armSelected) {
       Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
-      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
+      if (connected) {
+        lastJawFollowupMotor = 1;
+        if (!JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
+      }
     } else if (torsoSelected) {
       Serial.println("JAW-FIRST: sending TORSO after MP3 start (experimental).");
       startTorso(t);
-      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
+      if (connected) {
+        lastJawFollowupMotor = 2;
+        if (!JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
+      }
     }
   }
   if (!connected) { delay(100); return; }
@@ -527,14 +558,16 @@ void loop() {
       overdue = now - nextHeadAt;
     }
     if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
-        !(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 2) &&
+        !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 ||
+                                    JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, torsoSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextTorsoAt) > overdue)) {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
     if (ARM_ENABLED && reached(now, nextArmAt) &&
-        !(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 1) &&
+        !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 ||
+                                    JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, armSafeAfter) && !blockArmTorsoForJaw &&
         (choice == 0 || (uint32_t)(now - nextArmAt) > overdue)) {
       choice = 2;
