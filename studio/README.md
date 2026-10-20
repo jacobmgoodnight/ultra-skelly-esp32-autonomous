@@ -56,3 +56,9 @@ Studio's per-part **torso and arm minimum start intervals are now 45 seconds**, 
 ## Experimental jaw-first motor reaction
 
 Skelly Studio now offers **Jaw first → Arm or Torso** with a selectable **1–10-second delay** (default 2 s), initially **OFF**. It sends one `AACA` arm or torso command after the `AAC6` jaw MP3 starts, testing whether command order allows simultaneous mouth and body movement. **The initial implementation permits only one successful follow-up per BLE connection**, so the arm/torso doesn't follow every jaw clip regardless of its normal frequency. A skipped attempt may retry on the next jaw clip. The selected motor must be enabled; the action is skipped if it is still cooling down or blocked by the body lock. The existing **Protect arm + torso from jaw MP3** mode stays enabled for normal scheduling; jaw-first explicitly allows a one-time exception *after* playback begins. The result is **not yet physically verified**. See the step-by-step [jaw-first experiment](../docs/jaw-first-experiment.md).
+
+## Jaw-first overlap verified; recurring mode newly available
+
+On the original Ultra Skelly v2, starting the jaw MP3 then sending an arm `AACA` command **2 seconds afterward** let the jaw maintain its three-second hold while both arm motions finished (~22 seconds). Torso started after jaw also worked. These particular overlaps are physically **verified**.
+
+Studio's new **Repeat when the selected motor's own random interval is due** switch is OFF by default. When enabled, the arm or torso stops firing on its independent timer and instead waits for the next jaw MP3 **after its random interval has elapsed**, starting the motor after the chosen delay. Not every MP3 will trigger a motor. The new recurrence mode needs extended testing, especially if additional body motors or head overlap are enabled.
