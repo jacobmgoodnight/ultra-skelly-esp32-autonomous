@@ -72,3 +72,11 @@ When the experimental head/arm/torso body-motor overlap was enabled, those body 
 To test the hypothesis, a new option **Protect arm + torso from jaw MP3** postpones AAC6 until both body animations and safety buffers finish, then pauses new arm/torso commands until jaw audio finishes. Head/jaw overlap remains separately controlled. The protection algorithm is experimental and needs on-device validation.
 
 Previous Studio minimums of **90 seconds torso** and **120 seconds arm** were conservative user-interface restrictions while physical movement was unverified. They were not BLE-protocol limits. New minima are **45 seconds** for each part (vs measured ~25 seconds torso +10 s buffer and 22 seconds arm +10 s buffer). Frequent repetition increases motor duty cycle; use longer intervals for unattended displays.
+
+## October 20 — jaw-first body overlap physically confirmed
+
+The user tested **AAC6 jaw MP3 first, then AACA arm 2 seconds later** using jaw clip **#13**. The three-second jaw hold stayed open and both arm movements completed (~22 seconds). The separate jaw-first **torso** test also worked. This is the first on-device confirmation of simultaneous jaw+arm and jaw+torso action in this project. It does not prove simultaneous **head+torso+arm**, which remains a separate test.
+
+The posted serial logs contained repeated `JAW-FIRST: scheduled` lines, matching the **earlier** prototype build; the corrected one-shot firmware prints `JAW-FIRST ONE-SHOT: scheduled`. A successful one-shot in that newer build is limited to one per BLE connection.
+
+A new optional **recurring jaw-first** mode now coordinates the selected arm/torso with the next jaw clip **only when its configured random interval is due**. Unlike the proven one-shot sequence, this longer-running scheduler still needs field testing. See [jaw-first testing guide](jaw-first-experiment.md).

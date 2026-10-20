@@ -118,3 +118,9 @@ Studio now defaults to **Protect arm + torso from jaw MP3**, which delays jaw pl
 ### Experimental jaw-first arm/torso reaction
 
 A new, opt-in **Jaw first → arm or torso** experiment sends one body-motor `AACA` command after the `AAC6` mouth MP3 has already begun (default delay: **2 seconds**, configurable 1–10). The goal is to test whether reversing command order avoids the observed interruption of body motors by stored MP3 playback. Both the successful simultaneous behavior **and** the possibility of the jaw stopping remain unverified. The default is OFF; a successful jaw-first motor test fires **only once per BLE connection**, rather than triggering the motor with every MP3, and does not alter the existing proven head and jaw behavior. Read the [jaw-first test guide](docs/jaw-first-experiment.md).
+
+### Jaw-first overlap: confirmed, recurring mode available
+
+**October 20, 2026:** Starting the jaw MP3 first and sending the arm command **2 seconds later** allowed the **three-second jaw hold** to continue while the arm completed both movements (~22 seconds). Repeating the experiment with the torso also worked. This validates **jaw+arm and jaw+torso overlap**, not every possible simultaneous body-motor combination. The apparent MP3 interruption when sent second may reflect saved per-file movement metadata, but Skelly's internal priority behavior isn't proven.
+
+Studio now offers two *Jaw first* modes: **one-shot** (one successful motor follow-up per BLE connection) and **opt-in recurring** (selected arm or torso only fires after a jaw clip when that motor's own random interval has elapsed). The recurring timing logic still needs extended real-device testing. See the [jaw-first experiment and results](docs/jaw-first-experiment.md).
