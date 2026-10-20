@@ -198,6 +198,42 @@ test("Alternating jaw-first respects independent motor due times and remembers p
   assert.match(sketch, /JAW_FOLLOWUP_MOTOR == 3\)\) &&/);
 });
 
+test("Jaw-first HEAD uses the verified command format but stays opt-in and one-shot by default", () => {
+  const config=sample({
+    headEnabled:true,torsoEnabled:false,armEnabled:false,
+    jawEnabled:true,jawFile:13,jawProtectBody:true,
+    jawFollowupMotor:4,jawFollowupDelaySec:2,jawFollowupRecurring:false
+  });
+  const sketch=api.generateSketch(config);
+  assert.match(sketch, /const uint8_t JAW_FOLLOWUP_MOTOR = 4;/);
+  assert.match(sketch, /const bool JAW_FOLLOWUP_RECURRING = false;/);
+  assert.match(sketch, /JAW_FOLLOWUP_MOTOR == 4 \? "HEAD \(EXPERIMENTAL\)"/);
+  assert.match(sketch, /if \(JAW_FOLLOWUP_MOTOR == 4\) return headDue \? 4 : 0;/);
+  assert.match(sketch, /jawFollowupChosenMotor == 4/);
+  assert.match(sketch, /JAW-FIRST: sending HEAD after MP3 start \(UNTESTED\)/);
+  assert.match(sketch, /startHead\(t\);/);
+  assert.match(sketch, /JAW_FOLLOWUP_RECURRING \|\| !jawFollowupTestDone/);
+  assert.match(sketch, /headSelected && reached\(t, headSafeAfter\)/);
+  assert.match(sketch, /const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;/);
+  assert.match(sketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
+  assert.throws(() => api.generateSketch(sample({
+    headEnabled:false,jawEnabled:true,jawFollowupMotor:4
+  })),/Enable the head switch/);
+  assert.equal(api.DEFAULTS.jawFollowupMotor,0);
+  assert.notEqual(api.PRESETS.haunted.jawFollowupMotor,4);
+});
+test("Recurring head-followup suppresses independent head dispatch and keeps normal head due intervals",()=>{
+  const sketch=api.generateSketch(sample({
+    headEnabled:true,jawEnabled:true,
+    jawFollowupMotor:4,jawFollowupRecurring:true,headMin:90,headMax:150
+  }));
+  assert.match(sketch,/const bool JAW_FOLLOWUP_RECURRING = true;/);
+  assert.match(sketch,/const uint32_t HEAD_MIN_INTERVAL_MS = 90000;/);
+  assert.match(sketch,/const uint32_t HEAD_MAX_INTERVAL_MS = 150000;/);
+  assert.match(sketch,/JAW_FOLLOWUP_MOTOR == 4 &&/);
+  assert.match(sketch,/JAW_FOLLOWUP_RECURRING \|\| !jawFollowupTestDone/);
+});
+
 test("Jaw-first validates motor enable and sensible delay", () => {
   assert.throws(() => api.generateSketch(sample({jawFollowupMotor:1})), /Enable the arm switch/);
   assert.throws(() => api.generateSketch(sample({jawFollowupMotor:2})), /Enable the torso switch/);
