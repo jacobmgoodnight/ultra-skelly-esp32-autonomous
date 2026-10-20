@@ -14,6 +14,8 @@ const cases = {
   HauntedWithBothMotors: {torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,headMin:32,headMax:45,jawMin:30,jawMax:60},
   BodyMotorOverlapExperimental: {torsoEnabled:true,armEnabled:true,bodyOverlap:true,eyesEnabled:true},
   FastMotorJawProtected: {torsoEnabled:true,torsoMin:45,torsoMax:60,armEnabled:true,armMin:45,armMax:60,bodyOverlap:true,jawEnabled:true,jawProtectBody:true},
+  JawFirstArmTwoSeconds: {headEnabled:false,torsoEnabled:false,armEnabled:true,jawEnabled:true,jawFile:13,jawFollowupMotor:1,jawFollowupDelaySec:2,jawProtectBody:true},
+  JawFirstTorsoFourSeconds: {headEnabled:false,torsoEnabled:true,armEnabled:false,jawEnabled:true,jawFile:14,jawFollowupMotor:2,jawFollowupDelaySec:4,jawProtectBody:true},
   FastMotorJawUnprotected: {torsoEnabled:true,torsoMin:45,torsoMax:60,armEnabled:true,armMin:45,armMax:60,bodyOverlap:true,jawEnabled:true,jawProtectBody:false},
   ArmOnlyVerified: {headEnabled:false,jawEnabled:false,eyesEnabled:false,torsoEnabled:false,armEnabled:true,armMin:360,armMax:720},
   SubtleHeadOnly: {...generator.PRESETS.subtle},

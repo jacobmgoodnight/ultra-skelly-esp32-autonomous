@@ -52,6 +52,17 @@
         </div>
       </div>
       <div class="overlap-row"><div><strong>Protect arm + torso from jaw MP3 <span class="experimental">RECOMMENDED</span></strong><p>MP3 playback appears to apply saved movement flags 0x00, interrupting active arm and torso actions. Wait until they finish before starting a jaw clip, and postpone new arm/torso actions while jaw playback is active. Head/jaw overlap keeps its own switch. Jaw events may start later than their target.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Delay jaw MP3 until arm and torso movements finish</span></label></div>
+      <div class="eye-sync-control" style="margin:18px 0">
+        <label for="jawFollowupMotor"><strong>Jaw first → arm or torso <span class="experimental">EXPERIMENTAL</span></strong></label>
+        <select id="jawFollowupMotor" aria-describedby="jawFollowupHelp">
+          <option value="0" selected>Off — use normal scheduling</option>
+          <option value="1">Start arm after jaw MP3 begins</option>
+          <option value="2">Start torso after jaw MP3 begins</option>
+        </select>
+        <label for="jawFollowupDelaySec">Delay after MP3 starts (seconds)</label>
+        <input id="jawFollowupDelaySec" type="number" min="1" max="10" step="1" value="2" aria-label="Delay between jaw audio and arm or torso command in seconds">
+        <p id="jawFollowupHelp">Tests whether AAC6 applies movement flags only when audio begins. Sends one AACA arm/torso command after the delay, while the MP3 is still playing. It may also interrupt the jaw instead. The selected motor must be enabled; if busy or cooling down the reaction is skipped, not forced. Start with head OFF and only one body motor ON. <a href="../docs/jaw-first-experiment.md">Test instructions</a>.</p>
+      </div>
       <div class="overlap-row"><div><strong>Allow body motor overlap <span class="experimental">ADVANCED / UNTESTED</span></strong><p>Allow head, torso and arm animations to run at the same time. Each still has its own cooldown, and commands are spaced by 600 ms. OFF in all presets until combinations are tested.</p></div><label class="switch"><input type="checkbox" id="bodyOverlap"><span></span><span class="sr-only">Allow simultaneous body motor movements (advanced and experimental)</span></label></div>
       <div class="overlap-row"><div><strong>Allow head + jaw together</strong><p>When enabled, each animation keeps its own schedule. Verified on a real Skelly.</p></div><label class="switch"><input type="checkbox" id="overlap" checked><span></span><span class="sr-only">Allow head and jaw overlap</span></label></div>
     </section>
@@ -97,7 +108,7 @@
   <aside class="output">
     <div class="panel output-panel">
       <span class="eyebrow">YOUR GENERATED CONTROLLER</span><h2>Ready for the haunting?</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div></div>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST EXPERIMENT</span><strong id="jawFollowupSummary">Off</strong></div></div>
       <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
       <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
       <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>

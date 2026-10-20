@@ -107,6 +107,36 @@ test("Default jaw MP3 protects arm/torso from 0x00 playback metadata", () => {
   const unprotected=api.generateSketch(sample({jawProtectBody:false}));
   assert.match(unprotected, /const bool JAW_PROTECTS_ARM_TORSO = false;/);
 });
+test("Jaw-first experiment is disabled by default and sends one selected motor after AAC6", () => {
+  const normal=api.generateSketch(sample());
+  assert.match(normal, /const uint8_t JAW_FOLLOWUP_MOTOR = 0;/);
+  assert.match(normal, /const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;/);
+  const arm=api.generateSketch(sample({
+    jawEnabled:true,armEnabled:true,jawFollowupMotor:1,jawFollowupDelaySec:2,
+    headEnabled:false,torsoEnabled:false
+  }));
+  assert.match(arm, /const uint8_t JAW_FOLLOWUP_MOTOR = 1;/);
+  assert.match(arm, /jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0;/);
+  assert.match(arm, /jawFollowupAt = now \+ JAW_FOLLOWUP_DELAY_MS;/);
+  assert.match(arm, /JAW-FIRST: sending ARM after MP3 start/);
+  assert.match(arm, /startArm\(t\);/);
+  assert.match(arm, /const bool clipActive = !reached\(t, mouthPlayingUntil\);/);
+  const torso=api.generateSketch(sample({
+    jawEnabled:true,torsoEnabled:true,jawFollowupMotor:2,jawFollowupDelaySec:4,
+    headEnabled:false,armEnabled:false
+  }));
+  assert.match(torso, /const uint8_t JAW_FOLLOWUP_MOTOR = 2;/);
+  assert.match(torso, /const uint32_t JAW_FOLLOWUP_DELAY_MS = 4000;/);
+  assert.match(torso, /JAW-FIRST: sending TORSO after MP3 start/);
+  assert.match(torso, /startTorso\(t\);/);
+});
+test("Jaw-first validates motor enable and sensible delay", () => {
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:1})), /Enable the arm switch/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:2})), /Enable the torso switch/);
+  assert.throws(() => api.generateSketch(sample({jawEnabled:false,jawFollowupMotor:1,armEnabled:true})), /Enable silent jaw playback/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupMotor:3})), /jaw-first response/);
+  assert.throws(() => api.generateSketch(sample({jawFollowupDelaySec:0})), /whole number/);
+});
 test("Subtle deliberately disables silent jaw by default", () => {
   assert.equal(api.PRESETS.subtle.jawEnabled, false);
   const sketch=api.generateSketch(sample({...api.PRESETS.subtle}));

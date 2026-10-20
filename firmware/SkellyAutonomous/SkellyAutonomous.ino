@@ -46,6 +46,12 @@ const bool ALLOW_BODY_MOTOR_OVERLAP = false;
 // arm/torso motion. When enabled, defer AAC6 until these motors finish, then
 // prevent new arm/torso starts during the MP3. Head/jaw overlap is separate.
 const bool JAW_PROTECTS_ARM_TORSO = true;
+// EXPERIMENTAL: deliberately send AACA AFTER AAC6 playback begins.
+// 0 = disabled (default); 1 = arm; 2 = torso. Choose ONE motor at a time.
+// If AAC6 applies 0x00 movement flags only once at playback start, this may
+// allow jaw + motor together. The reverse (AACA stops jaw) is also possible.
+const uint8_t JAW_FOLLOWUP_MOTOR = 0;
+const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;
 const uint32_t BODY_WRITE_SPACING_MS = 600;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
@@ -106,6 +112,8 @@ uint32_t mouthPlayingUntil = 0;
 uint32_t nextEyeAt = 0;
 uint8_t lastEye = 0; // Last successfully requested eye icon.
 bool jawDelayNotified = false;
+bool jawFollowupPending = false;
+uint32_t jawFollowupAt = 0;
 bool jawEyeStartPending = false;
 bool jawEyeEndPending = false;
 uint32_t jawEyeStartAt = 0;
@@ -166,6 +174,7 @@ void resetConnection() {
   if (client != nullptr && client->isConnected()) client->disconnect();
   nextScanAt = millis(); // Re-scan immediately after power-off.
   jawDelayNotified = false;
+  jawFollowupPending = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 }
@@ -213,6 +222,7 @@ bool connectToSkelly() {
   if (EYES_ENABLED) nextEyeAt = now + 2000;
   lastEye = 0;
   jawDelayNotified = false;
+  jawFollowupPending = false;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
@@ -222,6 +232,10 @@ bool connectToSkelly() {
   Serial.printf("Body motor overlap %s. Jaw body-protection %s.\n",
                 ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
+  Serial.printf("Jaw-first follow-up: %s after %lu ms (EXPERIMENTAL).\n",
+                JAW_FOLLOWUP_MOTOR == 1 ? "ARM" :
+                JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" : "OFF",
+                (unsigned long)JAW_FOLLOWUP_DELAY_MS);
   Serial.printf("First head in %lu seconds.\n",
                 (unsigned long)((nextHeadAt - now) / 1000));
   if (mouthConfigured()) {
@@ -337,6 +351,15 @@ void startMouth(uint32_t now) {
   }
   jawDelayNotified = false;
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
+  // Intentional, one-time jaw-first motor experiment. Cancels any previous
+  // pending follow-up if the MP3 starts again (normally >20s apart).
+  jawFollowupPending = JAW_FOLLOWUP_MOTOR != 0;
+  jawFollowupAt = now + JAW_FOLLOWUP_DELAY_MS;
+  if (jawFollowupPending) {
+    Serial.printf("JAW-FIRST: scheduled %s %lu ms after MP3 start.\n",
+                  JAW_FOLLOWUP_MOTOR == 1 ? "ARM" : "TORSO",
+                  (unsigned long)JAW_FOLLOWUP_DELAY_MS);
+  }
   mouthSafeAfter = mouthPlayingUntil + MOUTH_BUFFER_MS;
   // Stored MP3 metadata may change the eyes. Schedule an AAF9 correction,
   // without interrupting AAC6 audio or issuing any new motor commands.
@@ -420,6 +443,38 @@ void loop() {
       jawEyeEndPending = false;
       if (lastEye != 0) sendEyeIcon(lastEye, "restored after jaw ends");
       delay(250);
+    }
+  }
+  if (!connected) { delay(100); return; }
+
+  // A controlled jaw-FIRST experiment: AAC6 plays, then one AACA motor packet.
+  // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
+  // selected motor only; all ordinary scheduled arm/torso commands stay blocked
+  // while the MP3 is active. Do not retry a skipped follow-up automatically.
+  if (connected && jawFollowupPending && reached(millis(), jawFollowupAt)) {
+    jawFollowupPending = false;
+    const uint32_t t = millis();
+    const bool clipActive = !reached(t, mouthPlayingUntil);
+    const bool armSelected = (JAW_FOLLOWUP_MOTOR == 1);
+    const bool torsoSelected = (JAW_FOLLOWUP_MOTOR == 2);
+    const bool selectedEnabled = (armSelected && ARM_ENABLED) ||
+                                 (torsoSelected && TORSO_ENABLED);
+    const bool motorReady = (armSelected && reached(t, armSafeAfter)) ||
+                            (torsoSelected && reached(t, torsoSafeAfter));
+    const bool lockReady = ALLOW_BODY_MOTOR_OVERLAP ||
+                           reached(t, bodySafeAfter);
+    if (!clipActive) {
+      Serial.println("JAW-FIRST: skipped; MP3 is no longer active.");
+    } else if (!selectedEnabled) {
+      Serial.println("JAW-FIRST: skipped; selected motor is OFF.");
+    } else if (!motorReady || !lockReady || !reached(t, nextBodyWriteAt)) {
+      Serial.println("JAW-FIRST: skipped; motor cooldown or body lock active.");
+    } else if (armSelected) {
+      Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
+      startArm(t);
+    } else if (torsoSelected) {
+      Serial.println("JAW-FIRST: sending TORSO after MP3 start (experimental).");
+      startTorso(t);
     }
   }
   if (!connected) { delay(100); return; }

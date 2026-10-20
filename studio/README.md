@@ -51,3 +51,8 @@ The original test device confirmed **3-second jaw holds** from the Long Open and
 **Protect arm + torso from jaw MP3** now defaults **ON**. It delays AAC6 playback until active arm/torso motions and their cooldowns end, and pauses new arm/torso starts during the MP3. Head/jaw overlap is controlled separately. Choose OFF only to experiment with MP3-overlapping-body behavior. The new priority scheduling remains hardware-experimental.
 
 Studio's per-part **torso and arm minimum start intervals are now 45 seconds**, reduced from the original conservative 90/120 seconds. Torso needs ~25 seconds to animate plus 10 seconds buffer; arm needs ~22 seconds plus 10 seconds buffer. These are **not minimums imposed by Bluetooth or Skelly itself**. Preset timing remains less frequent for motor longevity.
+
+
+## Experimental jaw-first motor reaction
+
+Skelly Studio now offers **Jaw first → Arm or Torso** with a selectable **1–10-second delay** (default 2 s), initially **OFF**. It sends one `AACA` arm or torso command after the `AAC6` jaw MP3 starts, testing whether command order allows simultaneous mouth and body movement. The selected motor must be enabled; the action is skipped if it is still cooling down or blocked by the body lock. The existing **Protect arm + torso from jaw MP3** mode stays enabled for normal scheduling; jaw-first explicitly allows a one-time exception *after* playback begins. The result is **not yet physically verified**. See the step-by-step [jaw-first experiment](../docs/jaw-first-experiment.md).
