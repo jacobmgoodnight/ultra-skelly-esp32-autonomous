@@ -197,6 +197,7 @@ bool sendVariableFrame(uint8_t *packet, size_t length) {
 bool sendFrame(uint8_t packet[11]) {
   return sendVariableFrame(packet, 11);
 }
+void resetConnection(); // Arduino prototype: light/body writes may trigger reconnect.
 void queueLightSequence(uint32_t now, uint32_t delayMs) {
   if (!LIGHTS_ENABLED) return;
   lightApplyStep = 0;
