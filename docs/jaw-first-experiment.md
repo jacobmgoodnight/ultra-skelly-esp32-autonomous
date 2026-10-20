@@ -1,10 +1,10 @@
 # Experiment: start the arm or torso AFTER jaw audio starts
 
-**Status: experimental / physical outcome unknown.** During earlier testing, issuing an AAC6 jaw-MP3 play command while a head/arm/torso `AACA` animation was already running appeared to interrupt arm or torso movement. That suggests command order matters, but it does **not prove** that the MP3 movement metadata is the cause.
+**Status (October 20, 2026): Jaw-first overlap CONFIRMED on the original Ultra Skelly v2 for both arm and torso.** The user observed the sustained three-second jaw hold continue uninterrupted while the arm completed both movements (~22 seconds). The torso-and-jaw combination also worked. The reverse ordering (arm/torso first, then AAC6) appeared to interrupt body movement. This supports command-order sensitivity but doesn't prove how Skelly's internal MP3 movement flags are processed. Recurring synchronization is a separate new feature and needs an extended test.
 
-## Hypothesis
+## Working command-order explanation
 
-If the stored MP3 applies its saved body-movement flags (`0x00`) at the instant playback begins, sending a new `AA CA 02` (arm) or `AA CA 04` (torso) command **2 seconds later** might start that motor without interrupting continued jaw response. It is also possible that `AACA` interrupts jaw playback instead, or that Skelly supports only one animation owner at a time.
+The observed behavior is consistent with a stored MP3 applying its saved body-movement flags (`0x00`) when playback starts. Sending a new `AA CA 02` (arm) or `AA CA 04` (torso) **2 seconds later** let the mouth and selected motor move together. The exact device-firmware priority rules remain unknown.
 
 The controller now offers **Jaw first → arm or torso**, disabled by default:
 
@@ -13,9 +13,18 @@ The controller now offers **Jaw first → arm or torso**, disabled by default:
 - `JAW_FOLLOWUP_MOTOR = 2`: send **torso** after the jaw MP3 starts.
 - `JAW_FOLLOWUP_DELAY_MS = 2000`: configurable between **1 and 10 seconds** in Studio.
 
-The extra `AACA` packet is sent **only once successfully per BLE connection** during the first eligible MP3 playback, after the delay, if the selected body motor is enabled, out of its own cooldown, and not blocked by the global body-motor lock. A skipped attempt is **logged** and may be tried on the next MP3; a successful attempt sets a one-shot guard so the arm doesn't inadvertently move every 45–90 seconds with the jaw. Reconnect/reset allows a new experimental attempt. It does not bypass motor safety margins or start both arm and torso simultaneously.
+**Two scheduling modes are available:**
+
+- **One-shot (default):** Send one successful follow-up per BLE connection; a skipped attempt can retry on a later MP3. Reconnect/reset allows another trial.
+- **Recurring (opt-in, unverified over long runs):** The chosen arm/torso movement **waits for its normal randomized interval** instead of firing independently. When due, it attaches to the next MP3 and starts after the configured delay. It does *not* follow every jaw clip. After sending, the usual next arm/torso random interval is set.
+
+Both modes check that the motor is enabled, the MP3 is still active, the per-motor cooldown has ended and the shared motor lock permits the action. A skipped attempt is logged; there is no forced retry during that MP3. Neither mode sends both arm and torso as one follow-up.
 
 The existing **Protect arm + torso from jaw MP3** mode remains ON by default: it avoids starting MP3 playback in the middle of an arm/torso animation. Jaw-first follow-up is a deliberate exception allowing one motor command *after* playback has already started.
+
+## Verified test result
+
+The original tester used **jaw file #13** (Long Open). With **Head OFF**, **Arm ON**, **Torso OFF**, **Jaw ON**, and a 2-second jaw-first delay, the jaw held open during the planned 2–5 second interval, and the arm completed both movements (~22 seconds). A separate test with **Torso ON**, **Arm OFF** also confirmed jaw-plus-torso overlap. The serial logs show two follow-up events on successive MP3s, using the **older test build** with the message `JAW-FIRST: scheduled`; the newer one-shot build says `JAW-FIRST ONE-SHOT: scheduled`. Thus the repeated sends do not establish a one-shot regression.
 
 ## Suggested first test (arm, clear view)
 
@@ -41,6 +50,6 @@ With **Head OFF**, **Arm OFF**, **Torso ON**, choose **Jaw first → Start torso
 | Both stop or restart | Another device-specific animation priority interaction is possible |
 | Follow-up skipped in serial log | Motor wasn't enabled, wasn't off cooldown, or was blocked by body lock; not a BLE protocol verdict |
 
-**Do not mark concurrent jaw/body commands verified until physical observation confirms both motions keep going**. A complete `AAC6` or `AACA` BLE write is not proof of simultaneous animation. For unattended use, turn jaw-first OFF until reliable.
+**Concurrent jaw+arm and jaw+torso motion has now been physically verified on the original Skelly.** A complete `AAC6` or `AACA` BLE write alone would not have established that; the observation does. Longer unattended reliability, head-plus-body combinations, and recurring interval coordination still need testing.
 
 This experiment leaves the file's **saved head, arm and torso movement flags at 0x00**. Do not change the MP3 metadata merely to force simultaneous motor animations.
