@@ -60,7 +60,7 @@ void setup() {
   const uint32_t SCAN_RETRY_DELAY_MS = 10000;
   for (uint8_t attempt = 1; attempt <= MAX_SCAN_ATTEMPTS && !foundDevice;
        ++attempt) {
-    Serial.printf("Scanning 5 seconds... attempt %u/%u\\n",
+    Serial.printf("Scanning 5 seconds... attempt %u/%u\n",
                   attempt, MAX_SCAN_ATTEMPTS);
     scanner->start(5, false); // Synchronous: connection AFTER scan returns.
     Serial.println("Scan finished.");
