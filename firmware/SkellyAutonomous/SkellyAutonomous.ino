@@ -42,6 +42,13 @@ const bool ARM_ENABLED = false;
 // Advanced opt-in only. When true, body motors may run at the same time.
 // This is NOT hardware-verified: test arm+head, then torso+head, then all.
 const bool ALLOW_BODY_MOTOR_OVERLAP = false;
+// Opt-in coordinated body motions: send ONE tested AACA mask, not several
+// competing AACA packets. This mode replaces standalone body scheduling.
+// Each mask must contain only motors switched ON below.
+const bool COMPOUND_BODY_ENABLED = false;
+const uint8_t COMPOUND_BODY_MASKS[] = {0x03, 0x05, 0x06, 0x07};
+const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = 180000;
+const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 360000;
 // AAC6 playback appears to reapply the MP3's saved movement flags (0x00)
 // and can interrupt head, torso or arm motion. With protection ON, finish
 // any current body animation (including head) before starting the MP3, and
@@ -63,6 +70,20 @@ const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;
 // periodic coordination is NEW and needs extended hardware testing.
 const bool JAW_FOLLOWUP_RECURRING = false;
 const uint32_t BODY_WRITE_SPACING_MS = 600;
+
+// Live lighting from the community controller: 0 = TORSO, 1 = HEAD LIGHT.
+// Channel 1 is NOT independently verified as the mouth LEDs.
+// Use F2 static mode, F3 brightness and F4 RGB (13-byte write).
+// Off by default; MP3s may restore their SAVED per-file lighting.
+const bool LIGHTS_ENABLED = false;
+const uint8_t TORSO_LIGHT_R = 255, TORSO_LIGHT_G = 0, TORSO_LIGHT_B = 0;
+const uint8_t HEAD_LIGHT_R = 255, HEAD_LIGHT_G = 96, HEAD_LIGHT_B = 0;
+const uint8_t TORSO_LIGHT_BRIGHTNESS = 180;
+const uint8_t HEAD_LIGHT_BRIGHTNESS = 180;
+// 0: apply once after connection; 1: also restore AFTER an MP3 (conservative);
+// 2: restore 3s into MP3 and again after MP3 (experimental).
+const uint8_t LIGHT_RESTORE_MODE = 1;
+const uint32_t LIGHT_WRITE_SPACING_MS = 300;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
 const uint32_t TORSO_MIN_INTERVAL_MS = 240000;
@@ -112,6 +133,13 @@ uint32_t headSafeAfter = 0;
 uint32_t headMovingUntil = 0;
 uint32_t bodySafeAfter = 0; // Global lock used when overlap is disabled.
 uint32_t nextBodyWriteAt = 0; // Spacing between motor BLE writes, even with overlap.
+uint32_t nextCompoundAt = 0;
+uint32_t compoundSafeAfter = 0;
+uint32_t nextLightWriteAt = 0;
+uint32_t lightRestoreAt = 0;
+bool lightRestorePending = false;
+bool lightApplyPending = false;
+uint8_t lightApplyStep = 0;
 uint32_t torsoSafeAfter = 0;
 uint32_t armSafeAfter = 0;
 uint32_t nextTorsoAt = 0;
@@ -157,14 +185,107 @@ uint8_t skellyCRC(const uint8_t *data, size_t length) {
   return crc;
 }
 
-bool sendFrame(uint8_t packet[11]) {
+bool sendVariableFrame(uint8_t *packet, size_t length) {
   if (!connected || client == nullptr || !client->isConnected() ||
-      writeChar == nullptr) {
+      writeChar == nullptr || length < 4 || length > 13) {
     return false;
   }
-  packet[10] = skellyCRC(packet, 10);
-  writeChar->writeValue(packet, 11, false); // WRITE_NR
+  packet[length - 1] = skellyCRC(packet, length - 1);
+  writeChar->writeValue(packet, length, false); // WRITE_NR
   return client->isConnected();
+}
+bool sendFrame(uint8_t packet[11]) {
+  return sendVariableFrame(packet, 11);
+}
+void queueLightSequence(uint32_t now, uint32_t delayMs) {
+  if (!LIGHTS_ENABLED) return;
+  lightApplyStep = 0;
+  lightApplyPending = true;
+  nextLightWriteAt = now + delayMs;
+}
+// Upstream live F2/F3/F4 layout (zero cluster, empty filename).
+// We send 6 writes in order: torso F2/F3/F4, then head F2/F3/F4.
+// Each write is spaced; don't assume a successful BLE write verifies LEDs.
+void progressLights(uint32_t now) {
+  if (!LIGHTS_ENABLED || !lightApplyPending ||
+      !reached(now, nextLightWriteAt) || !reached(now, nextBodyWriteAt) ||
+      (jawFollowupPending && !reached(now, jawFollowupAt))) return;
+  const uint8_t channel = lightApplyStep >= 3 ? 1 : 0;
+  const uint8_t stage = lightApplyStep % 3;
+  const uint8_t brightness = channel ? HEAD_LIGHT_BRIGHTNESS : TORSO_LIGHT_BRIGHTNESS;
+  const uint8_t r = channel ? HEAD_LIGHT_R : TORSO_LIGHT_R;
+  const uint8_t g = channel ? HEAD_LIGHT_G : TORSO_LIGHT_G;
+  const uint8_t b = channel ? HEAD_LIGHT_B : TORSO_LIGHT_B;
+  bool ok = false;
+  if (stage == 0) {
+    // F2 static mode: community live-mode implementation uses 8 payload
+    // bytes for torso ch0, 9 for head ch1.
+    uint8_t frame[12] = {0xAA, 0xF2, channel, 0x01, 0, 0, 0, 0, 0, 0, 0, 0};
+    ok = sendVariableFrame(frame, channel ? 12 : 11);
+  } else if (stage == 1) {
+    uint8_t frame[11] = {0xAA, 0xF3, channel, brightness, 0, 0, 0, 0, 0, 0, 0};
+    ok = sendFrame(frame);
+  } else {
+    // F4: channel + RGB + cycle=0 + cluster=00000000 + empty filename=00
+    uint8_t frame[13] = {0xAA, 0xF4, channel, r, g, b, 0, 0, 0, 0, 0, 0, 0};
+    ok = sendVariableFrame(frame, 13);
+  }
+  if (!ok) {
+    Serial.println("LIGHTS: BLE write failed; reconnecting.");
+    resetConnection();
+    return;
+  }
+  Serial.printf("LIGHTS: ch%u %s sent (visual effect unverified).\n",
+                channel, stage == 0 ? "static" : stage == 1 ? "brightness" : "RGB");
+  ++lightApplyStep;
+  nextLightWriteAt = now + LIGHT_WRITE_SPACING_MS;
+  if (lightApplyStep >= 6) lightApplyPending = false;
+}
+void startCompoundBody(uint32_t now) {
+  const size_t maskCount = sizeof(COMPOUND_BODY_MASKS) / sizeof(COMPOUND_BODY_MASKS[0]);
+  if (!maskCount) return;
+  const uint8_t mask = COMPOUND_BODY_MASKS[random(maskCount)];
+  const uint8_t enabled = (HEAD_ENABLED ? 1 : 0) | (ARM_ENABLED ? 2 : 0) |
+                          (TORSO_ENABLED ? 4 : 0);
+  if (mask < 3 || mask > 7 || (mask & ~enabled) != 0 ||
+      ((mask & (mask - 1)) == 0)) {
+    Serial.println("COMPOUND: invalid mask or motor disabled; skipping.");
+    nextCompoundAt = now + COMPOUND_BODY_MAX_INTERVAL_MS;
+    return;
+  }
+  uint8_t frame[11] = {0xAA, 0xCA, mask, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!sendFrame(frame)) {
+    Serial.println("COMPOUND: send failed.");
+    resetConnection();
+    return;
+  }
+  // All selected motors start TOGETHER in one BLE request. Lock conservatively
+  // until the slowest one finishes AND its safety buffer expires.
+  uint32_t duration = 0;
+  if (mask & 1) {
+    headMovingUntil = now + HEAD_ANIMATION_MS;
+    headSafeAfter = now + HEAD_ANIMATION_MS + HEAD_BUFFER_MS;
+    duration = max(duration, HEAD_ANIMATION_MS + HEAD_BUFFER_MS);
+    nextHeadAt = now + random(HEAD_MIN_INTERVAL_MS, HEAD_MAX_INTERVAL_MS + 1);
+  }
+  if (mask & 2) {
+    armSafeAfter = now + ARM_ANIMATION_MS + ARM_BUFFER_MS;
+    duration = max(duration, ARM_ANIMATION_MS + ARM_BUFFER_MS);
+    nextArmAt = now + random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
+  }
+  if (mask & 4) {
+    torsoSafeAfter = now + TORSO_ANIMATION_MS + TORSO_BUFFER_MS;
+    duration = max(duration, TORSO_ANIMATION_MS + TORSO_BUFFER_MS);
+    nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
+  }
+  bodySafeAfter = now + duration;
+  compoundSafeAfter = bodySafeAfter;
+  nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
+  nextCompoundAt = now + random(COMPOUND_BODY_MIN_INTERVAL_MS,
+                                COMPOUND_BODY_MAX_INTERVAL_MS + 1);
+  Serial.printf("COMPOUND mask 0x%02X SENT; locked %lu sec; next target %lu sec.\n",
+                mask, (unsigned long)(duration / 1000),
+                (unsigned long)((nextCompoundAt - now) / 1000));
 }
 
 class SkellyScanCallbacks : public BLEAdvertisedDeviceCallbacks {
@@ -193,6 +314,8 @@ void resetConnection() {
   lastJawFollowupMotor = 0;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
+  lightApplyPending = false;
+  lightRestorePending = false;
 }
 
 bool connectToSkelly() {
@@ -226,6 +349,12 @@ bool connectToSkelly() {
   headMovingUntil = now;
   bodySafeAfter = now;
   nextBodyWriteAt = now;
+  compoundSafeAfter = now;
+  nextCompoundAt = now + random(COMPOUND_BODY_MIN_INTERVAL_MS,
+                                COMPOUND_BODY_MAX_INTERVAL_MS + 1);
+  lightRestorePending = false;
+  lightApplyPending = false;
+  queueLightSequence(now, 1500);
   torsoSafeAfter = now;
   armSafeAfter = now;
   nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
@@ -248,6 +377,9 @@ bool connectToSkelly() {
   Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
     TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
+  Serial.printf("Compound body mode %s; live RGB lights %s (restore mode %u).\n",
+                COMPOUND_BODY_ENABLED ? "ON" : "OFF",
+                LIGHTS_ENABLED ? "ON" : "OFF", (unsigned)LIGHT_RESTORE_MODE);
   Serial.printf("Body motor overlap %s. Jaw protection (head/arm/torso) %s.\n",
                 ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
@@ -400,6 +532,11 @@ void startMouth(uint32_t now) {
   }
   jawDelayNotified = false;
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
+  if (LIGHTS_ENABLED && LIGHT_RESTORE_MODE != 0) {
+    lightRestoreAt = mouthPlayingUntil + 500;
+    lightRestorePending = true;
+    if (LIGHT_RESTORE_MODE == 2) queueLightSequence(now, 3000);
+  }
   // Choose one motor for this MP3, if one-shot or random-frequency-gated
   // coordination is due. New playback replaces an unserved pending event.
   jawFollowupChosenMotor = chooseJawFollowupMotor(now);
@@ -499,6 +636,14 @@ void loop() {
     }
   }
   if (!connected) { delay(100); return; }
+  if (LIGHTS_ENABLED) {
+    if (lightRestorePending && reached(millis(), lightRestoreAt)) {
+      lightRestorePending = false;
+      queueLightSequence(millis(), 100);
+    }
+    progressLights(millis());
+  }
+  if (!connected) { delay(100); return; }
 
   // Jaw-first motor command: AAC6 plays before one selected AACA frame.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
@@ -574,9 +719,16 @@ void loop() {
   // Select the most overdue eligible body command; independent when allowed.
   if (reached(now, nextBodyWriteAt) &&
       (ALLOW_BODY_MOTOR_OVERLAP || reached(now, bodySafeAfter))) {
+    if (COMPOUND_BODY_ENABLED && reached(now, nextCompoundAt) &&
+        reached(now, compoundSafeAfter) && !blockBodyForJaw &&
+        reached(now, headSafeAfter) && reached(now, armSafeAfter) &&
+        reached(now, torsoSafeAfter)) {
+      startCompoundBody(now);
+      sentBodyThisLoop = true;
+    }
     uint8_t choice = 0;
     uint32_t overdue = 0;
-    if (HEAD_ENABLED && reached(now, nextHeadAt) &&
+    if (!COMPOUND_BODY_ENABLED && HEAD_ENABLED && reached(now, nextHeadAt) &&
         // In head-first diagnostic mode, don't let a standalone HEAD
         // preempt the one-shot trial; recurring mode always coordinates it.
         !(JAW_FOLLOWUP_MOTOR == 4 &&
@@ -585,7 +737,7 @@ void loop() {
       choice = 1;
       overdue = now - nextHeadAt;
     }
-    if (TORSO_ENABLED && reached(now, nextTorsoAt) &&
+    if (!COMPOUND_BODY_ENABLED && TORSO_ENABLED && reached(now, nextTorsoAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, torsoSafeAfter) && !blockBodyForJaw &&
@@ -593,7 +745,7 @@ void loop() {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
-    if (ARM_ENABLED && reached(now, nextArmAt) &&
+    if (!COMPOUND_BODY_ENABLED && ARM_ENABLED && reached(now, nextArmAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, armSafeAfter) && !blockBodyForJaw &&
