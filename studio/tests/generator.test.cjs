@@ -120,7 +120,7 @@ test("Jaw-first experiment is disabled by default and sends one selected motor a
   assert.match(arm, /jawFollowupPending = jawFollowupChosenMotor != 0 &&/);
   assert.match(arm, /jawFollowupChosenMotor = chooseJawFollowupMotor\(now\);/);
   assert.match(arm, /bool jawFollowupTestDone = false;/);
-  assert.match(arm, /if \(connected && !JAW_FOLLOWUP_RECURRING\) jawFollowupTestDone = true;/);
+  assert.match(arm, /if \(!JAW_FOLLOWUP_RECURRING\) jawFollowupTestDone = true;/);
   assert.match(arm, /jawFollowupAt = now \+ JAW_FOLLOWUP_DELAY_MS;/);
   assert.match(arm, /JAW-FIRST: sending ARM after MP3 start/);
   assert.match(arm, /startArm\(t\);/);
@@ -142,7 +142,7 @@ test("Recurring jaw-first coordinates to the motor's configured interval", () =>
   }));
   assert.match(arm, /const bool JAW_FOLLOWUP_RECURRING = true;/);
   assert.match(arm, /if \(JAW_FOLLOWUP_MOTOR == 1\) return armDue \? 1 : 0;/);
-  assert.match(arm, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 1\)/);
+  assert.match(arm, /JAW_FOLLOWUP_MOTOR == 1 \|\|/);
   assert.match(arm, /JAW-FIRST %s: scheduled/);
   assert.match(arm, /JAW_FOLLOWUP_RECURRING \? "RECURRING" : "ONE-SHOT"/);
   assert.match(arm, /const uint32_t ARM_MIN_INTERVAL_MS = 180000;/);
@@ -153,7 +153,7 @@ test("Recurring jaw-first coordinates to the motor's configured interval", () =>
   }));
   assert.match(torso, /const bool JAW_FOLLOWUP_RECURRING = true;/);
   assert.match(torso, /if \(JAW_FOLLOWUP_MOTOR == 2\) return torsoDue \? 2 : 0;/);
-  assert.match(torso, /!\(JAW_FOLLOWUP_RECURRING && JAW_FOLLOWUP_MOTOR == 2\)/);
+  assert.match(torso, /JAW_FOLLOWUP_MOTOR == 2 \|\|/);
   assert.match(torso, /const uint32_t TORSO_MIN_INTERVAL_MS = 120000;/);
 });
 test("Alternating jaw-first respects independent motor due times and remembers previous selection", () => {
