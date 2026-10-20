@@ -53,7 +53,7 @@
       </div>
       <div class="overlap-row"><div><strong>Protect arm + torso from jaw MP3 <span class="experimental">RECOMMENDED</span></strong><p>MP3 playback appears to apply saved movement flags 0x00, interrupting active arm and torso actions. Wait until they finish before starting a jaw clip, and postpone new arm/torso actions while jaw playback is active. Head/jaw overlap keeps its own switch. Jaw events may start later than their target.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Delay jaw MP3 until arm and torso movements finish</span></label></div>
       <div class="eye-sync-control" style="margin:18px 0">
-        <label for="jawFollowupMotor"><strong>Jaw first → arm or torso <span class="experimental">EXPERIMENTAL</span></strong></label>
+        <label for="jawFollowupMotor"><strong>Jaw first → arm or torso <span class="experimental">OVERLAP VERIFIED</span></strong></label>
         <select id="jawFollowupMotor" aria-describedby="jawFollowupHelp">
           <option value="0" selected>Off — use normal scheduling</option>
           <option value="1">Start arm after jaw MP3 begins</option>
