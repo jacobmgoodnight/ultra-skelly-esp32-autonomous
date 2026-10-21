@@ -15,6 +15,7 @@ From the repository root with Node, Python and a C++17 compiler:
 node --check studio/app.js
 node --check studio/template.js
 node scripts/sync-template.cjs --check
+node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
 python tests/test_packets.py
 python tests/run_firmware_tests.py
@@ -49,6 +50,10 @@ Get-ChildItem .skelly-build -Directory | ForEach-Object {
 On Bash use the guarded loop in `.github/workflows/studio-checks.yml`. Generated
 files and native test output are ignored under `.skelly-build/`. After changing
 canonical firmware, run `node scripts/sync-template.cjs` before checks/export.
+After changing Studio JavaScript, CSS or the embedded template, run
+`node scripts/version-studio-assets.cjs` to refresh the HTML's content-based
+asset URLs. This prevents returning visitors from reusing an older generator or
+stylesheet with a new page; all three files remain local and work offline.
 
 ## Reference hardware test: isolate jaw and RGB, no body motors
 
