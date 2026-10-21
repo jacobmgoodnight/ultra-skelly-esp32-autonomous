@@ -7,6 +7,7 @@ on:
       - "tests/**"
       - "scripts/**"
       - "experiments/BodyComboSingleTest/**"
+      - "experiments/SerialIdleTest/**"
       - ".github/workflows/studio-checks.yml"
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - "tests/**"
       - "scripts/**"
       - "experiments/BodyComboSingleTest/**"
+      - "experiments/SerialIdleTest/**"
       - ".github/workflows/studio-checks.yml"
 permissions:
   contents: read
@@ -59,3 +61,5 @@ jobs:
       - name: Compile isolated compound motor test (HEAD+ARM first)
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
+      - name: Compile serial-only idle diagnostic
+        run: arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest

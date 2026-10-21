@@ -14,22 +14,34 @@ sources = {
         encoding="utf-8"),
 }
 harness = (ROOT / "tests/firmware_harness.cpp").read_text(encoding="utf-8")
-failed = False
-for name, mode in ((name, mode) for name in sources for mode in (0, 1, 2)):
-    source = sources[name]
-    directory = ROOT / ".skelly-build/host" / f"{name}Mode{mode}"
+
+
+def build_and_run(directory, source, assertions, label):
     directory.mkdir(parents=True, exist_ok=True)
-    configured = source.replace("const bool LIGHTS_ENABLED = false;", "const bool LIGHTS_ENABLED = true;")
-    configured = configured.replace("const bool HEAD_ENABLED = true;", "const bool HEAD_ENABLED = false;")
-    configured = configured.replace("const uint8_t LIGHT_RESTORE_MODE = 1;", f"const uint8_t LIGHT_RESTORE_MODE = {mode};")
     unit = directory / "test.cpp"
-    unit.write_text('#include <stdexcept>\n#include "Arduino.h"\n' + configured + harness, encoding="utf-8")
+    unit.write_text('#include <stdexcept>\n#include "Arduino.h"\n' + source + assertions, encoding="utf-8")
     exe = directory / ("test.exe" if os.name == "nt" else "test")
     if Path(compiler).stem.lower() == "cl":
         args = [compiler, "/nologo", "/std:c++17", "/EHsc", f"/I{ROOT / 'tests/stubs'}", str(unit), f"/Fe:{exe}", f"/Fo:{directory / 'test.obj'}"]
     else:
         args = [compiler, "-std=c++17", "-Wall", "-Wextra", "-I", str(ROOT / "tests/stubs"), str(unit), "-o", str(exe)]
     subprocess.run(args, check=True)
-    print(f"{name} RESTORE MODE {mode}", flush=True)
-    failed |= subprocess.run([str(exe)], check=False).returncode != 0
+    print(label, flush=True)
+    return subprocess.run([str(exe)], check=False).returncode != 0
+
+
+failed = False
+for name, mode in ((name, mode) for name in sources for mode in (0, 1, 2)):
+    source = sources[name]
+    directory = ROOT / ".skelly-build/host" / f"{name}Mode{mode}"
+    configured = source.replace("const bool LIGHTS_ENABLED = false;", "const bool LIGHTS_ENABLED = true;")
+    configured = configured.replace("const bool HEAD_ENABLED = true;", "const bool HEAD_ENABLED = false;")
+    configured = configured.replace("const uint8_t LIGHT_RESTORE_MODE = 1;", f"const uint8_t LIGHT_RESTORE_MODE = {mode};")
+    failed |= build_and_run(directory, configured, harness, f"{name} RESTORE MODE {mode}")
+failed |= build_and_run(
+    ROOT / ".skelly-build/host/SerialIdle",
+    (ROOT / "experiments/SerialIdleTest/SerialIdleTest.ino").read_text(encoding="utf-8"),
+    (ROOT / "tests/serial_idle_harness.cpp").read_text(encoding="utf-8"),
+    "Serial-only idle diagnostic",
+)
 raise SystemExit(1 if failed else 0)

@@ -29,7 +29,8 @@ the current status. A transport success alone does not verify an actuator.
 | Post-MP3 RGB restoration (mode 1) | Verified | October 21: user confirms both red body and green head return after MP3 #13; isolated jaw/lighting setup, four cycles logged |
 | During + after restoration (mode 2) | Untested | Experimental, OFF unless selected |
 | Channel 1 is specifically mouth LEDs | Untested | Protocol labels it Head Light; exact LED region needs mapping |
-| Garbled serial output around jaw/restore | Verified | October 21 pasted log has 64 replacement characters on each affected line; original UART bytes and cause unknown |
+| Garbled serial output around jaw/restore | Verified | October 21: persists with lighting OFF; two affected lines across three logged MP3 requests, each with 64 replacement characters; original UART bytes and cause unknown |
+| Serial-only idle diagnostic | Software-only | Core 3.3.12 compile and native cadence/wrap checks pass; attended UART/USB/monitor comparison untested |
 | New restoration guards, failure handling, timing/wrap tests | Software-only | Executed actual C++ with mocked BLE/time; not hardware proof |
 | Automatic power-cycle reconnect / many reconnects | Untested | Retries implemented; full lifecycle and heap endurance not established |
 | Idle breaks, multiple-file pool integration | Untested | Generated/compiled, no new physical evidence |

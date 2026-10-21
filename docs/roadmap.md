@@ -9,9 +9,10 @@ both chosen colors after MP3 #13 in the isolated jaw/lighting setup. The cause o
 serial corruption remains unknown; mode 2 and motor integration remain unverified.
 
 1. Isolate the persistent serial corruption using the comparison procedure in
-   [the testing guide](testing.md). The four-clip log shows no reported BLE write
-   failures or mid-session reconnects, steady connected heap, and exactly 64
-   Unicode replacement characters on each corrupted line. Obtain original byte
+   [the testing guide](testing.md). Corruption persists in the lighting-OFF
+   three-clip log, without reported write failures or mid-session reconnects and
+   with steady connected heap. Run the [serial-only idle test](serial-idle-test.md)
+   next. Affected lines contain exactly 64 Unicode replacement characters. Obtain original byte
    capture before assigning a UART/USB/monitor cause. Exact head LED mapping and
    physical restoration timing are still not independently measured.
 2. Investigate AE02 playback notifications independently: upstream parses BBC6

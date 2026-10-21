@@ -263,3 +263,29 @@ must not be described as proof of a 64-byte USB/UART failure.
 Next isolate capture/serial behavior with the same conservative no-body-motor
 configuration; do not change lighting restoration timing or enable mode 2 solely
 to address corrupted text. See the comparison steps in [testing](testing.md).
+
+## October 21, 2026 — lighting OFF still produces corrupted serial text
+
+The user uploaded the same isolated diagnostic with only `LIGHTS_ENABLED=false`.
+The log confirms jaw file #13 every 60 seconds; head, arm, torso motion, eyes,
+compound and follow-ups OFF. No F2/F3/F4 requests appear, and all light queue
+flags remain zero. Three MP3 starts appear at 160,641, 220,697 and 280,755 ms;
+modeled ends follow each at +21,033 ms. The second and third transmit lines begin
+with exactly **64 U+FFFD replacement characters**, followed by readable text.
+Thus RGB restoration writes are **not required** for this symptom. BLE and MP3
+remain active in this run; their involvement is not established or excluded.
+
+Connection recovered automatically from two connection failures and one missed
+scan, succeeding on scan 4 / connection attempt 3 at 100,596 ms. During the
+connected excerpt, counters remain 4/3, reported write failures stay zero and
+accepted writes reach three. Free heap remains **142,540 bytes**; minimum heap
+settles at **140,512 bytes** after the first MP3 request and stays there. Uptime
+continues without a logged new BOOT or mid-session reconnect. These are serial
+observations, not a new physical jaw result or proof of a fault-free system.
+
+The next [serial-only idle diagnostic](serial-idle-test.md) uses the same bounded
+formatter and UART print path with 60-second cycles and a second burst 21 seconds
+later. It initializes no BLE and sends no prop commands. It compiles with core
+3.3.12; native tests verify four-cycle cadence, completion, ASCII patterns and
+millis wrap. Its physical serial result remains **Untested**. The canonical
+controller, generator and feature defaults are unchanged by this experiment.

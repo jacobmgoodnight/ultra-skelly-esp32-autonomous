@@ -15,6 +15,7 @@ node studio/tests/export-samples.cjs
 arduino-cli core list
 arduino-cli compile --fqbn esp32:esp32:esp32 firmware/SkellyAutonomous
 arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
+arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest
 ```
 
 Use Arduino-ESP32 **3.3.12**, board **ESP32 Dev Module**, not the newest core by
@@ -95,7 +96,7 @@ restore sequences are logged, with no reported BLE write failures or mid-session
 reconnects and stable connected heap. Serial text corruption persists. The
 [experiment entry](experiments.md) separates physical observations from log timing.
 
-For the next comparison, copy the tested diagnostic sketch and change **only**
+For the lighting-OFF comparison, copy the tested diagnostic sketch and change **only**
 `LIGHTS_ENABLED` to `false`. Keep jaw #13 every 60 seconds, verbose diagnostics ON,
 and every body motor/eye/follow-up/compound/rest option OFF. Keep Serial Monitor at
 115200 baud and observe four clips. Saved purple colors are expected in this
@@ -104,6 +105,14 @@ comparison; this run is testing serial output, not color restoration.
 - If garbling remains, RGB F2/F3/F4 writes are not required to trigger it.
 - If it disappears, that narrows the comparison but does not by itself prove a
   lighting-packet or firmware fault.
+
+**Result:** the subsequent lighting-OFF log contains three MP3 requests and two
+corrupted lines, each with 64 replacement characters. No RGB writes appear;
+connected heap remains 142,540 bytes, with no reported write failures or
+mid-session reset/reconnect. RGB writes are therefore not required to reproduce
+the symptom. The next attended test is the [serial-only idle sketch](serial-idle-test.md),
+which sends no prop commands and reproduces the long pauses between log bursts.
+Its hardware result is still untested.
 
 Keep the same firmware and settings when comparing a second serial terminal with
 the Arduino monitor closed. Save original received bytes if possible, together
