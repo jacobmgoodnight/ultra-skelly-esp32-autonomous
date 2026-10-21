@@ -26,10 +26,12 @@ Live colors are **OFF by default**. When enabled, the controller applies torso a
 | Restore mode | Behavior | First-test recommendation |
 | --- | --- | --- |
 | At connection only (0) | Set custom lighting once | Test without jaw MP3 first |
-| After MP3 ends (1) | Reapply both channels ~500 ms after the modeled ~21-second clip ends | **Recommended initial MP3 test** |
+| After estimated MP3 end (1) | Queue both channels 500 ms after the modeled 21-second clip ends, then wait 100 ms before the first write | **Recommended initial MP3 test** |
 | During and after MP3 (2) | Reapply ~3 sec after AAC6 begins **and again** when audio ends | Experimental; could interfere with playback or movements |
 
-A jaw MP3 may reapply its **saved lighting metadata**, just as it has been observed to change stored eye/movement settings. **The color reset itself is a hypothesis, not yet verified on this ESP32 test.** Restore mode 1 means any unwanted MP3 colors could remain visible during the ~21-second clip. If so, test the more aggressive mode 2 only under supervision. Sending the live commands successfully does **not** establish that the chosen LEDs actually changed.
+**October 21 physical result:** the user observed green head and red body initially, purple on both during MP3 #13, and confirmed that **both return to red/green after playback in mode 1**. Body motors, eyes, compound mode and jaw-first follow-ups were OFF. The log contains four playback/restore cycles; each six-write sequence completed 23.499 s after the AAC6 request. These are logged write times, not measured physical LED transition times. Mode 1 intentionally permits saved MP3 colors during playback. Mode 2 and lighting integration with body motors remain unverified. Serial corruption persists and is investigated separately in the [experiment log](experiments.md).
+
+The controller still estimates playback duration using `MOUTH_CLIP_MS`; it does not subscribe to a playback-ended notification. A new MP3 waits for final restoration and all six writes. Partial older work is canceled when a new clip begins in modes 1/2, and disconnect cancels pending work. Verbose diagnostics are OFF by default. Follow the [isolated lighting/serial test](testing.md) before adding motors or trying mode 2.
 
 For isolation, first use **Head, arm, torso, jaw and eyes OFF**, enable **Live RGB lighting**, and observe which LEDs respond on channels 0 and 1. Next turn jaw #13 ON to observe whether playback changes the colors. Only after lighting and MP3 have been checked separately, enable the compound motor scheduler.
 

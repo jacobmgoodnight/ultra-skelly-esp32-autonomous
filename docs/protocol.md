@@ -17,9 +17,9 @@ Known test vectors:
 | Intent | Request | Status |
 | --- | --- | --- |
 | Head | `AA CA 01 00 00 00 00 00 00 00 51` | **Confirmed** (~25-second animation) |
-| Torso | `AA CA 04 00 00 00 00 00 00 00 07` | **Confirmed** (~25 seconds); not used in main firmware |
+| Torso | `AA CA 04 00 00 00 00 00 00 00 07` | **Confirmed** (~25 seconds); optional, OFF by default |
 | File 12 play | `AA C6 00 0C 01 00 00 00 00 00 DF` | **Confirmed** and received `BBC6` playing/stopped acknowledgments |
-| Eye icon 2 (live) | `AA F9 02 00 00 00 00 00 00 00 [CRC]` | **Derived from upstream; not yet tested on ESP32** |
+| Eye icon 2 (live) | `AA F9 02 00 00 00 00 00 00 00 [CRC]` | **Confirmed:** one-shot and randomized live eye changes |
 
 Movement selector flags from upstream: `0x01` head, `0x02` arm, `0x04` torso, `0xFF` all. When editing an audio file, setting saved movements to **`0x00`** disabled head/arm/torso but did **not** disable the jaw responding to that audio.
 
@@ -29,7 +29,7 @@ For playback `AAC6`: payload = two-byte big-endian file serial, byte `0x01` for 
 
 The upstream controller's [app-modular.js](https://github.com/martinecker/SkellyUltraWebController/blob/main/app-modular.js) uses eye ID 1–18, 4-byte *zero* cluster, empty filename marker/length (`00`), and CRC to change eyes in **live** mode. This differs from per-file eye metadata editing, which targets a specific file cluster/name. This repository's firmware sends exactly one 11-byte live eye frame at a time.
 
-**Caution:** This is based on upstream source reading, not an independently confirmed on-device observation. Test `experiments/EyeSingleTest` before opting in.
+**Physical evidence:** one-shot and randomized live eye changes worked on the original prop. Test `experiments/EyeSingleTest` for a different device; restoration after MP3 remains unconfirmed.
 
 ## Further upstream references
 
@@ -54,12 +54,12 @@ On October 20, 2026 the individual `AA CA 02` arm command was verified: **two ar
 
 The jaw-first HEAD experiment (`AAC6` file #13, then `AA CA 01` two seconds later) was physically unsuccessful on **two** runs despite successful-looking BLE writes; ordinary head motion worked independently. Jaw-first ARM and TORSO *did* move with the mouth. Do not infer physical motor success from `sendFrame` logging.
 
-The community web controller's live movement grid **combines selected bits**: `0x01` head, `0x02` arm, `0x04` torso, and a special `0xFF` ALL value. Combined masks `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso) and `0x07` (all three) are therefore protocol-grounded requests, **not** confirmed concurrent physical animations. They are implemented only in an [isolated one-shot test](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino), not in the default autonomous scheduler.
+The community web controller's live movement grid **combines selected bits**: `0x01` head, `0x02` arm, `0x04` torso, and a special `0xFF` ALL value. Combined masks `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso) and `0x07` (all three) are protocol-grounded requests. All four were subsequently physically verified (see below). The opt-in recurring compound scheduler is implemented but not field-verified.
 
 
 ## Physically tested multi-motor AACA mask and head/MP3 arbitration
 
-In the October 20 tests, `AA CA 03 00 00 00 00 00 00 00 D7` (movement mask `0x03 = HEAD + ARM`) **physically moved both requested body parts**, with no MP3 playing. Torso remained still as expected because `0x04` was not set. This directly validates a combined movement **bitmask**, not every possible motor combination. Mask `0x05` (head+torso) was subsequently physically verified: both moved from a single `AA CA 05 00 00 00 00 00 00 00 44` packet. Masks `0x06` (arm+torso) and `0x07` (all three) remain unverified.
+In the October 20 tests, `AA CA 03 00 00 00 00 00 00 00 D7` (movement mask `0x03 = HEAD + ARM`) **physically moved both requested body parts**, with no MP3 playing. Torso remained still as expected because `0x04` was not set. This directly validates a combined movement **bitmask**, not every possible motor combination. Mask `0x05` (head+torso) was subsequently physically verified: both moved from a single `AA CA 05 00 00 00 00 00 00 00 44` packet. Masks `0x06` (arm+torso) and `0x07` (all three) were subsequently verified too; see the final result below.
 
 In contrast, head command `AA CA 01` during ongoing jaw MP3 #13 playback, at both **2-second and 10-second** offsets, was transmitted but **did not physically move the head**. This suggests an MP3-specific suppression/arbitration effect, not a limitation of all combined body-motor commands. Exact firmware internals are unknown.
 
@@ -68,11 +68,24 @@ In contrast, head command `AA CA 01` during ongoing jaw MP3 #13 playback, at bot
 
 October 20 physical tests established that **one AACA command can activate multiple body motors** using the combined bitfield. `0x03` activated HEAD+ARM, `0x05` activated HEAD+TORSO, `0x06` activated ARM+TORSO, and **`0x07` activated HEAD+ARM+TORSO**. The latter two were confirmed after the original `0x03` and `0x05` tests. The individual completion durations were not recorded for the combination tests; the observation validates simultaneous activation rather than long-term endurance.
 
-The AACA 0x07 command was `AA CA 07 00 00 00 00 00 00 00 C2`. These physical results are **independent of AAC6 jaw playback**, which wasn't used for the combined-mask tests. The main autonomous controller still uses individual head/arm/torso commands unless and until a separate opt-in compound scheduling mode is implemented.
+The AACA 0x07 command was `AA CA 07 00 00 00 00 00 00 00 C2`. These physical results are **independent of AAC6 jaw playback**, which wasn't used for the combined-mask tests. The main autonomous controller uses individual head/arm/torso commands by default; the separate opt-in compound scheduler is implemented and still needs an extended field test.
 
 
 ## New experimental live RGB channel commands
 
 The upstream Skelly profile identifies two live lighting channels: `0x00` **Torso Light** and `0x01` **Head Light**. The latter may illuminate the mouth but has not been physically mapped on this user's device. The live-mode commands use tags `AAF2` (static effect mode 1), `AAF3` (brightness 0–255), and `AAF4` (RGB + color cycle OFF). Based on the upstream `app-modular.js`, the RGB request is **13 bytes** (two-byte tag + ten-byte payload + CRC8) and the shorter brightness request is **11 bytes**. F2 static-mode request size depends on the channel as implemented by the upstream code (11 bytes for channel 0; 12 bytes for channel 1).
 
-The new firmware can reapply both live colors after AAC6 playback or, experimentally, during and after it. MP3s may reapply saved per-file light settings but the actual reset and correction behavior is not yet physically verified with these new ESP32 writes. These live commands are **not enabled** in the base sketch. See [setup/testing guide](compound-body-and-lighting.md).
+The new firmware can reapply both live colors after AAC6 playback or, experimentally, during and after it. Both initial live colors and MP3 #13 resetting them to saved colors were physically observed. October 21: mode 1 correction was visually confirmed for both red body and green head after file #13, with all body motors and eyes OFF. Mode 2 and lighting/motor integration remain unverified. The client currently uses a 21-second duration estimate plus 500 ms grace and does not subscribe to AE02 playback status. These live commands are **not enabled** in the base sketch. See [setup/testing guide](compound-body-and-lighting.md).
+
+## Playback status and transport limits
+
+The upstream `js/protocol-parser.js` parses BBC6 as a two-byte file serial, a
+playing flag and a duration. This does not establish that every Skelly sends an
+unsolicited natural-EOF stop notification. Before using it to shorten safety
+locks or trigger restoration, capture real frames, verify CRC/length and
+file identity, and test missing/duplicate/out-of-order notifications. Keep a
+conservative duration fallback. No such subscription is added in the diagnostic PR.
+
+Arduino-ESP32 3.3.12 `BLERemoteCharacteristic::writeValue` returns a bool even for
+WRITE_NR. The firmware now checks it and connection state; an accepted request
+still does not confirm a motor, light, or audio response on the prop.

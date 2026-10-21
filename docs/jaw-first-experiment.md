@@ -1,5 +1,10 @@
 # Experiment: start the arm or torso AFTER jaw audio starts
 
+**Current status:** arm/torso pairings are physically verified; recurring
+alternating dispatch has an approximately 30-minute serial-log result. HEAD
+after jaw failed physically at 2 and 10 seconds. Earlier descriptions below
+record the progression of testing; consult the [current matrix](hardware-verification.md).
+
 **Status (October 20, 2026): Jaw-first overlap CONFIRMED on the original Ultra Skelly v2 for both arm and torso.** The user observed the sustained three-second jaw hold continue uninterrupted while the arm completed both movements (~22 seconds). The torso-and-jaw combination also worked. The reverse ordering (arm/torso first, then AAC6) appeared to interrupt body movement. This supports command-order sensitivity but doesn't prove how Skelly's internal MP3 movement flags are processed. Recurring synchronization is a separate new feature and needs an extended test.
 
 ## Working command-order explanation
