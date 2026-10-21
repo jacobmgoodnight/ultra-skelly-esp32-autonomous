@@ -16,6 +16,8 @@ arduino-cli core list
 arduino-cli compile --fqbn esp32:esp32:esp32 firmware/SkellyAutonomous
 arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
 arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest
+node scripts/export-attended-tests.cjs
+python scripts/compile-attended-tests.py
 ```
 
 Use Arduino-ESP32 **3.3.12**, board **ESP32 Dev Module**, not the newest core by
@@ -90,6 +92,11 @@ integration steps after the visual restoration result is known.
 
 
 ## October 21 result and next serial isolation test
+
+Ready-to-upload sketches, per-test settings and observation cards are provided
+by the [attended test pack](attended-test-pack.md). Begin with Test01_JawSerial;
+the pack uses this owner's confirmed clip serials and keeps body motors OFF
+until the combined routine tests. Recreate it with the export command above.
 
 The user confirmed both colors return after MP3 #13 in mode 1. Four complete
 restore sequences are logged, with no reported BLE write failures or mid-session

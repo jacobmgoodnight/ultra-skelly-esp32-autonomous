@@ -63,3 +63,7 @@ jobs:
           arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
       - name: Compile serial-only idle diagnostic
         run: arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest
+      - name: Export and compile attended hardware test pack
+        run: |
+          node scripts/export-attended-tests.cjs
+          python scripts/compile-attended-tests.py
