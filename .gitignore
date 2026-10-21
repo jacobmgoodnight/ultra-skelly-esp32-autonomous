@@ -7,3 +7,5 @@ build/
 .vscode/
 .DS_Store
 Thumbs.db
+.skelly-build/
+__pycache__/

@@ -85,7 +85,7 @@
     </section>
     <section class="panel">
       <div class="section-head"><div><span class="step">03</span><h2>Torso and head/mouth lighting <span class="experimental">LIVE RGB TESTING</span></h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
-      <p class="small-description">The community controller identifies channel 0 as <strong>Torso Light</strong> and channel 1 as <strong>Head Light</strong> (possibly the mouth illumination). The exact physical LEDs affected and MP3 reset behavior need testing. Settings are OFF by default.</p>
+      <p class="small-description">Live colors changed successfully on the test prop. Jaw MP3 playback then restored its saved torso/head colors. Restoration afterward still needs visual confirmation. Channel 1 is <strong>Head Light</strong>; its exact LED region needs mapping. Settings are OFF by default.</p>
       <div class="eye-sync-control">
         <div class="field-row">
           <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
@@ -98,10 +98,12 @@
         <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
         <select id="lightRestoreMode">
           <option value="0">Apply colors at connection only</option>
-          <option value="1" selected>Restore after MP3 ends (safer first test)</option>
+          <option value="1" selected>Restore after estimated MP3 end (first test)</option>
           <option value="2">Restore during and after MP3 (experimental)</option>
         </select>
-        <p>Each update sends static mode (F2), brightness (F3) and RGB (F4) to each channel, one write at a time. MP3s may override live colors using saved per-file settings. The during-playback option could affect audio or movement and has not been physically verified.</p>
+        <p>Each update sends static mode (F2), brightness (F3) and RGB (F4) to each channel. Restoration begins 500 ms after the configured 21-second clip estimate; it does not detect actual playback end. The next MP3 waits for the complete update. For longer files, adjust MOUTH_CLIP_MS in the downloaded sketch. The during-playback option remains unverified.</p>
+        <label><input type="checkbox" id="diagnosticsEnabled"> Verbose diagnostics for an attended test</label>
+        <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
       </div>
     </section>
     <section class="panel eye-panel">

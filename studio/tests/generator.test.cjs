@@ -163,12 +163,21 @@ test("RGB lighting emits both live channels with mode, brightness and correct 13
   assert.match(sketch,/const uint8_t LIGHT_RESTORE_MODE = 2;/);
   assert.match(sketch,/uint8_t frame\[13\] = \{0xAA, 0xF4, channel, r, g, b,/);
   assert.match(sketch,/ok = sendVariableFrame\(frame, 13\);/);
-  assert.match(sketch,/if \(LIGHT_RESTORE_MODE == 2\) queueLightSequence\(now, 3000\);/);
-  assert.match(sketch,/lightRestoreAt = mouthPlayingUntil \+ 500;/);
+  assert.match(sketch,/if \(LIGHT_RESTORE_MODE == 2\) queueLightSequence\(now, 3000, "during MP3 \(experimental\)"\);/);
+  assert.match(sketch,/lightRestoreAt = mouthPlayingUntil \+ LIGHT_RESTORE_GRACE_MS;/);
   assert.throws(()=>api.generateSketch(sample({lightsEnabled:true,headColor:"#123"})),/six-digit hexadecimal/);
   assert.throws(()=>api.generateSketch(sample({lightsEnabled:true,torsoBrightness:256})),/brightness must be 0/);
   assert.equal(api.DEFAULTS.lightsEnabled,false);
   assert.equal(api.DEFAULTS.compoundEnabled,false);
+});
+test("diagnostics are opt-in and generated jaw scheduling preserves light completion", () => {
+  assert.equal(api.DEFAULTS.diagnosticsEnabled, false);
+  assert.match(api.generateSketch(sample()), /const bool DIAGNOSTICS_ENABLED = false;/);
+  const sketch = api.generateSketch(sample({diagnosticsEnabled:true,lightsEnabled:true}));
+  assert.match(sketch, /const bool DIAGNOSTICS_ENABLED = true;/);
+  assert.match(sketch, /const bool accepted = writeChar->writeValue/);
+  assert.match(sketch, /!\(LIGHTS_ENABLED && \(lightApplyPending \|\| lightRestorePending\)\) &&/);
+  assert.match(sketch, /actual playback end unconfirmed/);
 });
 test("Jaw-first experiment is disabled by default and sends one selected motor after AAC6", () => {
   const normal=api.generateSketch(sample());
@@ -248,7 +257,7 @@ test("Jaw-first HEAD uses the verified command format but stays opt-in and one-s
   assert.match(sketch, /JAW_FOLLOWUP_MOTOR == 4 \? "HEAD \(EXPERIMENTAL\)"/);
   assert.match(sketch, /if \(JAW_FOLLOWUP_MOTOR == 4\) return headDue \? 4 : 0;/);
   assert.match(sketch, /jawFollowupChosenMotor == 4/);
-  assert.match(sketch, /JAW-FIRST: sending HEAD after MP3 start \(UNTESTED\)/);
+  assert.match(sketch, /JAW-FIRST: sending HEAD after MP3 start \(FAILED at 2s and 10s\)/);
   assert.match(sketch, /startHead\(t\);/);
   assert.match(sketch, /JAW_FOLLOWUP_RECURRING \|\| !jawFollowupTestDone/);
   assert.match(sketch, /headSelected && reached\(t, headSafeAfter\)/);

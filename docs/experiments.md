@@ -1,5 +1,9 @@
 # Experiment log (field observations, October 2026)
 
+This is a chronological record: earlier "untested" and "next test" statements
+describe their time of writing. Use the [current verification matrix](hardware-verification.md)
+for latest status and the [testing guide](testing.md) for the next procedure.
+
 A short record of iterative tests performed on one Home Depot Ultra Skelly v2, using an ESP32-WROOM-32 board and the community web controller.
 
 ## 1. Discovery and BLE link

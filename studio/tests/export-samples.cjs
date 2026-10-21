@@ -3,6 +3,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "../..");
+const buildRoot = path.resolve(root, process.env.SKELLY_BUILD_ROOT || ".skelly-build");
 const ctx = vm.createContext({window:{}});
 for(const file of ["studio/template.js","studio/app.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),ctx,{filename:file});
@@ -22,6 +23,7 @@ const cases = {
   CompoundTorsoArmOnly: {headEnabled:false,armEnabled:true,torsoEnabled:true,jawEnabled:false,compoundEnabled:true,compoundMasks:[6],compoundMin:100,compoundMax:180},
   LightsAfterJaw: {lightsEnabled:true,torsoColor:"#ff0000",headColor:"#00ff00",torsoBrightness:180,headBrightness:150,lightRestoreMode:1,jawFile:13},
   LightsDuringJaw: {lightsEnabled:true,torsoColor:"#aabbcc",headColor:"#ffee99",torsoBrightness:40,headBrightness:255,lightRestoreMode:2,jawFile:13},
+  LightingDiagnostic: {headEnabled:false,armEnabled:false,torsoEnabled:false,eyesEnabled:false,restEnabled:false,jawEnabled:true,jawFile:13,jawMin:60,jawMax:60,jawExtras:"",jawFollowupMotor:0,compoundEnabled:false,lightsEnabled:true,torsoColor:"#ff0000",headColor:"#00ff00",torsoBrightness:180,headBrightness:150,lightRestoreMode:1,diagnosticsEnabled:true},
   CompoundAndLights: {headEnabled:true,armEnabled:true,torsoEnabled:true,jawFile:13,compoundEnabled:true,compoundMasks:[3,7],lightsEnabled:true,lightRestoreMode:2},
   JawFirstHeadOneShot: {headEnabled:true,headMin:90,headMax:150,armEnabled:false,torsoEnabled:false,jawEnabled:true,jawFile:13,jawFollowupMotor:4,jawFollowupRecurring:false,jawFollowupDelaySec:2,jawProtectBody:true,bodyOverlap:false,eyesEnabled:false},
   JawFirstHeadRecurring: {headEnabled:true,headMin:90,headMax:150,armEnabled:false,torsoEnabled:false,jawEnabled:true,jawFile:13,jawFollowupMotor:4,jawFollowupRecurring:true,jawFollowupDelaySec:2,jawProtectBody:true,bodyOverlap:false,eyesEnabled:false},
@@ -40,7 +42,7 @@ const cases = {
 for(const [name,options] of Object.entries(cases)) {
   const settings={...base,...options};
   const code=generator.generateSketch(settings);
-  const dir=path.join(root,".skelly-build",name);
+  const dir=path.join(buildRoot,name);
   fs.mkdirSync(dir,{recursive:true});
   fs.writeFileSync(path.join(dir,name+".ino"),code,"utf8");
   console.log("Generated "+name+" ("+code.length+" characters)");

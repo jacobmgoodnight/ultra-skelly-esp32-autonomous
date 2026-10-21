@@ -3,11 +3,13 @@
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
 #include <BLEClient.h>
+#include <esp_system.h>
+#include <stdarg.h>
 
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
 // ESP32 Dev Module, Arduino-ESP32 3.3.12
-// Optional torso and arm movements default OFF; arm command needs hardware testing.
+// Optional torso and arm movements default OFF; both commands physically tested.
 // Body motor commands are serialized (head/torso/arm), jaw audio may overlap.
 // One-shot and randomized eye commands worked on real Skelly hardware.
 // Eye/jaw synchronization below is a NEW option requiring field testing.
@@ -58,7 +60,7 @@ const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 360000;
 const bool JAW_PROTECTS_ARM_TORSO = true;
 // EXPERIMENTAL: deliberately send AACA AFTER AAC6 playback begins.
 // 0 = disabled (default); 1 = arm; 2 = torso; 3 = alternate arm/torso;
-// 4 = HEAD after jaw (UNTESTED). Only ONE motor follows each MP3.
+// 4 = HEAD after jaw (FAILED at 2s and 10s). Only ONE motor follows each MP3.
 // Mode 3 requires recurrence in Studio. All modes are OFF by default.
 // If AAC6 applies 0x00 movement flags only once at playback start, this may
 // allow jaw + motor together. The reverse (AACA stops jaw) is also possible.
@@ -67,7 +69,7 @@ const uint32_t JAW_FOLLOWUP_DELAY_MS = 2000;
 // false = one successful diagnostic test per BLE connection.
 // true = trigger the selected motor only when its own configured random
 // frequency is due; wait for the next jaw clip, not every clip. This
-// periodic coordination is NEW and needs extended hardware testing.
+// alternating arm/torso dispatch ran ~30 minutes; wider integration needs testing.
 const bool JAW_FOLLOWUP_RECURRING = false;
 const uint32_t BODY_WRITE_SPACING_MS = 600;
 
@@ -84,6 +86,9 @@ const uint8_t HEAD_LIGHT_BRIGHTNESS = 180;
 // 2: restore 3s into MP3 and again after MP3 (experimental).
 const uint8_t LIGHT_RESTORE_MODE = 1;
 const uint32_t LIGHT_WRITE_SPACING_MS = 300;
+const uint32_t LIGHT_RESTORE_GRACE_MS = 500;
+// OFF normally. Enable for an attended lighting/MP3 diagnostic run.
+const bool DIAGNOSTICS_ENABLED = false;
 const uint32_t TORSO_ANIMATION_MS = 25000;
 const uint32_t TORSO_BUFFER_MS = 10000;
 const uint32_t TORSO_MIN_INTERVAL_MS = 240000;
@@ -101,8 +106,7 @@ const uint32_t MOUTH_MAX_INTERVAL_MS = 90000; // maximum 90 sec between starts
 
 // Experimental live eye expressions (1..18 from upstream web controller).
 // First run experiments/EyeSingleTest before changing this to true.
-// The eye packet is documented by the web controller but has not yet
-// been verified on this particular Skelly/ESP32 combination.
+// One-shot and randomized eye changes were physically verified on the test prop.
 const bool EYES_ENABLED = false;
 const uint32_t EYE_MIN_INTERVAL_MS = 120000; // 2 minutes
 const uint32_t EYE_MAX_INTERVAL_MS = 300000; // 5 minutes
@@ -159,6 +163,45 @@ bool jawEyeStartPending = false;
 bool jawEyeEndPending = false;
 uint32_t jawEyeStartAt = 0;
 uint32_t jawEyeEndAt = 0;
+bool mouthEndPending = false; // Modeled duration only, NOT a playback notification.
+bool haveBleWrite = false;
+uint32_t lastBleWriteAt = 0;
+uint32_t scanAttempts = 0;
+uint32_t connectionAttempts = 0;
+uint32_t writeAttempts = 0;
+uint32_t writeFailures = 0;
+uint8_t lastAttemptTag = 0;
+uint8_t lastAcceptedTag = 0;
+uint32_t lastAcceptedAt = 0;
+RTC_DATA_ATTR uint32_t bootCount = 0; // Retained only while RTC memory survives.
+
+// Format into a bounded buffer and write text once per event. No BLE payload is
+// ever sent to UART. millis() is uptime and wraps after about 49.7 days.
+void logEvent(const char *format, ...) {
+  char line[384];
+  const int prefix = snprintf(line, sizeof(line), "[%10lu ms] ", (unsigned long)millis());
+  if (prefix < 0 || (size_t)prefix >= sizeof(line)) return;
+  va_list args;
+  va_start(args, format);
+  vsnprintf(line + prefix, sizeof(line) - prefix, format, args);
+  va_end(args);
+  Serial.print(line);
+}
+void logLine(const char *message) { logEvent("%s\n", message); }
+
+void logDiagnostics(const char *event) {
+  if (!DIAGNOSTICS_ENABLED) return;
+  logEvent("DIAG %s: connected=%u scans=%lu connects=%lu heap=%lu minHeap=%lu "
+           "writes=%lu failures=%lu lastTry=AA%02X lastAccepted=AA%02X@%lu "
+           "lights=%u step=%u restore=%u\n",
+           event, (unsigned)connected, (unsigned long)scanAttempts,
+           (unsigned long)connectionAttempts, (unsigned long)ESP.getFreeHeap(),
+           (unsigned long)ESP.getMinFreeHeap(), (unsigned long)writeAttempts,
+           (unsigned long)writeFailures, (unsigned)lastAttemptTag,
+           (unsigned)lastAcceptedTag, (unsigned long)lastAcceptedAt,
+           (unsigned)lightApplyPending, (unsigned)lightApplyStep,
+           (unsigned)lightRestorePending);
+}
 
 bool reached(uint32_t now, uint32_t when) {
   return (int32_t)(now - when) >= 0;
@@ -187,30 +230,50 @@ uint8_t skellyCRC(const uint8_t *data, size_t length) {
 
 bool sendVariableFrame(uint8_t *packet, size_t length) {
   if (!connected || client == nullptr || !client->isConnected() ||
-      writeChar == nullptr || length < 4 || length > 13) {
+      writeChar == nullptr || packet == nullptr || length < 4 || length > 13) {
+    logLine("TX rejected: disconnected, missing writer, or invalid frame.");
     return false;
   }
   packet[length - 1] = skellyCRC(packet, length - 1);
-  writeChar->writeValue(packet, length, false); // WRITE_NR
-  return client->isConnected();
+  ++writeAttempts;
+  lastAttemptTag = packet[1];
+  const bool accepted = writeChar->writeValue(packet, length, false); // WRITE_NR
+  const bool ok = accepted && client->isConnected();
+  haveBleWrite = true;
+  lastBleWriteAt = millis();
+  if (ok) {
+    lastAcceptedTag = packet[1];
+    lastAcceptedAt = lastBleWriteAt;
+  } else {
+    ++writeFailures;
+  }
+  if (DIAGNOSTICS_ENABLED || !ok) {
+    logEvent("TX AA%02X len=%u BLE=%s (device effect not confirmed).\n",
+             (unsigned)packet[1], (unsigned)length, ok ? "accepted" : "failed");
+  }
+  return ok;
 }
 bool sendFrame(uint8_t packet[11]) {
   return sendVariableFrame(packet, 11);
 }
 void resetConnection(); // Arduino prototype: light/body writes may trigger reconnect.
-void queueLightSequence(uint32_t now, uint32_t delayMs) {
+void queueLightSequence(uint32_t now, uint32_t delayMs, const char *reason) {
   if (!LIGHTS_ENABLED) return;
   lightApplyStep = 0;
   lightApplyPending = true;
   nextLightWriteAt = now + delayMs;
+  logEvent("LIGHTS: queued full sequence (%s), delay %lu ms.\n",
+           reason, (unsigned long)delayMs);
+  logDiagnostics("lights queued");
 }
 // Upstream live F2/F3/F4 layout (zero cluster, empty filename).
 // We send 6 writes in order: torso F2/F3/F4, then head F2/F3/F4.
 // Each write is spaced; don't assume a successful BLE write verifies LEDs.
-void progressLights(uint32_t now) {
+bool progressLights(uint32_t now) {
   if (!LIGHTS_ENABLED || !lightApplyPending ||
       !reached(now, nextLightWriteAt) || !reached(now, nextBodyWriteAt) ||
-      (jawFollowupPending && !reached(now, jawFollowupAt))) return;
+      (haveBleWrite && !reached(now, lastBleWriteAt + 250)) ||
+      jawFollowupPending) return false;
   const uint8_t channel = lightApplyStep >= 3 ? 1 : 0;
   const uint8_t stage = lightApplyStep % 3;
   const uint8_t brightness = channel ? HEAD_LIGHT_BRIGHTNESS : TORSO_LIGHT_BRIGHTNESS;
@@ -232,15 +295,20 @@ void progressLights(uint32_t now) {
     ok = sendVariableFrame(frame, 13);
   }
   if (!ok) {
-    Serial.println("LIGHTS: BLE write failed; reconnecting.");
+    logLine("LIGHTS: BLE write failed; reconnecting.");
     resetConnection();
-    return;
+    return false;
   }
-  Serial.printf("LIGHTS: ch%u %s sent (visual effect unverified).\n",
+  logEvent("LIGHTS: ch%u %s sent (visual effect unverified).\n",
                 channel, stage == 0 ? "static" : stage == 1 ? "brightness" : "RGB");
   ++lightApplyStep;
-  nextLightWriteAt = now + LIGHT_WRITE_SPACING_MS;
-  if (lightApplyStep >= 6) lightApplyPending = false;
+  nextLightWriteAt = millis() + LIGHT_WRITE_SPACING_MS;
+  if (lightApplyStep >= 6) {
+    lightApplyPending = false;
+    logLine("LIGHTS: six BLE writes complete; confirm both colors visually.");
+    logDiagnostics("lights complete");
+  }
+  return true;
 }
 void startCompoundBody(uint32_t now) {
   const size_t maskCount = sizeof(COMPOUND_BODY_MASKS) / sizeof(COMPOUND_BODY_MASKS[0]);
@@ -250,13 +318,13 @@ void startCompoundBody(uint32_t now) {
                           (TORSO_ENABLED ? 4 : 0);
   if (mask < 3 || mask > 7 || (mask & ~enabled) != 0 ||
       ((mask & (mask - 1)) == 0)) {
-    Serial.println("COMPOUND: invalid mask or motor disabled; skipping.");
+    logLine("COMPOUND: invalid mask or motor disabled; skipping.");
     nextCompoundAt = now + COMPOUND_BODY_MAX_INTERVAL_MS;
     return;
   }
   uint8_t frame[11] = {0xAA, 0xCA, mask, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
-    Serial.println("COMPOUND: send failed.");
+    logLine("COMPOUND: send failed.");
     resetConnection();
     return;
   }
@@ -284,7 +352,7 @@ void startCompoundBody(uint32_t now) {
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   nextCompoundAt = now + random(COMPOUND_BODY_MIN_INTERVAL_MS,
                                 COMPOUND_BODY_MAX_INTERVAL_MS + 1);
-  Serial.printf("COMPOUND mask 0x%02X SENT; locked %lu sec; next target %lu sec.\n",
+  logEvent("COMPOUND mask 0x%02X SENT; locked %lu sec; next target %lu sec.\n",
                 mask, (unsigned long)(duration / 1000),
                 (unsigned long)((nextCompoundAt - now) / 1000));
 }
@@ -297,13 +365,13 @@ class SkellyScanCallbacks : public BLEAdvertisedDeviceCallbacks {
 
     found = true;
     skellyDevice = new BLEAdvertisedDevice(advertisedDevice);
-    Serial.print("Found Skelly: ");
-    Serial.println(advertisedDevice.getAddress().toString().c_str());
+    logLine("Found Skelly by advertised name.");
     scanner->stop(); // The connection will happen AFTER scanning returns.
   }
 };
 
 void resetConnection() {
+  logDiagnostics("connection reset");
   connected = false;
   writeChar = nullptr;
   if (client != nullptr && client->isConnected()) client->disconnect();
@@ -317,28 +385,37 @@ void resetConnection() {
   jawEyeEndPending = false;
   lightApplyPending = false;
   lightRestorePending = false;
+  lightApplyStep = 0;
+  mouthEndPending = false;
+  haveBleWrite = false;
 }
 
 bool connectToSkelly() {
   if (!found || skellyDevice == nullptr) return false;
   if (client == nullptr) client = BLEDevice::createClient();
+  ++connectionAttempts;
+  logDiagnostics("connecting");
+  if (client == nullptr) {
+    logLine("BLE client allocation failed.");
+    return false;
+  }
 
-  Serial.println("Connecting to Skelly (scan is finished)...");
+  logLine("Connecting to Skelly (scan is finished)...");
   if (!client->connect(skellyDevice)) {
-    Serial.println("Connection failed.");
+    logLine("Connection failed.");
     resetConnection();
     return false;
   }
 
   BLERemoteService *service = client->getService(SERVICE_UUID);
   if (service == nullptr) {
-    Serial.println("AE00 service missing.");
+    logLine("AE00 service missing.");
     resetConnection();
     return false;
   }
   writeChar = service->getCharacteristic(WRITE_UUID);
   if (writeChar == nullptr) {
-    Serial.println("AE01 characteristic missing.");
+    logLine("AE01 characteristic missing.");
     resetConnection();
     return false;
   }
@@ -355,7 +432,10 @@ bool connectToSkelly() {
                                 COMPOUND_BODY_MAX_INTERVAL_MS + 1);
   lightRestorePending = false;
   lightApplyPending = false;
-  queueLightSequence(now, 1500);
+  lightApplyStep = 0;
+  mouthEndPending = false;
+  haveBleWrite = false;
+  queueLightSequence(now, 1500, "connection");
   torsoSafeAfter = now;
   armSafeAfter = now;
   nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
@@ -375,16 +455,16 @@ bool connectToSkelly() {
   jawEyeStartPending = false;
   jawEyeEndPending = false;
 
-  Serial.printf("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
+  logEvent("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
     TORSO_ENABLED ? "ON" : "OFF", ARM_ENABLED ? "ON" : "OFF");
-  Serial.printf("Compound body mode %s; live RGB lights %s (restore mode %u).\n",
+  logEvent("Compound body mode %s; live RGB lights %s (restore mode %u).\n",
                 COMPOUND_BODY_ENABLED ? "ON" : "OFF",
                 LIGHTS_ENABLED ? "ON" : "OFF", (unsigned)LIGHT_RESTORE_MODE);
-  Serial.printf("Body motor overlap %s. Jaw protection (head/arm/torso) %s.\n",
+  logEvent("Body motor overlap %s. Jaw protection (head/arm/torso) %s.\n",
                 ALLOW_BODY_MOTOR_OVERLAP ? "ON" : "OFF",
                 JAW_PROTECTS_ARM_TORSO ? "ON" : "OFF");
-  Serial.printf("Jaw-first follow-up: %s after %lu ms (%s).\n",
+  logEvent("Jaw-first follow-up: %s after %lu ms (%s).\n",
                 JAW_FOLLOWUP_MOTOR == 1 ? "ARM" :
                 JAW_FOLLOWUP_MOTOR == 2 ? "TORSO" :
                 JAW_FOLLOWUP_MOTOR == 3 ? "ALTERNATING" :
@@ -392,29 +472,32 @@ bool connectToSkelly() {
                 (unsigned long)JAW_FOLLOWUP_DELAY_MS,
                 JAW_FOLLOWUP_RECURRING ? "RECURRING frequency-gated" : "ONE-SHOT");
   if (HEAD_ENABLED) {
-    Serial.printf("First head in %lu seconds.\n",
+    logEvent("First head in %lu seconds.\n",
                   (unsigned long)((nextHeadAt - now) / 1000));
   } else {
-    Serial.println("Head motion disabled.");
+    logLine("Head motion disabled.");
   }
   if (mouthConfigured()) {
-    Serial.printf("Jaw file serial %u; first attempt in ~%lu seconds.\n",
+    logEvent("Jaw file serial %u; first attempt in ~%lu seconds.\n",
                   (unsigned)MOUTH_FILE_SERIAL,
                   (unsigned long)((nextMouthAt - now) / 1000));
   } else {
-    Serial.println("Jaw OFF: set MOUTH_FILE_SERIAL after uploading the jaw MP3.");
+    logLine("Jaw OFF: set MOUTH_FILE_SERIAL after uploading the jaw MP3.");
   }
   if (EYES_ENABLED) {
-    Serial.printf("First eye selection in ~%lu seconds.\n",
+    logEvent("First eye selection in ~%lu seconds.\n",
                   (unsigned long)((nextEyeAt - now) / 1000));
   } else {
-    Serial.println("Random eyes OFF (enable after confirming eye commands).");
+    logLine("Random eyes OFF (enable after confirming eye commands).");
   }
+  logDiagnostics("connected");
   return true;
 }
 
 void scanAndConnect() {
-  Serial.println("Scanning for Ultra Skelly v2...");
+  ++scanAttempts;
+  logDiagnostics("scan");
+  logLine("Scanning for Ultra Skelly v2...");
   found = false;
   if (skellyDevice != nullptr) {
     delete skellyDevice;
@@ -424,7 +507,7 @@ void scanAndConnect() {
   scanner->start(SCAN_SECONDS, false);
 
   if (!found) {
-    Serial.println("Not found. Retrying after 30 seconds.");
+    logLine("Not found. Retrying after 30 seconds.");
     nextScanAt = millis() + SCAN_RETRY_MS;
     return;
   }
@@ -432,7 +515,7 @@ void scanAndConnect() {
   delay(500);
   if (!connectToSkelly()) {
     nextScanAt = millis() + SCAN_RETRY_MS;
-    Serial.println("Retrying BLE connection after 30 seconds.");
+    logLine("Retrying BLE connection after 30 seconds.");
   }
 }
 
@@ -440,7 +523,7 @@ void startHead(uint32_t now) {
   // Verified head-only frame. No arm or torso movement bits.
   uint8_t frame[11] = {0xAA, 0xCA, 0x01, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
-    Serial.println("Head send failed / disconnected.");
+    logLine("Head send failed / disconnected.");
     resetConnection();
     return;
   }
@@ -455,7 +538,7 @@ void startHead(uint32_t now) {
   nextHeadAt = now + headInterval;
 
   const bool jawAlreadyPlaying = !reached(now, mouthPlayingUntil);
-  Serial.printf("HEAD command sent; next head in %lu sec%s.\n",
+  logEvent("HEAD command sent; next head in %lu sec%s.\n",
                 (unsigned long)(headInterval / 1000),
                 jawAlreadyPlaying ? " (jaw audio may be playing too)" : "");
 }
@@ -464,7 +547,7 @@ void startHead(uint32_t now) {
 void startTorso(uint32_t now) {
   uint8_t frame[11] = {0xAA, 0xCA, 0x04, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
-    Serial.println("Torso send failed / disconnected.");
+    logLine("Torso send failed / disconnected.");
     resetConnection();
     return;
   }
@@ -473,7 +556,7 @@ void startTorso(uint32_t now) {
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
   nextTorsoAt = now + interval;
-  Serial.printf("TORSO command sent; next torso target in %lu sec.\n",
+  logEvent("TORSO command sent; next torso target in %lu sec.\n",
                 (unsigned long)(interval / 1000));
 }
 
@@ -481,7 +564,7 @@ void startArm(uint32_t now) {
   // Physically verified arm-only action: two back-to-back moves ~22s.
   uint8_t frame[11] = {0xAA, 0xCA, 0x02, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
-    Serial.println("Arm send failed / disconnected.");
+    logLine("Arm send failed / disconnected.");
     resetConnection();
     return;
   }
@@ -490,7 +573,7 @@ void startArm(uint32_t now) {
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
   nextArmAt = now + interval;
-  Serial.printf("ARM command sent; next arm target in %lu sec.\n",
+  logEvent("ARM command sent; next arm target in %lu sec.\n",
                 (unsigned long)(interval / 1000));
 }
 
@@ -527,16 +610,27 @@ void startMouth(uint32_t now) {
     0x01, 0, 0, 0, 0, 0, 0
   };
   if (!sendFrame(frame)) {
-    Serial.println("Jaw playback send failed / disconnected.");
+    logLine("Jaw playback send failed / disconnected.");
     resetConnection();
     return;
   }
   jawDelayNotified = false;
+  // Base the estimate on completion of the BLE call, which may block.
+  now = millis();
   mouthPlayingUntil = now + MOUTH_CLIP_MS;
+  mouthEndPending = true;
+  logEvent("MP3: modeled duration %lu ms; no playback-end notification subscribed.\n",
+           (unsigned long)MOUTH_CLIP_MS);
   if (LIGHTS_ENABLED && LIGHT_RESTORE_MODE != 0) {
-    lightRestoreAt = mouthPlayingUntil + 500;
+    // A partial earlier sequence cannot restore a coherent pair of channels
+    // after AAC6 has reapplied saved settings. Restart a full sequence later.
+    lightApplyPending = false;
+    lightApplyStep = 0;
+    lightRestoreAt = mouthPlayingUntil + LIGHT_RESTORE_GRACE_MS;
     lightRestorePending = true;
-    if (LIGHT_RESTORE_MODE == 2) queueLightSequence(now, 3000);
+    logEvent("LIGHTS: final restore due at uptime %lu ms (modeled end + grace).\n",
+             (unsigned long)lightRestoreAt);
+    if (LIGHT_RESTORE_MODE == 2) queueLightSequence(now, 3000, "during MP3 (experimental)");
   }
   // Choose one motor for this MP3, if one-shot or random-frequency-gated
   // coordination is due. New playback replaces an unserved pending event.
@@ -545,7 +639,7 @@ void startMouth(uint32_t now) {
                        (JAW_FOLLOWUP_RECURRING || !jawFollowupTestDone);
   jawFollowupAt = now + JAW_FOLLOWUP_DELAY_MS;
   if (jawFollowupPending) {
-    Serial.printf("JAW-FIRST %s: scheduled %s %lu ms after MP3 start.\n",
+    logEvent("JAW-FIRST %s: scheduled %s %lu ms after MP3 start.\n",
                   JAW_FOLLOWUP_RECURRING ? "RECURRING" : "ONE-SHOT",
                   jawFollowupChosenMotor == 1 ? "ARM" :
                   jawFollowupChosenMotor == 2 ? "TORSO" : "HEAD",
@@ -564,22 +658,23 @@ void startMouth(uint32_t now) {
                                       MOUTH_MAX_INTERVAL_MS + 1);
   nextMouthAt = now + jawInterval; // Start-to-start, not after the clip.
   const bool headIsMoving = !reached(now, headMovingUntil);
-  Serial.printf("JAW command sent (file #%u); next jaw in %lu sec%s.\n",
+  logEvent("JAW command sent (file #%u); next jaw in %lu sec%s.\n",
                 (unsigned)MOUTH_FILE_SERIAL,
                 (unsigned long)(jawInterval / 1000),
                 headIsMoving ? " (OVERLAPPING head motion)" : "");
+  logDiagnostics("MP3 start");
 }
 
 bool sendEyeIcon(uint8_t icon, const char *reason) {
   // Verified LIVE-eye AAF9 frame. No motor movement is commanded.
   uint8_t frame[11] = {0xAA, 0xF9, icon, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
-    Serial.println("Eye request failed / disconnected.");
+    logLine("Eye request failed / disconnected.");
     resetConnection();
     return false;
   }
   lastEye = icon;
-  Serial.printf("EYES: icon %u (%s).\n", (unsigned)icon, reason);
+  logEvent("EYES: icon %u (%s).\n", (unsigned)icon, reason);
   return true;
 }
 
@@ -590,14 +685,19 @@ void changeEyes(uint32_t now) {
   const uint32_t interval = random(EYE_MIN_INTERVAL_MS,
                                     EYE_MAX_INTERVAL_MS + 1);
   nextEyeAt = now + interval;
-  Serial.printf("EYES: requested icon %u; next in %lu sec.\n",
+  logEvent("EYES: requested icon %u; next in %lu sec.\n",
                 (unsigned)eye, (unsigned long)(interval / 1000));
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("\n=== ULTRA SKELLY: AUTONOMOUS HEAD/JAW/EYES + OPTIONAL TORSO/ARM ===");
+  ++bootCount;
+  logEvent("BOOT mp3-lights-diag-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+           (unsigned long)bootCount, (unsigned)esp_reset_reason(),
+           (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
+           DIAGNOSTICS_ENABLED ? "ON" : "OFF");
+  logLine("\n=== ULTRA SKELLY: AUTONOMOUS HEAD/JAW/EYES + OPTIONAL TORSO/ARM ===");
   randomSeed(micros());
   BLEDevice::init("");
   scanner = BLEDevice::getScan();
@@ -607,9 +707,9 @@ void setup() {
 }
 
 void loop() {
-  const uint32_t now = millis();
+  uint32_t now = millis();
   if (connected && (client == nullptr || !client->isConnected())) {
-    Serial.println("Disconnected; scanning again.");
+    logLine("Disconnected; scanning again.");
     resetConnection();
   }
 
@@ -617,6 +717,12 @@ void loop() {
     if (reached(now, nextScanAt)) scanAndConnect();
     delay(100);
     return;
+  }
+
+  if (mouthEndPending && reached(now, mouthPlayingUntil)) {
+    mouthEndPending = false;
+    logLine("MP3: modeled clip end reached; actual playback end unconfirmed.");
+    logDiagnostics("modeled MP3 end");
   }
 
   // First correct any eye icon that the MP3's saved settings changed.
@@ -640,11 +746,15 @@ void loop() {
   if (LIGHTS_ENABLED) {
     if (lightRestorePending && reached(millis(), lightRestoreAt)) {
       lightRestorePending = false;
-      queueLightSequence(millis(), 100);
+      queueLightSequence(millis(), 100, "after modeled MP3 end");
     }
-    progressLights(millis());
+    // Lighting is low priority. Give the next eye/body/jaw write the same
+    // 250 ms separation already used for adjacent eye/motor requests.
+    if (progressLights(millis())) { delay(250); return; }
   }
   if (!connected) { delay(100); return; }
+
+  now = millis(); // Eye writes and BLE calls above may have advanced time.
 
   // Jaw-first motor command: AAC6 plays before one selected AACA frame.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
@@ -668,27 +778,27 @@ void loop() {
     const bool lockReady = ALLOW_BODY_MOTOR_OVERLAP ||
                            reached(t, bodySafeAfter);
     if (!clipActive) {
-      Serial.println("JAW-FIRST: skipped; MP3 is no longer active.");
+      logLine("JAW-FIRST: skipped; MP3 is no longer active.");
     } else if (!selectedEnabled) {
-      Serial.println("JAW-FIRST: skipped; selected motor is OFF.");
+      logLine("JAW-FIRST: skipped; selected motor is OFF.");
     } else if (!motorReady || !lockReady || !reached(t, nextBodyWriteAt)) {
-      Serial.println("JAW-FIRST: skipped; motor cooldown or body lock active.");
+      logLine("JAW-FIRST: skipped; motor cooldown or body lock active.");
     } else if (headSelected) {
       // AACA head-only after AAC6, exactly like the verified jaw-first arm
       // and torso order. No independent head request is allowed to preempt
-      // the one-shot trial. Head/jaw physical overlap is NOT yet verified.
-      Serial.println("JAW-FIRST: sending HEAD after MP3 start (UNTESTED).");
+      // the one-shot trial. Physical head response FAILED at 2s and 10s.
+      logLine("JAW-FIRST: sending HEAD after MP3 start (FAILED at 2s and 10s).");
       startHead(t);
       if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
     } else if (armSelected) {
-      Serial.println("JAW-FIRST: sending ARM after MP3 start (experimental).");
+      logLine("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
       if (connected) {
         lastJawFollowupMotor = 1;
         if (!JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
       }
     } else if (torsoSelected) {
-      Serial.println("JAW-FIRST: sending TORSO after MP3 start (experimental).");
+      logLine("JAW-FIRST: sending TORSO after MP3 start (experimental).");
       startTorso(t);
       if (connected) {
         lastJawFollowupMotor = 2;
@@ -773,7 +883,8 @@ void loop() {
   }
 
   if (mouthConfigured() && reached(millis(), nextMouthAt) &&
-      reached(millis(), mouthSafeAfter)) {
+      reached(millis(), mouthSafeAfter) &&
+      !(LIGHTS_ENABLED && (lightApplyPending || lightRestorePending))) {
     // Avoid playing an MP3 while any head/torso/arm animation or safety
     // buffer is active. Previously only arm/torso were checked, so head
     // kept getting interrupted and the jaw-first follow-up was skipped.
@@ -785,7 +896,7 @@ void loop() {
                                   reached(jawNow, bodySafeAfter));
     if (JAW_PROTECTS_ARM_TORSO && !bodyMotorsReady) {
       if (!jawDelayNotified) {
-        Serial.println("JAW deferred: waiting for head/arm/torso cooldown.");
+        logLine("JAW deferred: waiting for head/arm/torso cooldown.");
         jawDelayNotified = true;
       }
     } else {

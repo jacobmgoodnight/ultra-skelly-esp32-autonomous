@@ -14,7 +14,7 @@
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
-    bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
+    diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
     subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,compoundEnabled:false,lightsEnabled:false},
@@ -139,6 +139,7 @@
       ["const uint8_t TORSO_LIGHT_BRIGHTNESS = 180;","const uint8_t TORSO_LIGHT_BRIGHTNESS = "+config.torsoBrightness+";"],
       ["const uint8_t HEAD_LIGHT_BRIGHTNESS = 180;","const uint8_t HEAD_LIGHT_BRIGHTNESS = "+config.headBrightness+";"],
       ["const uint8_t LIGHT_RESTORE_MODE = 1;","const uint8_t LIGHT_RESTORE_MODE = "+config.lightRestoreMode+";"],
+      ["const bool DIAGNOSTICS_ENABLED = false;","const bool DIAGNOSTICS_ENABLED = "+Boolean(config.diagnosticsEnabled)+";"],
       ["const bool JAW_PROTECTS_ARM_TORSO = true;","const bool JAW_PROTECTS_ARM_TORSO = "+Boolean(config.jawProtectBody)+";"],
       ["const uint8_t JAW_FOLLOWUP_MOTOR = 0;","const uint8_t JAW_FOLLOWUP_MOTOR = "+config.jawFollowupMotor+";"],
       ["const bool JAW_FOLLOWUP_RECURRING = false;","const bool JAW_FOLLOWUP_RECURRING = "+Boolean(config.jawFollowupRecurring)+";"],
@@ -186,7 +187,7 @@
       "    uint32_t d = random(REST_MIN_DURATION_MS, REST_MAX_DURATION_MS + 1);\n"+
       "    restUntil = now + d;\n"+
       "    nextRestAt = restUntil + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
-      "    Serial.printf(\"REST: new animations paused for %lu sec.\\n\", (unsigned long)(d / 1000));\n"+
+      "    logEvent(\"REST: new animations paused for %lu sec.\\n\", (unsigned long)(d / 1000));\n"+
       "  }\n"+
       "  if (REST_ENABLED && !reached(now, restUntil)) { delay(100); return; }\n"+
       "  bool sentHeadThisLoop = false;");
@@ -215,9 +216,10 @@
       "      // Wait until jaw clip ends rather than starting head movement.\n"+
       "    } else if (choice == 1) {");
     out=replaceOnce(out,
-      "  if (mouthConfigured() && reached(millis(), nextMouthAt) &&\n      reached(millis(), mouthSafeAfter)) {",
+      "  if (mouthConfigured() && reached(millis(), nextMouthAt) &&\n      reached(millis(), mouthSafeAfter) &&\n      !(LIGHTS_ENABLED && (lightApplyPending || lightRestorePending))) {",
       "  if (mouthConfigured() && reached(millis(), nextMouthAt) &&\n"+
       "      reached(millis(), mouthSafeAfter) &&\n"+
+      "      !(LIGHTS_ENABLED && (lightApplyPending || lightRestorePending)) &&\n"+
       "      (ALLOW_HEAD_JAW_OVERLAP || !HEAD_ENABLED || reached(millis(), headMovingUntil))) {");
     const eyes=(config.eyeChoices.length?config.eyeChoices:DEFAULTS.eyeChoices).slice().sort((a,b)=>a-b);
     out=replaceOnce(out,
@@ -242,7 +244,8 @@
       "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
       "// Jaw-first motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s; recurring="+config.jawFollowupRecurring+".",
       "// Compound body="+config.compoundEnabled+" masks="+config.compoundMasks.join(",")+" interval="+config.compoundMin+"-"+config.compoundMax+"s.",
-      "// Live RGB channels (0=torso, 1=head/mouth)="+config.lightsEnabled+"; restore="+config.lightRestoreMode+"; color behavior unverified.",
+      "// Live RGB channels (0=torso, 1=head)="+config.lightsEnabled+"; restore="+config.lightRestoreMode+"; post-MP3 restoration unverified.",
+      "// Verbose diagnostics="+Boolean(config.diagnosticsEnabled)+"; clip end is modeled, not notified by Skelly.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
@@ -267,13 +270,14 @@
       restEnabled:byId("restEnabled").checked,restMin:n("restMin"),restMax:n("restMax"),
       restDurationMin:n("restDurationMin"),restDurationMax:n("restDurationMax"),
       eyesMin:n("eyesMin"),eyesMax:n("eyesMax"),eyeJawMode:n("eyeJawMode"),
+      diagnosticsEnabled:byId("diagnosticsEnabled").checked,
       bleName:byId("bleName").value,eyeChoices:Array.from(document.querySelectorAll(".eye-choice input:checked")).map(el=>Number(el.value))
     };
   }
   function writeConfig(cfg) {
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","compoundMin","compoundMax","torsoColor","headColor","torsoBrightness","headBrightness","lightRestoreMode","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled","diagnosticsEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.compoundMasks)document.querySelectorAll(".compound-choice").forEach(el=>el.checked=cfg.compoundMasks.includes(Number(el.value)));
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));

@@ -14,6 +14,8 @@
 | Eyes don't change | They are OFF by default. Run isolated `EyeSingleTest`; confirm live-mode packet on your device. Eye changes may be overwritten by per-file playback eye metadata. |
 | No sound is heard | Intentional with prop's *physical volume knob at 0*. If you want audible audio, turn knob up. |
 | First jaw event takes some time | Scheduling waits random 45–90 sec after connection by default. File playback behavior and BLE connection delay also vary. |
+| MP3 changes torso/head colors | Physically observed with file #13. Restore mode 1 uses modeled clip duration, not actual playback end. Visual recovery is unconfirmed; use the [isolated RGB/jaw test](testing.md). |
+| Garbled text near playback/restoration | Keep 115200 baud. Enable verbose diagnostics, capture from BOOT through three clips, and record reset reason, heap, TX failures and visual timing. Cause is unknown; see the [comparison procedure](testing.md). |
 
 ## Safety and limitations
 

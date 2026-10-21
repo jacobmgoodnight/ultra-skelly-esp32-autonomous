@@ -1,119 +1,49 @@
-# Skelly Studio — browser-based ESP32 sketch generator
+# Skelly Studio
 
-This is a **beta** graphical configuration tool for the [Ultra Skelly ESP32 Autonomous Controller](../README.md).
+A static browser configurator for the autonomous ESP32 controller.
+[Open Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)
+or open `index.html` from a local ZIP. No backend, account or build step is needed.
+The eye thumbnails require internet; firmware generation works offline.
 
-**Run locally**: open `studio/index.html` in a browser. (All HTML/CSS/JavaScript and the tested firmware snapshot live in this folder.) GitHub Pages successfully deployed this repository in October 2026. Open **https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/**, which redirects to `/studio/`, or open the `/studio/` URL directly.
+Choose randomized head/jaw timing, optional arm/torso, live eyes, RGB colors,
+jaw-first follow-ups, compound masks, MP3 pools and idle breaks; then download or
+copy a self-contained `.ino`. Flash with Arduino IDE, **ESP32 Dev Module**, core
+**3.3.12**. The browser does not compile or flash firmware. The five-minute preview
+is illustrative and does not model all arbitration. Profiles/import-export remain
+planned work, not current features.
 
-## What it does
+## Current feature evidence
 
-- Pick Subtle, Normal or Haunted presets, or enter independent random **start-to-start** intervals.
-- Enable optional **torso movement** (previously verified for ~25 s) or **arm movement** (now verified: two motions taking 22 seconds). Each has a separate random interval and all body-motor commands are serialized with safety cooldown. The advanced body-overlap switch permits overlapping head/torso/arm motion (not yet tested together), preserving per-motor cooldown and 600 ms spacing between BLE writes. **Haunted enables both torso and arm by default**, but keeps advanced body-motor overlap OFF pending simultaneous-movement tests. See the [body safety guide](../docs/body-movements.md).
-- **Subtle turns the silent jaw OFF by default.** Normal and Haunted turn the jaw on. You can override any preset.
-- Switch head and jaw on or off, and choose whether their animations may overlap.
-- Supply **your jaw MP3's file serial**; it is not a Bluetooth MAC address.
-- Choose the Skelly BLE *advertised name* (default `Ultra Skelly v2`); the ESP32 discovers the address itself.
-- Opt in to randomized eye expressions, choose which of 18 supported icon numbers may appear, and control their timing. **Both one-shot and randomized ESP32 eye changes were verified on the original Ultra Skelly v2.** The original tester observed that starting a jaw MP3 **does appear to restore its saved eye design**. New eye/jaw coordination modes attempt to handle this; they still need real-device testing.
-- Set **what eyes do when the jaw starts**: use the MP3's saved eye, restore the currently selected random eye, or switch to another selected eye and keep that expression. The last two modes send live AAF9 eye commands after playback begins and after the ~20-second clip ends; this is experimental.
-- Choose from **18 real eye-pattern thumbnails** in the app. The images are linked from [martinecker's Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), not copied into this repository. Image previews require internet; sketch generation does not.
-- Add up to **eight** uploaded jaw MP3 file serial numbers to randomly switch between different jaw personalities (new, needs device testing). Each stored file must have saved motor movement flags `0x00`.
-- Enable optional **idle breaks** to pause newly triggered movements for a randomized time once any active animation has finished (new, needs device testing).
-- Preview an illustrative 5-minute schedule; **not a prediction**, because actual firmware uses fresh randomness and device timing.
-- Download a complete `SkellyAutonomous.ino` file or inspect/copy the sketch.
+See the [current verification matrix](../docs/hardware-verification.md). Head,
+arm, torso, live eyes, jaw-first arm/torso and every compound mask have physical
+evidence on one prop. Recurring compound automation remains untested. The
+alternating jaw-first scheduler has ~30 minutes of serial dispatch evidence;
+every full physical cycle was not separately timed. HEAD after jaw failed at
+both 2 and 10 seconds; keep that diagnostic OFF in regular operation.
 
-The generator starts from the project's current Arduino firmware rather than implementing a second BLE client. Its output preserves the tested head animation safety minimum of **32 seconds** and jaw clip scheduling minimum of **22 seconds**. Only allowed settings and scheduler options are changed.
+Compound and jaw-first modes are separate. Default MP3 protection covers **all
+body motors**, including head, and overrides independent head/jaw overlap. Keep
+stored MP3 movement flags **0x00** and discover the serial on your own device.
+Intervals are start-to-start targets and may be postponed by locks or restoration.
 
-## Important before use
+Both live torso/head colors physically changed before playback; MP3 #13 then
+restored its saved colors. **Post-MP3 visual restoration is still unconfirmed.**
+Channel 1 is protocol-labeled Head Light; a separate mouth channel is not known.
+Mode 1 queues restoration 500 ms after the modeled 21-second playback, then waits
+100 ms to start its six writes. It does not receive actual end-of-playback status.
+The next MP3 waits for all six writes. Mode 2 (during + after) is experimental.
+For longer files, increase `MOUTH_CLIP_MS` conservatively in the downloaded sketch.
 
-1. **Eyes are off by default.** One-shot and randomized eye changes both worked on the test Skelly. Try the [one-shot eye test](../experiments/EyeSingleTest/EyeSingleTest.ino) on your device if you want to verify compatibility. Audio playback was observed changing the eyes back to the file's saved icon. Eye restoration/reaction options need device testing; the configured MP3 duration is approximately 21 seconds.
-2. **Torso and arm commands remain disabled.** On your MP3 set the saved movement flag to **0x00** in the [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/) before using jaw playback.
-3. **No MAC address entry** is needed: scanning is by BLE name. `MOUTH_FILE_SERIAL` is a separate *per-file* number.
-4. Generated code is **not compiled in the browser**. Download, open in Arduino IDE, compile/upload to ESP32 Dev Module (tested framework 3.3.12), and monitor serial output at 115200.
-5. After an upload the board normally restarts; on some setups an **EN/RESET** button press or ESP32 USB power cycle helps the initial connection. Disconnect any other BLE controller. The regular firmware retries scans automatically.
-6. Keep reasonable motor activity and use a weatherproof enclosure if outdoors.
+Verbose diagnostics are OFF by default. Enable them for the
+[isolated lighting test](../docs/testing.md): boot/reset, uptime, heap, BLE outcomes
+and queue progress help investigate the reported garbled Serial Monitor output.
+Its cause is unknown. Use **115200 baud**.
 
-## Project status
+## Development
 
-This configurator is a **beta**. GitHub Actions run JavaScript syntax checks, generator smoke tests for presets/options/validation, and protocol CRC test vectors. These tests do **not** compile the Arduino C++ against the ESP32 toolchain or replace real-hardware checks. Keep a backup of the proven main firmware. Jaw pools, random eyes during MP3 playback, and idle breaks need field testing.
-
-## Hosting on GitHub Pages
-
-The project's Pages build and deployment were reported successful by GitHub. The repository now includes a root `index.html` that redirects visitors to `/studio/`. When Pages deploys a change, allow a little time for it to propagate; if a browser still shows 404, refresh without cache and inspect **Settings → Pages** and **Actions → pages build and deployment**. GitHub's source-file view of `index.html` is **code, not a rendered preview**. For an immediate local preview, use **Code → Download ZIP** on GitHub, extract, and double-click `studio/index.html`. This app requires no build pipeline, backend, tokens or third-party API.
-
-## Experimental jaw audio personalities
-
-Two synthetic waveform recipes can be generated using [audio/generate_jaw_clips.py](../audio/generate_jaw_clips.py). The [jaw personality guide](../audio/jaw-personalities.md) describes the **three-second open hold** and **whisper-then-gasp** clips. Upload each to Skelly, set saved body-movement metadata to `0x00`, and enter its file serial in Studio. Their physical response needs testing.
-
-
-## Jaw MP3 priority and shorter body timing
-
-The original test device confirmed **3-second jaw holds** from the Long Open and Whisper Then Gasp files (original file serials **#13 and #14**, device-specific). When MP3 playback started during arm/torso movement, the user observed an apparent interruption of those body animations. MP3 per-file saved movement flags are a plausible cause, but the internal firmware behavior is not proven.
-
-**Protect arm + torso from jaw MP3** now defaults **ON**. It delays AAC6 playback until active arm/torso motions and their cooldowns end, and pauses new arm/torso starts during the MP3. Head/jaw overlap is controlled separately. Choose OFF only to experiment with MP3-overlapping-body behavior. The new priority scheduling remains hardware-experimental.
-
-Studio's per-part **torso and arm minimum start intervals are now 45 seconds**, reduced from the original conservative 90/120 seconds. Torso needs ~25 seconds to animate plus 10 seconds buffer; arm needs ~22 seconds plus 10 seconds buffer. These are **not minimums imposed by Bluetooth or Skelly itself**. Preset timing remains less frequent for motor longevity.
-
-
-## Experimental jaw-first motor reaction
-
-Skelly Studio now offers **Jaw first → Arm or Torso** with a selectable **1–10-second delay** (default 2 s), initially **OFF**. It sends one `AACA` arm or torso command after the `AAC6` jaw MP3 starts, testing whether command order allows simultaneous mouth and body movement. **The initial implementation permits only one successful follow-up per BLE connection**, so the arm/torso doesn't follow every jaw clip regardless of its normal frequency. A skipped attempt may retry on the next jaw clip. The selected motor must be enabled; the action is skipped if it is still cooling down or blocked by the body lock. The existing **Protect arm + torso from jaw MP3** mode stays enabled for normal scheduling; jaw-first explicitly allows a one-time exception *after* playback begins. The result is **not yet physically verified**. See the step-by-step [jaw-first experiment](../docs/jaw-first-experiment.md).
-
-## Jaw-first overlap verified; recurring mode newly available
-
-On the original Ultra Skelly v2, starting the jaw MP3 then sending an arm `AACA` command **2 seconds afterward** let the jaw maintain its three-second hold while both arm motions finished (~22 seconds). Torso started after jaw also worked. These particular overlaps are physically **verified**.
-
-Studio's new **Repeat when the selected motor's own random interval is due** switch is OFF by default. When enabled, the arm or torso stops firing on its independent timer and instead waits for the next jaw MP3 **after its random interval has elapsed**, starting the motor after the chosen delay. Not every MP3 will trigger a motor. The new recurrence mode needs extended testing, especially if additional body motors or head overlap are enabled.
-
-## Alternating jaw-first arm and torso reactions
-
-An optional **Alternate arm or torso when due (recurring)** selection now coordinates *both* motors with MP3 playback, while still sending only one arm or torso command per MP3. Enable both arm and torso and check the Recurring option. Each motor uses its own randomized start target and cooldown; when both are eligible, the controller prefers the motor not selected the preceding time. When neither is eligible, jaw playback continues with no body follow-up. This scheduler is **untested over multiple cycles**, unlike the previously verified one-shot jaw-first arm and torso movements.
-
-The updated serial messages print `JAW-FIRST RECURRING: scheduled ARM/TORSO` when an eligible follow-up is chosen. They print `Head motion disabled` when Head is OFF rather than showing a confusing unused head timer.
-
-
-## Field test — recurring alternating commands now confirmed
-
-The original Ultra Skelly v2 logged **six consecutive successful jaw-first motor sends** in the sequence **arm, torso, arm, torso, arm, torso**, with recurring mode enabled, MP3 #13, two-second follow-up delay and head OFF. No disconnects or skipped commands were reported in the log excerpt. The scheduler and motor-selection logic have therefore been **field-tested at the BLE command level**; physical completion of *every* cycle and multi-hour reliability are still pending further observation.
-
-Select **Alternate arm or torso when due** and enable **Repeat when the selected motor's own random interval is due** to reproduce this mode. Motor frequencies continue to control eligibility; alternate selection is a preference when both motors are due, not a guarantee that every future session alternates strictly.
-
-
-## Field status — 30-minute recurring alternating test
-
-**Confirmed at the scheduling/BLE level:** one approximately 30-minute run of **Alternating arm or torso when due** with jaw MP3 #13, 2-second jaw-first follow-up and both body motors enabled. The device connected on its second scan, then serial logs showed arm/torso alternation throughout without logged disconnects, skipped follow-ups or BLE send failures. The exact physical completion of each individual motor cycle was not separately recorded in that log; prior isolated jaw+arm and jaw+torso overlap tests were visually successful.
-
-**Not tested in this run:** head movements, live eye rotation, and sustained unattended operation for hours/days. Keep the original head and eye configurations available for progressive integration tests. Remember the randomized target intervals are start-to-start requests and may be delayed by cooldown or MP3 coordination.
-
-
-## Head + jaw MP3 interrupt fix
-
-In the first test enabling the head alongside recurring jaw-first arm/torso, AAC6 appeared to interrupt active head motion. Because the head held the shared motor cooldown, the arm/torso follow-ups were skipped on every subsequent MP3. This was traced to an omission in jaw MP3 protection: the code waited for arm and torso, but did not wait for head.
-
-The **Protect head + arm + torso from jaw MP3** switch (ON by default, retaining the firmware identifier `JAW_PROTECTS_ARM_TORSO` for compatibility) now defers AAC6 until head motion has ended and blocks standalone head movement while a jaw clip is active/due. It still intentionally permits the jaw-first arm or torso follow-up. **With protection ON, the independent head+jaw overlap toggle is overridden**; motion is sequenced rather than simultaneous, until a separate jaw-first head experiment is performed. The new head-safe scheduler needs a physical test.
-
-
-## Jaw-first HEAD test (new, not physically verified)
-
-Studio now includes **Start HEAD after jaw MP3 begins (UNTESTED)** in the Jaw first → body movement selector. Run it with **Head ON**, **Jaw ON file #13**, **Arm/Torso OFF**, **2-second delay**, **recurring OFF**, MP3 body protection ON, eyes OFF, and body overlap OFF. The first successful follow-up is intentionally one-shot per BLE connection and temporarily suppresses regular head scheduling until it fires. Afterward, independent head scheduling resumes. Verify visually that the jaw still holds for 3 seconds and the head completes its ~25-second movement. Instructions: [jaw-first head test](../docs/jaw-first-head-test.md).
-
-The existing **Allow body motor overlap** option can theoretically let head, arm and torso run concurrently (one BLE motor command per write, 600ms spacing, and per-motor cooldown). Physical concurrent movement of all three has not been verified. Test pairwise combinations first. The latest head-enabled alternating jaw-first log showed head commands and coordinated arm/torso commands successfully sent, with MP3 protection occasionally deferring playback while head finished.
-
-
-## Head-after-jaw result and isolated combined motor packet test
-
-**New October 20 result:** the user twice tested **jaw #13 → 2 s delay → HEAD command**. ESP32 serial showed the BLE HEAD packet was sent but the head **did not physically move at that point**. Later independent head movement works. This differs from the confirmed jaw-first ARM and TORSO co-movement. Studio keeps HEAD-after-jaw as a clearly labeled, opt-in **diagnostic**; do not enable it for unattended Haunted mode. For investigation, the delay can be increased to 10 s (unverified).
-
-The upstream `AACA` movement argument is a **bitfield**, so a standalone [BodyComboSingleTest.ino](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) sends a single combined mask rather than sending consecutive commands. Start with `0x03` for head+arm, then follow the [progressive hardware test guide](../docs/body-combo-test.md). Composite simultaneous movement remains **unverified**.
-
-
-## Tested statuses: head during MP3 vs combined body command
-
-**Jaw-first HEAD remains an unsuccessful diagnostic at 2 and 10 seconds.** On the original prop, the device received the `AA CA 01` head packet during jaw MP3 #13 playback but did not visibly move the head. This does **not** affect standalone protected HEAD or the successful jaw-first ARM/TORSO modes. Skelly Studio now labels both failed delays.
-
-**A single `AA CA 03` request physically moved HEAD and ARM together** with no MP3 running. A separate [combined body-motor test sketch](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) now retries its Bluetooth discovery automatically after initial scan misses; its default mask is still `0x03`. To test the next combination, change `TEST_MOVEMENT_MASK` to **`0x05`** (HEAD + TORSO). See the [test guide](../docs/body-combo-test.md). These experiments do not change the normal autonomous firmware.
-
-
-## Random combined movements and torso/head RGB lighting
-
-A new opt-in **Random combined body movements** controller mode sends one of the user's allowed `AACA` masks (`0x03`, `0x05`, `0x06`, `0x07`) every randomized 180–360 seconds by default, preserving the longest requested body motor cooldown. All masks were individually verified on the prop, but the new repeating scheduler still needs extended field testing. The old independently timed body movements are suppressed while this mode is enabled. It cannot be used at the same time as the verified jaw-first reaction scheduler.
-
-A separate **Torso and head/mouth lighting** section controls live color and brightness for channel 0 (torso light) and channel 1 (head light, potentially mouth LEDs). Live F2 static mode, F3 brightness, and F4 RGB are emitted sequentially after BLE connection. Restore choices are: connection only, after MP3 (conservative), or during + after MP3 (experimental). Lighting remains OFF by default. This color feature is protocol-derived but **not physically verified on the ESP32**; custom MP3 files may reapply saved light settings. [Detailed testing guide](../docs/compound-body-and-lighting.md).
+Edit `firmware/SkellyAutonomous/SkellyAutonomous.ino` and regenerate the embedded
+snapshot using `node scripts/sync-template.cjs`. Do not hand-edit `template.js`.
+CI checks drift, JavaScript, generator output, gallery markup, packet CRC and
+actual C++ behavior with mocked BLE/time, then compiles canonical firmware,
+representative generated sketches and the compound diagnostic with core 3.3.12.
+[Reproducible commands](../docs/testing.md) · [architecture](../docs/architecture.md).

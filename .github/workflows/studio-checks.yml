@@ -3,11 +3,17 @@ on:
   push:
     paths:
       - "studio/**"
+      - "firmware/**"
+      - "tests/**"
+      - "scripts/**"
       - "experiments/BodyComboSingleTest/**"
       - ".github/workflows/studio-checks.yml"
   pull_request:
     paths:
       - "studio/**"
+      - "firmware/**"
+      - "tests/**"
+      - "scripts/**"
       - "experiments/BodyComboSingleTest/**"
       - ".github/workflows/studio-checks.yml"
 permissions:
@@ -25,7 +31,11 @@ jobs:
           node --check studio/app.js
           node --check studio/template.js
       - name: Check generated Arduino output and constraints
-        run: node --test studio/tests/generator.test.cjs
+        run: node --test studio/tests/*.test.cjs
+      - name: Check canonical firmware and browser template match
+        run: node scripts/sync-template.cjs --check
+      - name: Execute firmware with mocked BLE and clock
+        run: python tests/run_firmware_tests.py
       - name: Verify CRC test vectors
         run: python tests/test_packets.py
       - name: Set up Arduino CLI
@@ -40,9 +50,12 @@ jobs:
         run: |
           set -e
           for sketch in .skelly-build/*; do
+            test -f "$sketch/$(basename "$sketch").ino" || continue
             echo "Compiling $sketch"
             arduino-cli compile --fqbn esp32:esp32:esp32 "$sketch"
           done
+      - name: Compile canonical firmware
+        run: arduino-cli compile --fqbn esp32:esp32:esp32 firmware/SkellyAutonomous
       - name: Compile isolated compound motor test (HEAD+ARM first)
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
