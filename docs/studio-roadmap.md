@@ -3,8 +3,8 @@
 The October 21 usability pass separates body movement and mouth routines, uses
 short everyday labels, and folds optional appearance, coordination and testing
 controls away. Firmware defaults, timing, packet formats and generator anchors
-are unchanged. Existing settings remain accessible. The timeline is tucked away
-and explicitly illustrative; it is not a firmware simulator.
+are unchanged. Existing settings remain accessible. The five-minute timeline stays visible
+and is explicitly illustrative; it is not a firmware simulator.
 
 ## Mouth routines
 

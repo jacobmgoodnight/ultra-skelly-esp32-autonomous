@@ -17,11 +17,11 @@
 </header>
 <section class="hero">
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
-  <h1>A little <em>personality.</em><br>A lot of Skelly.</h1>
+  <h1>Make your Skelly<br><em>come alive.</em></h1>
   <p>Pick a personality, choose his moves, and make the night a little stranger. Your ESP32 takes it from there.</p>
   <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Your settings stay yours</span></div>
 </section>
-<nav class="studio-nav" aria-label="Studio sections"><a href="#movement">Movement</a><a href="#mouth">Mouth</a><a href="#lighting">Lighting</a><a href="#expressions">Eyes</a><a href="#advanced">Advanced</a><a href="#finish">Save &amp; upload</a></nav>
+<nav class="studio-nav" aria-label="Studio sections"><a href="#movement">Movement</a><a href="#mouth">Mouth</a><a href="#expressions">Eyes</a><a href="#lighting">Lighting</a><a href="#advanced">Advanced</a><a href="#finish">Save &amp; upload</a></nav>
 <main class="layout">
   <div class="controls">
     <section class="panel">
@@ -70,29 +70,8 @@
       </div>
       <div class="overlap-row"><div><strong>Finish body movements before jaw playback</strong><p>Let each body movement finish before the next mouth clip starts.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Protect head, arm and torso by delaying jaw MP3 until body movement finishes</span></label></div>
     </section>
-    <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small id="lightingStatus">Off · body and head colors</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <div class="section-head"><div><span class="step">04</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
-      <p class="small-description">Choose body and head colors. Restoring both after MP3 playback is verified on the test prop; the MP3 can use its own colors while playing.</p>
-      <div class="eye-sync-control">
-        <div class="field-row">
-          <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
-          <label>Brightness (0–255) <input type="number" id="torsoBrightness" min="0" max="255" value="180" aria-label="Torso brightness"></label>
-        </div>
-        <div class="field-row">
-          <label>Head RGB <input type="color" id="headColor" value="#ff6000" aria-label="Head or mouth light color"></label>
-          <label>Brightness (0–255) <input type="number" id="headBrightness" min="0" max="255" value="180" aria-label="Head light brightness"></label>
-        </div>
-        <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
-        <select id="lightRestoreMode">
-          <option value="0">Apply colors at connection only</option>
-          <option value="1" selected>Restore my colors after MP3 playback</option>
-          <option value="2">Restore during and after MP3 (experimental)</option>
-        </select>
-        <p>Uses a 21-second playback estimate. During-playback restoration remains untested. The exact head LED region still needs mapping.</p>
-      </div>
-    </div></details>
     <details class="panel fold-panel" id="expressions"><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · choose a rotation of eye designs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <div class="section-head"><div><span class="step">05</span><h2>Eye expressions</h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable eye changes</span></label></div>
+      <div class="section-head"><div><span class="step">04</span><h2>Eye expressions</h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable eye changes</span></label></div>
       <p class="small-description">Choose expressions for Skelly to rotate through. Random eye changes are verified; eye recovery around MP3 playback needs testing.</p>
       <div id="eyeOptions" class="eye-advanced muted">
         <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
@@ -115,6 +94,27 @@
         <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button><a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">View eye designs ↗</a></div>
       </div>
 
+    </div></details>
+    <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small id="lightingStatus">Off · body and head colors</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+      <div class="section-head"><div><span class="step">05</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
+      <p class="small-description">Choose body and head colors. Restoring both after MP3 playback is verified on the test prop; the MP3 can use its own colors while playing.</p>
+      <div class="eye-sync-control">
+        <div class="field-row">
+          <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
+          <label>Brightness (0–255) <input type="number" id="torsoBrightness" min="0" max="255" value="180" aria-label="Torso brightness"></label>
+        </div>
+        <div class="field-row">
+          <label>Head RGB <input type="color" id="headColor" value="#ff6000" aria-label="Head or mouth light color"></label>
+          <label>Brightness (0–255) <input type="number" id="headBrightness" min="0" max="255" value="180" aria-label="Head light brightness"></label>
+        </div>
+        <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
+        <select id="lightRestoreMode">
+          <option value="0">Apply colors at connection only</option>
+          <option value="1" selected>Restore my colors after MP3 playback</option>
+          <option value="2">Restore during and after MP3 (experimental)</option>
+        </select>
+        <p>Uses a 21-second playback estimate. During-playback restoration remains untested. The exact head LED region still needs mapping.</p>
+      </div>
     </div></details>
     <details class="panel fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small id="breaksStatus">Off · pauses between routines</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">06</span><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
@@ -165,11 +165,12 @@
     <div class="panel output-panel">
       <span class="eyebrow">YOUR SKELLY</span><h2>Make it yours.</h2>
       <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div></div>
-      <details class="instructions"><summary>Coordination &amp; timing illustration</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div>      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
+      <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
+      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
       <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot compound"></i> Combined</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
       <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>
       <div class="timeline-axis"><span>0:00</span><span>2:30</span><span>5:00</span></div>
-<p>Timing illustration only; excludes several cooldown, jaw-first and restoration rules. Actual starts can be delayed.</p></details>
+<p class="small-description">Timing illustration only; excludes several cooldown, jaw-first and restoration rules. Actual starts can be delayed.</p>
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
