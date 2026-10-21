@@ -18,6 +18,9 @@ the cause of serial corruption. Run [the isolated test](testing.md) first.
 3. Exercise repeated Skelly power cycles with heap diagnostics; verify reused
    client/service cleanup, canceled pending jobs, delayed restart targets and no
    unintended repeat movement. A disconnect loses physical animation knowledge.
+   The pinned Bluedroid `getService` can reuse its service cache across reconnects;
+   investigate explicit rediscovery with failure/reconnect tests before changing
+   that lifecycle. Do not describe the current lookup as forced fresh discovery.
 
 ## P1 — Scheduler correctness and endurance
 

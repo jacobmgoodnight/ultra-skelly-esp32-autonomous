@@ -20,9 +20,13 @@ not reproduce the firmware's full lock/follow-up/lighting arbitration.
 performs a blocking five-second scan. The scan callback copies the matching
 advertisement and stops scanning; connection starts only after scanning returns
 and a 500 ms settling delay. Misses and failed connections retry after 30 seconds.
-One BLE client is reused, with fresh AE00/AE01 service/characteristic lookup on
-each connection. The pinned Bluedroid client clears its services when rediscovering
-them (`BLEClient::getServices`). Repeated-cycle heap stability still needs testing.
+One BLE client is reused, and AE00/AE01 lookup is called on each connection.
+In the pinned Bluedroid implementation, `getService` can return a cached service:
+`m_haveServices` is not cleared by its disconnect handler. Explicit `getServices`
+rediscovery clears old services, but the current firmware does not force that
+rediscovery on every reconnect. Stale handles after a changed device profile and
+repeated-cycle heap stability therefore remain audit risks; no reconnection
+rewrite is included in the first lighting-diagnostic PR.
 
 `resetConnection` invalidates the writer, disconnects if needed, cancels eye,
 jaw-follow-up, modeled-end, and light work. Reconnection starts fresh randomized
