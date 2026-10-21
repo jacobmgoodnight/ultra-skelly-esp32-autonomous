@@ -89,8 +89,10 @@ output or demonstrated buffer overrun. That does not establish a cause for the
 reported garbled serial output.
 
 Text event logs use one bounded formatting buffer and an uptime prefix. Boot logs
-include a build marker, numeric ESP-IDF reset reason, RTC-retained boot count, and
-heap. RTC memory does not survive every reset/power loss. Verbose diagnostics add
+include a build marker, numeric ESP-IDF reset reason, validated RTC-NOINIT boot count, and
+heap. [RTC-NOINIT retains values across software restarts](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/memory-types.html);
+the counter is reset on power-on or an invalid guard. RTC memory does not survive
+every reset/power loss, so this is not a lifetime boot total. Verbose diagnostics add
 per-write outcomes and event-triggered connection/heap/light snapshots. Uptime
 wraps at ~49.7 days. Signed deadline comparisons require deadlines within half
 that range; stale inactive-motor cooldown timestamps are a long-run audit item.

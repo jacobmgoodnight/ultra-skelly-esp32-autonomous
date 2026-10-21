@@ -173,7 +173,17 @@ uint32_t writeFailures = 0;
 uint8_t lastAttemptTag = 0;
 uint8_t lastAcceptedTag = 0;
 uint32_t lastAcceptedAt = 0;
-RTC_DATA_ATTR uint32_t bootCount = 0; // Retained only while RTC memory survives.
+// NOINIT preserves diagnostics across software resets. Validate retained words;
+// power loss, EN reset or brownout can still discard RTC memory.
+RTC_NOINIT_ATTR uint32_t bootCount;
+RTC_NOINIT_ATTR uint32_t bootCountGuard;
+
+void recordBoot(esp_reset_reason_t reason) {
+  const uint32_t magic = 0x534B454C;
+  if (reason == ESP_RST_POWERON || (bootCount ^ bootCountGuard) != magic) bootCount = 0;
+  ++bootCount;
+  bootCountGuard = bootCount ^ magic;
+}
 
 // Format into a bounded buffer and write text once per event. No BLE payload is
 // ever sent to UART. millis() is uptime and wraps after about 49.7 days.
@@ -692,7 +702,7 @@ void changeEyes(uint32_t now) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  ++bootCount;
+  recordBoot(esp_reset_reason());
   logEvent("BOOT mp3-lights-diag-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),

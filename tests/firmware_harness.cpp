@@ -139,5 +139,14 @@ int main() {
     CHECK(Serial.output.size() <= 383);
     CHECK(Serial.output.find("[      1234 ms] ") == 0);
   });
+  run("boot counter validates retained memory and resets on power-on", [] {
+    bootCount = 42; bootCountGuard = 0;
+    recordBoot(ESP_RST_SW); CHECK(bootCount == 1);
+    recordBoot(ESP_RST_SW); CHECK(bootCount == 2);
+    recordBoot(ESP_RST_PANIC); CHECK(bootCount == 3);
+    recordBoot(ESP_RST_POWERON); CHECK(bootCount == 1);
+    bootCountGuard ^= 1;
+    recordBoot(ESP_RST_SW); CHECK(bootCount == 1);
+  });
   return failed ? 1 : 0;
 }
