@@ -7,10 +7,10 @@ The eye thumbnails require internet; firmware generation works offline.
 
 Choose randomized head/jaw timing, optional arm/torso, live eyes, RGB colors,
 jaw-first follow-ups, compound masks, MP3 pools and idle breaks; then download or
-copy a self-contained `.ino`. Flash with Arduino IDE, **ESP32 Dev Module**, core
+copy a self-contained `.ino`. Flash with Arduino IDE or CLI, **ESP32 Dev Module**, core
 **3.3.12**. The browser does not compile or flash firmware. The five-minute preview
-is illustrative and does not model all arbitration. Profiles/import-export remain
-planned work, not current features.
+is illustrative and does not model all arbitration. Save/load settings keeps your
+configuration and named jaw clip mappings in a portable JSON file.
 
 ## Current feature evidence
 
@@ -49,3 +49,15 @@ CI checks drift, JavaScript, generator output, gallery markup, packet CRC and
 actual C++ behavior with mocked BLE/time, then compiles canonical firmware,
 representative generated sketches and the compound diagnostic with core 3.3.12.
 [Reproducible commands](../docs/testing.md) · [architecture](../docs/architecture.md).
+
+## Studio usability
+
+Everyday body and mouth controls are visible first; appearance and specialist
+coordination/testing controls expand on demand. The clip library maps readable
+names to the user's actual uploaded MP3 serials. Settings and clip mappings can
+be saved/loaded as validated version-1 JSON files without an account. Existing
+firmware defaults remain unchanged.
+
+See [Studio next steps](../docs/studio-roadmap.md) for pending hardware checks,
+browser USB uploading, and ideas for future improvements. Studio currently
+generates `.ino` source; it does not compile or flash firmware.

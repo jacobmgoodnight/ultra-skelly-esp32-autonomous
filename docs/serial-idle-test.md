@@ -26,5 +26,15 @@ runs and, next, a second serial terminal at the same baud with the Arduino
 monitor closed. The original received bytes are more useful than pasted Unicode
 replacement characters for separating received data from display/decoding issues.
 
-Do not change baud, cable, USB port and sketch together. No hardware result is
-claimed for this serial-only sketch until the user runs it.
+Do not change baud, cable, USB port and sketch together.
+
+## October 21 result
+
+The user supplied the complete four-cycle run, from BOOT at 1,010 ms through
+COMPLETE at 262,197 ms. All eight FIRST/SECOND pairs and heap lines are readable,
+with no replacement characters. Free heap remains 331,404 bytes and minimum heap
+299,452 bytes throughout. This is a clean serial-only comparison on the tested
+board. It does not establish a BLE cause, rule out an intermittent serial/capture
+problem, or fix controller log corruption. Next repeat the lighting-OFF jaw
+sketch with a second terminal and save original bytes; a BLE-connected/no-command
+control can further isolate the difference if needed.

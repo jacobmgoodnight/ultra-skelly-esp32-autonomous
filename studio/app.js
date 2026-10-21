@@ -22,6 +22,63 @@
     haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
+  const CLIP_FIELDS = {chatter:"clipChatter",longOpen:"clipLongOpen",gasp:"clipGasp"};
+  function normalizeLibrary(library) {
+    const result={};
+    if(!library || typeof library!=="object" || Array.isArray(library))throw new Error("Invalid jaw clip library.");
+    for(const key of Object.keys(CLIP_FIELDS)) {
+      const value=library[key];
+      if(value===undefined || value===null || value==="")result[key]=null;
+      else if(Number.isSafeInteger(value) && value>=1 && value<=65535)result[key]=value;
+      else throw new Error("Clip file numbers must be whole numbers from 1 to 65535.");
+    }
+    return result;
+  }
+  function jawSelection(choice, library) {
+    const clips=normalizeLibrary(library);
+    let files;
+    if(choice==="mix") {
+      files=Object.values(clips).filter(n=>n!==null);
+      if(files.length<2)throw new Error("Add at least two clip file numbers to create a mix.");
+      if(new Set(files).size!==files.length)throw new Error("Use a different file number for each clip in a mix.");
+    } else {
+      if(!Object.hasOwn(CLIP_FIELDS,choice) || clips[choice]===null)throw new Error("Enter this clip’s file number first.");
+      files=[clips[choice]];
+    }
+    return {jawEnabled:true,jawFile:files[0],jawExtras:files.slice(1).join(", ")};
+  }
+  function parseProfile(text) {
+    if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
+    const profile=JSON.parse(text);
+    if(!profile || profile.app!=="SkellyStudio" || profile.version!==1 ||
+       !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
+      throw new Error("This is not a supported Skelly Studio profile (version 1).");
+    const config={};
+    for(const [key,value] of Object.entries(DEFAULTS)) {
+      const entry=profile.config[key];
+      if(Array.isArray(value)) {
+        if(!Array.isArray(entry) || entry.some(n=>!Number.isSafeInteger(n)))throw new Error("Invalid profile setting: "+key);
+        config[key]=entry.slice();
+      } else {
+        if(typeof entry!==typeof value || (typeof entry==="number" && !Number.isSafeInteger(entry)))
+          throw new Error("Invalid profile setting: "+key);
+        config[key]=entry;
+      }
+    }
+    // Validate dormant settings too: they will still be emitted into C++ constants.
+    const errors=validate(config);
+    errors.push(...validate({...config,headEnabled:true,torsoEnabled:true,armEnabled:true,
+      jawEnabled:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true,
+      compoundEnabled:false,jawFollowupMotor:0}));
+    if(config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax ||
+       config.compoundMasks.some(n=>![3,5,6,7].includes(n)) || new Set(config.compoundMasks).size!==config.compoundMasks.length)
+      errors.push("Invalid combined movement settings.");
+    if(errors.length)throw new Error([...new Set(errors)].join("\n"));
+    return {app:"SkellyStudio",version:1,config,clips:normalizeLibrary(profile.clips||{})};
+  }
+  function createProfile(config,clips) {
+    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:1,config,clips})),null,2)+"\n";
+  }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
     if (at<0 || source.indexOf(original,at+original.length)!==-1)
@@ -330,14 +387,31 @@
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
+    const files=[c.jawFile,...extraFileNumbers(c)];
+    const clips=readLibrary();
+    const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
+    const selectedNames=files.map(file=>Object.keys(clips).filter(k=>clips[k]===file));
+    byId("jawChoiceStatus").textContent=!c.jawEnabled?"Jaw playback is off.":"Selected: "+files.map((file,i)=>
+      (selectedNames[i].length===1?names[selectedNames[i][0]]+" · ":"")+"#"+file).join(" + ")+(files.length>1?" · chosen randomly":"");
+    for(const button of document.querySelectorAll("[data-jaw-choice]")) {
+      let selected=false;
+      try {
+        const choice=jawSelection(button.dataset.jawChoice,clips);
+        button.disabled=false;
+        selected=c.jawEnabled && choice.jawFile===c.jawFile && choice.jawExtras===c.jawExtras;
+      } catch { button.disabled=true; }
+      button.setAttribute("aria-pressed",String(selected));
+    }
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("overlapSummary").textContent=(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
+    byId("eyeOptions").inert=!c.eyesEnabled;
     byId("selectedEyeCount").textContent=c.eyeChoices.length+" of 18 selected";
     byId("restOptions").classList.toggle("muted",!c.restEnabled);
+    byId("restOptions").inert=!c.restEnabled;
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
     const timeline=byId("timeline");timeline.replaceChildren();
@@ -359,6 +433,15 @@
     image.src=eyeImageUrl(index);
     image.alt="Enlarged preview of Ultra Skelly eye pattern "+index;
     byId("eyePreviewLabel").textContent="Eye pattern #"+index;
+  }
+  function readLibrary() {
+    return Object.fromEntries(Object.entries(CLIP_FIELDS).map(([key,id])=>
+      [key,byId(id).value===""?null:Number(byId(id).value)]));
+  }
+  function downloadText(text,name,type) {
+    const href=URL.createObjectURL(new Blob([text],{type}));
+    const a=document.createElement("a");a.href=href;a.download=name;
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
   }
   function init(){
     const eyeGrid=byId("eyeGrid");
@@ -402,13 +485,41 @@
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
       writeConfig(PRESETS[b.dataset.preset]);
     });
+    for(const button of document.querySelectorAll("[data-jaw-choice]"))button.addEventListener("click",()=>{
+      try {
+        writeConfig(jawSelection(button.dataset.jawChoice,readLibrary()));
+        for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+      }
+      catch(error) { byId("jawChoiceStatus").textContent=error.message; }
+    });
+    for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{
+      const target=byId(link.getAttribute("href").slice(1));
+      if(target && target.tagName==="DETAILS")target.open=true;
+    });
+    byId("saveProfile").addEventListener("click",()=>{
+      try {
+        downloadText(createProfile(readConfig(),readLibrary()),"SkellyStudio-settings.json","application/json");
+        byId("profileStatus").textContent="Settings saved. Keep this file to restore your setup.";
+      } catch(error) { byId("profileStatus").textContent=error.message; }
+    });
+    byId("loadProfile").addEventListener("click",()=>byId("profileFile").click());
+    byId("profileFile").addEventListener("change",async event=>{
+      const file=event.target.files[0];
+      if(!file)return;
+      try {
+        if(file.size>65536)throw new Error("Choose a settings file smaller than 64 KB.");
+        const profile=parseProfile(await file.text());
+        for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=profile.clips[key]??"";
+        writeConfig(profile.config);
+        for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+        byId("profileStatus").textContent="Settings loaded. Clip numbers belong to the Skelly that created this profile.";
+      } catch(error) { byId("profileStatus").textContent="Could not load settings: "+error.message; }
+      finally { event.target.value=""; }
+    });
     byId("download").addEventListener("click",()=>{
       try{
         const code=generateSketch(readConfig());
-        const blob=new Blob([code],{type:"text/plain;charset=utf-8"});
-        const href=URL.createObjectURL(blob);
-        const a=document.createElement("a");a.href=href;a.download="SkellyAutonomous.ino";
-        document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
+        downloadText(code,"SkellyAutonomous.ino","text/plain;charset=utf-8");
       }catch(e){byId("error").textContent=e.message;byId("error").hidden=false}
     });
     const dialog=byId("codeDialog");
@@ -425,6 +536,6 @@
     });
     writeConfig(DEFAULTS);
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,simulateSchedule};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,simulateSchedule,jawSelection,createProfile,parseProfile};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

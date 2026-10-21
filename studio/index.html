@@ -17,10 +17,11 @@
 </header>
 <section class="hero">
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
-  <h1>Make your Skelly<br><em>come alive.</em></h1>
-  <p>Choose the movements, set their random timing, and generate a complete Arduino sketch for an ESP32. No phone app, Wi-Fi, account, or coding required after setup.</p>
-  <div class="chips"><span>✓ Verified head + jaw</span><span>↔ Optional overlap</span><span>◉ Eye control confirmed</span><span>♻ BLE reconnection</span></div>
+  <h1>A little <em>personality.</em><br>A lot of Skelly.</h1>
+  <p>Pick a personality, choose his moves, and make the night a little stranger. Your ESP32 takes it from there.</p>
+  <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Your settings stay yours</span></div>
 </section>
+<nav class="studio-nav" aria-label="Studio sections"><a href="#movement">Movement</a><a href="#mouth">Mouth</a><a href="#lighting">Lighting</a><a href="#expressions">Eyes</a><a href="#advanced">Advanced</a><a href="#finish">Save &amp; upload</a></nav>
 <main class="layout">
   <div class="controls">
     <section class="panel">
@@ -31,28 +32,99 @@
         <button class="preset" type="button" data-preset="haunted"><span class="preset-symbol">✺</span><b>Haunted</b><small>A little more active</small></button>
       </div>
     </section>
-    <section class="panel">
-      <div class="section-head"><div><span class="step">02</span><h2>Customize movement</h2></div><span class="tiny">Intervals are start-to-start</span></div>
+    <section class="panel" id="movement">
+      <div class="section-head"><div><span class="step">02</span><h2>Body movement</h2></div><span class="tiny">Intervals are start-to-start</span></div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">↻</span><div><strong>Head movement</strong><small>~25-sec animation, 7-sec motor buffer</small></div></div><label class="switch"><input type="checkbox" id="headEnabled" checked><span></span><span class="sr-only">Enable head movement</span></label></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon">↻</span><div><strong>Head movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="headEnabled" checked><span></span><span class="sr-only">Enable head movement</span></label></div>
         <div class="frequency" data-for="headEnabled"><label>Start every <input id="headMin" type="number" min="32" max="3600" value="32" inputmode="numeric" aria-label="Head minimum seconds"> to <input id="headMax" type="number" min="32" max="3600" value="60" inputmode="numeric" aria-label="Head maximum seconds"> seconds</label></div>
       </div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">⌁</span><div><strong>Torso movement</strong><small>Previously verified ~25-sec animation · optional</small></div></div><label class="switch"><input type="checkbox" id="torsoEnabled"><span></span><span class="sr-only">Enable torso movement</span></label></div>
-        <div class="frequency" data-for="torsoEnabled"><label>Start every <input id="torsoMin" type="number" min="45" max="3600" value="240" inputmode="numeric" aria-label="Torso minimum seconds"> to <input id="torsoMax" type="number" min="45" max="3600" value="420" inputmode="numeric" aria-label="Torso maximum seconds"> seconds</label><p class="small-description">Enabled by the Haunted preset. Starts can be delayed by motor cooldowns and optional jaw-priority rules. The 45-second input minimum is a conservative Studio limit, not a Skelly protocol restriction.</p></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon">⌁</span><div><strong>Torso movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="torsoEnabled"><span></span><span class="sr-only">Enable torso movement</span></label></div>
+        <div class="frequency" data-for="torsoEnabled"><label>Start every <input id="torsoMin" type="number" min="45" max="3600" value="240" inputmode="numeric" aria-label="Torso minimum seconds"> to <input id="torsoMax" type="number" min="45" max="3600" value="420" inputmode="numeric" aria-label="Torso maximum seconds"> seconds</label></div>
       </div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">☞</span><div><strong>Arm movement <span class="experimental">VERIFIED: 22 SEC</span></strong><small>Two back-to-back arm motions · optional</small></div></div><label class="switch"><input type="checkbox" id="armEnabled"><span></span><span class="sr-only">Enable experimental arm movement</span></label></div>
-        <div class="frequency" data-for="armEnabled"><label>Start every <input id="armMin" type="number" min="45" max="3600" value="360" inputmode="numeric" aria-label="Arm minimum seconds"> to <input id="armMax" type="number" min="45" max="3600" value="720" inputmode="numeric" aria-label="Arm maximum seconds"> seconds</label><p class="small-description">Arm-only test succeeded: two movements over ~22 seconds. Its 45-second Studio minimum includes time to finish and cool down; Haunted still defaults to 6–12 minutes.</p></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon">☞</span><div><strong>Arm movement</strong><small>Two motions over about 22 seconds</small></div></div><label class="switch"><input type="checkbox" id="armEnabled"><span></span><span class="sr-only">Enable arm movement</span></label></div>
+        <div class="frequency" data-for="armEnabled"><label>Start every <input id="armMin" type="number" min="45" max="3600" value="360" inputmode="numeric" aria-label="Arm minimum seconds"> to <input id="armMax" type="number" min="45" max="3600" value="720" inputmode="numeric" aria-label="Arm maximum seconds"> seconds</label></div>
       </div>
+    </section>
+    <section class="panel" id="mouth"><div class="section-head"><div><span class="step">03</span><h2>Mouth routines</h2></div></div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">〰</span><div><strong>Silent jaw animation</strong><small>Requires an uploaded MP3 with movement flags 0x00</small></div></div><label class="switch"><input type="checkbox" id="jawEnabled" checked><span></span><span class="sr-only">Enable jaw movement</span></label></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon">〰</span><div><strong>Jaw animation</strong><small>Uses audio clips already stored on your Skelly</small></div></div><label class="switch"><input type="checkbox" id="jawEnabled" checked><span></span><span class="sr-only">Enable jaw movement</span></label></div>
         <div class="frequency" data-for="jawEnabled"><label>Start every <input id="jawMin" type="number" min="22" max="3600" value="45" inputmode="numeric" aria-label="Jaw minimum seconds"> to <input id="jawMax" type="number" min="22" max="3600" value="90" inputmode="numeric" aria-label="Jaw maximum seconds"> seconds</label>
-          <div class="field-row"><label for="jawFile">MP3 file serial <input id="jawFile" type="number" min="1" max="65535" value="12" inputmode="numeric"></label><span class="helper">Find yours in the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a> log. #12 is only an example.</span></div><label class="single-field" for="jawExtras">Additional jaw MP3 file serials (optional)<input id="jawExtras" type="text" value="" placeholder="e.g. 13, 14"></label><p class="small-description">Randomly choose from uploaded jaw clips. Set saved movement flags to <strong>0x00 on EVERY clip</strong>. Try the <a href="../audio/jaw-personalities.md" target="_blank">3-second wide-open and surprise jaw audio recipes</a>. Upload each MP3 to Skelly and enter its actual file serial here.</p>
+          <div class="clip-library" role="group" aria-label="Jaw clip library">
+            <p class="small-description">Give each clip its file number from your Skelly, then choose a routine. These buttons select uploaded audio; they do not upload or create it.</p>
+            <div class="clip-cards">
+              <div class="clip-card"><span class="clip-mark" aria-hidden="true">∿</span><strong>Chatter</strong><small>Little irregular mouth movements</small><label for="clipChatter">Your file #<input id="clipChatter" type="number" min="1" max="65535" placeholder="—" inputmode="numeric"></label><button type="button" data-jaw-choice="chatter" disabled>Use chatter</button></div>
+              <div class="clip-card"><span class="clip-mark" aria-hidden="true">○</span><strong>Long open</strong><small>Repeated openings held about 3 seconds</small><label for="clipLongOpen">Your file #<input id="clipLongOpen" type="number" min="1" max="65535" placeholder="—" inputmode="numeric"></label><button type="button" data-jaw-choice="longOpen" disabled>Use long open</button></div>
+              <div class="clip-card"><span class="clip-mark" aria-hidden="true">✧</span><strong>Whisper &amp; gasp</strong><small>Small movements with dramatic openings</small><label for="clipGasp">Your file #<input id="clipGasp" type="number" min="1" max="65535" placeholder="—" inputmode="numeric"></label><button type="button" data-jaw-choice="gasp" disabled>Use whisper &amp; gasp</button></div>
+            </div>
+            <button type="button" class="secondary" data-jaw-choice="mix" disabled>Surprise me · mix my clips</button>
+            <p id="jawChoiceStatus" class="selection-status" aria-live="polite"></p>
+          </div>
+          <details class="instructions" open><summary>Selected files &amp; custom clips</summary>
+            <div class="field-row"><label for="jawFile">Primary file # <input id="jawFile" type="number" min="1" max="65535" value="12" inputmode="numeric"></label><span class="helper">Use your own uploaded file number. #12 is an example.</span></div>
+            <label class="single-field" for="jawExtras">Extra file numbers for random selection<input id="jawExtras" type="text" value="" placeholder="e.g. 13, 14"></label>
+          </details>
+          <details class="instructions"><summary>Set up silent mouth clips</summary><ol><li>Upload a jaw MP3 with the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a> and note its file number.</li><li>Save head, arm and torso movement as OFF on every clip (flags <strong>0x00</strong>).</li><li>Turn the prop’s volume knob to zero for silent movement.</li></ol><p>Keep clips at 20–21 seconds. Long open and whisper &amp; gasp each produced ~3-second holds on the test prop. <a href="../audio/jaw-personalities.md">Get the clips and setup guide ↗</a></p></details>
         </div>
       </div>
-      <div class="overlap-row"><div><strong>Protect head + arm + torso from jaw MP3 <span class="experimental">RECOMMENDED</span></strong><p>Skelly's MP3 appears to reset movement flags when playback starts. When ON, let the current head, arm or torso movement finish before playing an MP3; postpone new standalone body movement until the jaw clip is done. Jaw-first arm/torso follow-ups remain allowed. This overrides the independent Head + Jaw overlap switch so the head isn't cut off. Jaw events may start later than their target.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Protect head, arm and torso by delaying jaw MP3 until body movement finishes</span></label></div>
-      <div class="eye-sync-control" style="margin:18px 0">
+      <div class="overlap-row"><div><strong>Finish body movements before jaw playback</strong><p>Let each body movement finish before the next mouth clip starts.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Protect head, arm and torso by delaying jaw MP3 until body movement finishes</span></label></div>
+    </section>
+    <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small>Body and head colors · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+      <div class="section-head"><div><span class="step">04</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
+      <p class="small-description">Choose body and head colors. Restoring both after MP3 playback is verified on the test prop; the MP3 can use its own colors while playing.</p>
+      <div class="eye-sync-control">
+        <div class="field-row">
+          <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
+          <label>Brightness (0–255) <input type="number" id="torsoBrightness" min="0" max="255" value="180" aria-label="Torso brightness"></label>
+        </div>
+        <div class="field-row">
+          <label>Head RGB <input type="color" id="headColor" value="#ff6000" aria-label="Head or mouth light color"></label>
+          <label>Brightness (0–255) <input type="number" id="headBrightness" min="0" max="255" value="180" aria-label="Head light brightness"></label>
+        </div>
+        <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
+        <select id="lightRestoreMode">
+          <option value="0">Apply colors at connection only</option>
+          <option value="1" selected>Restore my colors after MP3 playback</option>
+          <option value="2">Restore during and after MP3 (experimental)</option>
+        </select>
+        <p>Uses a 21-second playback estimate. During-playback restoration remains untested. The exact head LED region still needs mapping.</p>
+      </div>
+    </div></details>
+    <details class="panel fold-panel" id="expressions"><summary><span><strong>Eye expressions</strong><small>Choose a rotation of eye designs · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+      <div class="section-head"><div><span class="step">05</span><h2>Eye expressions</h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable eye changes</span></label></div>
+      <p class="small-description">Choose expressions for Skelly to rotate through. Random eye changes are verified; eye recovery around MP3 playback needs testing.</p>
+      <div id="eyeOptions" class="eye-advanced muted">
+        <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
+        <div class="eye-sync-control">
+          <label for="eyeJawMode"><strong>When a jaw MP3 plays</strong></label>
+          <select id="eyeJawMode" aria-describedby="eyeJawHelp">
+            <option value="1" selected>Keep my selected eye expression</option>
+            <option value="2">Choose a new random eye expression</option>
+            <option value="0">Let the MP3 control the eyes</option>
+          </select>
+          <p id="eyeJawHelp">MP3 playback can reset the eyes. The first two modes send an eye update shortly after playback starts and after the 21-second clip estimate. This synchronization is new and needs testing.</p>
+        </div>
+        <span class="field-caption">Choose which eye designs appear in the random rotation. Select a thumbnail to toggle it; use the preview button to enlarge it.</span>
+        <div class="eye-spotlight" aria-live="polite">
+          <img id="eyePreviewImage" src="https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">
+          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Tap <strong>Preview</strong> under any eye to see it here. Check the patterns you want Skelly to rotate through.</p><span id="selectedEyeCount">18 of 18 selected</span></div>
+        </div>
+        <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
+        <p class="eye-credit">Previews are loaded from the <a href="https://github.com/martinecker/SkellyUltraWebController" rel="noopener" target="_blank">Skelly Ultra Web Controller</a> project, not copied into this repository. An internet connection is needed to display them; the Arduino generator works offline.</p>
+        <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button><a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">View eye designs ↗</a></div>
+      </div>
+
+    </div></details>
+    <details class="panel fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small>Let Skelly pause between routines · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+      <div class="section-head"><div><span class="step">06</span><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
+      <p class="small-description">Occasional quiet stretches after animations finish. Hardware integration is still untested.</p>
+      <div id="restOptions" class="eye-advanced muted">
+        <label class="freq-inline">After every <input type="number" id="restMin" value="180" min="120" max="3600" aria-label="Rest interval minimum seconds"> to <input type="number" id="restMax" value="420" min="120" max="3600" aria-label="Rest interval maximum seconds"> seconds, take a break</label>
+        <label class="freq-inline" style="margin-top:12px">Rest for <input type="number" id="restDurationMin" value="25" min="15" max="300" aria-label="Rest duration minimum seconds"> to <input type="number" id="restDurationMax" value="60" min="15" max="300" aria-label="Rest duration maximum seconds"> seconds</label>
+      </div>
+    </div></details>
+    <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Coordination, combined actions, Bluetooth and logs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">      <div class="eye-sync-control" style="margin:18px 0">
         <label for="jawFollowupMotor"><strong>Jaw first → body movement <span class="experimental">HEAD: 2s + 10s FAILED</span></strong></label>
         <select id="jawFollowupMotor" aria-describedby="jawFollowupHelp">
           <option value="0" selected>Off — use normal scheduling</option>
@@ -64,13 +136,13 @@
         <label for="jawFollowupDelaySec">Delay after MP3 starts (seconds)</label>
         <input id="jawFollowupDelaySec" type="number" min="1" max="10" step="1" value="2" aria-label="Delay between jaw audio and arm or torso command in seconds">
         <label class="freq-inline" style="margin-top:12px"><input id="jawFollowupRecurring" type="checkbox" style="width:18px;height:18px;accent-color:#b28df9"> <strong>Repeat when the selected motor's own random interval is due</strong></label>
-        <p>OFF = one successful diagnostic run per BLE connection. ON = coordinated recurring movement: the arm or torso waits until its configured interval has elapsed, then starts <strong>after the next jaw MP3</strong>. Not every jaw clip triggers a motor. Recurring mode needs extended testing.</p>
-        <p id="jawFollowupHelp"><strong>Arm/torso jaw-first overlap is confirmed.</strong> Jaw-first HEAD was tested with file #13 at BOTH 2 seconds and 10 seconds after MP3 start: the command was SENT, but head motion did not start. Standalone head movement works. Keep this diagnostic OFF for normal operation. The cause remains unknown; jaw-first ARM and TORSO work. The Alternating arm/torso option requires both motors enabled and recurring mode ON. <a href="../docs/jaw-first-head-test.md">Head test instructions</a>.</p>
+        <p>Repeat OFF runs once per connection. Repeat ON waits for the motor’s own interval before pairing it with a mouth clip.</p>
+        <p id="jawFollowupHelp">Arm/torso follow-ups have worked. HEAD after jaw failed at both 2 and 10 seconds; keep it OFF. Alternating needs arm, torso and repeat enabled. <a href="../docs/jaw-first-head-test.md">Test evidence ↗</a></p>
       </div>
       <div class="overlap-row"><div><strong>Allow separate motor-command overlap <span class="experimental">ADVANCED</span></strong><p>Send individually scheduled head, torso and arm commands while another motor is still moving. Physical combined-mask commands are verified separately; this older separate-write scheduler remains experimental. Ignored when combined mode is ON.</p></div><label class="switch"><input type="checkbox" id="bodyOverlap"><span></span><span class="sr-only">Allow simultaneous body motor movements (advanced and experimental)</span></label></div>
       <div class="eye-sync-control" style="margin:18px 0">
         <label class="freq-inline"><input id="compoundEnabled" type="checkbox"> <strong>Random combined body movements <span class="experimental">MASKS VERIFIED · AUTOMATION NEW</span></strong></label>
-        <p>Replaces independently scheduled head/arm/torso movements with a single randomized AACA bitmask. The 0x03, 0x05, 0x06 and 0x07 commands were all physically verified. New autonomous random scheduling needs a field test. This is separate from jaw-first reactions.</p>
+        <p>Move selected motors with one combined command. Individual masks worked; recurring automation still needs a field test. Choose this OR jaw-first reactions.</p>
         <label>Combined action every <input id="compoundMin" type="number" min="45" max="3600" value="180" aria-label="Combined movement minimum seconds"> to <input id="compoundMax" type="number" min="45" max="3600" value="360" aria-label="Combined movement maximum seconds"> seconds</label>
         <p>Randomly choose from these allowed combinations (all selected motors must be enabled above):</p>
         <div class="field-row">
@@ -79,89 +151,37 @@
           <label><input class="compound-choice" type="checkbox" value="6" checked> Arm + Torso</label>
           <label><input class="compound-choice" type="checkbox" value="7" checked> All three</label>
         </div>
-        <p>Keep jaw MP3 body protection ON. The random chooser never sends a multi-motor packet during active jaw playback. To preserve the proven jaw-first alternating routine, leave this option OFF.</p>
+        <p>Keep jaw body protection ON. Combined actions wait for jaw playback to finish.</p>
       </div>
-      <div class="overlap-row"><div><strong>Allow independent head + jaw overlap</strong><p>Only applies when MP3 body protection is OFF. On this Skelly, playing an MP3 during a head animation appears to interrupt it. Keep protection ON until jaw-first head movement is separately tested.</p></div><label class="switch"><input type="checkbox" id="overlap" checked><span></span><span class="sr-only">Allow head and jaw overlap</span></label></div>
-    </section>
-    <section class="panel">
-      <div class="section-head"><div><span class="step">03</span><h2>Torso and head/mouth lighting <span class="experimental">LIVE RGB TESTING</span></h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
-      <p class="small-description">Live colors changed successfully on the test prop. Jaw MP3 playback then restored its saved torso/head colors. Restoration afterward still needs visual confirmation. Channel 1 is <strong>Head Light</strong>; its exact LED region needs mapping. Settings are OFF by default.</p>
-      <div class="eye-sync-control">
-        <div class="field-row">
-          <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
-          <label>Brightness (0–255) <input type="number" id="torsoBrightness" min="0" max="255" value="180" aria-label="Torso brightness"></label>
-        </div>
-        <div class="field-row">
-          <label>Head / mouth RGB <input type="color" id="headColor" value="#ff6000" aria-label="Head or mouth light color"></label>
-          <label>Brightness (0–255) <input type="number" id="headBrightness" min="0" max="255" value="180" aria-label="Head light brightness"></label>
-        </div>
-        <label for="lightRestoreMode"><strong>When a jaw MP3 plays</strong></label>
-        <select id="lightRestoreMode">
-          <option value="0">Apply colors at connection only</option>
-          <option value="1" selected>Restore after estimated MP3 end (first test)</option>
-          <option value="2">Restore during and after MP3 (experimental)</option>
-        </select>
-        <p>Each update sends static mode (F2), brightness (F3) and RGB (F4) to each channel. Restoration begins 500 ms after the configured 21-second clip estimate; it does not detect actual playback end. The next MP3 waits for the complete update. For longer files, adjust MOUTH_CLIP_MS in the downloaded sketch. The during-playback option remains unverified.</p>
-        <label><input type="checkbox" id="diagnosticsEnabled"> Verbose diagnostics for an attended test</label>
-        <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
-      </div>
-    </section>
-    <section class="panel eye-panel">
-      <div class="section-head"><div><span class="step">03</span><h2>Eye expressions <span class="experimental">RANDOM MODE IN TESTING</span></h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable experimental eye changes</span></label></div>
-      <p class="small-description"><strong>Verified on an Ultra Skelly v2:</strong> both a one-shot eye change and randomized eye changes from the ESP32 work. Different firmware versions may behave differently; the mouth clip could reapply its saved eye setting. <a href="../docs/eyes.md">Eye notes ↗</a></p>
-      <div id="eyeOptions" class="eye-advanced muted">
-        <label class="freq-inline">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
-        <div class="eye-sync-control">
-          <label for="eyeJawMode"><strong>When a jaw MP3 plays</strong></label>
-          <select id="eyeJawMode" aria-describedby="eyeJawHelp">
-            <option value="1" selected>Keep my selected eye expression</option>
-            <option value="2">Choose a new random eye expression</option>
-            <option value="0">Let the MP3 control the eyes</option>
-          </select>
-          <p id="eyeJawHelp">MP3 playback can reset the eyes. The first two modes send an eye update shortly after playback starts and after the approximately 20-second clip ends. This synchronization is new and needs testing.</p>
-        </div>
-        <span class="field-caption">Choose which eye designs appear in the random rotation. Select a thumbnail to toggle it; use the preview button to enlarge it.</span>
-        <div class="eye-spotlight" aria-live="polite">
-          <img id="eyePreviewImage" src="https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">
-          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Tap <strong>Preview</strong> under any eye to see it here. Check the patterns you want Skelly to rotate through.</p><span id="selectedEyeCount">18 of 18 selected</span></div>
-        </div>
-        <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
-        <p class="eye-credit">Previews are loaded from the <a href="https://github.com/martinecker/SkellyUltraWebController" rel="noopener" target="_blank">Skelly Ultra Web Controller</a> project, not copied into this repository. An internet connection is needed to display them; the Arduino generator works offline.</p>
-        <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button><a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">View eye designs ↗</a></div>
-      </div>
-      <div class="notice"><strong>Torso and arm: OPTIONAL.</strong> Body motors use a global cooldown by default; separate-write overlap is optional. All four compound movement masks are now physically verified, but randomly scheduled compound mode is new. On every jaw MP3, keep stored movement flags at 0x00.</div>
-    </section>
-    <section class="panel">
-      <div class="section-head"><div><span class="step">04</span><h2>Occasional idle breaks <span class="experimental">NEW</span></h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
-      <p class="small-description">Adds unpredictable quiet stretches. Skelly finishes active animations before resting. New feature: test it on your ESP32 before leaving it unattended.</p>
-      <div id="restOptions" class="eye-advanced muted">
-        <label class="freq-inline">After every <input type="number" id="restMin" value="180" min="120" max="3600" aria-label="Rest interval minimum seconds"> to <input type="number" id="restMax" value="420" min="120" max="3600" aria-label="Rest interval maximum seconds"> seconds, take a break</label>
-        <label class="freq-inline" style="margin-top:12px">Rest for <input type="number" id="restDurationMin" value="25" min="15" max="300" aria-label="Rest duration minimum seconds"> to <input type="number" id="restDurationMax" value="60" min="15" max="300" aria-label="Rest duration maximum seconds"> seconds</label>
-      </div>
-    </section>
-    <section class="panel">
-      <div class="section-head"><div><span class="step">05</span><h2>Bluetooth settings</h2></div></div>
+      <div class="overlap-row"><div><strong>Allow independent head + jaw overlap</strong><p>Only applies when MP3 body protection is OFF. Playback can interrupt head movement; jaw-first HEAD failed at both 2 and 10 seconds. Keep body protection ON for regular use.</p></div><label class="switch"><input type="checkbox" id="overlap" checked><span></span><span class="sr-only">Allow head and jaw overlap</span></label></div>
+      <h3>Connection &amp; diagnostics</h3>
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>
-    </section>
+        <label><input type="checkbox" id="diagnosticsEnabled"> Verbose diagnostics for an attended test</label>
+        <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
+</div></details>
   </div>
-  <aside class="output">
+  <aside class="output" id="finish">
     <div class="panel output-panel">
-      <span class="eyebrow">YOUR GENERATED CONTROLLER</span><h2>Ready for the haunting?</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST EXPERIMENT</span><strong id="jawFollowupSummary">Off</strong></div></div>
-      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
+      <span class="eyebrow">YOUR SKELLY</span><h2>Make it yours.</h2>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">45–90 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div></div>
+      <details class="instructions"><summary>Coordination &amp; timing illustration</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div>      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
       <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot compound"></i> Combined</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
       <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>
       <div class="timeline-axis"><span>0:00</span><span>2:30</span><span>5:00</span></div>
+<p>Timing illustration only; excludes several cooldown, jaw-first and restoration rules. Actual starts can be delayed.</p></details>
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
-      <p class="small-description">Generated entirely in your browser. Firmware starts from the tested head/jaw controller. New jaw-pool and idle-break options still need hardware testing.</p>
-      <details class="instructions"><summary>After downloading</summary><ol><li>Open the file in Arduino IDE using <strong>ESP32 Dev Module</strong>.</li><li>Power on Skelly, and close any other Bluetooth controller.</li><li>Upload to your ESP32 and open Serial Monitor at <strong>115200</strong>.</li><li>If it doesn't connect after flashing, try the board's EN/RESET button; scan retry happens automatically.</li></ol><p><a href="../docs/setup.md">Read complete setup guide ↗</a></p></details>
+      <p class="small-description">Generates locally in your browser. New file mixes and idle breaks still need an attended hardware test.</p>
+      <div class="profile-actions"><button id="saveProfile" class="secondary" type="button">Save settings (.json)</button><button id="loadProfile" class="secondary" type="button">Load settings</button><input id="profileFile" class="sr-only" type="file" accept=".json,application/json" aria-label="Choose saved Studio settings"></div>
+      <p id="profileStatus" class="small-description" role="status">Save a profile to keep settings and your own clip numbers.</p>
+      <details class="instructions"><summary>Put it on my ESP32</summary><ol><li>Download the sketch and open it in Arduino IDE or use Arduino CLI.</li><li>Choose <strong>ESP32 Dev Module</strong> and core <strong>3.3.12</strong>, then compile and upload over USB.</li><li>Power on Skelly and disconnect other Bluetooth controllers. The ESP32 finds it by name.</li></ol><p>Once uploaded, the browser and computer can disconnect.</p><p><a href="../docs/setup.md">Setup guide ↗</a></p></details>
+      <details class="instructions"><summary>Can I upload from Chrome?</summary><p>Browser USB flashing is possible with compiled firmware. This version generates source and does not compile or flash it. A future installer could remove the IDE step for prebuilt firmware. <a href="../docs/studio-roadmap.md">What’s planned ↗</a></p></details>
     </div>
   </aside>
 </main>
-<footer>Community-made ESP32 controller · <a href="https://github.com/martinecker/SkellyUltraWebController">Web controller protocol credits</a> · <a href="../docs/eyes.md">Eye experiment notes</a></footer>
+<footer>Community-made ESP32 controller · <a href="https://github.com/martinecker/SkellyUltraWebController">Web controller protocol credits</a> · <a href="../docs/hardware-verification.md">Hardware test status</a></footer>
 </div>
 <dialog id="codeDialog"><div class="dialog-head"><strong>Generated SkellyAutonomous.ino</strong><button id="closeDialog" type="button" aria-label="Close code preview">✕</button></div><pre><code id="codeText"></code></pre><div class="dialog-actions"><button type="button" id="copyCode">Copy code</button><button id="closeDialogBottom" type="button">Close</button></div></dialog>
 </body>
