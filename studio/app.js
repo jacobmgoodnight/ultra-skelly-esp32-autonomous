@@ -22,6 +22,17 @@
     haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
+  const PALETTES=Object.freeze({
+    halloween:{name:"Halloween",torsoColor:"#ff6000",headColor:"#00ff00"},
+    haunted:{name:"Haunted",torsoColor:"#8000ff",headColor:"#00e6cc"},
+    moonlight:{name:"Moonlight",torsoColor:"#176bff",headColor:"#c8e8ff"},
+    ember:{name:"Ember",torsoColor:"#ff1800",headColor:"#ffb000"}
+  });
+  function paletteSettings(name) {
+    if(!Object.hasOwn(PALETTES,name))throw new Error("Choose a known lighting palette.");
+    const p=PALETTES[name];
+    return {lightsEnabled:true,torsoColor:p.torsoColor,headColor:p.headColor};
+  }
   const CLIP_FIELDS = {chatter:"clipChatter",longOpen:"clipLongOpen",gasp:"clipGasp"};
   function normalizeLibrary(library) {
     const result={};
@@ -301,7 +312,7 @@
       "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
       "// Jaw-first motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s; recurring="+config.jawFollowupRecurring+".",
       "// Compound body="+config.compoundEnabled+" masks="+config.compoundMasks.join(",")+" interval="+config.compoundMin+"-"+config.compoundMax+"s.",
-      "// Live RGB channels (0=torso, 1=head)="+config.lightsEnabled+"; restore="+config.lightRestoreMode+"; post-MP3 restoration unverified.",
+      "// Live RGB channels (0=torso, 1=head)="+config.lightsEnabled+"; restore="+config.lightRestoreMode+"; mode 1 verified in isolated test; mode 2 untested.",
       "// Verbose diagnostics="+Boolean(config.diagnosticsEnabled)+"; clip end is modeled, not notified by Skelly.",
       "// Overlap="+config.overlap+"; eyes="+config.eyesEnabled+" "+config.eyesMin+"–"+config.eyesMax+"s",
       "// Random AAF9 eye selection verified; jaw-MP3 eye recovery modes need hardware testing.",
@@ -408,6 +419,12 @@
     byId("lightingStatus").textContent=c.lightsEnabled?"On · body "+c.torsoColor+" / head "+c.headColor:"Off · body and head colors";
     byId("eyesStatus").textContent=c.eyesEnabled?"On · "+c.eyeChoices.length+" expressions in rotation":"Off · choose a rotation of eye designs";
     byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
+    const palette=Object.values(PALETTES).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
+    byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
+    for(const button of document.querySelectorAll("[data-palette]")) {
+      const p=PALETTES[button.dataset.palette];
+      button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
+    }
     byId("overlapSummary").textContent=(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
@@ -495,6 +512,10 @@
       }
       catch(error) { byId("jawChoiceStatus").textContent=error.message; }
     });
+    for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
+      writeConfig(paletteSettings(button.dataset.palette));
+      for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+    });
     for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{
       const target=byId(link.getAttribute("href").slice(1));
       if(target && target.tagName==="DETAILS")target.open=true;
@@ -539,6 +560,6 @@
     });
     writeConfig(DEFAULTS);
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,simulateSchedule,jawSelection,createProfile,parseProfile};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

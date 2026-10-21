@@ -45,10 +45,13 @@ failed |= build_and_run(
     (ROOT / "tests/serial_idle_harness.cpp").read_text(encoding="utf-8"),
     "Serial-only idle diagnostic",
 )
-pack_dir = ROOT / ".skelly-build/attended-host-pack"
-subprocess.run([os.environ.get("NODE", "node"), str(ROOT / "scripts/export-attended-tests.cjs"), str(pack_dir)], check=True)
-pack = json.loads((pack_dir / "manifest.json").read_text(encoding="utf-8"))
-for case in pack["tests"]:
+pack_fixtures = []
+for name, flags in [("attended-host-pack", []), ("quick-host-pack", ["--quick"])]:
+    pack_dir = ROOT / ".skelly-build" / name
+    subprocess.run([os.environ.get("NODE", "node"), str(ROOT / "scripts/export-attended-tests.cjs"), str(pack_dir), *flags], check=True)
+    pack = json.loads((pack_dir / "manifest.json").read_text(encoding="utf-8"))
+    pack_fixtures.extend((pack_dir, case, pack["quick"]) for case in pack["tests"])
+for pack_dir, case, quick in pack_fixtures:
     c = case["config"]
     motor_mask = (1 if c["headEnabled"] else 0) | (2 if c["armEnabled"] else 0) | (4 if c["torsoEnabled"] else 0)
     files = [c["jawFile"]] + [int(n.strip()) for n in c["jawExtras"].split(",") if n.strip()]
@@ -56,6 +59,8 @@ for case in pack["tests"]:
         f"\nconst uint8_t expectedMotorMask = {motor_mask};\n"
         f"const uint16_t expectedFiles[] = {{{', '.join(map(str, files))}}};\n"
         f"const uint8_t expectedEyes[] = {{{', '.join(map(str, c['eyeChoices']))}}};\n"
+        f"const uint32_t expectedWindowMS = {int(case['minutes'] * 60000) if quick else 1200000};\n"
+        f"const bool expectQuick = {str(quick).lower()};\n"
         + "".join(f"const bool {label} = {str(c[key]).lower()};\n" for label, key in
                   [("expectJaw", "jawEnabled"), ("expectEyes", "eyesEnabled"), ("expectLights", "lightsEnabled"), ("expectRest", "restEnabled")])
         + (ROOT / "tests/attended_pack_harness.cpp").read_text(encoding="utf-8")

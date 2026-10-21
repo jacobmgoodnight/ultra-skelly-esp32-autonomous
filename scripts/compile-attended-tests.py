@@ -11,11 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--arduino-cli", default="arduino-cli")
 parser.add_argument("--jobs", default=2, type=int)
+parser.add_argument("--pack", default=str(ROOT / ".skelly-build/attended-tests"))
 args = parser.parse_args()
 platforms = json.loads(subprocess.check_output([args.arduino_cli, "core", "list", "--format", "json"], text=True))
 if not any(p.get("id") == "esp32:esp32" and p.get("installed_version") == "3.3.12" for p in platforms.get("platforms", [])):
     raise SystemExit("Install pinned esp32:esp32@3.3.12 before compiling the test pack.")
-pack = ROOT / ".skelly-build/attended-tests"
+pack = Path(args.pack).resolve()
 manifest = json.loads((pack / "manifest.json").read_text(encoding="utf-8"))
 scratch = ROOT / ".skelly-build/attended-compile/AttendedCompile"
 scratch.mkdir(parents=True, exist_ok=True)

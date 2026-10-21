@@ -9,7 +9,7 @@ int main() {
     REQUIRE(connectToSkelly());
     fakeWrites.clear();
     const uint32_t begin = fakeNow;
-    while (fakeNow - begin < 20U * 60000U) loop();
+    while (fakeNow - begin < expectedWindowMS) loop();
     size_t motors = 0, jaw = 0, eyes = 0, lights = 0;
     uint8_t observedMotorMask = 0;
     for (const auto &frame : fakeWrites) {
@@ -40,10 +40,11 @@ int main() {
     REQUIRE((motors > 0) == (expectedMotorMask != 0));
     if (!COMPOUND_BODY_ENABLED) REQUIRE(observedMotorMask == expectedMotorMask);
     REQUIRE((jaw > 0) == expectJaw);
+    if (expectQuick && expectJaw) REQUIRE(jaw >= 2);
     REQUIRE((eyes > 0) == expectEyes);
     REQUIRE((lights > 0) == expectLights);
     if (expectRest) REQUIRE(Serial.output.find("REST: new animations paused") != std::string::npos);
-    std::cout << "PASS 20 simulated minutes: permitted motors, clips, eyes, lighting and CRC\n";
+    std::cout << "PASS simulated " << expectedWindowMS / 1000 << " seconds: permitted motors, clips, eyes, lighting and CRC\n";
     resetConnection();
     REQUIRE(!connected && writeChar == nullptr);
     REQUIRE(!lightApplyPending && !lightRestorePending && !jawFollowupPending);

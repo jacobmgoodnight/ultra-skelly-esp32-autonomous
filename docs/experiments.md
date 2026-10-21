@@ -305,3 +305,47 @@ claim the controller's serial fault is fixed. The next low-impact comparison is
 the unchanged lighting-OFF jaw sketch in a second terminal with original-byte
 capture; then consider a BLE-connected/no-command diagnostic. Studio cleanup can
 proceed independently while firmware behavior remains unchanged.
+
+## October 21, 2026 — jaw pool observed, idle pauses and two reconnect recoveries logged
+
+**Test01_JawSerial:** the user reports three approximately three-second jaw holds
+within each #13 playback, recurring every 60 seconds. Five accepted requests are
+logged at 199,124 / 259,181 / 319,238 / 379,294 / 439,350 ms, with all five modeled
+ends present. The supplied connected excerpt is readable, failures remain zero,
+and heap stays 144,492 bytes (minimum 142,332 after the first MP3). Initial
+discovery/connection needed retries. A second-terminal comparison was not
+specified. This clean excerpt does not resolve intermittent serial corruption.
+
+**Test04_JawMix:** the user confirms #13 long open, #12 chatter, #14 whisper and
+gasp. Six logged selections are **13, 13, 13, 12, 13, 14**, each about 60.059 seconds
+apart. All three clips appear in the actual pool run. Heap stays 144,952 bytes,
+minimum 143,048 after the first request, failures zero, scan/connect counters 1/1.
+No garbled lines appear in this excerpt. The isolated jaw pool is now physically
+verified on this prop; random repeats are normal.
+
+**Test05_IdleBreaks:** the user says it "seemed to work." The two fully readable
+REST entries at 191,933 and 341,946 ms are followed by MP3 starts at 221,935 and
+371,948 ms: both gaps are **30,002 ms**. Seven MP3 requests are logged or recoverable
+from their adjacent diagnostics; writes remain accepted, heap 143,572 bytes and
+minimum 141,104 remain stable. Later transmit and REST prefixes are corrupted.
+This supports the software pause/resume timing plus a tentative physical report;
+it is not explicit confirmation that every physical animation finished normally.
+
+**Test08_Reconnect:** initial connection succeeds at 3,153 ms. Link losses are
+logged at 35,014 and 171,226 ms; recoveries occur at 106,731 and 379,406 ms. These
+are **two**, not three, observed recoveries. The second loss occurs during a
+modeled MP3 with a restore pending; subsequent scan snapshots show that restore
+canceled. Both recoveries queue the six initial lighting writes, and playback
+resumes. At the end, 40 writes and zero reported write failures are logged.
+The user says it appeared to work; actual restored colors were not separately
+confirmed in this report. Discovery misses/one failed connection add waiting
+time, but prop power-on times are unknown, so these gaps are not measured
+post-power-on recovery latency. Connected heap varies around 143–145 KB; this
+short sample neither proves a persistent leak nor establishes long-run stability.
+Garbled text recurs during scans, MP3 and light transmission.
+
+The user wants to move beyond lengthy testing. Completed jaw/pool observations
+do not need repetition. Remaining optional spot checks use shorter scheduling
+targets while preserving the **21-second MP3 model, motor cooldowns, body
+protection and BLE spacing**. Longer runs remain available as endurance tests;
+they are not a gate for unrelated Studio usability and color-palette features.

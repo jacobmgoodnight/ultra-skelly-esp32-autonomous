@@ -66,3 +66,23 @@ test("profile ignores unknown keys and cannot inject generated code through BLE 
   assert.equal(Object.hasOwn(restored.config,"unknown"),false);
   assert.match(api.generateSketch(restored.config),/Skelly \\"quoted\\"/);
 });
+
+test("palettes only enable lighting and set the two colors",()=>{
+  for(const name of Object.keys(api.PALETTES)) {
+    const changes=plain(api.paletteSettings(name));
+    assert.deepEqual(Object.keys(changes).sort(),["headColor","lightsEnabled","torsoColor"]);
+    const c=config({torsoBrightness:24,headBrightness:72,lightRestoreMode:1,...changes});
+    const sketch=api.generateSketch(c);
+    assert.match(sketch,/const bool LIGHTS_ENABLED = true;/);
+    assert.match(sketch,/const bool ARM_ENABLED = false;/);
+    assert.match(sketch,/const bool TORSO_ENABLED = false;/);
+    assert.match(sketch,/const bool JAW_PROTECTS_ARM_TORSO = true;/);
+    assert.match(sketch,/const uint8_t TORSO_LIGHT_BRIGHTNESS = 24;/);
+    assert.match(sketch,/const uint8_t HEAD_LIGHT_BRIGHTNESS = 72;/);
+    assert.equal(api.parseProfile(api.createProfile(c,{})).config.headColor,changes.headColor);
+  }
+});
+
+test("palette selection rejects unknown and inherited names",()=>{
+  for(const name of ["toString","__proto__","unknown",null])assert.throws(()=>api.paletteSettings(name),/known lighting palette/);
+});

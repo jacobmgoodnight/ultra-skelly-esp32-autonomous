@@ -98,6 +98,14 @@
     <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small id="lightingStatus">Off · body and head colors</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">05</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
       <p class="small-description">Choose body and head colors. Restoring both after MP3 playback is verified on the test prop; the MP3 can use its own colors while playing.</p>
+      <div class="palette-grid" role="group" aria-label="Lighting palettes">
+        <button type="button" data-palette="halloween" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#ff6000"></i><i style="background:#00ff00"></i></span>Halloween</button>
+        <button type="button" data-palette="haunted" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#8000ff"></i><i style="background:#00e6cc"></i></span>Haunted</button>
+        <button type="button" data-palette="moonlight" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#176bff"></i><i style="background:#c8e8ff"></i></span>Moonlight</button>
+        <button type="button" data-palette="ember" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#ff1800"></i><i style="background:#ffb000"></i></span>Ember</button>
+      </div>
+      <p id="paletteStatus" class="selection-status" role="status">Lighting is off.</p>
+      <p class="small-description">Choose a palette to enable lighting. Brightness and playback behavior stay as you set them.</p>
       <div class="eye-sync-control">
         <div class="field-row">
           <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
@@ -174,7 +182,7 @@
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
-      <p class="small-description">Generates locally in your browser. New file mixes and idle breaks still need an attended hardware test.</p>
+      <p class="small-description">Generates locally in your browser. Save a profile to keep your settings and clip numbers.</p>
       <div class="profile-actions"><button id="saveProfile" class="secondary" type="button">Save settings (.json)</button><button id="loadProfile" class="secondary" type="button">Load settings</button><input id="profileFile" class="sr-only" type="file" accept=".json,application/json" aria-label="Choose saved Studio settings"></div>
       <p id="profileStatus" class="small-description" role="status">Save a profile to keep settings and your own clip numbers.</p>
       <details class="instructions"><summary>Put it on my ESP32</summary><ol><li>Download the sketch and open it in Arduino IDE or use Arduino CLI.</li><li>Choose <strong>ESP32 Dev Module</strong> and core <strong>3.3.12</strong>, then compile and upload over USB.</li><li>Power on Skelly and disconnect other Bluetooth controllers. The ESP32 finds it by name.</li></ol><p>Once uploaded, the browser and computer can disconnect.</p><p><a href="../docs/setup.md">Setup guide ↗</a></p></details>

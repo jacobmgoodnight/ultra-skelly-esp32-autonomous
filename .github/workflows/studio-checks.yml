@@ -67,3 +67,7 @@ jobs:
         run: |
           node scripts/export-attended-tests.cjs
           python scripts/compile-attended-tests.py
+      - name: Export and compile optional short checks
+        run: |
+          node scripts/export-attended-tests.cjs --quick
+          python scripts/compile-attended-tests.py --pack .skelly-build/quick-tests
