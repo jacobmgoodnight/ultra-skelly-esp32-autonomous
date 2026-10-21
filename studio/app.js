@@ -405,6 +405,9 @@
     const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
+    byId("lightingStatus").textContent=c.lightsEnabled?"On · body "+c.torsoColor+" / head "+c.headColor:"Off · body and head colors";
+    byId("eyesStatus").textContent=c.eyesEnabled?"On · "+c.eyeChoices.length+" expressions in rotation":"Off · choose a rotation of eye designs";
+    byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
     byId("overlapSummary").textContent=(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);

@@ -70,7 +70,7 @@
       </div>
       <div class="overlap-row"><div><strong>Finish body movements before jaw playback</strong><p>Let each body movement finish before the next mouth clip starts.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Protect head, arm and torso by delaying jaw MP3 until body movement finishes</span></label></div>
     </section>
-    <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small>Body and head colors · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small id="lightingStatus">Off · body and head colors</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">04</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
       <p class="small-description">Choose body and head colors. Restoring both after MP3 playback is verified on the test prop; the MP3 can use its own colors while playing.</p>
       <div class="eye-sync-control">
@@ -91,7 +91,7 @@
         <p>Uses a 21-second playback estimate. During-playback restoration remains untested. The exact head LED region still needs mapping.</p>
       </div>
     </div></details>
-    <details class="panel fold-panel" id="expressions"><summary><span><strong>Eye expressions</strong><small>Choose a rotation of eye designs · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="expressions"><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · choose a rotation of eye designs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">05</span><h2>Eye expressions</h2></div><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable eye changes</span></label></div>
       <p class="small-description">Choose expressions for Skelly to rotate through. Random eye changes are verified; eye recovery around MP3 playback needs testing.</p>
       <div id="eyeOptions" class="eye-advanced muted">
@@ -116,7 +116,7 @@
       </div>
 
     </div></details>
-    <details class="panel fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small>Let Skelly pause between routines · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small id="breaksStatus">Off · pauses between routines</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">06</span><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
       <p class="small-description">Occasional quiet stretches after animations finish. Hardware integration is still untested.</p>
       <div id="restOptions" class="eye-advanced muted">
