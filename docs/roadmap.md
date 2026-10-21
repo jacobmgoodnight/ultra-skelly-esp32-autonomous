@@ -11,8 +11,9 @@ serial corruption remains unknown; mode 2 and motor integration remain unverifie
 1. Isolate the persistent serial corruption using the comparison procedure in
    [the testing guide](testing.md). Corruption persists in the lighting-OFF
    three-clip log, without reported write failures or mid-session reconnects and
-   with steady connected heap. Run the [serial-only idle test](serial-idle-test.md)
-   next. Affected lines contain exactly 64 Unicode replacement characters. Obtain original byte
+   with steady connected heap. The [serial-only idle test](serial-idle-test.md)
+   subsequently passed all four cycles cleanly. Compare the unchanged jaw sketch
+   in a second terminal next. Affected controller lines contain exactly 64 Unicode replacement characters. Obtain original byte
    capture before assigning a UART/USB/monitor cause. Exact head LED mapping and
    physical restoration timing are still not independently measured.
 2. Investigate AE02 playback notifications independently: upstream parses BBC6
@@ -47,6 +48,10 @@ enablement. Then evaluate upstream F2 strobe/pulse, F6 speed, presets, rotation 
 per-file overrides. New experimental features default OFF.
 
 ## P3 — Studio architecture and usability
+
+The first usability pass adds progressive disclosure, named jaw-clip selection,
+and validated JSON profiles. See [Studio's next steps](studio-roadmap.md) for the
+prioritized remaining hardware tests and staged browser USB upload proposal.
 
 Template generation/CI drift enforcement is in the first PR. Next consolidate
 configuration metadata and validation without rewriting the proven controller.

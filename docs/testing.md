@@ -112,7 +112,11 @@ connected heap remains 142,540 bytes, with no reported write failures or
 mid-session reset/reconnect. RGB writes are therefore not required to reproduce
 the symptom. The next attended test is the [serial-only idle sketch](serial-idle-test.md),
 which sends no prop commands and reproduces the long pauses between log bursts.
-Its hardware result is still untested.
+The user subsequently completed all four serial-only cycles with clean output
+and stable heap. See the [recorded result](serial-idle-test.md). The next comparison
+is the same lighting-OFF jaw firmware in a second serial terminal, capturing
+original bytes. A BLE-connected/no-command control remains a possible follow-up;
+the clean idle run alone does not establish a cause.
 
 Keep the same firmware and settings when comparing a second serial terminal with
 the Arduino monitor closed. Save original received bytes if possible, together

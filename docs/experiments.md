@@ -289,3 +289,19 @@ later. It initializes no BLE and sends no prop commands. It compiles with core
 3.3.12; native tests verify four-cycle cadence, completion, ASCII patterns and
 millis wrap. Its physical serial result remains **Untested**. The canonical
 controller, generator and feature defaults are unchanged by this experiment.
+
+## October 21, 2026 — serial-only idle comparison clean for four cycles
+
+The user supplied the complete `SERIAL-IDLE-TEST-v1` log: BOOT at 1,010 ms,
+START bursts at 61,021 / 121,065 / 181,109 / 241,153 ms, END bursts at 82,043 /
+142,087 / 202,131 / 262,175 ms and COMPLETE at 262,197 ms. All eight FIRST/SECOND
+pairs retain their expected ASCII patterns; no garbling appears. Free heap is
+331,404 bytes and minimum heap 299,452 bytes at every burst.
+
+This verifies clean output for this one serial-only run. Unlike the jaw run,
+this sketch never initializes BLE or plays an MP3, so it narrows the comparison
+without proving BLE, audio, timing, power or the monitor is responsible. Do not
+claim the controller's serial fault is fixed. The next low-impact comparison is
+the unchanged lighting-OFF jaw sketch in a second terminal with original-byte
+capture; then consider a BLE-connected/no-command diagnostic. Studio cleanup can
+proceed independently while firmware behavior remains unchanged.
