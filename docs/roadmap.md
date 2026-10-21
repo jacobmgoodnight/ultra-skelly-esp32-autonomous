@@ -4,12 +4,16 @@
 
 The first reliability PR honors BLE write failures, records reset/heap/write/queue
 diagnostics, cancels stale partial restoration, and prevents a new MP3 from
-preempting the complete restore. It does **not** establish physical recovery or
-the cause of serial corruption. Run [the isolated test](testing.md) first.
+preempting the complete restore. On October 21 the user confirmed mode 1 returns
+both chosen colors after MP3 #13 in the isolated jaw/lighting setup. The cause of
+serial corruption remains unknown; mode 2 and motor integration remain unverified.
 
-1. Capture three jaw/lighting cycles with timestamps, an unedited serial log and
-   visual timings. Determine whether colors return, which LEDs channel 1 controls,
-   and whether any BOOT/reset/heap/write-failure evidence accompanies corruption.
+1. Isolate the persistent serial corruption using the comparison procedure in
+   [the testing guide](testing.md). The four-clip log shows no reported BLE write
+   failures or mid-session reconnects, steady connected heap, and exactly 64
+   Unicode replacement characters on each corrupted line. Obtain original byte
+   capture before assigning a UART/USB/monitor cause. Exact head LED mapping and
+   physical restoration timing are still not independently measured.
 2. Investigate AE02 playback notifications independently: upstream parses BBC6
    file serial, playing flag and duration. Confirm CRC/frame length, whether stop
    is unsolicited at natural EOF, duplicate/out-of-order behavior, and device

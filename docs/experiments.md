@@ -217,3 +217,49 @@ The user completed the pairwise movement matrix and the combined three-motor tes
 **Implication for the main controller:** We can now consider a separate opt-in scheduling mode that selects combined masks, rather than relying on multiple rapid individual AACA writes. However MP3 jaw playback remains a separate priority issue: head movement during MP3 #13 failed at 2s and 10s, while jaw-first arm/torso worked. Keep MP3 protection and conservatively lock all body motors until completion when experimenting with compound AACA packets.
 
 See [combined body-motor test guide](body-combo-test.md). The normal autonomous firmware is unchanged by the latest diagnostic update.
+
+
+## October 21, 2026 — mode 1 lighting recovery visually confirmed; serial corruption persists
+
+The user ran the isolated LightingDiagnostic configuration: jaw file #13 every
+60 seconds, mode 1 restore, red torso/body and green head, verbose diagnostics ON.
+Head, arm, torso motion, eyes, compound mode, jaw-first follow-ups and rests were
+OFF. The user observed **green head/red body initially**, **purple on both during
+the MP3**, and explicitly confirmed **both return to red/green after playback**.
+This is physical evidence of mode 1 recovery on this prop. It does not validate
+mode 2, exact mouth LED mapping, or integration with body movements.
+
+The supplied pasted Serial Monitor log contains these four cycles:
+
+| AAC6 accepted uptime (ms) | Full restore completion uptime (ms) | Logged delay (ms) |
+| --- | --- | --- |
+| 97,923 | 121,422 | 23,499 |
+| 157,996 | 181,495 | 23,499 |
+| 218,068 | 241,567 | 23,499 |
+| 278,140 | 301,639 | 23,499 |
+
+Within every sequence, torso RGB was dispatched +22,402 ms and head RGB +23,488 ms
+after AAC6 acceptance. These are **BLE log timestamps**, not independently timed
+physical LED changes. Playback end is still modeled at 21 seconds, not confirmed
+by a notification. The MP3 start spacing was about 60.073 seconds.
+
+Connection succeeded after one missed scan. During the connected four-clip
+segment, scan/connect counters stayed at 2/1, reported write failures stayed at
+zero, and writes rose from 6 initial lighting requests to 34 total. Connected
+free heap stayed **143,984 bytes**; minimum free heap settled at **141,824 bytes**
+after initial lighting and stayed there. Uptime increased continuously, with no
+logged BOOT or mid-session reconnect. This does not support a demonstrated reset
+or steadily leaking heap in this excerpt; it does not rule out every fault.
+
+**Serial corruption remains:** every affected pasted line contains exactly **64
+U+FFFD replacement characters** followed, in some cases, by the readable remainder
+of a log line. In the timestamped segment this affects some AAC6 transmit and
+modeled-end messages, often the first output after a quiet interval. Other such
+messages are readable; no deterministic cause is established. Earlier untimestamped
+scan text in the paste is not enough to assign it to this particular boot. The
+paste does not preserve the original UART bytes, so 64 replacement characters
+must not be described as proof of a 64-byte USB/UART failure.
+
+Next isolate capture/serial behavior with the same conservative no-body-motor
+configuration; do not change lighting restoration timing or enable mode 2 solely
+to address corrupted text. See the comparison steps in [testing](testing.md).

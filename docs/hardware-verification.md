@@ -1,6 +1,6 @@
 # Hardware verification matrix
 
-Latest evidence: engineering handoff and October 20, 2026 reports on one Ultra
+Latest evidence: engineering handoff and October 20–21, 2026 reports on one Ultra
 Skelly v2 with an original ESP32-WROOM board. **Verified** means a reported physical
 observation, **Failed** an observed unsuccessful physical test, **Software-only**
 automated checks or serial dispatch evidence, **Untested** no qualifying observation.
@@ -26,10 +26,10 @@ the current status. A transport success alone does not verify an actuator.
 | Eye restoration around MP3 | Untested | MP3 eye override observed; correction requires observation |
 | Live torso/head RGB initialization | Verified | Both colors changed before MP3 in latest test |
 | MP3 overwrites live torso/head colors | Verified | File #13 restored saved colors |
-| Post-MP3 RGB restoration (mode 1) | Untested | Six-write logs occurred; actual color return not explicitly confirmed |
+| Post-MP3 RGB restoration (mode 1) | Verified | October 21: user confirms both red body and green head return after MP3 #13; isolated jaw/lighting setup, four cycles logged |
 | During + after restoration (mode 2) | Untested | Experimental, OFF unless selected |
 | Channel 1 is specifically mouth LEDs | Untested | Protocol labels it Head Light; exact LED region needs mapping |
-| Garbled serial output around jaw/restore | Verified | Symptom reported; no raw capture or established cause |
+| Garbled serial output around jaw/restore | Verified | October 21 pasted log has 64 replacement characters on each affected line; original UART bytes and cause unknown |
 | New restoration guards, failure handling, timing/wrap tests | Software-only | Executed actual C++ with mocked BLE/time; not hardware proof |
 | Automatic power-cycle reconnect / many reconnects | Untested | Retries implemented; full lifecycle and heap endurance not established |
 | Idle breaks, multiple-file pool integration | Untested | Generated/compiled, no new physical evidence |

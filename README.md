@@ -6,7 +6,7 @@ in **[Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autono
 flash an inexpensive ESP32-WROOM board, and let it run without a connected phone,
 browser, Wi-Fi, cloud service or subscription. GitHub Pages hosts the static site.
 
-## Current evidence — October 20, 2026
+## Current evidence — October 21, 2026
 
 | Feature | Latest result |
 | --- | --- |
@@ -18,7 +18,7 @@ browser, Wi-Fi, cloud service or subscription. GitHub Pages hosts the static sit
 | Live one-shot / randomized eyes | Physically verified; MP3 eye restoration still needs observation |
 | Live torso/head RGB initialization | Both chosen colors physically appeared |
 | MP3 lighting override | **Observed:** file #13 restored its saved colors |
-| Post-MP3 lighting restoration | Logs showed writes; **actual color return is not yet confirmed** |
+| Post-MP3 lighting restoration (mode 1) | **Physically confirmed:** red body and green head return after MP3 #13; isolated jaw/lighting setup |
 | Garbled Serial Monitor output | Reported near playback/restoration; cause unknown |
 | Power-cycle reconnect / multi-day endurance | Automatic retries implemented; complete field verification pending |
 
@@ -65,7 +65,9 @@ Studio rejects selecting both modes. Separate-write body overlap remains advance
 
 Channel 0 is **Torso Light**, channel 1 **Head Light**; the exact head LED region
 has not been mapped to the mouth. Live colors worked before MP3 playback, which
-then reapplied saved colors. Restoration remains opt-in and visually unconfirmed.
+then reapplied saved purple colors. On October 21 the user confirmed that restore
+mode 1 returns both the red body and green head afterward. This verifies the
+isolated jaw/lighting setup on one prop, not mode 2 or integration with motors.
 
 The reliability changes honor BLE write failures, add timestamped text and boot/reset
 information, and complete all six restore writes before the next MP3. Verbose
@@ -75,7 +77,9 @@ is no playback-ended subscription. Longer MP3s require a conservative
 `MOUTH_CLIP_MS` adjustment in the downloaded sketch.
 
 **Next on-device test:** [exact isolated jaw/RGB settings and pass/fail criteria](docs/testing.md).
-Do not regard the restoration problem or serial corruption as fixed until observed.
+Mode 1 color recovery is now visually verified on the test prop. Serial corruption
+remains unresolved; the log shows steady connected heap and no reported BLE write
+failures during four clips. See the October 21 entry in the experiment log.
 
 ## Studio and development
 

@@ -27,7 +27,9 @@ stored MP3 movement flags **0x00** and discover the serial on your own device.
 Intervals are start-to-start targets and may be postponed by locks or restoration.
 
 Both live torso/head colors physically changed before playback; MP3 #13 then
-restored its saved colors. **Post-MP3 visual restoration is still unconfirmed.**
+restored its saved purple colors. **October 21: the user confirmed both red body
+and green head return afterward in mode 1**, with body motors and eyes OFF. This
+is one-prop evidence; mode 2 and motor integration remain unverified.
 Channel 1 is protocol-labeled Head Light; a separate mouth channel is not known.
 Mode 1 queues restoration 500 ms after the modeled 21-second playback, then waits
 100 ms to start its six writes. It does not receive actual end-of-playback status.

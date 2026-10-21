@@ -72,7 +72,11 @@ corrections around the modeled MP3. Corrections are separate from motor commands
 Lights use six spaced requests: torso F2/F3/F4, then head F2/F3/F4. F2 lengths are
 11/12 bytes for channel 0/1; F3 is 11 bytes; F4 is 13 bytes. CRC covers every byte
 before the final CRC. Initial live colors and MP3 overriding them were physically
-observed. Post-MP3 restoration has not yet been visually confirmed.
+observed. On October 21 the user confirmed mode 1 restores both red body and green
+head after MP3 #13 in the isolated jaw/lighting configuration. Four restore
+sequences appear in the supplied log; their BLE completion delay is 23.499 s
+after each accepted AAC6 request. Actual physical color-change times were not
+independently measured. Mode 2 and integration with body motors remain unverified.
 
 Restore mode 0 initializes only. Mode 1 discards an unfinished older light
 sequence on MP3 start and schedules a complete sequence at modeled end +500 ms,

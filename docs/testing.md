@@ -86,3 +86,27 @@ power-on, 3 software, 4 panic, 9 brownout); retain the complete number/log.
 
 Do not try mode 2 or add motors during this isolated test. Those are separate
 integration steps after the visual restoration result is known.
+
+
+## October 21 result and next serial isolation test
+
+The user confirmed both colors return after MP3 #13 in mode 1. Four complete
+restore sequences are logged, with no reported BLE write failures or mid-session
+reconnects and stable connected heap. Serial text corruption persists. The
+[experiment entry](experiments.md) separates physical observations from log timing.
+
+For the next comparison, copy the tested diagnostic sketch and change **only**
+`LIGHTS_ENABLED` to `false`. Keep jaw #13 every 60 seconds, verbose diagnostics ON,
+and every body motor/eye/follow-up/compound/rest option OFF. Keep Serial Monitor at
+115200 baud and observe four clips. Saved purple colors are expected in this
+comparison; this run is testing serial output, not color restoration.
+
+- If garbling remains, RGB F2/F3/F4 writes are not required to trigger it.
+- If it disappears, that narrows the comparison but does not by itself prove a
+  lighting-packet or firmware fault.
+
+Keep the same firmware and settings when comparing a second serial terminal with
+the Arduino monitor closed. Save original received bytes if possible, together
+with the readable log and terminal/USB adapter details. A pasted replacement
+character cannot reveal the original byte value. Do not change baud, USB cable,
+firmware, and lighting settings together; change one factor per comparison.
