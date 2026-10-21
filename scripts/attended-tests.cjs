@@ -46,4 +46,26 @@ const cases=[
     options:{...isolated,...colors,jawEnabled:false},
     observe:"No jaw, body motor or eye requests. After initial lighting, record exactly which LEDs are red (channel 0) and green (channel 1), including any mouth area. This maps protocol Head Light to physical regions; it is not a separate mouth-channel claim."}
 ];
-module.exports={clips,cases};
+const evidence={
+  Test01_JawSerial:"Jaw #13 physically observed; five clean logged requests in this run. Intermittent serial corruption remains open.",
+  Test04_JawMix:"Verified on the original prop: all three mapped clips observed in the random pool; six requests logged.",
+  Test05_IdleBreaks:"Two complete 30.002-second logged pauses; user says it seemed to work. Physical completion remains tentative.",
+  Test08_Reconnect:"Two reconnect recoveries logged; user says it appeared to work. Three-cycle/visual/endurance criteria not fully confirmed."
+};
+const quickDurations={Test02_EyeRestore:1.5,Test03_EyeChange:1.5,Test06_MotorsLights:4,
+  Test07_AddEyes:4,Test09_Compound:3,Test10_DuringLights:1.5,Test11_LightRegions:0.5};
+function selectedCases(quick=false) {
+  if(!quick)return cases;
+  return cases.filter(t=>Object.hasOwn(quickDurations,t.name)).map(t=>{
+    const options={...t.options};
+    if(options.jawEnabled!==false){options.jawMin=30;options.jawMax=30;}
+    if(["Test06_MotorsLights","Test07_AddEyes"].includes(t.name))Object.assign(options,
+      {headMin:60,headMax:60,armMin:90,armMax:90,torsoMin:90,torsoMax:90,jawMin:45,jawMax:45});
+    if(t.name==="Test09_Compound")Object.assign(options,{compoundMin:60,compoundMax:60});
+    return {...t,name:t.name.replace("Test","Quick"),title:t.title+" — short spot check",minutes:quickDurations[t.name],
+      optional:true,options,observe:t.observe.replace(/four jaw clips|four clips/g,"two clips")
+        .replace("After tests 01-05, attend the first five minutes; continue toward 20 minutes only if normal. ","")
+        .replace("in 20 minutes","in this short run")+" This is an optional spot check, not an endurance result. Stop manually at the stated observation window."};
+  });
+}
+module.exports={clips,cases,evidence,selectedCases};

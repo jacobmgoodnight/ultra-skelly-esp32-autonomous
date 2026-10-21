@@ -29,9 +29,10 @@ the current status. A transport success alone does not verify an actuator.
 | Post-MP3 RGB restoration (mode 1) | Verified | October 21: user confirms both red body and green head return after MP3 #13; isolated jaw/lighting setup, four cycles logged |
 | During + after restoration (mode 2) | Untested | Experimental, OFF unless selected |
 | Channel 1 is specifically mouth LEDs | Untested | Protocol labels it Head Light; exact LED region needs mapping |
-| Garbled serial output around jaw/restore | Verified | October 21: persists with lighting OFF; two affected lines across three logged MP3 requests, each with 64 replacement characters; original UART bytes and cause unknown |
+| Garbled serial output around jaw/restore | Verified | October 21: later jaw-only and pool logs are clean, but corruption recurs during idle-break and reconnect runs. Intermittent cause remains unknown. |
 | Serial-only idle diagnostic | Verified | October 21: all four START/END bursts and completion received cleanly; heap 331,404 / minimum 299,452 stable. One run without BLE; controller serial corruption remains unresolved. |
 | New restoration guards, failure handling, timing/wrap tests | Software-only | Executed actual C++ with mocked BLE/time; not hardware proof |
-| Automatic power-cycle reconnect / many reconnects | Untested | Retries implemented; full lifecycle and heap endurance not established |
-| Idle breaks, multiple-file pool integration | Untested | Generated/compiled, no new physical evidence |
+| Automatic power-cycle reconnect / many reconnects | Software-only | Test08 logs two successful recoveries, canceled pending restore and resumed MP3/light writes; user tentatively reports it worked. Three-cycle visual/endurance criteria remain incomplete. |
+| Multiple-file jaw pool (#12/#13/#14) | Verified | Test04: user confirms all three clip identities; six logged selections 13,13,13,12,13,14, no reported write failures; isolated jaw setup. |
+| Idle breaks | Software-only | Test05: two complete 30.002-second logged pauses followed by playback; user says it seemed to work. Uninterrupted physical completion not explicitly confirmed. |
 

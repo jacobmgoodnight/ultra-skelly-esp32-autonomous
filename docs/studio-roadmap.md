@@ -24,12 +24,17 @@ combined hardware integration still needs an attended run.
 
 ## Pending hardware work, in practical order
 
+October 21 update: the jaw mix is physically observed; idle pauses and two
+reconnect recoveries have logs with tentative physical reports. Remaining checks
+are optional spot checks from the [short pack](attended-test-pack.md), not a gate
+for unrelated Studio improvements. Completed checks do not need repetition.
+
 | Priority | Test | Result criteria |
 | --- | --- | --- |
 | Next diagnosis | Repeat the lighting-OFF jaw sketch using a second serial terminal, then a BLE-connected/no-command control if needed | Save original bytes and timing; compare the same cable, baud and sketch. Serial-only idle passed once, so no UART/monitor or BLE cause is established. |
 | Before relying on a combined routine | Known jaw clip + standalone head + alternating arm/torso + mode-1 lights, adding eyes separately | Observe each motor finishing, jaw continuing during arm/torso, both colors returning, and no unexpected movement/reset. Start with a short attended run, then extend endurance. |
 | Before using eye recovery | Keep selected eyes / choose new eyes around MP3 | Visually confirm the requested expression survives start/end; serial acceptance is insufficient. |
-| Before using file mixes or breaks | Uploaded-file random selection and idle breaks | Verify each actual file, no body metadata actions, no interrupted animation at rest entry, and normal resumption. |
+| Optional follow-up | Idle-break physical completion | Jaw pool is observed. Pause/resume timing is logged; check uninterrupted physical completion only if needed during use. |
 | Reliability | Several prop power cycles, reconnects, then extended runtime | No unexpected replay, stable post-connection heap, fresh usable service handles and canceled stale jobs. Cached service lifecycle remains an audit item. |
 | Optional experiment | Recurring combined body mode, separate from jaw-first | Confirm each permitted mask, full motion durations and conservative cooldowns over repeated cycles. |
 | Optional experiment | During-playback light restoration, exact head LED region | Observe channel mapping and both chosen colors during/after audio without breaking the routine. |
@@ -71,6 +76,10 @@ it is not needed for the preferred static, account-free approach. An in-browser
 compiler would be a separate substantial toolchain project.
 
 ## Further usability and fun
+
+Studio now includes Halloween, Haunted, Moonlight and Ember color palettes.
+Choosing one enables the existing RGB controls and changes only the two colors;
+brightness, MP3 restoration behavior and motor settings remain as configured.
 
 - Add named color palettes and more personality starting points using existing
   controls; show which motors and clips each personality needs.

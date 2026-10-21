@@ -1,16 +1,17 @@
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm"),crypto=require("node:crypto");
-const {cases,clips}=require("./attended-tests.cjs");
+const {clips,evidence,selectedCases}=require("./attended-tests.cjs");
 const root=path.resolve(__dirname,"..");
-function createPack(outputRoot=path.join(root,".skelly-build/attended-tests")) {
+function createPack(outputRoot=path.join(root,".skelly-build/attended-tests"),quick=false) {
   const context=vm.createContext({window:{}});
   for(const file of ["studio/template.js","studio/app.js"])vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),context);
   const api=context.window.SkellyStudioGenerator;
-  const manifest={version:1,board:"esp32:esp32:esp32",core:"3.3.12",baud:115200,clips,tests:[]};
+  const manifest={version:1,quick,board:"esp32:esp32:esp32",core:"3.3.12",baud:115200,clips,tests:[]};
   fs.mkdirSync(outputRoot,{recursive:true});
   fs.copyFileSync(path.join(root,"docs/attended-test-pack.md"),path.join(outputRoot,"START-HERE.md"));
-  for(const test of cases) {
+  for(const test of selectedCases(quick)) {
     const config={...api.DEFAULTS,...test.options};
-    const header=`// ATTENDED TEST: ${test.name} - ${test.title}\n// Original owner's clips: 12 chatter / 13 long open / 14 whisper and gasp.\n// ${test.optional?"OPTIONAL EXPERIMENT":"ORDERED TEST"}: physical result still untested for this configuration.\n// Read TEST-CARD.md; approximately ${test.minutes} minutes AFTER connection.\n`;
+    const status=evidence[test.name]||"Physical result remains untested for this configuration.";
+    const header=`// ATTENDED TEST: ${test.name} - ${test.title}\n// Original owner's clips: 12 chatter / 13 long open / 14 whisper and gasp.\n// ${test.optional?"OPTIONAL EXPERIMENT":"REFERENCE TEST"}: ${status}\n// Read TEST-CARD.md; approximately ${test.minutes} minutes AFTER connection.\n`;
     const source=header+api.generateSketch(config);
     const directory=path.join(outputRoot,test.name);
     fs.mkdirSync(directory,{recursive:true});
@@ -23,7 +24,10 @@ function createPack(outputRoot=path.join(root,".skelly-build/attended-tests")) {
   return manifest;
 }
 if(require.main===module) {
-  const manifest=createPack(process.argv[2]?path.resolve(process.argv[2]):undefined);
+  const args=process.argv.slice(2),quick=args.includes("--quick"),output=args.filter(a=>a!=="--quick");
+  if(output.length>1)throw new Error("Use: node scripts/export-attended-tests.cjs [output-directory] [--quick]");
+  const directory=output[0]?path.resolve(output[0]):path.join(root,quick?".skelly-build/quick-tests":".skelly-build/attended-tests");
+  const manifest=createPack(directory,quick);
   console.log(`Exported ${manifest.tests.length} attended test sketches (core ${manifest.core}).`);
 }
 module.exports={createPack};

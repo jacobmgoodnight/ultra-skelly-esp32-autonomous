@@ -1,5 +1,12 @@
 # Reproducible testing and the next on-device test
 
+The October 21 jaw/mix/break/reconnect reports are recorded in the
+[experiment log](experiments.md). No completed test needs repetition before
+Studio improvements. Remaining checks are optional; use the
+[short spot-check pack](attended-test-pack.md) for 90-second eye/light checks and
+four-minute combined-routine checks. Longer windows below are references for
+endurance work, not a mandatory checklist.
+
 ## Automated checks
 
 From the repository root with Node, Python and a C++17 compiler:
@@ -43,7 +50,7 @@ On Bash use the guarded loop in `.github/workflows/studio-checks.yml`. Generated
 files and native test output are ignored under `.skelly-build/`. After changing
 canonical firmware, run `node scripts/sync-template.cjs` before checks/export.
 
-## Next hardware test: isolate jaw and RGB, no body motors
+## Reference hardware test: isolate jaw and RGB, no body motors
 
 1. Keep a copy of the working sketch. In Studio choose **Head OFF, Arm OFF,
    Torso OFF, Eyes OFF, Idle breaks OFF, Compound OFF, Jaw-first OFF**.

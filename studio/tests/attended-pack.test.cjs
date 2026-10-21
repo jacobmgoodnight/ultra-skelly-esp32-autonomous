@@ -34,3 +34,22 @@ test("attended pack keeps isolated tests free of body movement and preserves rou
   const repeated=createPack(output);
   assert.deepEqual(repeated.tests.map(t=>t.sha256),pack.tests.map(t=>t.sha256));
 });
+
+test("short pack skips completed checks and preserves motor cooldowns and clip duration",()=>{
+  const pack=createPack(path.join(root,".skelly-build/quick-pack-test"),true);
+  assert.equal(pack.quick,true);assert.equal(pack.tests.length,7);
+  for(const item of pack.tests) {
+    assert.equal(item.optional,true);
+    assert.ok(!/Quick01|Quick04|Quick05|Quick08/.test(item.name));
+    assert.ok(item.minutes<=4);
+    const c=item.config;
+    assert.equal(c.jawProtectBody,true);assert.equal(c.bodyOverlap,false);
+    const source=fs.readFileSync(path.join(root,".skelly-build/quick-pack-test",item.name,item.name+".ino"),"utf8");
+    assert.match(source,/const uint32_t MOUTH_CLIP_MS = 21000;/);
+    assert.match(source,/const uint32_t HEAD_BUFFER_MS = 7000;/);
+    assert.match(source,/const uint32_t ARM_BUFFER_MS = 10000;/);
+    assert.match(source,/const uint32_t TORSO_BUFFER_MS = 10000;/);
+    if(c.jawEnabled)assert.ok(c.jawMin>=30);
+    assert.equal(c.jawFollowupMotor===4,false);
+  }
+});
