@@ -4,8 +4,8 @@ const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "../..");
 const buildRoot = path.resolve(root, process.env.SKELLY_BUILD_ROOT || ".skelly-build");
-const ctx = vm.createContext({window:{}});
-for(const file of ["studio/template.js","studio/app.js"]) {
+const ctx = vm.createContext({window:{},TextEncoder,TextDecoder});
+for(const file of ["studio/template.js","studio/runtime-schema.js","studio/runtime.js","studio/app.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),ctx,{filename:file});
 }
 const generator = ctx.window.SkellyStudioGenerator;
@@ -60,3 +60,8 @@ for(const [name,options] of Object.entries(cases)) {
   fs.writeFileSync(path.join(dir,name+".ino"),code,"utf8");
   console.log("Generated "+name+" ("+code.length+" characters)");
 }
+for(const [name,scenes,rotate] of [
+  ['RuntimeSingle',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}}],false],
+  ['RuntimeScenes',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Haunted',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted,eyesEnabled:true,lightsEnabled:true}}],true],
+  ['RuntimeJawProtected',[{name:'Limited mouth',seconds:600,config:{...generator.DEFAULTS,jawEnabled:true,jawFile:13,jawExtras:'12,14',jawDurations:'12:30,14:45',fairBodyTurns:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true,clockEnabled:true}}],false]
+]) {const dir=path.join(buildRoot,name);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.ino'),generator.generateRuntimeSketch(scenes,rotate));console.log('Generated '+name);}

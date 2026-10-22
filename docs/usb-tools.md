@@ -1,4 +1,9 @@
-# USB diagnostics, offline clock and fixed-profile installation
+# USB diagnostics, offline clock and installation
+
+The optional [universal firmware](usb-settings-scenes.md) adds persistent USB
+settings, saved scene rotation and connected status. Studio places these controls
+under **Advanced & testing**. Physical USB/scene checks remain pending; continue
+the existing Studio refresh checklist before that separate follow-up.
 
 These tools are software-tested; physical USB capture/flashing and the new
 firmware options have not been exercised on the prop. They do not resolve the
@@ -48,7 +53,8 @@ Sending a value is not a prop-response confirmation.
 The USB protocol accepts `SKELLY TIME <10-digit-local-civil-seconds>` within
 2024–2099. The browser derives local civil time from the computer's clock/offset.
 Input is bounded to 63 printable characters with a 64-byte processing budget per
-loop; malformed/overflowed lines cannot set time or start a motor. No time is
+loop in ordinary firmware (191 characters / 192 bytes in universal firmware).
+Malformed/overflowed lines cannot set time or start a motor. No time is
 restored from profiles, NVS, the network or RTC after boot. Time continues while
 powered and the loop is serviced, including normal millis wrap. Set it again for
 DST/timezone changes or clock drift; it is not a battery-backed precision clock.
@@ -60,16 +66,20 @@ can finish, and playback eye/light restoration may complete. This does not send
 a physical stop command or necessarily turn off the prop's stored lights. Opening
 a window schedules fresh intervals rather than replaying overdue requests.
 
-## Fixed head-only USB installer
+## Reviewed USB installer packages
 
-The `Build head-only USB installer package` Actions workflow creates a downloadable
-artifact, not a release or deployment. It uses Arduino-ESP32 3.3.12, the original
-ESP32 target and a fixed profile: head every 120–240 seconds; jaw/arm/torso/eyes/
+The `Build USB installer packages` Actions workflow creates downloadable
+artifacts, not a release or deployment. It uses Arduino-ESP32 3.3.12 and the original
+ESP32 target. The fixed head-only profile requests head every 120–240 seconds; jaw/arm/torso/eyes/
 lights/clock/fairness/notification experiments OFF. The package contains a merged
 4 MiB image, `manifest.json` and `build.json` with commit/source/binary hashes.
+The universal profile instead starts with Subtle head 60–120 seconds and optional
+features OFF; previously saved USB settings take priority over that seed. Restore
+firmware defaults explicitly to replace saved settings. This package remains a
+physically Untested preview.
 
 Download the artifact from your reviewed commit, extract it, and select `build.json`
-plus `head-only.bin` on USB tools. The page checks profile, chip, core, length,
+plus its matching `head-only.bin` or `universal.bin` on USB tools. The page checks profile, chip, core, length,
 image headers and SHA-256 before offering the installer. Hash matching detects a
 mixed/damaged package; it does **not** authenticate its publisher. Use a build you
 reviewed. The firmware package is read locally, not uploaded to a server.

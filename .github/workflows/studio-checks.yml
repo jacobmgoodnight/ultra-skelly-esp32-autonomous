@@ -32,7 +32,9 @@ jobs:
       - name: Check generated Arduino output and constraints
         run: node --test studio/tests/*.test.cjs
       - name: Check canonical firmware and browser template match
-        run: node scripts/sync-template.cjs --check
+        run: |
+          node scripts/sync-runtime-schema.cjs --check
+          node scripts/sync-template.cjs --check
       - name: Check Studio asset cache versions
         run: node scripts/version-studio-assets.cjs --check
       - name: Execute firmware with mocked BLE and clock

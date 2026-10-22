@@ -8,9 +8,12 @@ flash an inexpensive ESP32-WROOM board, and let it run without a connected phone
 browser, Wi-Fi, cloud service or subscription.
 
 For Ultra Skelly v2 owners who want occasional movement without keeping a phone
-connected. Custom configurations download as Arduino source; **Studio does not
-upload MP3s or compile sketches**. Separate USB tools can install a fixed head-only
-build package. The software is free and MIT licensed; you supply the prop,
+connected. Custom configurations download as Arduino source. An optional
+[universal firmware](docs/usb-settings-scenes.md) adds USB settings updates and
+up to four saved scenes: compile/install once, then change routines from Studio.
+Separate USB tools accept reviewed head-only or universal build packages.
+These new USB and scene features have software coverage; physical testing is pending.
+The software is free and MIT licensed; you supply the prop,
 an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
 computer for the initial Arduino upload. Other prop revisions and ESP32 variants
 are not covered by the current hardware evidence.
@@ -39,6 +42,8 @@ does not extend compatibility to the 12-foot app-controlled Skelly or other prop
 - Optional **limited mouth routines**, OFF by default, using your own uploaded clips.
 - Separate opt-in jaw-first arm/torso and compound body modes, plus idle breaks.
 - Named clip mappings, color palettes and portable JSON settings files.
+- Up to four locally saved personalities, with optional scene rotation in universal firmware.
+- USB settings readback and connected diagnostics with universal firmware.
 - Self-contained `.ino` downloads, generated locally and usable offline.
 
 Treat this as a hobby preview tested on one prop. Start with a simple attended
@@ -88,7 +93,7 @@ observations do not establish that this firmware revision passed on the prop.
 
 [Full setup](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
 
-For a first try without preparing audio, select **Subtle** in Studio. It enables
+For a first try, select **Subtle** in Studio. It enables
 occasional head movement and disables jaw, arm and torso. To use Studio offline,
 download the repository ZIP, extract it, and open `studio/index.html`; keep
 all files in the `studio` folder together, including `experience.js`. Initial toolchain installation

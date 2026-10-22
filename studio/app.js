@@ -395,7 +395,7 @@
       "// GENERATED WITH SKELLY STUDIO — ultra-skelly-esp32-autonomous",
       "// Settings: head="+config.headEnabled+" "+config.headMin+"–"+config.headMax+"s; jaw="+config.jawEnabled+" "+config.jawMin+"–"+config.jawMax+"s",
       "// Torso="+config.torsoEnabled+" "+config.torsoMin+"–"+config.torsoMax+"s; arm="+config.armEnabled+" "+config.armMin+"–"+config.armMax+"s",
-      "// Head/torso/arm overlap="+config.bodyOverlap+"; measured arm runtime 22 seconds.",
+      "// Head/torso/arm overlap="+false+"; measured arm runtime 22 seconds.",
       "// Jaw body protection="+config.jawProtectBody+"; AAC6 may interrupt prior AACA.",
       "// Jaw-first motor="+config.jawFollowupMotor+" delay="+config.jawFollowupDelaySec+"s; recurring="+config.jawFollowupRecurring+".",
       "// Compound body="+config.compoundEnabled+" masks="+config.compoundMasks.join(",")+" interval="+config.compoundMin+"-"+config.compoundMax+"s.",
@@ -459,8 +459,8 @@
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
     render();
   }
-  function simulateSchedule(c) {
-    let seed=0x582A, random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+  function simulateSchedule(c,exampleSeed=0x582A) {
+    let seed=exampleSeed, random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
     const between=(lo,hi)=>lo+Math.floor(random()*(hi-lo+1));
     const events=[];
     const add=(kind,on,min,max,duration)=>{
@@ -480,6 +480,7 @@
     // precision about actual starts and could leave events out of time order.
     return events.filter(e=>e.time<300);
   }
+  let previewSeed=0x582A;
   function render() {
     const c=readConfig(),errors=validate(c);
     const previewItems=window.SkellyExperience.previewItems(c);
@@ -488,7 +489,7 @@
       const item=document.createElement("span"),dot=document.createElement("i");
       dot.className="dot "+kind;item.append(dot,document.createTextNode(" "+label));legend.append(item);
     }
-    byId("timelineEmpty").hidden=simulateSchedule(c).length>0;
+    byId("timelineEmpty").hidden=simulateSchedule(c,previewSeed).length>0;
     const feedback=byId("scheduleFeedback");
     feedback.replaceChildren();
     for(const text of window.SkellyExperience.scheduleFeedback(c)) {
@@ -499,7 +500,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
     byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
-    byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:"Off";
+    byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+(c.jawEnabled?" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:""):"Off";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
@@ -521,7 +522,6 @@
     }
     const eyeLabel=!c.jawEnabled?"Direct rotation":[ "MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
-    byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · rotate "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · body "+c.torsoColor+" / head "+c.headColor):"Off · body and head colors";
     byId("lightRotationOptions").disabled=!c.lightsEnabled||!c.lightRotation;
     byId("lightRotationOptions").hidden=!c.lightRotation;
@@ -539,7 +539,7 @@
       document.querySelector('.light-palette-choice[value="'+i+'"]').nextSibling.textContent=" "+p.name;
       button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
-    byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · no audio preparation needed";
+    byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · optional";
     byId("mouthOptions").disabled=!c.jawEnabled;
     byId("mouthOptions").hidden=!c.jawEnabled;
     byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
@@ -554,7 +554,14 @@
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
     const timeline=byId("timeline");timeline.replaceChildren();
     timeline.style.height=Math.max(38,previewItems.length*24+10)+"px";
-    for(const ev of simulateSchedule(c)){
+    for(const [row,[kind]] of previewItems.entries()) {
+      const key={compound:'compound',head:'head',arm:'arm',torso:'torso',eyes:'eyes',jaw:'jaw'}[kind];
+      const min=kind==='lights'?c.lightInterval:c[key+'Min'],max=kind==='lights'?c.lightInterval:c[key+'Max'];
+      if(min<300){const range=document.createElement('span');range.className='request-window '+kind;range.style.left=(min/3)+'%';range.style.width=Math.max(.7,(Math.min(max,300)-min)/3)+'%';range.style.top=(8+row*24)+'px';range.title='First '+kind+' request window: '+min+'–'+max+' seconds';if(max>300){range.classList.add('continues');range.textContent='→';}timeline.append(range);}
+    }
+    byId('timelineBeyond').hidden=!(c.compoundEnabled&&c.compoundMax>300);
+    byId('timelineBeyond').textContent='Combined requests: '+c.compoundMin+'–'+c.compoundMax+' seconds; the first can fall beyond this window.';
+    for(const ev of simulateSchedule(c,previewSeed)){
       const element=document.createElement("span");
       element.className="event "+ev.kind;
       element.style.left=(ev.time/3)+"%";
@@ -563,6 +570,17 @@
       element.title=ev.kind+" requested at "+Math.floor(ev.time/60)+":"+String(ev.time%60).padStart(2,"0")+"; actual start may be later";
       timeline.appendChild(element);
     }
+  }
+  function generateRuntimeSketch(scenes,rotate=false) {
+    if(!window.SkellyRuntime)throw Error('The offline USB settings module did not load.');
+    const words=window.SkellyRuntime.encode(scenes,rotate,validate);
+    // Include every optional scheduling hook in the universal build; runtime
+    // settings, rather than these compile-time seed values, control activation.
+    let source=generateSketch({...DEFAULTS,jawEnabled:false,jawExtras:'13',restEnabled:true,clockEnabled:true});
+    const match=source.match(/const uint32_t RUNTIME_SEED\[\] = \{[^}]+\};/);
+    if(!match)throw Error('Runtime seed anchor missing.');
+    source=replaceOnce(source,match[0],'const uint32_t RUNTIME_SEED[] = {'+words.map(n=>n+'UL').join(',')+'};');
+    return '#define SKELLY_RUNTIME 1\n'+source;
   }
   // Bundled eye previews and attribution: images/eyes/README.md.
   function eyeImageUrl(index) {
@@ -577,6 +595,9 @@
   function readLibrary() {
     return Object.fromEntries(Object.entries(CLIP_FIELDS).map(([key,id])=>
       [key,byId(id).value===""?null:Number(byId(id).value)]));
+  }
+  function writeLibrary(clips) {
+    for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=clips[key]??"";
   }
   function downloadText(text,name,type) {
     const href=URL.createObjectURL(new Blob([text],{type}));
@@ -623,6 +644,7 @@
     });
     byId("selectAllEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
     byId("selectFewEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
+    byId('newExample').addEventListener('click',()=>{previewSeed=(previewSeed+1)>>>0;render();});
     for(const b of document.querySelectorAll(".preset"))b.addEventListener("click",()=>{
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
       const preset=PRESETS[b.dataset.preset];
@@ -684,6 +706,6 @@
     });
     writeConfig(DEFAULTS);
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,readLibrary,writeLibrary};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

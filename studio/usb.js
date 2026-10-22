@@ -6,6 +6,7 @@
     byId("disconnect").disabled=!session.port||session.closing;
     byId("identify").disabled=!session.port;
     byId("clock").disabled=!session.port||!session.capture.text.includes("USB READY v1 CLOCK");
+    byId('readStatus').disabled=!session.port;
     byId("status").textContent=(session.port?"USB connected. ":"Disconnected. ")+session.capture.size+" bytes captured; "+session.capture.dropped+" discarded. "+session.error;
     byId("output").textContent=session.capture.text.slice(-32768);
   });
@@ -16,7 +17,8 @@
   byId("disconnect").onclick=()=>session.disconnect().catch(e=>byId("status").textContent=e.message);
   byId("clock").onclick=()=>session.syncClock().then(()=>byId("status").textContent="Time sent. Look for USB TIME accepted in the log.").catch(e=>byId("status").textContent=e.message);
   byId("identify").onclick=()=>session.identify().catch(e=>byId("status").textContent=e.message);
+  byId('readStatus').onclick=()=>session.status().then(r=>byId('controllerState').textContent=r.text+'\nReported controller state; physical movement and lighting need observation.').catch(e=>byId('controllerState').textContent=e.message);
   byId("raw").onclick=()=>download(session.capture.bytes(),"Skelly-serial.bin","application/octet-stream");
   byId("text").onclick=()=>download(new TextDecoder().decode(session.capture.bytes()),"Skelly-serial.txt","text/plain");
-  byId("report").onclick=()=>download(JSON.stringify(session.capture.summary(),null,2),"Skelly-diagnostics.json","application/json");
+  byId("report").onclick=()=>download(JSON.stringify(session.diagnostics(),null,2),"Skelly-diagnostics.json","application/json");
 })();

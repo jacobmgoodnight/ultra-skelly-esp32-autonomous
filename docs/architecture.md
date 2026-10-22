@@ -6,6 +6,31 @@ application that embeds this sketch and replaces validated constants plus severa
 optional scheduling blocks. It downloads one self-contained `.ino`. No backend,
 Wi-Fi, or ongoing browser connection is involved.
 
+## Optional USB settings and scenes
+
+Universal sketches explicitly enable `SKELLY_RUNTIME`; ordinary generated sketches
+keep that engine compiled out. `studio/runtime-schema.js` defines bounded fields;
+`scripts/sync-runtime-schema.cjs` generates the matching firmware schema, aliases
+and safe Subtle seed, then `sync-template.cjs` embeds the canonical source.
+Both generated blocks are checked for drift. Cooldowns are never runtime fields.
+
+A validated program holds one to four complete scenes. USB transfers stage a
+whole program before CRC/range/cross-field validation. Application waits for active
+motions, playback, follow-ups and restoration to finish; new routines pause while
+an accepted update waits. Explicit saves use alternating NVS slots with payload
+CRC, protected sequence headers and readback before application. Invalid or failed
+saves preserve the running program; boot falls back to the newest valid slot or
+compiled seed. Scene rotation writes no flash and waits for the same idle boundary.
+Every applied scene reconnects by advertised name with fresh intervals. Scene hold
+time starts at successful connection and does not advance scenes while disconnected.
+Clock validity is never persisted. No lights-out behavior is added.
+
+The browser uses explicit port selection, bounded text protocol queues independent
+of its bounded raw-byte capture, acknowledged chunks and matching settings readback.
+Saved local scene libraries are separate from controller storage. Status counters
+describe transport/model state, never physical completion. See the
+[protocol and attended criteria](usb-settings-scenes.md) for limits and recovery.
+
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye
