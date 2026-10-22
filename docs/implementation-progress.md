@@ -45,23 +45,31 @@ regression or serial root-cause finding is claimed. New firmware marker:
 ## Validation
 
 - Baseline: 38 Node tests and canonical/template check passed before editing.
-- Current Node tests: **50 passing**, including first-run setup, old-profile
+- Current Node tests: **51 passing**, including first-run setup, old-profile
   compatibility, new configuration rejection, original bytes/UTF-8, stream cleanup,
   canceled port selection, unplug handling and installer image/hash rejection.
 - Native: **30 C++ executables and two expected compile rejections** pass with
   MSVC C++17. Added cases cover contention with preserved locks, passive queue
   overflow/cleanup, per-file timing, no-time pause, malformed USB input, clock
   wrap, overnight boundaries, fresh window-entry targets and blocking writes
-  crossing closing time. These execute firmware functions with mocked I/O.
+  crossing closing time, plus idle-break reinitialization after 26 simulated days
+  waiting for clock input. These execute firmware functions with mocked I/O.
 - Python package test passes using synthetic test data, not a flashable artifact.
 - CRC vectors, template synchronization and local asset versions pass.
-- ESP32: full pinned **3.3.12** matrix is in progress. It includes canonical,
-  32 generated settings, four isolated diagnostics, 11 attended, seven quick and
+- **PASS: 57 ESP32 builds** on pinned **3.3.12**. These include canonical,
+  33 generated settings, four isolated diagnostics, 11 attended, seven quick and
   the fixed head-only installer profile. Each compiled source hash is recorded
-  under `.skelly-build/validation/results.json`.
+  under `.skelly-build/validation/results.json` (56 cases) and
+  `.skelly-build/validation/additional-results.json` (clock/rest). The additional
+  case was compiled separately without changing the other 32 matrix sources.
+- PR #25's GitHub smoke suite passed. PR #26's installer-package workflow passed;
+  its newest smoke checks are tracked on the PR and may still be running after
+  this local validation record. No CI outcome is inferred from a queued run.
 - Browser: local Studio first-run action and advanced controls load; Studio and
   USB pages fit a 390-pixel viewport without horizontal overflow. No hardware
-  port was opened. The pinned installer module URL is reachable; flashing is not tested.
+  port was opened. A real GitHub-built installer package passed archive/source/image
+  hash checks and local package selection; the unchecked overwrite notice blocks
+  installer loading. The pinned module URL is reachable; flashing is not tested.
 
 ## What still cannot be called finished
 

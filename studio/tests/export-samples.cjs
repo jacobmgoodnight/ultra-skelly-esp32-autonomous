@@ -11,6 +11,7 @@ for(const file of ["studio/template.js","studio/app.js"]) {
 const generator = ctx.window.SkellyStudioGenerator;
 const base = {...generator.DEFAULTS, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
+  ClockWithIdleBreaks:{clockEnabled:true,restEnabled:true},
   Watchful:{...generator.PRESETS.watchful},
   Storyteller:{...generator.PRESETS.storyteller},
   UsbClockFairAndNotifications:{clockEnabled:true,clockStart:1320,clockEnd:120,clockDays:32,fairBodyTurns:true,playbackDiagnostics:true,lightsEnabled:true},

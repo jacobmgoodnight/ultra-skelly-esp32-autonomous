@@ -295,6 +295,11 @@
       "  nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);\n"+
       "  nextRestAt = now + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
       "  restUntil = now;");
+    if(config.clockEnabled && config.restEnabled)out=replaceOnce(out,
+      "  nextEyeAt = at + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);",
+      "  nextEyeAt = at + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);\n"+
+      "  nextRestAt = at + random(REST_MIN_INTERVAL_MS, REST_MAX_INTERVAL_MS + 1);\n"+
+      "  restUntil = at; // A newly opened window never inherits an old idle pause.");
     out=replaceOnce(out,
       "  bool sentHeadThisLoop = false;",
       "  if (REST_ENABLED && reached(now, nextRestAt) &&\n"+

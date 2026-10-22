@@ -25,3 +25,9 @@ test('new profiles use version two so older Studio cannot silently drop clock or
   const parsed=JSON.parse(encoded);assert.equal(parsed.version,2);
   delete parsed.config.jawClipSec;assert.throws(()=>api.parseProfile(JSON.stringify(parsed)),/Invalid profile setting/);
 });
+test('a clock window with idle breaks resets rest targets on opening',()=>{
+  const code=api.generateSketch({...api.DEFAULTS,clockEnabled:true,restEnabled:true});
+  assert.match(code,/restUntil = at; \/\/ A newly opened window/);
+  const withoutClock=api.generateSketch({...api.DEFAULTS,restEnabled:true});
+  assert.doesNotMatch(withoutClock,/restUntil = at;/);
+});

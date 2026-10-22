@@ -3,7 +3,8 @@
   "use strict";
   async function verifyPackage(metadata,bytes) {
     if(metadata.profile!=="head-only"||metadata.chipFamily!=="ESP32"||metadata.core!=="3.3.12"||
-      !/^[a-f0-9]{40}$/.test(metadata.sourceCommit)||!/^[a-f0-9]{64}$/.test(metadata.binarySHA256)||
+      !/^[a-f0-9]{40}$/.test(metadata.sourceCommit)||!/^[a-f0-9]{64}$/.test(metadata.sourceSHA256)||
+      !/^[a-f0-9]{64}$/.test(metadata.binarySHA256)||metadata.physicalStatus!=="Untested"||
       bytes.length!==4194304||metadata.bytes!==bytes.length||bytes[4096]!==0xe9||bytes[65536]!==0xe9)
       throw new Error("Choose build.json and head-only.bin from the same ESP32 installer package.");
     const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes)),n=>n.toString(16).padStart(2,"0")).join("");

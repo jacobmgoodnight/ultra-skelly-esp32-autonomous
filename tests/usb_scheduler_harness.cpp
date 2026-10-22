@@ -42,6 +42,11 @@ int main(){try{
   const uint64_t base=clockCivilMillis;fakeNow+=500;serviceUsbClock();REQUIRE(clockCivilMillis==base+500);
   ready(UINT32_MAX-250);const uint64_t wrapBase=clockCivilMillis;fakeNow+=500;serviceUsbClock();REQUIRE(clockCivilMillis==wrapBase+500);
 #ifdef TEST_FILE_DURATIONS
+  ready();clockValid=false;
+  for(int day=0;day<26;++day){fakeNow+=86400000;loop();}
+  REQUIRE(!reached(fakeNow,restUntil));
+  clockValid=true;clockWindowWasOpen=false;loop();
+  REQUIRE(reached(fakeNow,restUntil));REQUIRE(!reached(fakeNow,nextRestAt));
   const uint32_t expectedDurations[]={21000,24000,30000};
   for(int choice=0;choice<3;++choice){
     ready();fakeRandomChoices.push_back(choice);startMouth(fakeNow);
