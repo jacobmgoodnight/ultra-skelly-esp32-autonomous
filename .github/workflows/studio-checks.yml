@@ -49,32 +49,11 @@ jobs:
         run: |
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-      - name: Generate representative Arduino sketches
-        run: node studio/tests/export-samples.cjs
-      - name: Compile each generated sketch for ESP32 Dev Module
-        run: |
-          set -e
-          for sketch in .skelly-build/*; do
-            test -f "$sketch/$(basename "$sketch").ino" || continue
-            echo "Compiling $sketch"
-            arduino-cli compile --fqbn esp32:esp32:esp32 "$sketch"
-          done
-      - name: Compile canonical firmware
-        run: arduino-cli compile --fqbn esp32:esp32:esp32 firmware/SkellyAutonomous
-      - name: Compile isolated compound motor test (HEAD+ARM first)
-        run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
-      - name: Compile serial-only idle diagnostic
-        run: arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest
-      - name: Compile isolated arm and eye diagnostics
-        run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32 experiments/ArmSingleTest
-          arduino-cli compile --fqbn esp32:esp32:esp32 experiments/EyeSingleTest
-      - name: Export and compile attended hardware test pack
-        run: |
-          node scripts/export-attended-tests.cjs
-          python scripts/compile-attended-tests.py
-      - name: Export and compile optional short checks
-        run: |
-          node scripts/export-attended-tests.cjs --quick
-          python scripts/compile-attended-tests.py --pack .skelly-build/quick-tests
+      - name: Compile complete pinned ESP32 matrix with a shared scratch cache
+        run: python scripts/compile-validation.py
+      - name: Preserve compiled source hashes
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-source-hashes-${{ github.run_id }}
+          path: .skelly-build/validation/results.json
+          if-no-files-found: error

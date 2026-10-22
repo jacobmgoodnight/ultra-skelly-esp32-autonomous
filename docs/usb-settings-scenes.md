@@ -53,6 +53,14 @@ It never shortens the 32/32/35-second body cooldowns. No NVS write occurs during
 scene rotation. Disabled lighting leaves existing LEDs alone; it does not switch
 them off. Choose scene durations long enough for their requested intervals.
 
+Runtime servicing retires elapsed cooldown timestamps while disconnected as well
+as connected. This prevents a regularly serviced controller from treating old
+locks as future deadlines after the signed timer half-range (about 24.9 days),
+which would otherwise leave a USB save pending and suppress reconnect. A native
+full-loop regression covers 25 days offline, a save, a still-active 32-second lock,
+then continued offline servicing through millis wrap. These are software results,
+not an endurance or hardware pass.
+
 ## Protocol and storage contract
 
 `SKELLY HELLO` retains `USB READY v1 CLOCK` and adds `USB CAPS v2 settings=0|1`.

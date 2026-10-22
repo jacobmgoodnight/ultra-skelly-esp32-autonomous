@@ -21,6 +21,11 @@ that this newly changed firmware has passed its hardware regression.
 USB settings/scene software coverage and a separate future attended procedure are
 in [USB settings and scenes](usb-settings-scenes.md). Continue the current Studio
 refresh checklist first; no new physical result is implied by these checks.
+The native runtime-offline case services the real loop across the 24.9-day signed
+timer boundary and millis wrap, verifies USB settings persist with the prop absent,
+and preserves an active 32-second head cooldown. CI uses the same complete
+`scripts/compile-validation.py` driver as local verification, with a shared scratch
+sketch/cache and an uploaded source-hash manifest; no compile categories are skipped.
 
 For the new USB/fairness/clock options, see [attended criteria](next-attended-tests.md).
 Hardware is unavailable during implementation; software tests never replace those

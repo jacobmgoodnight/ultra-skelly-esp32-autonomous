@@ -450,3 +450,21 @@ unnecessary preparation copy, and adds the larger skull and skeletal hand icon.
 No ESP32 was flashed or connected, and no physical result is claimed. The new
 [USB/scene checks](usb-settings-scenes.md) are a separate follow-up when the owner
 is ready; existing lighting/USB and refresh reports retain their previous status.
+
+## October 22, 2026 — independent review: long-disconnection USB blocker
+
+A separate automated review reproduced a P2 bug in the initial universal build:
+after 25 simulated days offline with the loop serviced hourly, stale zero-valued
+cooldown deadlines appeared future under signed comparisons. A USB reset queued
+indefinitely, while the pending update prevented scanning/reconnection from
+refreshing those locks. The original native reproduction observed 600 scans,
+then no NVS write or further scan during 250 seconds of pending work. This was
+continuous serviced operation, distinct from a weeks-long loop stall.
+
+The correction retires elapsed deadlines at every runtime service, including
+disconnected/pending loops, and leaves future motion/playback deadlines untouched.
+A new full-loop regression fails on the original source and covers the offline
+half-range, settings persistence, the full 32-second active cooldown, and subsequent
+millis wrap. The complete pinned compile driver is reused in CI so library caches
+can be shared while preserving all generated, diagnostic, attended and installer
+cases. No physical endurance, USB/NVS or actuator result is claimed.

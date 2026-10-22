@@ -42,6 +42,8 @@ failed = False
 runtime_source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-runtime-fixture.cjs")], encoding="utf-8")
 failed |= build_and_run(ROOT / ".skelly-build/host/RuntimeSettings", runtime_source,
                        (ROOT / "tests/runtime_settings_harness.cpp").read_text(encoding="utf-8"), "Runtime USB settings and scenes")
+failed |= build_and_run(ROOT / ".skelly-build/host/RuntimeOffline", runtime_source,
+                       (ROOT / "tests/runtime_offline_harness.cpp").read_text(encoding="utf-8"), "Runtime settings during long disconnection")
 refresh_source = subprocess.check_output(
     [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-refresh-fixture.cjs")], encoding="utf-8")
 failed |= build_and_run(ROOT / ".skelly-build/host/RefreshFollowup", refresh_source,

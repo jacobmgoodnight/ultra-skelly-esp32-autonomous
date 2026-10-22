@@ -1720,6 +1720,9 @@ class RuntimeEngine {
   }
   void service() {
     const uint32_t now=millis();
+    // Keep elapsed locks fresh even while disconnected or awaiting USB apply.
+    // Future motion/playback deadlines retain their complete cooldowns.
+    retireElapsedCooldowns(now);
     if(transfer && uint32_t(now-touched)>30000){transfer=false;error(request,"TIMEOUT");}
     if(dumping){
       if(dumpOffset<dump.count){char data[80];size_t used=0;const uint32_t end=stdMin(dumpOffset+8,dump.count);
