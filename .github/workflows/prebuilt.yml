@@ -1,0 +1,33 @@
+name: Build head-only USB installer package
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['firmware/**', 'studio/**', 'scripts/prepare-prebuilt.cjs', 'scripts/package-prebuilt.py', '.github/workflows/prebuilt.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install pinned core
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Generate and compile fixed head-only firmware
+        run: |
+          node scripts/sync-template.cjs --check
+          node scripts/prepare-prebuilt.cjs
+          arduino-cli compile --fqbn esp32:esp32:esp32 --build-path .skelly-build/prebuilt/binaries .skelly-build/prebuilt/HeadOnly
+      - name: Package version and hashes
+        run: |
+          python scripts/package-prebuilt.py --source .skelly-build/prebuilt/HeadOnly/HeadOnly.ino --binary .skelly-build/prebuilt/binaries/HeadOnly.ino.merged.bin --output .skelly-build/prebuilt/package --revision "$(git rev-parse HEAD)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: head-only-usb-preview
+          path: .skelly-build/prebuilt/package/
+          retention-days: 90

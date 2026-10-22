@@ -53,6 +53,18 @@ failed |= build_and_run(
     "Serial-only idle diagnostic",
 )
 scheduler_harness = (ROOT / "tests/scheduler_harness.cpp").read_text(encoding="utf-8")
+usb_harness = (ROOT / "tests/usb_scheduler_harness.cpp").read_text(encoding="utf-8")
+usb_source = sources["Canonical"].replace("const bool ARM_ENABLED = false;", "const bool ARM_ENABLED = true;").replace("const bool TORSO_ENABLED = false;", "const bool TORSO_ENABLED = true;")
+usb_source = usb_source.replace("const uint32_t MOUTH_MIN_INTERVAL_MS = 45000;", "const uint32_t MOUTH_MIN_INTERVAL_MS = 22000;").replace("const uint32_t MOUTH_MAX_INTERVAL_MS = 90000;", "const uint32_t MOUTH_MAX_INTERVAL_MS = 22000;")
+usb_source = usb_source.replace("const bool LIGHTS_ENABLED = false;", "const bool LIGHTS_ENABLED = true;")
+for fair in (False, True):
+    configured = usb_source
+    if fair:
+        for before, after in [("FAIR_BODY_TURNS = false", "FAIR_BODY_TURNS = true"), ("PLAYBACK_DIAGNOSTICS = false", "PLAYBACK_DIAGNOSTICS = true"), ("CLOCK_WINDOW_ENABLED = false", "CLOCK_WINDOW_ENABLED = true"), ("CLOCK_START_MINUTE = 1080", "CLOCK_START_MINUTE = 1320"), ("CLOCK_END_MINUTE = 1380", "CLOCK_END_MINUTE = 120"), ("CLOCK_DAYS = 127", "CLOCK_DAYS = 32")]:
+            configured = configured.replace(before, after)
+    failed |= build_and_run(ROOT / f".skelly-build/host/UsbFair{fair}", configured, usb_harness, f"USB clock and fair turns {fair}")
+generated_usb = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-usb-fixture.cjs")], encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/UsbGenerated", "#define TEST_FILE_DURATIONS\n" + generated_usb, usb_harness, "Generated USB/compound/fair/clip-duration fixture")
 scheduler_source = sources["Canonical"].replace("const bool ARM_ENABLED = false;", "const bool ARM_ENABLED = true;")
 scheduler_source = scheduler_source.replace("const bool TORSO_ENABLED = false;", "const bool TORSO_ENABLED = true;")
 scheduler_source = scheduler_source.replace("const bool COMPOUND_BODY_ENABLED = false;", "const bool COMPOUND_BODY_ENABLED = true;")

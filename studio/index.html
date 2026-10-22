@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=63e47a4dfe5e">
-<script src="./template.js?v=5153ca616498" defer></script>
-<script src="./app.js?v=7af3a5ab7941" defer></script>
+<link rel="stylesheet" href="./style.css?v=c8960f89a948">
+<script src="./template.js?v=8636bdd77c2e" defer></script>
+<script src="./experience.js?v=60a691d804a4" defer></script>
+<script src="./app.js?v=be0ce2296ebc" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -24,12 +25,22 @@
 <nav class="studio-nav" aria-label="Studio sections"><a href="#movement">Movement</a><a href="#mouth">Mouth</a><a href="#expressions">Eyes</a><a href="#lighting">Lighting</a><a href="#advanced">Advanced</a><a href="#finish">Save &amp; upload</a></nav>
 <main class="layout">
   <div class="controls">
+    <section class="panel" id="first-run" aria-labelledby="first-run-title">
+      <div class="section-head"><div><span class="step">START HERE</span><h2 id="first-run-title">Your first autonomous routine</h2></div></div>
+      <p>Start with a head turn every 2–4 minutes. No audio preparation or wiring to the prop is needed.</p>
+      <button type="button" id="startHeadOnly" class="secondary">Set up head-only movement</button>
+      <ol><li>Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Download the sketch, then compile/upload using ESP32 Dev Module and core 3.3.12.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li>Add jaw clips next: upload each clip with body flags 0x00, note your own file numbers, then select them below.</li></ol>
+      <p id="firstRunStatus" class="selection-status" role="status">Your existing settings stay selected until you choose the head-only setup.</p>
+      <p><a href="./usb.html">USB logs, clock and installation →</a> · <a href="../docs/audit-follow-up.md">Attended test criteria →</a></p>
+    </section>
     <section class="panel">
       <div class="section-head"><div><span class="step">01</span><h2>Choose a personality</h2></div><span class="tiny">Starting points; customize below</span></div>
       <div class="presets" role="group" aria-label="Movement presets">
         <button class="preset" type="button" data-preset="subtle"><span class="preset-symbol">☾</span><b>Subtle</b><small>Quiet and occasional</small></button>
         <button class="preset chosen" type="button" data-preset="normal"><span class="preset-symbol">◈</span><b>Normal</b><small>Original tested setup</small></button>
         <button class="preset" type="button" data-preset="haunted"><span class="preset-symbol">✺</span><b>Haunted</b><small>A little more active</small></button>
+        <button class="preset" type="button" data-preset="watchful"><span class="preset-symbol">↻</span><b>Watchful</b><small>Head only · every 2–4 min</small></button>
+        <button class="preset" type="button" data-preset="storyteller"><span class="preset-symbol">〰</span><b>Storyteller</b><small>Spaced head and jaw · needs your clip</small></button>
       </div>
     </section>
     <section class="panel" id="movement">
@@ -82,7 +93,7 @@
             <option value="2">Choose a new random eye expression</option>
             <option value="0">Let the MP3 control the eyes</option>
           </select>
-          <p id="eyeJawHelp">MP3 playback can reset the eyes. The first two modes send an eye update shortly after playback starts and after the 21-second clip estimate. This synchronization is new and needs testing.</p>
+          <p id="eyeJawHelp">MP3 playback can reset the eyes. The first two modes send an eye update shortly after playback starts and after the configured clip estimate (21 seconds by default). This synchronization needs physical testing.</p>
         </div>
         <span class="field-caption">Choose which eye designs appear in the random rotation. Select a thumbnail to toggle it; use the preview button to enlarge it.</span>
         <div class="eye-spotlight" aria-live="polite">
@@ -166,6 +177,20 @@
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>
         <label><input type="checkbox" id="diagnosticsEnabled"> Verbose diagnostics for an attended test</label>
+        <label><input type="checkbox" id="fairBodyTurns"> Fair turns for waiting body movements (experimental)</label>
+        <p>After a jaw clip, let one due standalone/compound body request take a turn. Cooldowns remain unchanged; jaw-first follow-ups keep their own rules. OFF preserves jaw priority.</p>
+        <label for="jawClipSec">Default clip estimate including padding (seconds)</label><input id="jawClipSec" type="number" min="21" max="120" value="21">
+        <label for="jawDurations">Per-file estimates, optional</label><input id="jawDurations" type="text" value="" placeholder="13:24, 14:21">
+        <p>Use file:seconds for selected clips only, 21–120 seconds. Measure each clip and include padding. These estimates protect motion; they are not playback telemetry.</p>
+        <label><input type="checkbox" id="playbackDiagnostics"> Observe playback notifications (experimental, logs only)</label>
+        <p>Collect bounded AE02 metadata without changing motion, clip estimates or light timing. Notification format and natural-end behavior still need hardware confirmation.</p>
+        <fieldset><legend>Optional local clock schedule · experimental</legend>
+          <label><input type="checkbox" id="clockEnabled"> Only start routines inside this window</label>
+          <label for="clockStart">Start</label><input id="clockStart" type="time" value="18:00">
+          <label for="clockEnd">End</label><input id="clockEnd" type="time" value="23:00">
+          <div role="group" aria-label="Days on which the window starts"><label><input class="clock-day" type="checkbox" value="1" checked>Sun</label><label><input class="clock-day" type="checkbox" value="2" checked>Mon</label><label><input class="clock-day" type="checkbox" value="4" checked>Tue</label><label><input class="clock-day" type="checkbox" value="8" checked>Wed</label><label><input class="clock-day" type="checkbox" value="16" checked>Thu</label><label><input class="clock-day" type="checkbox" value="32" checked>Fri</label><label><input class="clock-day" type="checkbox" value="64" checked>Sat</label></div>
+          <p>Set local time through <a href="./usb.html">USB tools</a> after every restart. Until then, no routines start. Overnight windows belong to their start day. Existing movement finishes at closing time. No Wi-Fi, automatic DST adjustment or clock retention after power loss.</p>
+        </fieldset>
         <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
 </div></details>
   </div>
@@ -176,9 +201,10 @@
       <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
       <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
       <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot compound"></i> Combined</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
-      <div id="timeline" class="timeline" role="img" aria-label="Illustrative movement schedule for five minutes"></div>
+      <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over five minutes, not actual movement times"></div>
       <div class="timeline-axis"><span>0:00</span><span>2:30</span><span>5:00</span></div>
-<p class="small-description">Timing illustration only; excludes several cooldown, jaw-first and restoration rules. Actual starts can be delayed.</p>
+<p class="small-description">Example requests, not predicted movement. Locks, jaw-first coordination, breaks and light restoration can delay starts.</p>
+      <ul id="scheduleFeedback" class="small-description" aria-live="polite"></ul>
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
@@ -186,7 +212,7 @@
       <div class="profile-actions"><button id="saveProfile" class="secondary" type="button">Save settings (.json)</button><button id="loadProfile" class="secondary" type="button">Load settings</button><input id="profileFile" class="sr-only" type="file" accept=".json,application/json" aria-label="Choose saved Studio settings"></div>
       <p id="profileStatus" class="small-description" role="status">Save a profile to keep settings and your own clip numbers.</p>
       <details class="instructions"><summary>Put it on my ESP32</summary><ol><li>Download the sketch and open it in Arduino IDE or use Arduino CLI.</li><li>Choose <strong>ESP32 Dev Module</strong> and core <strong>3.3.12</strong>, then compile and upload over USB.</li><li>Power on Skelly and disconnect other Bluetooth controllers. The ESP32 finds it by name.</li></ol><p>Once uploaded, the browser and computer can disconnect.</p><p><a href="../docs/setup.md">Setup guide ↗</a></p></details>
-      <details class="instructions"><summary>Can I upload from Chrome?</summary><p>Browser USB flashing is possible with compiled firmware. This version generates source and does not compile or flash it. A future installer could remove the IDE step for prebuilt firmware. <a href="../docs/studio-roadmap.md">What’s planned ↗</a></p></details>
+      <details class="instructions"><summary>Can I upload from Chrome?</summary><p>The <a href="./usb.html">USB tools page</a> installs a fixed head-only preview from a versioned build package. Your custom settings still need compilation through Arduino IDE/CLI. The browser also captures original serial bytes and sets the optional clock.</p></details>
     </div>
   </aside>
 </main>

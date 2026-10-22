@@ -8,8 +8,9 @@ flash an inexpensive ESP32-WROOM board, and let it run without a connected phone
 browser, Wi-Fi, cloud service or subscription. GitHub Pages hosts the static site.
 
 For Ultra Skelly v2 owners who want occasional movement without keeping a phone
-connected. Studio generates Arduino source; **it does not upload MP3s, compile,
-or flash your ESP32**. The software is free and MIT licensed; you supply the prop,
+connected. Custom configurations download as Arduino source; **Studio does not
+upload MP3s or compile sketches**. Separate USB tools can install a fixed head-only
+build package. The software is free and MIT licensed; you supply the prop,
 an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
 computer for the initial Arduino upload. Other prop revisions and ESP32 variants
 are not covered by the current hardware evidence.
@@ -22,8 +23,9 @@ the intervals; the ESP32 handles the recurring triggers. Other enabled routines
 and safety locks may delay starts.
 
 This adds a recurring schedule in Bluetooth mode without manual DecorPro taps or
-waiting for the prop's sensor. **Scheduling means fixed or randomized intervals
-after connection, not clock times, days of the week or an evening on/off calendar.**
+waiting for the prop's sensor. **Default scheduling uses fixed or randomized
+intervals.** An experimental weekday/time window can limit new routines after
+you set local time over USB; it pauses after every restart until time is set again.
 The stock sensor mode's active-window timer is a different feature. This project
 does not extend compatibility to the 12-foot app-controlled Skelly or other props.
 
@@ -88,8 +90,13 @@ observations do not establish that this firmware revision passed on the prop.
 For a first try without preparing audio, select **Subtle** in Studio. It enables
 occasional head movement and disables jaw, arm and torso. To use Studio offline,
 download the repository ZIP, extract it, and open `studio/index.html`; keep
-`app.js`, `template.js` and `style.css` beside it. Initial toolchain installation
+all files in the `studio` folder together, including `experience.js`. Initial toolchain installation
 and MP3 preparation are separate setup steps.
+
+[USB tools](studio/usb.html) capture original serial bytes and set the optional
+clock. A fixed head-only installer uses a versioned, hash-checked build package;
+it needs internet to load its pinned installer library. Custom settings still
+need Arduino compilation. See [USB setup and evidence limits](docs/usb-tools.md).
 
 ## Conservative movement scheduling
 

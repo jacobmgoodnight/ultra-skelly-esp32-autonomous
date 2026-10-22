@@ -1,5 +1,23 @@
 # Studio usability and next steps
 
+## October 21 implementation update
+
+The next pass implements guided head-only setup, Watchful/Storyteller presets,
+request-only timing feedback, local raw-byte USB capture, a USB clock protocol
+and optional weekday/overnight windows, per-file conservative playback estimates,
+opt-in fair body turns and passive AE02 observations. A fixed head-only image can
+be built as a versioned Actions artifact and installed through the separate USB
+page after package/hash validation. Custom settings still require compilation.
+New profiles use version 2; version-1 profiles import with safe defaults for added
+fields. Older Studio rejects version 2 instead of silently dropping those fields.
+See [USB tools](usb-tools.md) and [attended criteria](next-attended-tests.md).
+
+Hardware is unavailable for this pass, so new physical results remain Untested.
+Serial corruption is not fixed; actual playback-end control, USB-persistent
+configuration and additional lighting protocols remain separate work. The staged
+upload proposal below records the earlier plan; stages 1 and 2 now have software
+implementations, while stage 3 remains future work.
+
 The October 21 usability pass separates body movement and mouth routines, uses
 short everyday labels, and folds optional appearance, coordination and testing
 controls away. Firmware defaults, timing, packet formats and generator anchors

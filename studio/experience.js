@@ -1,0 +1,30 @@
+/* Pure setup guidance. No device access and no prediction of physical response. */
+(function () {
+  "use strict";
+  function firstRoutine(defaults) {
+    return {...defaults, headEnabled:true, headMin:120, headMax:240,
+      jawEnabled:false, armEnabled:false, torsoEnabled:false, eyesEnabled:false,
+      lightsEnabled:false, compoundEnabled:false, jawFollowupMotor:0,
+      jawFollowupRecurring:false, bodyOverlap:false, jawProtectBody:true,
+      restEnabled:false, overlap:false, fairBodyTurns:false, playbackDiagnostics:false,
+      clockEnabled:false};
+  }
+  function scheduleFeedback(c) {
+    const messages=["Equal minimum/maximum values request a fixed interval; a range randomizes it. Starts are measured after connection or the previous start, not by clock time."];
+    if(c.headEnabled||c.armEnabled||c.torsoEnabled) messages.push("Motor cooldowns stay conservative: head 32 seconds, arm 32 seconds, torso 35 seconds. A due request waits for its locks.");
+    if(c.jawEnabled&&c.jawProtectBody) messages.push("Jaw playback waits for body movement to finish. Body requests wait while jaw playback is due or active; requested intervals are not guaranteed start times.");
+    if(c.jawFollowupMotor) messages.push("Jaw-first coordination uses a separate delayed follow-up. The request illustration does not draw that follow-up; HEAD after jaw failed in physical tests.");
+    if(c.compoundEnabled) messages.push("Compound mode replaces individual body requests. One permitted mask is chosen per event; recurring compound operation still needs a physical run.");
+    if(c.restEnabled) messages.push("Idle breaks begin only after active movement finishes and can postpone every new request.");
+    if(c.fairBodyTurns) messages.push(c.jawProtectBody?"Fair turns is experimental: one waiting body request gets a turn after jaw playback, without shortening motor cooldowns.":"Fair turns is inactive while MP3 body protection is OFF. Enable protection to use it.");
+    if(c.clockEnabled) messages.push("Clock scheduling pauses new routines until USB time is set after every restart. Only selected days and the configured local-time window are active; existing motion can finish.");
+    if(c.lightsEnabled&&c.jawEnabled&&c.lightRestoreMode) messages.push("The next jaw clip waits for all six light-restoration writes. Playback end is estimated, not confirmed by the prop.");
+    const load=(c.headEnabled?32/c.headMin:0)+(c.armEnabled?32/c.armMin:0)+(c.torsoEnabled?35/c.torsoMin:0);
+    if(!c.bodyOverlap&&!c.compoundEnabled&&load>1) messages.push("These body intervals request more movement than the shared cooldown allows. Expect delays; increasing the intervals gives each part more room.");
+    if(c.jawEnabled&&c.jawProtectBody&&(c.compoundEnabled||c.headEnabled||c.armEnabled||c.torsoEnabled)&&c.jawMin<40) messages.push("Frequent jaw requests can starve body movement under jaw-priority scheduling. Use longer jaw intervals or the optional fair-turn policy.");
+    return messages;
+  }
+  const api={firstRoutine,scheduleFeedback};
+  if(typeof module!=="undefined")module.exports=api;
+  if(typeof window!=="undefined")window.SkellyExperience=api;
+})();

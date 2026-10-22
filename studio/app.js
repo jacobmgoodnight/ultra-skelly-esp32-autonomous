@@ -14,9 +14,13 @@
     jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
-    diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
+    diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1),
+    fairBodyTurns:false,playbackDiagnostics:false,jawClipSec:21,jawDurations:"",
+    clockEnabled:false,clockStart:1080,clockEnd:1380,clockDays:127
   });
   const PRESETS = {
+    watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
@@ -61,12 +65,13 @@
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
     const profile=JSON.parse(text);
-    if(!profile || profile.app!=="SkellyStudio" || profile.version!==1 ||
+    if(!profile || profile.app!=="SkellyStudio" || ![1,2].includes(profile.version) ||
        !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
-      throw new Error("This is not a supported Skelly Studio profile (version 1).");
+      throw new Error("This is not a supported Skelly Studio profile (version 1 or 2).");
     const config={};
     for(const [key,value] of Object.entries(DEFAULTS)) {
-      const entry=profile.config[key];
+      const added=["fairBodyTurns","playbackDiagnostics","jawClipSec","jawDurations","clockEnabled","clockStart","clockEnd","clockDays"];
+      const entry=profile.version===1&&profile.config[key]===undefined&&added.includes(key)?value:profile.config[key];
       if(Array.isArray(value)) {
         if(!Array.isArray(entry) || entry.some(n=>!Number.isSafeInteger(n)))throw new Error("Invalid profile setting: "+key);
         config[key]=entry.slice();
@@ -85,10 +90,10 @@
        config.compoundMasks.some(n=>![3,5,6,7].includes(n)) || new Set(config.compoundMasks).size!==config.compoundMasks.length)
       errors.push("Invalid combined movement settings.");
     if(errors.length)throw new Error([...new Set(errors)].join("\n"));
-    return {app:"SkellyStudio",version:1,config,clips:normalizeLibrary(profile.clips||{})};
+    return {app:"SkellyStudio",version:2,config,clips:normalizeLibrary(profile.clips||{})};
   }
   function createProfile(config,clips) {
-    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:1,config,clips})),null,2)+"\n";
+    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:2,config,clips})),null,2)+"\n";
   }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
@@ -102,6 +107,19 @@
     if(!raw)return [];
     return raw.split(",").map(part=>part.trim()).map(part=>/^\d+$/.test(part)?Number(part):NaN);
   }
+  function durationEntries(config) {
+    const raw=config.jawDurations.trim();
+    if(!raw)return [];
+    const files=[config.jawFile,...extraFileNumbers(config)],seen=new Set();
+    if(raw.length>256)throw new Error("Clip duration list is too long.");
+    return raw.split(",").map(item=>{
+      const match=/^\s*(\d+)\s*:\s*(\d+)\s*$/.exec(item);
+      const file=match?Number(match[1]):NaN,seconds=match?Number(match[2]):NaN;
+      if(!files.includes(file)||seen.has(file)||seconds<21||seconds>120||!Number.isSafeInteger(seconds))
+        throw new Error("Clip estimates use selected-file:seconds, 21–120 seconds, with no duplicates.");
+      seen.add(file);return [file,seconds];
+    });
+  }
   function validate(config) {
     const error=[];
     if(!config || typeof config!=="object" || Array.isArray(config))return ["Choose valid Studio settings."];
@@ -113,6 +131,13 @@
         error.push("Invalid setting type: "+key+".");
     }
     if(error.length)return error;
+    if(!Number.isSafeInteger(config.jawClipSec)||config.jawClipSec<21||config.jawClipSec>120)
+      error.push("Jaw clip estimate must be 21–120 seconds, including padding. Never shorten protection below 21 seconds.");
+    if(!Number.isSafeInteger(config.clockStart)||!Number.isSafeInteger(config.clockEnd)||
+       config.clockStart<0||config.clockStart>=1440||config.clockEnd<0||config.clockEnd>=1440||config.clockStart===config.clockEnd||
+       !Number.isSafeInteger(config.clockDays)||config.clockDays<1||config.clockDays>127)
+      error.push("Choose different clock start/end minutes (0–1439) and a weekday mask from 1 to 127.");
+    try { durationEntries(config); } catch(e) { error.push(e.message); }
     if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled && !config.torsoEnabled && !config.armEnabled && !config.lightsEnabled)
       error.push("Enable at least one movement or eye effect.");
     for(const [name,min,max,floor] of [
@@ -199,6 +224,13 @@
     if(typeof out!=="string" || out.length<5000)throw new Error("The tested firmware template did not load. Refresh this page.");
     // These substitutions fail closed rather than emitting a partial or invalid sketch.
     const assignments=[
+      ["const bool FAIR_BODY_TURNS = false;","const bool FAIR_BODY_TURNS = "+config.fairBodyTurns+";"],
+      ["const bool PLAYBACK_DIAGNOSTICS = false;","const bool PLAYBACK_DIAGNOSTICS = "+config.playbackDiagnostics+";"],
+      ["const bool CLOCK_WINDOW_ENABLED = false;","const bool CLOCK_WINDOW_ENABLED = "+config.clockEnabled+";"],
+      ["const uint16_t CLOCK_START_MINUTE = 1080;","const uint16_t CLOCK_START_MINUTE = "+config.clockStart+";"],
+      ["const uint16_t CLOCK_END_MINUTE = 1380;","const uint16_t CLOCK_END_MINUTE = "+config.clockEnd+";"],
+      ["const uint8_t CLOCK_DAYS = 127;","const uint8_t CLOCK_DAYS = "+config.clockDays+";"],
+      ["const uint32_t MOUTH_CLIP_MS = 21000;","const uint32_t MOUTH_CLIP_MS = "+config.jawClipSec*1000+";"],
       ["const uint16_t MOUTH_FILE_SERIAL = 12;","const uint16_t MOUTH_FILE_SERIAL = "+config.jawFile+";"],
       ["const bool MOUTH_ENABLED = true;","const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";"],
       ["const bool HEAD_ENABLED = true;","const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";"],
@@ -238,6 +270,12 @@
       ['#define SKELLY_NAME "Ultra Skelly v2"','#define SKELLY_NAME '+JSON.stringify(config.bleName.trim())]
     ];
     for(const [from,to] of assignments)out=replaceOnce(out,from,to);
+    const durations=durationEntries(config);
+    if(durations.length)out=replaceOnce(out,
+      "uint32_t jawDurationMs(uint16_t file) { (void)file; return MOUTH_CLIP_MS; }",
+      "uint32_t jawDurationMs(uint16_t file) {\n  switch(file) {\n"+
+      durations.map(([file,seconds])=>"    case "+file+": return "+seconds*1000+";").join("\n")+
+      "\n    default: return MOUTH_CLIP_MS;\n  }\n}");
     out=replaceOnce(out,
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";",
       "const bool MOUTH_ENABLED = "+Boolean(config.jawEnabled)+";\n"+
@@ -284,6 +322,8 @@
         "    (uint8_t)(chosenJawFile >> 8),");
       out=replaceOnce(out,"    (uint8_t)(MOUTH_FILE_SERIAL & 0xFF),",
         "    (uint8_t)(chosenJawFile & 0xFF),");
+      out=replaceOnce(out,"  const uint32_t clipDuration = jawDurationMs(MOUTH_FILE_SERIAL);",
+        "  const uint32_t clipDuration = jawDurationMs(chosenJawFile);");
       out=replaceOnce(out,"                (unsigned)MOUTH_FILE_SERIAL,\n                (unsigned long)(jawInterval / 1000),",
         "                (unsigned)chosenJawFile,\n                (unsigned long)(jawInterval / 1000),");
     }
@@ -350,10 +390,20 @@
       restDurationMin:n("restDurationMin"),restDurationMax:n("restDurationMax"),
       eyesMin:n("eyesMin"),eyesMax:n("eyesMax"),eyeJawMode:n("eyeJawMode"),
       diagnosticsEnabled:byId("diagnosticsEnabled").checked,
+      fairBodyTurns:byId("fairBodyTurns").checked,playbackDiagnostics:byId("playbackDiagnostics").checked,
+      jawClipSec:n("jawClipSec"),jawDurations:byId("jawDurations").value,
+      clockEnabled:byId("clockEnabled").checked,
+      clockStart:byId("clockStart").value.split(":").reduce((h,m)=>Number(h)*60+Number(m)),
+      clockEnd:byId("clockEnd").value.split(":").reduce((h,m)=>Number(h)*60+Number(m)),
+      clockDays:Array.from(document.querySelectorAll(".clock-day:checked")).reduce((mask,el)=>mask|Number(el.value),0),
       bleName:byId("bleName").value,eyeChoices:Array.from(document.querySelectorAll(".eye-choice input:checked")).map(el=>Number(el.value))
     };
   }
   function writeConfig(cfg) {
+    for(const key of ["fairBodyTurns","playbackDiagnostics","clockEnabled"])if(cfg[key]!==undefined)byId(key).checked=cfg[key];
+    for(const key of ["jawClipSec","jawDurations"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
+    for(const key of ["clockStart","clockEnd"])if(cfg[key]!==undefined)byId(key).value=String(Math.floor(cfg[key]/60)).padStart(2,"0")+":"+String(cfg[key]%60).padStart(2,"0");
+    if(cfg.clockDays!==undefined)document.querySelectorAll(".clock-day").forEach(el=>el.checked=Boolean(cfg.clockDays&Number(el.value)));
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","compoundMin","compoundMax","torsoColor","headColor","torsoBrightness","headBrightness","lightRestoreMode","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled","diagnosticsEnabled"])
@@ -378,27 +428,17 @@
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
     events.sort((a,b)=>a.time-b.time);
-    // Illustrative global motor serialization (real controller prioritizes
-    // overdue movements; exact future times are inherently unpredictable).
-    let bodyAvailableAt=0;
-    for(const ev of events) {
-      if(!c.bodyOverlap && ["head","torso","arm"].includes(ev.kind)){
-        ev.time=Math.max(ev.time,bodyAvailableAt);
-        const cooldown=ev.kind==="head"?32:ev.kind==="torso"?35:32;
-        bodyAvailableAt=ev.time+cooldown;
-      }
-    }
-    if((!c.overlap||c.jawProtectBody)&&c.headEnabled&&c.jawEnabled){
-      let headUntil=0,jawUntil=0;
-      for(const e of events){
-        if(e.kind==="head"){e.time=Math.max(e.time,jawUntil);headUntil=e.time+25}
-        if(e.kind==="jaw"){e.time=Math.max(e.time,headUntil);jawUntil=e.time+21}
-      }
-    }
+    // Show requested intervals only. A partial arbitration model gave false
+    // precision about actual starts and could leave events out of time order.
     return events.filter(e=>e.time<300);
   }
   function render() {
     const c=readConfig(),errors=validate(c);
+    const feedback=byId("scheduleFeedback");
+    feedback.replaceChildren();
+    for(const text of window.SkellyExperience.scheduleFeedback(c)) {
+      const item=document.createElement("li");item.textContent=text;feedback.append(item);
+    }
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
@@ -450,7 +490,7 @@
       const element=document.createElement("span");
       element.className="event "+ev.kind;
       element.style.left=(ev.time/3)+"%";
-      element.title=ev.kind+" at "+Math.floor(ev.time/60)+":"+String(ev.time%60).padStart(2,"0")+" (illustrative)";
+      element.title=ev.kind+" requested at "+Math.floor(ev.time/60)+":"+String(ev.time%60).padStart(2,"0")+"; actual start may be later";
       timeline.appendChild(element);
     }
   }
@@ -475,6 +515,11 @@
     document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
   }
   function init(){
+    byId("startHeadOnly").addEventListener("click",()=>{
+      writeConfig(window.SkellyExperience.firstRoutine(DEFAULTS));
+      byId("firstRunStatus").textContent="Head only: 120–240 seconds. Download, upload, and observe a complete head movement before adding other routines.";
+      for(const p of document.querySelectorAll(".preset"))p.classList.remove("chosen");
+    });
     const eyeGrid=byId("eyeGrid");
     for(let i=1;i<=18;i++){
       const card=document.createElement("div");

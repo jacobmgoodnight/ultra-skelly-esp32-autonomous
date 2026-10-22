@@ -7,6 +7,10 @@
 #include <deque>
 using String = std::string;
 using std::max;
+using portMUX_TYPE = int;
+#define portMUX_INITIALIZER_UNLOCKED 0
+#define portENTER_CRITICAL(lock) ((void)(lock))
+#define portEXIT_CRITICAL(lock) ((void)(lock))
 inline uint32_t fakeNow = 1000;
 inline uint32_t millis() { return fakeNow; }
 inline uint32_t micros() { return fakeNow * 1000; }
@@ -24,6 +28,9 @@ inline long random(long lo, long hi) {
 }
 struct SerialStub {
   std::string output;
+  std::deque<unsigned char> input;
+  int available() { return int(input.size()); }
+  int read() { if(input.empty())return -1;const int c=input.front();input.pop_front();return c; }
   void begin(int) {}
   void print(const char *s) { output += s; }
   void println(const char *s) { output += s; output += '\n'; }

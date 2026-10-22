@@ -11,6 +11,11 @@ for(const file of ["studio/template.js","studio/app.js"]) {
 const generator = ctx.window.SkellyStudioGenerator;
 const base = {...generator.DEFAULTS, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
+  Watchful:{...generator.PRESETS.watchful},
+  Storyteller:{...generator.PRESETS.storyteller},
+  UsbClockFairAndNotifications:{clockEnabled:true,clockStart:1320,clockEnd:120,clockDays:32,fairBodyTurns:true,playbackDiagnostics:true,lightsEnabled:true},
+  PerFileLongerClips:{jawClipSec:30,jawExtras:"13,14",jawDurations:"13:24,14:45",eyesEnabled:true,lightsEnabled:true,restEnabled:true},
+  FairCompoundWindow:{headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,fairBodyTurns:true,clockEnabled:true,clockStart:0,clockEnd:720,clockDays:65},
   Normal: {},
   HauntedWithBothMotors: {torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,headMin:32,headMax:45,jawMin:30,jawMax:60},
   BodyMotorOverlapExperimental: {torsoEnabled:true,armEnabled:true,bodyOverlap:true,eyesEnabled:true},

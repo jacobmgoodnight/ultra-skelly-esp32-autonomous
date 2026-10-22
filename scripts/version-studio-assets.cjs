@@ -3,10 +3,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const studio = path.resolve(__dirname, "../studio");
-const target = path.join(studio, "index.html");
+for(const [page,files] of Object.entries({"index.html":["style.css", "template.js", "experience.js", "app.js"],"usb.html":["style.css","serial.js","usb.js","installer.js"]})) {
+const target = path.join(studio, page);
 const original = fs.readFileSync(target, "utf8").replace(/\r\n/g, "\n");
 let expected = original;
-for (const file of ["style.css", "template.js", "app.js"]) {
+for (const file of files) {
   const source = fs.readFileSync(path.join(studio, file), "utf8").replace(/\r\n/g, "\n");
   const revision = crypto.createHash("sha256").update(source).digest("hex").slice(0, 12);
   const attribute = file.endsWith(".css") ? "href" : "src";
@@ -23,4 +24,5 @@ if (process.argv.includes("--check")) {
   }
 } else {
   fs.writeFileSync(target, expected);
+}
 }
