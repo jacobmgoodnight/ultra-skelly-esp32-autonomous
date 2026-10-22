@@ -5,7 +5,7 @@ on an ESP32: head, arm and torso movement at your own intervals, optional eyes a
 Configure it
 in **[Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)**,
 flash an inexpensive ESP32-WROOM board, and let it run without a connected phone,
-browser, Wi-Fi, cloud service or subscription. GitHub Pages hosts the static site.
+browser, Wi-Fi, cloud service or subscription.
 
 For Ultra Skelly v2 owners who want occasional movement without keeping a phone
 connected. Custom configurations download as Arduino source; **Studio does not
