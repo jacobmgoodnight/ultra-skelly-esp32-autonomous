@@ -11,7 +11,7 @@
     bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
     compoundEnabled:false,compoundMin:180,compoundMax:360,compoundMasks:[3,5,6,7],
     lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:180,headBrightness:180,lightRestoreMode:1,
-    jawEnabled:true, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
+    jawEnabled:false, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1),
@@ -22,8 +22,8 @@
     watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
+    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   const PALETTES=Object.freeze({
@@ -405,6 +405,7 @@
     };
   }
   function writeConfig(cfg) {
+    if(cfg.jawEnabled===true)byId("mouth").open=true;
     for(const key of ["fairBodyTurns","playbackDiagnostics","clockEnabled"])if(cfg[key]!==undefined)byId(key).checked=cfg[key];
     for(const key of ["jawClipSec","jawDurations"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     for(const key of ["clockStart","clockEnd"])if(cfg[key]!==undefined)byId(key).value=String(Math.floor(cfg[key]/60)).padStart(2,"0")+":"+String(cfg[key]%60).padStart(2,"0");
@@ -453,7 +454,7 @@
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
-    byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off";
+    byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off · optional";
     const files=[c.jawFile,...extraFileNumbers(c)];
     const clips=readLibrary();
     const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
@@ -469,7 +470,7 @@
       } catch { button.disabled=true; }
       button.setAttribute("aria-pressed",String(selected));
     }
-    const eyeLabel=["MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
+    const eyeLabel=!c.jawEnabled?"Direct rotation":[ "MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
     byId("lightingStatus").textContent=c.lightsEnabled?"On · body "+c.torsoColor+" / head "+c.headColor:"Off · body and head colors";
@@ -481,7 +482,11 @@
       const p=PALETTES[button.dataset.palette];
       button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
-    byId("overlapSummary").textContent=(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
+    byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · no audio preparation needed";
+    byId("mouthOptions").disabled=!c.jawEnabled;
+    byId("mouthOptions").hidden=!c.jawEnabled;
+    byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
+    byId("overlapSummary").textContent=!c.jawEnabled?"Not needed":(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
     byId("eyeOptions").inert=!c.eyesEnabled;
@@ -558,13 +563,15 @@
     showEyePreview(1);
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
-      render();
+      if(el.id==="jawEnabled"&&!el.checked)writeConfig(window.SkellyExperience.withoutMouth(readConfig()));
+      else render();
     });
     byId("selectAllEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
     byId("selectFewEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
     for(const b of document.querySelectorAll(".preset"))b.addEventListener("click",()=>{
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
-      writeConfig(PRESETS[b.dataset.preset]);
+      const preset=PRESETS[b.dataset.preset];
+      writeConfig(preset.jawEnabled?preset:window.SkellyExperience.withoutMouth({...readConfig(),...preset}));
     });
     for(const button of document.querySelectorAll("[data-jaw-choice]"))button.addEventListener("click",()=>{
       try {

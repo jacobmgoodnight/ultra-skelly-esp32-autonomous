@@ -40,6 +40,13 @@ cannot currently be recovered from the prop.
 
 ## Movement and jaw scheduling
 
+Studio defaults to mouth OFF; common presets are audio-free. Its last collapsed
+panel owns all mouth-only controls, revealed only on opt-in. Disabling mouth
+clears jaw-first selection/recurrence, fair turns and passive playback diagnostics,
+preserving clip mappings and independent body/eye/light/clock settings. Loading a
+saved profile preserves its explicit settings. This UI change does not alter the
+canonical reference sketch's previous head-and-jaw defaults or scheduling code.
+
 Independent body scheduling chooses the most overdue eligible head, arm, or torso.
 Each motor has a due time and cooldown, now anchored after a successful BLE call
 returns so call latency cannot consume the cooldown. A shared lock serializes body commands by

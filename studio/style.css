@@ -100,7 +100,11 @@ section[id],details[id],aside[id]{scroll-margin-top:22px}
 .usb-tools input[type=file]{max-width:100%}
 #advanced fieldset{border:1px solid #39445d;border-radius:10px;padding:14px;margin-top:20px;min-width:0}
 #advanced fieldset label{display:inline-block;margin:7px}
-#advanced label[for=jawClipSec],#advanced label[for=jawDurations]{display:block;margin-top:16px;margin-bottom:7px}
+#mouth label[for=jawClipSec],#mouth label[for=jawDurations]{display:block;margin-top:16px;margin-bottom:7px}
+#mouthOptions{border:0;padding:0;margin:18px 0 0;min-width:0}
+#mouthOptions legend{font-size:12px;color:var(--muted)}
+#mouthOptions>label{display:block;margin-top:18px}
+#mouthOptions>.preset{margin-top:18px}
 #jawDurations{width:100%;max-width:26rem}
 #jawClipSec,#jawDurations,#clockStart,#clockEnd{box-sizing:border-box;background:#101725;color:var(--text);border:1px solid #52647e;border-radius:6px;min-height:40px;padding:8px;max-width:100%}
 #first-run ol{padding-left:22px;line-height:1.7}

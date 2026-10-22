@@ -1,7 +1,7 @@
 # Ultra Skelly ESP32 Autonomous Controller 💀
 
 Custom, scheduled routines for the Home Depot Ultra Skelly v2, running autonomously
-on an ESP32: head movement at your own intervals, jaw clips, optional eyes and RGB.
+on an ESP32: head, arm and torso movement at your own intervals, optional eyes and RGB.
 Configure it
 in **[Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)**,
 flash an inexpensive ESP32-WROOM board, and let it run without a connected phone,
@@ -33,9 +33,10 @@ does not extend compatibility to the 12-foot app-controlled Skelly or other prop
 
 ![Skelly Studio on desktop: movement presets, interval controls and sketch summary](docs/images/studio-desktop.jpg)
 
-- Random head and jaw intervals, with optional arm and torso movements and
+- Random head intervals, with optional arm and torso movements and
   conservative motor cooldowns.
-- A mix of your own uploaded jaw clips, optional eye rotations and torso/head RGB.
+- Eye rotations, torso/head static RGB and brightness, without uploaded audio.
+- Optional **limited mouth routines**, OFF by default, using your own uploaded clips.
 - Separate opt-in jaw-first arm/torso and compound body modes, plus idle breaks.
 - Named clip mappings, color palettes and portable JSON settings files.
 - Self-contained `.ino` downloads, generated locally and usable offline.
@@ -72,14 +73,13 @@ observations do not establish that this firmware revision passed on the prop.
 
 1. Install Arduino IDE and **esp32 by Espressif Systems 3.3.12**. Select **ESP32 Dev
    Module** for the original ESP32-WROOM-32 board. Serial Monitor uses **115200**.
-2. With Skelly powered on, use the community [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/)
-   to upload a jaw MP3. Set its saved head/arm/torso movement flags to **`0x00`**.
-   Play it once and record its actual file serial. **#12/#13/#14 are specific to
-   the original tester's device**, not universal slots. The physical volume knob
-   can silence the speaker while the jaw moves; software volume zero is not equivalent.
-3. Disconnect the phone/web controller so the ESP32 can connect. Choose settings in
-   Studio and download the self-contained `.ino`, or edit
-   `firmware/SkellyAutonomous/SkellyAutonomous.ino` and set `MOUTH_FILE_SERIAL`.
+2. Choose movement, eyes and lighting in Studio and download the self-contained
+   `.ino`. Mouth routines are OFF by default, including Normal and Haunted.
+   **These direct features need no MP3 upload or web controller.**
+3. Power Skelly in Bluetooth mode and disconnect any other controller so the
+   ESP32 can connect. If using the checked-in firmware instead of Studio, set
+   `MOUTH_ENABLED = false` for an audio-free setup; that reference sketch retains
+   its previous head-and-jaw defaults.
 4. Compile/upload. The ESP32 finds **Ultra Skelly v2** by name; no MAC entry or
    physical wiring to the prop is needed. It scans five seconds and retries
    misses/connection failures after 30 seconds. A board EN/RESET press can help
@@ -91,7 +91,31 @@ For a first try without preparing audio, select **Subtle** in Studio. It enables
 occasional head movement and disables jaw, arm and torso. To use Studio offline,
 download the repository ZIP, extract it, and open `studio/index.html`; keep
 all files in the `studio` folder together, including `experience.js`. Initial toolchain installation
-and MP3 preparation are separate setup steps.
+is a separate setup step. MP3 preparation is only needed for optional mouth routines.
+
+### Optional mouth routines · limited
+
+The collapsed section at the very bottom of Studio contains clip setup and all
+mouth coordination controls. Enable it only if mouth movement is worth the
+additional limits: playback can interrupt body movement and replace live eyes
+and colors. Protection delays other routines, and clip completion is estimated.
+Turning mouth OFF clears jaw-first coordination, fair turns and playback logging,
+while keeping your clip numbers, body settings and clock window.
+
+Use the community [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/)
+to upload clips once with saved head/arm/torso flags **`0x00`**, test them and record
+their actual file serials. **#12/#13/#14 belong to the original test device.**
+The physical volume knob can silence the speaker while the jaw moves; software
+volume zero is not equivalent. Disconnect that controller before using the ESP32.
+Existing saved Studio profiles retain their explicit mouth setting when loaded.
+
+### Lighting effects
+
+Studio currently generates **static RGB and brightness** for torso and head.
+The upstream controller lists [Static, Strobe and Pulsing](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
+for Ultra Skelly. Those animated modes appear feasible as future direct commands,
+without audio preparation; they are **not implemented or hardware-verified here**.
+See the [lighting plan](docs/roadmap.md#p2--lighting-capabilities).
 
 [USB tools](studio/usb.html) capture original serial bytes and set the optional
 clock. A fixed head-only installer uses a versioned, hash-checked build package;

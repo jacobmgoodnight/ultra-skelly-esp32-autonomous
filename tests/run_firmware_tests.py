@@ -39,6 +39,18 @@ def build_and_run(directory, source, assertions, label, expected_error=None):
 
 
 failed = False
+audio_free = subprocess.check_output(
+    [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-host-fixture.cjs"), "--audio-free"], encoding="utf-8")
+audio_free_assertions = """
+const uint8_t expectedMotorMask = 7;
+const uint16_t expectedFiles[] = {12};
+const uint8_t expectedEyes[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+const uint32_t expectedWindowMS = 1200000;
+const bool expectQuick = false, expectJaw = false, expectEyes = true, expectLights = true, expectRest = true;
+static_assert(!MOUTH_ENABLED, "Studio defaults must not require audio");
+""" + (ROOT / "tests/attended_pack_harness.cpp").read_text(encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/AudioFreeStudio", audio_free, audio_free_assertions,
+                        "Audio-free Studio: head/arm/torso/eyes/lights/rest without AAC6")
 for name, mode in ((name, mode) for name in sources for mode in (0, 1, 2)):
     source = sources[name]
     directory = ROOT / ".skelly-build/host" / f"{name}Mode{mode}"
