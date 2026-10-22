@@ -32,8 +32,7 @@ class ScanCB : public BLEAdvertisedDeviceCallbacks {
     if (foundDevice || !device.haveName()) return;
     if (String(device.getName().c_str()) != SKELLY_NAME) return;
     foundDevice = new BLEAdvertisedDevice(device);
-    Serial.print("Found Skelly: ");
-    Serial.println(device.getAddress().toString().c_str());
+    Serial.println("Found Skelly by advertised name.");
     scanner->stop(); // Connection must happen after scan returns.
   }
 };

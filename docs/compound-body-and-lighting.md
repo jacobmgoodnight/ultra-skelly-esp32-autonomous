@@ -9,7 +9,7 @@ In [Skelly Studio](../studio/), enable the individual motors you intend to use, 
 - The controller selects **ONE combined mask** for each event, sends one AACA BLE frame, and suppresses the old independently timed head/arm/torso commands while this mode is active.
 - Each motor in the selected mask receives its usual cooldown (head **25+7 sec**, arm **22+10 sec**, torso **25+10 sec**); the shared body lock lasts as long as the **slowest selected motor plus buffer**.
 - The next compound movement waits for its randomized interval, that lock, and any jaw MP3 that is due/playing. Leave **Protect head + arm + torso from jaw MP3** ON: MP3 playback appears to interfere with head motion.
-- This mode **cannot be combined** with *Jaw first → body movement* in the generator. To preserve the existing 30-minute field-proven alternating jaw-first arm/torso mode, leave compound mode OFF.
+- This mode **cannot be combined** with *Jaw first → body movement* in the generator. To preserve alternating jaw-first arm/torso mode, leave compound mode OFF. It has about 30 minutes of serial dispatch evidence plus individually verified physical pairings; every recurring physical cycle was not separately confirmed.
 - Presets and the checked-in sketch keep compound mode OFF by default. Running compound actions continuously for hours, or during frequent jaw clips, needs an attended test before unattended use.
 
 ## Torso and head/mouth lighting

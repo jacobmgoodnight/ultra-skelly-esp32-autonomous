@@ -7,6 +7,11 @@ Studio improvements. Remaining checks are optional; use the
 four-minute combined-routine checks. Longer windows below are references for
 endurance work, not a mandatory checklist.
 
+The timing/reconnect changes use boot marker **audit-timing-v2**. Their new
+software evidence and focused attended pass/fail checks are in
+[audit follow-up](audit-follow-up.md). Existing physical results do not establish
+that this newly changed firmware has passed its hardware regression.
+
 ## Automated checks
 
 From the repository root with Node, Python and a C++17 compiler:
@@ -24,6 +29,8 @@ arduino-cli core list
 arduino-cli compile --fqbn esp32:esp32:esp32 firmware/SkellyAutonomous
 arduino-cli compile --fqbn esp32:esp32:esp32 experiments/BodyComboSingleTest
 arduino-cli compile --fqbn esp32:esp32:esp32 experiments/SerialIdleTest
+arduino-cli compile --fqbn esp32:esp32:esp32 experiments/ArmSingleTest
+arduino-cli compile --fqbn esp32:esp32:esp32 experiments/EyeSingleTest
 node scripts/export-attended-tests.cjs
 python scripts/compile-attended-tests.py
 ```

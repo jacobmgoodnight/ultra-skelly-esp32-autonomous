@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <deque>
 using String = std::string;
 using std::max;
 inline uint32_t fakeNow = 1000;
@@ -11,8 +12,16 @@ inline uint32_t millis() { return fakeNow; }
 inline uint32_t micros() { return fakeNow * 1000; }
 inline void delay(uint32_t ms) { fakeNow += ms; }
 inline void randomSeed(uint32_t) {}
-inline long random(long hi) { return hi ? hi - 1 : 0; }
-inline long random(long lo, long hi) { return lo + (hi - lo) / 2; }
+inline std::deque<long> fakeRandomChoices;
+inline long random(long hi) {
+  if (fakeRandomChoices.empty()) return hi ? hi - 1 : 0;
+  const long choice = fakeRandomChoices.front(); fakeRandomChoices.pop_front();
+  if (choice < 0 || choice >= hi) throw std::runtime_error("Invalid queued random choice");
+  return choice;
+}
+inline long random(long lo, long hi) {
+  return fakeRandomChoices.empty() ? lo + (hi - lo) / 2 : lo + random(hi - lo);
+}
 struct SerialStub {
   std::string output;
   void begin(int) {}

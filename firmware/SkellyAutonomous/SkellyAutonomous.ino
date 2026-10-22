@@ -124,6 +124,12 @@ const uint32_t EYE_JAW_END_GRACE_MS = 500;
 const uint32_t SCAN_SECONDS = 5;
 const uint32_t SCAN_RETRY_MS = 30000;
 
+static_assert(!COMPOUND_BODY_ENABLED || JAW_FOLLOWUP_MOTOR == 0,
+              "Compound and jaw-first modes must be selected separately.");
+static_assert(!COMPOUND_BODY_ENABLED || !MOUTH_ENABLED || MOUTH_FILE_SERIAL == 0 ||
+              JAW_PROTECTS_ARM_TORSO,
+              "Compound mode with jaw playback requires MP3 body protection.");
+
 BLEScan *scanner = nullptr;
 BLEClient *client = nullptr;
 BLERemoteCharacteristic *writeChar = nullptr;
@@ -215,6 +221,19 @@ void logDiagnostics(const char *event) {
 
 bool reached(uint32_t now, uint32_t when) {
   return (int32_t)(now - when) >= 0;
+}
+
+// Retire elapsed cooldowns while the cooperative loop is running. Otherwise an
+// inactive motor's old deadline can look like a future one after ~24.9 days.
+// Do not refresh movement targets: their overdue age decides scheduling priority.
+// Future deadlines (including ones across millis wrap) are left untouched.
+void retireElapsedCooldowns(uint32_t now) {
+  uint32_t *deadlines[] = {&headSafeAfter, &headMovingUntil, &bodySafeAfter,
+    &nextBodyWriteAt, &compoundSafeAfter, &torsoSafeAfter, &armSafeAfter,
+    &mouthSafeAfter, &mouthPlayingUntil};
+  for (uint32_t *deadline : deadlines) {
+    if (reached(now, *deadline)) *deadline = now;
+  }
 }
 
 uint32_t millisecondsUntil(uint32_t now, uint32_t when) {
@@ -338,6 +357,7 @@ void startCompoundBody(uint32_t now) {
     resetConnection();
     return;
   }
+  now = millis(); // Preserve the full cooldown after a blocking BLE write.
   // All selected motors start TOGETHER in one BLE request. Lock conservatively
   // until the slowest one finishes AND its safety buffer expires.
   uint32_t duration = 0;
@@ -417,6 +437,15 @@ bool connectToSkelly() {
     return false;
   }
 
+  // The pinned Bluedroid client retains service objects across disconnects.
+  // Invalidate our writer before getServices deletes/rebuilds that cache.
+  writeChar = nullptr;
+  auto *services = client->getServices();
+  if (services == nullptr || services->empty() || !client->isConnected()) {
+    logLine("BLE service discovery failed or disconnected.");
+    resetConnection();
+    return false;
+  }
   BLERemoteService *service = client->getService(SERVICE_UUID);
   if (service == nullptr) {
     logLine("AE00 service missing.");
@@ -424,7 +453,7 @@ bool connectToSkelly() {
     return false;
   }
   writeChar = service->getCharacteristic(WRITE_UUID);
-  if (writeChar == nullptr) {
+  if (writeChar == nullptr || !client->isConnected()) {
     logLine("AE01 characteristic missing.");
     resetConnection();
     return false;
@@ -538,6 +567,7 @@ void startHead(uint32_t now) {
     return;
   }
 
+  now = millis(); // Start modeled motion/cooldown after transport returns.
   headMovingUntil = now + HEAD_ANIMATION_MS;
   headSafeAfter = now + HEAD_ANIMATION_MS + HEAD_BUFFER_MS;
   bodySafeAfter = headSafeAfter;
@@ -561,6 +591,7 @@ void startTorso(uint32_t now) {
     resetConnection();
     return;
   }
+  now = millis();
   bodySafeAfter = now + TORSO_ANIMATION_MS + TORSO_BUFFER_MS;
   torsoSafeAfter = bodySafeAfter;
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
@@ -578,6 +609,7 @@ void startArm(uint32_t now) {
     resetConnection();
     return;
   }
+  now = millis();
   bodySafeAfter = now + ARM_ANIMATION_MS + ARM_BUFFER_MS;
   armSafeAfter = bodySafeAfter;
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
@@ -703,7 +735,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   recordBoot(esp_reset_reason());
-  logEvent("BOOT mp3-lights-diag-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+  logEvent("BOOT audit-timing-v2: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
            DIAGNOSTICS_ENABLED ? "ON" : "OFF");
@@ -728,6 +760,8 @@ void loop() {
     delay(100);
     return;
   }
+
+  retireElapsedCooldowns(now);
 
   if (mouthEndPending && reached(now, mouthPlayingUntil)) {
     mouthEndPending = false;

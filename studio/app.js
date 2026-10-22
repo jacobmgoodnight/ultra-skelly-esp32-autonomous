@@ -17,8 +17,8 @@
     diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1)
   });
   const PRESETS = {
-    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,compoundEnabled:false,lightsEnabled:false},
-    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,compoundEnabled:false,lightsEnabled:false},
+    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:true,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:true,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
@@ -104,31 +104,39 @@
   }
   function validate(config) {
     const error=[];
+    if(!config || typeof config!=="object" || Array.isArray(config))return ["Choose valid Studio settings."];
+    // Disabled controls are still emitted as C++ constants. Check their types
+    // and bounds too, so disabling a feature cannot bypass sketch validation.
+    for(const [key,value] of Object.entries(DEFAULTS)) {
+      const entry=config[key];
+      if(Array.isArray(value)?!Array.isArray(entry):typeof entry!==typeof value)
+        error.push("Invalid setting type: "+key+".");
+    }
+    if(error.length)return error;
     if(!config.headEnabled && !config.jawEnabled && !config.eyesEnabled && !config.torsoEnabled && !config.armEnabled && !config.lightsEnabled)
       error.push("Enable at least one movement or eye effect.");
-    for(const [name,enabled,min,max,floor] of [
-      ["Head",config.headEnabled,config.headMin,config.headMax,32],
-      ["Torso",config.torsoEnabled,config.torsoMin,config.torsoMax,45],
-      ["Arm",config.armEnabled,config.armMin,config.armMax,45],
-      ["Jaw",config.jawEnabled,config.jawMin,config.jawMax,22],
-      ["Eyes",config.eyesEnabled,config.eyesMin,config.eyesMax,15]
+    for(const [name,min,max,floor] of [
+      ["Head",config.headMin,config.headMax,32],
+      ["Torso",config.torsoMin,config.torsoMax,45],
+      ["Arm",config.armMin,config.armMax,45],
+      ["Jaw",config.jawMin,config.jawMax,22],
+      ["Eyes",config.eyesMin,config.eyesMax,15]
     ]) {
-      if(!enabled)continue;
       if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||min<floor||max>3600||min>max)
         error.push(name+": choose whole-number intervals from "+floor+" to 3600 seconds, minimum ≤ maximum.");
     }
-    if(config.jawEnabled && (!Number.isSafeInteger(config.jawFile)||config.jawFile<1||config.jawFile>65535))
+    if(!Number.isSafeInteger(config.jawFile)||config.jawFile<1||config.jawFile>65535)
       error.push("Enter the MP3 serial shown in your own web-controller log (1–65535).");
     if(typeof config.bleName!=="string"||!config.bleName.trim()||config.bleName.length>48||/[\x00-\x1F]/.test(config.bleName))
       error.push("Enter a valid advertised Bluetooth device name (1–48 characters).");
 
-    if(config.jawEnabled) {
+    {
       const pool=[config.jawFile,...extraFileNumbers(config)];
       if(pool.length>8 || pool.some(n=>!Number.isSafeInteger(n)||n<1||n>65535) ||
          new Set(pool).size!==pool.length)
         error.push("Jaw file pool must contain unique file serials 1–65535 (up to eight total), separated by commas.");
     }
-    if(config.restEnabled) {
+    {
       for(const [label,min,max,floor,ceiling] of [
         ["Rest frequency",config.restMin,config.restMax,120,3600],
         ["Rest duration",config.restDurationMin,config.restDurationMax,15,300]
@@ -137,19 +145,22 @@
           error.push(label+": whole numbers between "+floor+" and "+ceiling+" seconds, minimum ≤ maximum.");
       }
     }
+    if(!Number.isSafeInteger(config.compoundMin) || !Number.isSafeInteger(config.compoundMax) ||
+       config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax)
+      error.push("Combined movement frequency must be 45–3600 seconds.");
+    if(config.compoundMasks.some(m=>![3,5,6,7].includes(m)) ||
+       new Set(config.compoundMasks).size!==config.compoundMasks.length)
+      error.push("Combined masks must be unique values from 3, 5, 6, 7.");
     if (config.compoundEnabled) {
       if(config.jawFollowupMotor!==0) error.push("Compound body mode and jaw-first reactions are separate modes; turn one OFF.");
       if(config.jawEnabled && !config.jawProtectBody) error.push("Compound body movements require MP3 body protection when jaw playback is enabled.");
-      if(!Number.isSafeInteger(config.compoundMin) || !Number.isSafeInteger(config.compoundMax) ||
-         config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax)
-        error.push("Combined movement frequency must be 45–3600 seconds.");
       const enabled=(config.headEnabled?1:0)|(config.armEnabled?2:0)|(config.torsoEnabled?4:0);
       if(!Array.isArray(config.compoundMasks) || !config.compoundMasks.length ||
          config.compoundMasks.some(m=>![3,5,6,7].includes(m) || (m&~enabled)!==0) ||
          new Set(config.compoundMasks).size!==config.compoundMasks.length)
         error.push("Select at least one combined mask using only enabled head, arm, and torso motors.");
     }
-    if (config.lightsEnabled) {
+    {
       if(!/^#[0-9a-f]{6}$/i.test(config.torsoColor||"") ||
          !/^#[0-9a-f]{6}$/i.test(config.headColor||""))
         error.push("Lighting colors must be six-digit hexadecimal colors.");
@@ -177,7 +188,7 @@
       error.push("Enable the head switch to test Head after jaw.");
     if (![0,1,2].includes(config.eyeJawMode))
       error.push("Choose a valid eye/jaw behavior (0, 1 or 2).");
-    if(config.eyesEnabled && (!config.eyeChoices.length || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length))
+    if((config.eyesEnabled && !config.eyeChoices.length) || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length)
       error.push("Select at least one valid eye design number between 1 and 18.");
     return error;
   }

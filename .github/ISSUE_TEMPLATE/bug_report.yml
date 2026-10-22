@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a Studio, setup or controller problem.
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Please remove personal device names, Bluetooth addresses and secrets from
+        profiles and logs. Report physical observations separately from serial
+        messages; accepted BLE writes do not confirm movement or lighting.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - Studio / generated sketch
+        - Setup / compilation / upload
+        - Hardware behavior / BLE connection
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and settings
+      description: Include the preset and changed settings, or a reviewed, redacted JSON profile.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected and actual result
+      description: For hardware, state exactly what you saw move or light up, and what the log says separately.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/OS for Studio; board, Arduino-ESP32 version, prop revision if known, and firmware revision for hardware.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted text logs or errors
+      description: Use text rather than screenshots of code/errors. Include boot messages when relevant; never include personal addresses.
+      render: text
