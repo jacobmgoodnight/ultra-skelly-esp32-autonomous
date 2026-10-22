@@ -30,10 +30,11 @@
     }
     waitFor(test,after=this.messageSerial,timeout=8000){const found=this.messages.find(e=>e.id>after&&test(e.text));if(found)return Promise.resolve(found);return new Promise((resolve,reject)=>{const w={test,after,resolve,reject};w.timer=setTimeout(()=>{this.waiters=this.waiters.filter(x=>x!==w);reject(Error('No controller acknowledgment. Reconnect and read saved settings before retrying.'));},timeout);this.waiters.push(w);});}
     async request(command,test,timeout=8000){const after=this.messageSerial;await this.send(command+'\n');return this.waitFor(test,after,timeout);}
-    async capabilities(){return this.request('SKELLY HELLO',s=>s.startsWith('USB CAPS v2 '));}
-    async status(){return this.request('SKELLY STATUS',s=>s.startsWith('USB STATUS v2 '));}
+    // A blocking BLE scan/connect may already be running when USB opens.
+    async capabilities(){return this.request('SKELLY HELLO',s=>s.startsWith('USB CAPS v2 '),45000);}
+    async status(){return this.request('SKELLY STATUS',s=>s.startsWith('USB STATUS v2 '),45000);}
     diagnostics(){const last=[...this.messages].reverse().find(e=>e.text.startsWith('USB STATUS v2 '));return {...this.capture.summary(),controller:last?Object.fromEntries(last.text.slice(14).split(' ').filter(s=>/^[A-Za-z]+=[0-9]+$/.test(s)).map(s=>{const [k,v]=s.split('=');return [k,Number(v)];})):null,notice:'Controller status is reported transport/model state, not observed motor or LED behavior.'};}
-    async configReply(command,id,test,timeout=8000){const r=await this.request(command,s=>s.startsWith('USB CFG ERROR '+id+' ')||test(s),timeout);if(r.text.startsWith('USB CFG ERROR'))throw Error('Controller rejected settings: '+r.text.split(' ').at(-1));return r;}
+    async configReply(command,id,test,timeout=45000){const r=await this.request(command,s=>s.startsWith('USB CFG ERROR '+id+' ')||test(s),timeout);if(r.text.startsWith('USB CFG ERROR'))throw Error('Controller rejected settings: '+r.text.split(' ').at(-1));return r;}
     async writeSettings(words,crc,onProgress=()=>{}){
       if(this.operation)throw Error('Wait for the current controller operation.');this.operation=true;const id=(Date.now()%1000000000)+1,after=this.messageSerial;
       try{
