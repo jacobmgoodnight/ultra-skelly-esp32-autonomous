@@ -16,15 +16,17 @@ function sample(changes = {}) {
   const defaults = api.DEFAULTS;
   return {
     ...defaults,
+    // Jaw regressions opt in explicitly; the public Studio default is audio-free.
+    jawEnabled: true,
     eyeChoices: [...defaults.eyeChoices],
     ...changes
   };
 }
 
-test("default settings generate conservative head-and-jaw sketch", () => {
-  const sketch = api.generateSketch(sample());
+test("default Studio settings generate an audio-free head sketch", () => {
+  const sketch = api.generateSketch({...api.DEFAULTS});
   assert.match(sketch, /const bool HEAD_ENABLED = true;/);
-  assert.match(sketch, /const bool MOUTH_ENABLED = true;/);
+  assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
   assert.match(sketch, /const bool EYES_ENABLED = false;/);
   assert.match(sketch, /const bool REST_ENABLED = false;/);
   assert.match(sketch, /const uint32_t HEAD_MIN_INTERVAL_MS = 32000;/);
@@ -124,12 +126,9 @@ test("MP3 protection now includes the head, to preserve arm/torso follow-ups", (
   assert.match(sketch, /JAW deferred: waiting for head\/arm\/torso cooldown/);
   assert.match(sketch, /reached\(now, headSafeAfter\) && !blockBodyForJaw/);
   assert.match(sketch, /JAW-FIRST %s: scheduled/);
-  const sampleSchedule=api.simulateSchedule(config);
-  const head=sampleSchedule.filter(x=>x.kind==="head");
-  const jaw=sampleSchedule.filter(x=>x.kind==="jaw");
-  for(const h of head)for(const j of jaw)
-    assert.ok(h.time + 25 <= j.time || j.time + 21 <= h.time,
-      "Timeline should not imply overlapping head+jaw when protection is on");
+  const requests=api.simulateSchedule(sample({headMin:60,headMax:60,jawMin:60,jawMax:60}));
+  assert.ok(requests.some(h=>h.kind==="head"&&requests.some(j=>j.kind==="jaw"&&j.time===h.time)),
+    "Request illustration must not pretend to predict arbitration or physical starts");
 });
 
 test("Compound body mode emits one tested bitmask and conservative body cooldown", () => {
@@ -296,8 +295,8 @@ test("Subtle deliberately disables silent jaw by default", () => {
   assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
   assert.match(sketch, /const bool TORSO_ENABLED = false;/);
   assert.match(sketch, /const bool ARM_ENABLED = false;/);
-  assert.equal(api.PRESETS.normal.jawEnabled, true);
-  assert.equal(api.PRESETS.haunted.jawEnabled, true);
+  assert.equal(api.PRESETS.normal.jawEnabled, false);
+  assert.equal(api.PRESETS.haunted.jawEnabled, false);
 });
 test("Advanced body overlap permits independent motor timers but defaults off", () => {
   const normal=api.generateSketch(sample());

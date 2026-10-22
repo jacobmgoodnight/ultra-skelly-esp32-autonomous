@@ -39,6 +39,18 @@ def build_and_run(directory, source, assertions, label, expected_error=None):
 
 
 failed = False
+audio_free = subprocess.check_output(
+    [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-host-fixture.cjs"), "--audio-free"], encoding="utf-8")
+audio_free_assertions = """
+const uint8_t expectedMotorMask = 7;
+const uint16_t expectedFiles[] = {12};
+const uint8_t expectedEyes[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+const uint32_t expectedWindowMS = 1200000;
+const bool expectQuick = false, expectJaw = false, expectEyes = true, expectLights = true, expectRest = true;
+static_assert(!MOUTH_ENABLED, "Studio defaults must not require audio");
+""" + (ROOT / "tests/attended_pack_harness.cpp").read_text(encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/AudioFreeStudio", audio_free, audio_free_assertions,
+                        "Audio-free Studio: head/arm/torso/eyes/lights/rest without AAC6")
 for name, mode in ((name, mode) for name in sources for mode in (0, 1, 2)):
     source = sources[name]
     directory = ROOT / ".skelly-build/host" / f"{name}Mode{mode}"
@@ -53,6 +65,18 @@ failed |= build_and_run(
     "Serial-only idle diagnostic",
 )
 scheduler_harness = (ROOT / "tests/scheduler_harness.cpp").read_text(encoding="utf-8")
+usb_harness = (ROOT / "tests/usb_scheduler_harness.cpp").read_text(encoding="utf-8")
+usb_source = sources["Canonical"].replace("const bool ARM_ENABLED = false;", "const bool ARM_ENABLED = true;").replace("const bool TORSO_ENABLED = false;", "const bool TORSO_ENABLED = true;")
+usb_source = usb_source.replace("const uint32_t MOUTH_MIN_INTERVAL_MS = 45000;", "const uint32_t MOUTH_MIN_INTERVAL_MS = 22000;").replace("const uint32_t MOUTH_MAX_INTERVAL_MS = 90000;", "const uint32_t MOUTH_MAX_INTERVAL_MS = 22000;")
+usb_source = usb_source.replace("const bool LIGHTS_ENABLED = false;", "const bool LIGHTS_ENABLED = true;")
+for fair in (False, True):
+    configured = usb_source
+    if fair:
+        for before, after in [("FAIR_BODY_TURNS = false", "FAIR_BODY_TURNS = true"), ("PLAYBACK_DIAGNOSTICS = false", "PLAYBACK_DIAGNOSTICS = true"), ("CLOCK_WINDOW_ENABLED = false", "CLOCK_WINDOW_ENABLED = true"), ("CLOCK_START_MINUTE = 1080", "CLOCK_START_MINUTE = 1320"), ("CLOCK_END_MINUTE = 1380", "CLOCK_END_MINUTE = 120"), ("CLOCK_DAYS = 127", "CLOCK_DAYS = 32")]:
+            configured = configured.replace(before, after)
+    failed |= build_and_run(ROOT / f".skelly-build/host/UsbFair{fair}", configured, usb_harness, f"USB clock and fair turns {fair}")
+generated_usb = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-usb-fixture.cjs")], encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/UsbGenerated", "#define TEST_FILE_DURATIONS\n" + generated_usb, usb_harness, "Generated USB/compound/fair/clip-duration fixture")
 scheduler_source = sources["Canonical"].replace("const bool ARM_ENABLED = false;", "const bool ARM_ENABLED = true;")
 scheduler_source = scheduler_source.replace("const bool TORSO_ENABLED = false;", "const bool TORSO_ENABLED = true;")
 scheduler_source = scheduler_source.replace("const bool COMPOUND_BODY_ENABLED = false;", "const bool COMPOUND_BODY_ENABLED = true;")

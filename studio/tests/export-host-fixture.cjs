@@ -10,5 +10,8 @@ for (const file of ["studio/template.js", "studio/app.js"]) {
 }
 const api = context.window.SkellyStudioGenerator;
 process.stdout.write(api.generateSketch({
-  ...api.DEFAULTS, headEnabled:false, lightsEnabled:true, diagnosticsEnabled:true
+  ...api.DEFAULTS,
+  ...(process.argv.includes('--audio-free')
+    ? {headEnabled:true,armEnabled:true,torsoEnabled:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true}
+    : {jawEnabled:true,headEnabled:false,lightsEnabled:true,diagnosticsEnabled:true})
 }));

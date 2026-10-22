@@ -365,3 +365,24 @@ failures, all compound masks, and all configured jaw-pool choices. These are
 **Software-only** results. They are not a new physical/endurance pass and do not
 resolve serial corruption or playback-end feedback. See
 [audit follow-up](audit-follow-up.md) for exact attended regression criteria.
+
+## October 21, 2026 — USB tools and optional scheduling work (software-only)
+
+At the owner's request to implement the remaining improvements, Studio gained
+guided head-only setup, request-only timing feedback and Watchful/Storyteller
+presets. The USB page captures bounded original UART bytes with text/summary
+downloads, identifies the new clock protocol and can install a fixed head-only
+Actions build package after image/hash checks. No port opens automatically.
+
+Boot marker **usb-scheduler-v3** adds optional fair body turns, per-file playback
+estimates, bounded passive AE02 metadata and USB-set weekday/time windows. These
+options default OFF; the 21-second fallback and existing motor cooldowns/defaults
+remain. Notification observations never change safety timers. Clock-enabled
+routines pause after every boot until valid local time is explicitly supplied.
+
+Host tests reproduce jaw-priority starvation with restoration and coarse loop
+service, then verify safe fair turns; this is not a physical starvation report.
+USB parser, wrap, overnight weekday boundaries, no-time pause, queue overflow and
+per-file selection have software coverage. The owner says hardware is unavailable,
+so no new physical observation, serial root-cause result, upload or flashing
+success is claimed. [Next attended checks](next-attended-tests.md) record criteria.

@@ -14,6 +14,12 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
+For the new USB/fairness/clock options, see [attended criteria](next-attended-tests.md).
+Hardware is unavailable during implementation; software tests never replace those
+observations. The full compile matrix can now be run with
+`python scripts/compile-validation.py --cli <path-to-arduino-cli>`; it checks the
+pinned core and records each source hash under `.skelly-build/validation/`.
+
 From the repository root with Node, Python and a C++17 compiler:
 
 ```sh
@@ -23,6 +29,7 @@ node scripts/sync-template.cjs --check
 node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
 python tests/test_packets.py
+python tests/test_prebuilt.py
 python tests/run_firmware_tests.py
 node studio/tests/export-samples.cjs
 arduino-cli core list

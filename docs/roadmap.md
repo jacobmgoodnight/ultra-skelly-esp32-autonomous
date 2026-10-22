@@ -1,5 +1,11 @@
 # Prioritized development roadmap
 
+October 21 follow-up: guided setup/scheduling feedback, bounded original-byte USB
+capture, the fixed-profile installer build path, optional fair turns, per-file
+clip estimates, passive playback observations and USB-set weekday/time windows
+are now implemented in software. Hardware checks are prepared, not performed.
+See [implementation status](implementation-progress.md).
+
 ## P0 — Finish the lighting/serial diagnosis
 
 The first reliability PR honors BLE write failures, records reset/heap/write/queue
@@ -21,6 +27,8 @@ serial corruption remains unknown; mode 2 and motor integration remain unverifie
    is unsolicited at natural EOF, duplicate/out-of-order behavior, and device
    differences. Only then design bounded callback-to-loop handoff plus a duration
    fallback. Keep motor protection conservative if a notification is absent/early.
+   The new opt-in passive queue collects bounded metadata without acting on it;
+   CRC/framing, duration units and natural EOF still need physical evidence.
 3. Exercise repeated Skelly power cycles with heap diagnostics; verify reused
    client/service cleanup, canceled pending jobs, delayed restart targets and no
    unintended repeat movement. A disconnect loses physical animation knowledge.
@@ -38,11 +46,24 @@ Remaining work includes frequent jaw playback starving compound movements,
 recurrence fairness, disconnect during physical movement, and broader fault and
 random-sequence coverage. Preserve physical evidence limits.
 
+The opt-in fair-turn policy now has executable contention tests with restoration
+and coarse loop service. It preserves cooldowns and existing default jaw priority;
+its remaining gate is physical integration, not another speculative policy rewrite.
+
 Keep proven jaw-first and compound modes separate. Run a supervised recurring
 compound test at 180–360 s only after isolated light testing; log physical duration
 and completion, then extend endurance gradually.
 
 ## P2 — Lighting capabilities
+
+Studio currently emits static RGB and brightness only. The upstream
+[Ultra Skelly device profile](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
+lists Static (1), Strobe (2), and Pulsing (3), separately for torso/head channels.
+This supports investigating direct effects without MP3s; it does not establish
+their physical response on this controller. Next implement opt-in per-channel
+effect selection with Static as the default, packet/CRC tests, pinned generated
+builds, and an attended torso/head effect-and-speed observation. Keep effect
+speed, preset rotation and per-file controls separate from this Studio cleanup.
 
 After static restoration is visually reliable, test channel mapping and independent
 enablement. Then evaluate upstream F2 strobe/pulse, F6 speed, presets, rotation and
@@ -57,13 +78,16 @@ prioritized remaining hardware tests and staged browser USB upload proposal.
 Template generation/CI drift enforcement is in the first PR. Next consolidate
 configuration metadata and validation without rewriting the proven controller.
 Replace fragile generator injections incrementally with compatibility tests.
-Correct the illustrative timeline before presenting it as an accurate simulator
-(it omits jaw-first, compound cooldown arbitration and lighting delays). Add
-versioned local profiles, JSON import/export, metadata and mobile improvements.
+The timeline now explicitly shows requested intervals, with contextual delay
+feedback instead of an incomplete arbitration simulation. Profiles remain
+versioned JSON with backward-compatible safe defaults for the new controls.
+USB capture and a fixed-profile installer are implemented; persistent settings
+over USB without recompilation remain a separate firmware migration.
 
 ## P4 — Additional animation experiments
 
-After reliability and field evidence, evaluate personalities, weighted movement
-selection, rare full-body events and offline time-of-day schedules. Keep free
+Watchful and Storyteller add conservative starting points. Optional offline
+weekday/time windows now pause after boot until USB time is set. After reliability
+and field evidence, evaluate weighted movement selection and rare full-body events. Keep free
 static hosting and autonomous operation.
 

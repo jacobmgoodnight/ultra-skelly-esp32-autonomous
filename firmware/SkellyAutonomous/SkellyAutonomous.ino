@@ -5,6 +5,8 @@
 #include <BLEClient.h>
 #include <esp_system.h>
 #include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
 
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
@@ -124,6 +126,17 @@ const uint32_t EYE_JAW_END_GRACE_MS = 500;
 const uint32_t SCAN_SECONDS = 5;
 const uint32_t SCAN_RETRY_MS = 30000;
 
+// Optional experiments. Preserve the existing scheduling policy by default.
+const bool FAIR_BODY_TURNS = false;
+const bool PLAYBACK_DIAGNOSTICS = false; // Observe AE02; never shorten protection.
+const bool CLOCK_WINDOW_ENABLED = false;
+const uint16_t CLOCK_START_MINUTE = 1080; // 18:00 local civil time, inclusive.
+const uint16_t CLOCK_END_MINUTE = 1380; // 23:00, exclusive; may cross midnight.
+const uint8_t CLOCK_DAYS = 127; // Sunday bit 0 ... Saturday bit 6; window-start day.
+static_assert(CLOCK_START_MINUTE < 1440 && CLOCK_END_MINUTE < 1440 &&
+              CLOCK_START_MINUTE != CLOCK_END_MINUTE && CLOCK_DAYS > 0 && CLOCK_DAYS < 128,
+              "Invalid clock window.");
+
 static_assert(!COMPOUND_BODY_ENABLED || JAW_FOLLOWUP_MOTOR == 0,
               "Compound and jaw-first modes must be selected separately.");
 static_assert(!COMPOUND_BODY_ENABLED || !MOUTH_ENABLED || MOUTH_FILE_SERIAL == 0 ||
@@ -171,6 +184,14 @@ uint32_t jawEyeStartAt = 0;
 uint32_t jawEyeEndAt = 0;
 bool mouthEndPending = false; // Modeled duration only, NOT a playback notification.
 bool haveBleWrite = false;
+bool lastTurnWasJaw = false;
+bool clockValid = false;
+uint64_t clockCivilMillis = 0;
+uint32_t clockLastTick = 0;
+bool clockWindowWasOpen = false;
+char usbLine[64];
+uint8_t usbUsed = 0;
+bool usbOverflow = false;
 uint32_t lastBleWriteAt = 0;
 uint32_t scanAttempts = 0;
 uint32_t connectionAttempts = 0;
@@ -205,6 +226,108 @@ void logEvent(const char *format, ...) {
 }
 void logLine(const char *message) { logEvent("%s\n", message); }
 
+void acceptUsbCommand(const char *line) {
+  if (strcmp(line, "SKELLY HELLO") == 0) {
+    logLine("USB READY v1 CLOCK");
+    return;
+  }
+  const char *prefix = "SKELLY TIME ";
+  if (strncmp(line, prefix, strlen(prefix)) != 0) return;
+  const char *value = line + strlen(prefix);
+  if (strlen(value) != 10) { logLine("USB TIME rejected"); return; }
+  for (const char *p = value; *p; ++p) if (*p < '0' || *p > '9') {
+    logLine("USB TIME rejected"); return;
+  }
+  const uint64_t seconds = strtoull(value, nullptr, 10);
+  if (seconds < 1704067200ULL || seconds >= 4102444800ULL) {
+    logLine("USB TIME rejected"); return;
+  }
+  clockCivilMillis = seconds * 1000ULL;
+  clockLastTick = millis();
+  clockValid = true;
+  logLine("USB TIME accepted; local civil time, no automatic DST adjustment");
+}
+
+void serviceUsbClock() {
+  const uint32_t tick = millis();
+  if (clockValid) clockCivilMillis += uint32_t(tick - clockLastTick);
+  clockLastTick = tick;
+  // Bound per-loop work even for a flooding or malformed serial sender.
+  for (uint8_t count = 0; count < 64 && Serial.available(); ++count) {
+    const int c = Serial.read();
+    if (c == '\n') {
+      if (!usbOverflow) { usbLine[usbUsed] = 0; acceptUsbCommand(usbLine); }
+      usbUsed = 0; usbOverflow = false;
+    } else if (c != '\r') {
+      if (c < 32 || c > 126 || usbUsed >= sizeof(usbLine)-1) usbOverflow = true;
+      else if (!usbOverflow) usbLine[usbUsed++] = char(c);
+    }
+  }
+}
+
+bool routineWindowOpen() {
+  if (!CLOCK_WINDOW_ENABLED) return true;
+  const uint32_t tick = millis();
+  if (clockValid) clockCivilMillis += uint32_t(tick - clockLastTick);
+  clockLastTick = tick;
+  if (!clockValid) return false;
+  const uint64_t seconds = clockCivilMillis / 1000ULL;
+  const uint16_t minute = (seconds / 60ULL) % 1440;
+  uint8_t day = (seconds / 86400ULL + 4) % 7;
+  if (CLOCK_START_MINUTE < CLOCK_END_MINUTE)
+    return minute >= CLOCK_START_MINUTE && minute < CLOCK_END_MINUTE && (CLOCK_DAYS & (1 << day));
+  if (minute < CLOCK_END_MINUTE) day = (day + 6) % 7;
+  return (minute >= CLOCK_START_MINUTE || minute < CLOCK_END_MINUTE) && (CLOCK_DAYS & (1 << day));
+}
+
+uint32_t jawDurationMs(uint16_t file) { (void)file; return MOUTH_CLIP_MS; }
+
+struct PlaybackObservation { uint16_t file; uint16_t duration; uint8_t playing; uint8_t length; };
+PlaybackObservation playbackQueue[8];
+uint8_t playbackRead = 0, playbackWrite = 0;
+uint32_t playbackDropped = 0;
+portMUX_TYPE playbackMux = portMUX_INITIALIZER_UNLOCKED;
+BLERemoteCharacteristic *notifySource = nullptr;
+
+// Observe bounded metadata only. Frame length/CRC/duration units and natural-EOF
+// behavior are unverified; no observation changes any safety or playback timer.
+void playbackNotification(BLERemoteCharacteristic *source, uint8_t *data, size_t length, bool) {
+  if (!PLAYBACK_DIAGNOSTICS || length < 7 || length > 32 || data == nullptr ||
+      data[0] != 0xBB || data[1] != 0xC6 || data[4] > 1) return;
+  portENTER_CRITICAL(&playbackMux);
+  if (source == notifySource && source != nullptr) {
+    const uint8_t next = (playbackWrite + 1) % 8;
+    if (next == playbackRead) ++playbackDropped;
+    else {
+      playbackQueue[playbackWrite] = {uint16_t((data[2] << 8) | data[3]),
+        uint16_t((data[5] << 8) | data[6]), data[4], uint8_t(length)};
+      playbackWrite = next;
+    }
+  }
+  portEXIT_CRITICAL(&playbackMux);
+}
+
+void drainPlaybackObservation() {
+  PlaybackObservation observation{};
+  bool have = false;
+  portENTER_CRITICAL(&playbackMux);
+  if (playbackRead != playbackWrite) {
+    observation = playbackQueue[playbackRead]; playbackRead = (playbackRead + 1) % 8; have = true;
+  }
+  portEXIT_CRITICAL(&playbackMux);
+  if (have) logEvent("AE02 unvalidated BBC6: file=%u playing=%u durationRaw=%u length=%u; timers unchanged\n",
+    unsigned(observation.file), unsigned(observation.playing), unsigned(observation.duration), unsigned(observation.length));
+}
+
+void postponeRoutineTargets(uint32_t at) {
+  nextHeadAt = at + random(HEAD_MIN_INTERVAL_MS, HEAD_MAX_INTERVAL_MS + 1);
+  nextArmAt = at + random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
+  nextTorsoAt = at + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
+  nextMouthAt = at + random(MOUTH_MIN_INTERVAL_MS, MOUTH_MAX_INTERVAL_MS + 1);
+  nextCompoundAt = at + random(COMPOUND_BODY_MIN_INTERVAL_MS, COMPOUND_BODY_MAX_INTERVAL_MS + 1);
+  nextEyeAt = at + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);
+}
+
 void logDiagnostics(const char *event) {
   if (!DIAGNOSTICS_ENABLED) return;
   logEvent("DIAG %s: connected=%u scans=%lu connects=%lu heap=%lu minHeap=%lu "
@@ -221,6 +344,17 @@ void logDiagnostics(const char *event) {
 
 bool reached(uint32_t now, uint32_t when) {
   return (int32_t)(now - when) >= 0;
+}
+
+bool giveWaitingBodyTurn(uint32_t now) {
+  if (!FAIR_BODY_TURNS || !JAW_PROTECTS_ARM_TORSO || !lastTurnWasJaw ||
+      !reached(now, mouthPlayingUntil) || !reached(now, nextBodyWriteAt) ||
+      (!ALLOW_BODY_MOTOR_OVERLAP && !reached(now, bodySafeAfter))) return false;
+  if (COMPOUND_BODY_ENABLED) return reached(now, nextCompoundAt) && reached(now, compoundSafeAfter) &&
+    reached(now, headSafeAfter) && reached(now, armSafeAfter) && reached(now, torsoSafeAfter);
+  return (HEAD_ENABLED && JAW_FOLLOWUP_MOTOR != 4 && reached(now, nextHeadAt) && reached(now, headSafeAfter)) ||
+    (ARM_ENABLED && !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 || JAW_FOLLOWUP_MOTOR == 3)) && reached(now, nextArmAt) && reached(now, armSafeAfter)) ||
+    (TORSO_ENABLED && !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 || JAW_FOLLOWUP_MOTOR == 3)) && reached(now, nextTorsoAt) && reached(now, torsoSafeAfter));
 }
 
 // Retire elapsed cooldowns while the cooperative loop is running. Otherwise an
@@ -340,6 +474,7 @@ bool progressLights(uint32_t now) {
   return true;
 }
 void startCompoundBody(uint32_t now) {
+  if (!routineWindowOpen()) return;
   const size_t maskCount = sizeof(COMPOUND_BODY_MASKS) / sizeof(COMPOUND_BODY_MASKS[0]);
   if (!maskCount) return;
   const uint8_t mask = COMPOUND_BODY_MASKS[random(maskCount)];
@@ -358,6 +493,7 @@ void startCompoundBody(uint32_t now) {
     return;
   }
   now = millis(); // Preserve the full cooldown after a blocking BLE write.
+  lastTurnWasJaw = false;
   // All selected motors start TOGETHER in one BLE request. Lock conservatively
   // until the slowest one finishes AND its safety buffer expires.
   uint32_t duration = 0;
@@ -403,6 +539,11 @@ class SkellyScanCallbacks : public BLEAdvertisedDeviceCallbacks {
 void resetConnection() {
   logDiagnostics("connection reset");
   connected = false;
+  portENTER_CRITICAL(&playbackMux);
+  notifySource = nullptr; playbackRead = playbackWrite = 0; playbackDropped = 0;
+  portEXIT_CRITICAL(&playbackMux);
+  lastTurnWasJaw = false;
+  clockWindowWasOpen = false;
   writeChar = nullptr;
   if (client != nullptr && client->isConnected()) client->disconnect();
   nextScanAt = millis(); // Re-scan immediately after power-off.
@@ -474,7 +615,7 @@ bool connectToSkelly() {
   lightApplyStep = 0;
   mouthEndPending = false;
   haveBleWrite = false;
-  queueLightSequence(now, 1500, "connection");
+  if (!CLOCK_WINDOW_ENABLED) queueLightSequence(now, 1500, "connection");
   torsoSafeAfter = now;
   armSafeAfter = now;
   nextTorsoAt = now + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
@@ -493,6 +634,16 @@ bool connectToSkelly() {
   lastJawFollowupMotor = 0;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
+
+  if (PLAYBACK_DIAGNOSTICS) {
+    auto *notify = service->getCharacteristic("0000ae02-0000-1000-8000-00805f9b34fb");
+    if (notify != nullptr && notify->canNotify()) {
+      portENTER_CRITICAL(&playbackMux); notifySource = notify; portEXIT_CRITICAL(&playbackMux);
+      notify->registerForNotify(playbackNotification);
+      logLine("AE02 passive observations enabled; no playback-end control.");
+    } else logLine("AE02 notifications unavailable; conservative model retained.");
+    if (!client->isConnected()) { resetConnection(); return false; }
+  }
 
   logEvent("CONNECTED. Head %s, jaw %s, torso %s, arm %s.\n",
     HEAD_ENABLED ? "ON" : "OFF", MOUTH_ENABLED ? "ON" : "OFF",
@@ -559,6 +710,7 @@ void scanAndConnect() {
 }
 
 void startHead(uint32_t now) {
+  if (!routineWindowOpen()) return;
   // Verified head-only frame. No arm or torso movement bits.
   uint8_t frame[11] = {0xAA, 0xCA, 0x01, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
@@ -568,6 +720,7 @@ void startHead(uint32_t now) {
   }
 
   now = millis(); // Start modeled motion/cooldown after transport returns.
+  lastTurnWasJaw = false;
   headMovingUntil = now + HEAD_ANIMATION_MS;
   headSafeAfter = now + HEAD_ANIMATION_MS + HEAD_BUFFER_MS;
   bodySafeAfter = headSafeAfter;
@@ -585,6 +738,7 @@ void startHead(uint32_t now) {
 
 // Only called by the shared body-motor scheduler after cooldown.
 void startTorso(uint32_t now) {
+  if (!routineWindowOpen()) return;
   uint8_t frame[11] = {0xAA, 0xCA, 0x04, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
     logLine("Torso send failed / disconnected.");
@@ -593,6 +747,7 @@ void startTorso(uint32_t now) {
   }
   now = millis();
   bodySafeAfter = now + TORSO_ANIMATION_MS + TORSO_BUFFER_MS;
+  lastTurnWasJaw = false;
   torsoSafeAfter = bodySafeAfter;
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
@@ -602,6 +757,7 @@ void startTorso(uint32_t now) {
 }
 
 void startArm(uint32_t now) {
+  if (!routineWindowOpen()) return;
   // Physically verified arm-only action: two back-to-back moves ~22s.
   uint8_t frame[11] = {0xAA, 0xCA, 0x02, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
@@ -611,6 +767,7 @@ void startArm(uint32_t now) {
   }
   now = millis();
   bodySafeAfter = now + ARM_ANIMATION_MS + ARM_BUFFER_MS;
+  lastTurnWasJaw = false;
   armSafeAfter = bodySafeAfter;
   nextBodyWriteAt = now + BODY_WRITE_SPACING_MS;
   const uint32_t interval = random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
@@ -643,6 +800,7 @@ uint8_t chooseJawFollowupMotor(uint32_t now) {
 }
 
 void startMouth(uint32_t now) {
+  if (!routineWindowOpen()) return;
   // AAC6 payload: 2-byte big-endian file serial, 01 = play,
   // remaining 5 bytes zero, CRC8 calculated automatically.
   uint8_t frame[11] = {
@@ -659,10 +817,12 @@ void startMouth(uint32_t now) {
   jawDelayNotified = false;
   // Base the estimate on completion of the BLE call, which may block.
   now = millis();
-  mouthPlayingUntil = now + MOUTH_CLIP_MS;
+  const uint32_t clipDuration = jawDurationMs(MOUTH_FILE_SERIAL);
+  mouthPlayingUntil = now + clipDuration;
+  lastTurnWasJaw = true;
   mouthEndPending = true;
-  logEvent("MP3: modeled duration %lu ms; no playback-end notification subscribed.\n",
-           (unsigned long)MOUTH_CLIP_MS);
+  logEvent("MP3: modeled duration %lu ms; playback end unconfirmed.\n",
+           (unsigned long)clipDuration);
   if (LIGHTS_ENABLED && LIGHT_RESTORE_MODE != 0) {
     // A partial earlier sequence cannot restore a coherent pair of channels
     // after AAC6 has reapplied saved settings. Restart a full sequence later.
@@ -735,7 +895,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   recordBoot(esp_reset_reason());
-  logEvent("BOOT audit-timing-v2: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+  logEvent("BOOT usb-scheduler-v3: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
            DIAGNOSTICS_ENABLED ? "ON" : "OFF");
@@ -746,9 +906,13 @@ void setup() {
   scanner->setAdvertisedDeviceCallbacks(new SkellyScanCallbacks());
   scanner->setActiveScan(true);
   nextScanAt = millis();
+  logLine("USB READY v1 CLOCK");
+  if (CLOCK_WINDOW_ENABLED) logLine("CLOCK: new routines paused until USB time is set and the window opens.");
 }
 
 void loop() {
+  serviceUsbClock();
+  if (PLAYBACK_DIAGNOSTICS) drainPlaybackObservation();
   uint32_t now = millis();
   if (connected && (client == nullptr || !client->isConnected())) {
     logLine("Disconnected; scanning again.");
@@ -762,6 +926,18 @@ void loop() {
   }
 
   retireElapsedCooldowns(now);
+  const bool windowOpen = routineWindowOpen();
+  if (CLOCK_WINDOW_ENABLED && windowOpen != clockWindowWasOpen) {
+    clockWindowWasOpen = windowOpen;
+    if (windowOpen) {
+      postponeRoutineTargets(now);
+      queueLightSequence(now, 1500, "clock window opened");
+      logLine("CLOCK: window open; fresh intervals scheduled.");
+    } else {
+      jawFollowupPending = false;
+      logLine("CLOCK: window closed; existing motion and restoration may finish.");
+    }
+  }
 
   if (mouthEndPending && reached(now, mouthPlayingUntil)) {
     mouthEndPending = false;
@@ -800,6 +976,8 @@ void loop() {
 
   now = millis(); // Eye writes and BLE calls above may have advanced time.
 
+  if (!routineWindowOpen()) { jawFollowupPending = false; delay(100); return; }
+
   // Jaw-first motor command: AAC6 plays before one selected AACA frame.
   // This is intentionally permitted through JAW_PROTECTS_ARM_TORSO for one
   // selected motor only; all ordinary scheduled arm/torso commands stay blocked
@@ -807,6 +985,7 @@ void loop() {
   // per BLE connection. In recurring mode, only when its random interval
   // is due; a skipped attempt can retry on the next jaw MP3.
   if (connected && jawFollowupPending && reached(millis(), jawFollowupAt)) {
+    const uint32_t writesBefore = writeAttempts;
     jawFollowupPending = false;
     const uint32_t t = millis();
     const bool clipActive = !reached(t, mouthPlayingUntil);
@@ -833,18 +1012,18 @@ void loop() {
       // the one-shot trial. Physical head response FAILED at 2s and 10s.
       logLine("JAW-FIRST: sending HEAD after MP3 start (FAILED at 2s and 10s).");
       startHead(t);
-      if (connected && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
+      if (connected && writeAttempts != writesBefore && !JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
     } else if (armSelected) {
       logLine("JAW-FIRST: sending ARM after MP3 start (experimental).");
       startArm(t);
-      if (connected) {
+      if (connected && writeAttempts != writesBefore) {
         lastJawFollowupMotor = 1;
         if (!JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
       }
     } else if (torsoSelected) {
       logLine("JAW-FIRST: sending TORSO after MP3 start (experimental).");
       startTorso(t);
-      if (connected) {
+      if (connected && writeAttempts != writesBefore) {
         lastJawFollowupMotor = 2;
         if (!JAW_FOLLOWUP_RECURRING) jawFollowupTestDone = true;
       }
@@ -870,7 +1049,7 @@ void loop() {
                         reached(now, mouthSafeAfter);
   const bool blockBodyForJaw =
       JAW_PROTECTS_ARM_TORSO &&
-      (!reached(now, mouthPlayingUntil) || jawReady);
+      (!reached(now, mouthPlayingUntil) || (jawReady && !giveWaitingBodyTurn(now)));
   // Select the most overdue eligible body command; independent when allowed.
   if (reached(now, nextBodyWriteAt) &&
       (ALLOW_BODY_MOTOR_OVERLAP || reached(now, bodySafeAfter))) {
@@ -952,9 +1131,9 @@ void loop() {
 
   // Experimental independent eye expressions. Can overlap animations.
   // Give adjacent BLE write-without-response commands a small gap.
-  if (connected && EYES_ENABLED && reached(millis(), nextEyeAt)) {
+  if (connected && EYES_ENABLED && reached(millis(), nextEyeAt) && routineWindowOpen()) {
     if (sentBodyThisLoop || sentMouthThisLoop) delay(250);
-    changeEyes(millis());
+    if (routineWindowOpen()) changeEyes(millis());
   }
 
   delay(100);

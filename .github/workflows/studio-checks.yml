@@ -28,8 +28,7 @@ jobs:
           node-version: "22"
       - name: Check JavaScript syntax
         run: |
-          node --check studio/app.js
-          node --check studio/template.js
+          for source in studio/*.js; do node --check "$source"; done
       - name: Check generated Arduino output and constraints
         run: node --test studio/tests/*.test.cjs
       - name: Check canonical firmware and browser template match
@@ -39,7 +38,9 @@ jobs:
       - name: Execute firmware with mocked BLE and clock
         run: python tests/run_firmware_tests.py
       - name: Verify CRC test vectors
-        run: python tests/test_packets.py
+        run: |
+          python tests/test_packets.py
+          python tests/test_prebuilt.py
       - name: Set up Arduino CLI
         uses: arduino/setup-arduino-cli@v2
       - name: Install Espressif ESP32 core (3.3.12)

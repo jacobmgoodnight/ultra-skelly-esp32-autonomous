@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include <map>
 inline std::vector<std::vector<uint8_t>> fakeWrites;
+inline std::vector<uint32_t> fakeWriteTimes;
 inline bool fakeWriteOK = true;
 inline uint32_t fakeWriteLatency = 0;
 inline bool fakeConnectOK = true;
@@ -22,10 +23,13 @@ class BLEAdvertisedDeviceCallbacks {
 };
 class BLERemoteCharacteristic {
  public:
+  bool canNotify() { return true; }
+  void registerForNotify(void (*)(BLERemoteCharacteristic *, uint8_t *, size_t, bool)) {}
   bool writeValue(uint8_t *data, size_t length, bool response) {
     if (response) throw std::runtime_error("WRITE_NR required");
     fakeWrites.emplace_back(data, data + length);
     fakeNow += fakeWriteLatency;
+    fakeWriteTimes.push_back(fakeNow);
     return fakeWriteOK;
   }
 };

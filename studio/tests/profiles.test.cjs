@@ -42,7 +42,7 @@ test("profile round trip keeps firmware output and device clip library",()=>{
 test("profile rejects bad schema, wrong types and invalid dormant settings",()=>{
   const valid=JSON.parse(api.createProfile(config(),{}));
   for(const mutate of [
-    p=>p.version=2,
+    p=>p.version=99,
     p=>p.config.headEnabled="false",
     p=>delete p.config.jawFile,
     p=>{p.config.jawEnabled=false;p.config.jawFile=65536;},

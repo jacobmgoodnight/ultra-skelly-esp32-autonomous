@@ -11,8 +11,9 @@ normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rej
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye
 sets, and the independent head/jaw overlap option are generator extensions; their
 substitution architecture is still a maintenance risk and is covered by the
-generated compile matrix. The five-minute UI timeline is illustrative and does
-not reproduce the firmware's full lock/follow-up/lighting arbitration.
+generated compile matrix. The five-minute UI timeline shows example requested
+intervals, without pretending to arbitrate actual starts. Contextual feedback
+explains locks, jaw-first follow-ups, restoration, rest and optional clock windows.
 
 ## Connection lifecycle
 
@@ -39,6 +40,13 @@ cannot currently be recovered from the prop.
 
 ## Movement and jaw scheduling
 
+Studio defaults to mouth OFF; common presets are audio-free. Its last collapsed
+panel owns all mouth-only controls, revealed only on opt-in. Disabling mouth
+clears jaw-first selection/recurrence, fair turns and passive playback diagnostics,
+preserving clip mappings and independent body/eye/light/clock settings. Loading a
+saved profile preserves its explicit settings. This UI change does not alter the
+canonical reference sketch's previous head-and-jaw defaults or scheduling code.
+
 Independent body scheduling chooses the most overdue eligible head, arm, or torso.
 Each motor has a due time and cooldown, now anchored after a successful BLE call
 returns so call latency cannot consume the cooldown. A shared lock serializes body commands by
@@ -63,10 +71,12 @@ motor's own due time; alternating mode prefers the previously unselected motor
 when both are due. Jaw-first HEAD remains a failed physical diagnostic.
 
 Playback may restore stored movement flags, eyes, and lights. The current client
-does not subscribe to AE02. `mouthPlayingUntil` is **modeled** from `MOUTH_CLIP_MS`
+does not subscribe to AE02 by default. `mouthPlayingUntil` is **modeled** from `MOUTH_CLIP_MS`
 (21 s), beginning after the write call returns. All pooled clips must fit that
-duration or the constant must be increased conservatively. There is no playback
-completion confirmation.
+duration or use a conservatively increased fallback/per-file estimate. There is no playback
+completion confirmation. Optional per-file estimates (21–120 seconds, including
+padding) use the selected pool serial; unmapped files use the fallback estimate.
+Experimental AE02 observations are separately opt-in and never change these timers.
 
 ## Eyes and lights
 
@@ -116,4 +126,36 @@ loop is serviced within the half-range; a loop blocked for weeks is not recovere
 by this mechanism. Actual C++ tests cover 60 simulated days and wrap, plus body
 cooldowns after a simulated five-second write. Neither is physical endurance
 evidence. See [audit follow-up](audit-follow-up.md) for attended regression criteria.
+
+## Optional USB clock, fairness and observations
+
+Boot marker `usb-scheduler-v3` identifies the next software revision. USB accepts
+only bounded HELLO/TIME lines; no serial command starts a motor or changes a
+configuration. Clock windows default OFF. Enabled windows fail closed after every
+boot until USB local time is accepted, use Sunday-based weekday bits and a daily
+start-inclusive/end-exclusive interval, including overnight windows owned by their
+start day. The cooperative loop accumulates unsigned millis deltas in 64 bits.
+There is no NVS time restoration or automatic timezone/DST handling. Window entry
+refreshes request targets, exit cancels pending motor follow-ups; existing motion
+and eye/light restoration can finish. Firmware does not issue a physical stop.
+
+Fair body turns default OFF. With MP3 protection ON, after a jaw clip an eligible
+overdue standalone/compound body request can run before another due jaw clip.
+It preserves all body locks/spacing and excludes motors reserved for recurring
+jaw-first follow-ups. Tests reproduce jaw-priority starvation with restoration
+and coarse loop service, then verify fair turns without bypassing cooldowns.
+This is software evidence, not a measured field starvation result.
+
+Passive notification observations default OFF. A callback copies at most seven
+pending BBC6 metadata records under a critical section, never logging or allocating
+there. The loop drains one text record per iteration. Disconnect invalidates the
+source and clears queued records. Short/oversized/malformed status packets are
+ignored; CRC, exact framing, duration units and natural EOF are unverified. No
+notification can release a motor lock, shorten playback or claim physical success.
+
+The separate browser USB tools retain at most 2 MiB of original UART bytes with
+an explicit discarded count, close reader/writer locks and offer text/binary/summary
+downloads. No port opens automatically. The fixed-profile installer verifies
+package metadata and SHA-256 before offering pinned ESP Web Tools; it does not
+compile custom source. See [USB tools](usb-tools.md) for lifecycle and evidence.
 
