@@ -9,7 +9,7 @@ for(const file of ["studio/template.js","studio/app.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),ctx,{filename:file});
 }
 const generator = ctx.window.SkellyStudioGenerator;
-const base = {...generator.DEFAULTS, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
+const base = {...generator.DEFAULTS, jawEnabled:true, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
   ClockWithIdleBreaks:{clockEnabled:true,restEnabled:true},
   Watchful:{...generator.PRESETS.watchful},
@@ -17,8 +17,9 @@ const cases = {
   UsbClockFairAndNotifications:{clockEnabled:true,clockStart:1320,clockEnd:120,clockDays:32,fairBodyTurns:true,playbackDiagnostics:true,lightsEnabled:true},
   PerFileLongerClips:{jawClipSec:30,jawExtras:"13,14",jawDurations:"13:24,14:45",eyesEnabled:true,lightsEnabled:true,restEnabled:true},
   FairCompoundWindow:{headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,fairBodyTurns:true,clockEnabled:true,clockStart:0,clockEnd:720,clockDays:65},
-  Normal: {},
-  HauntedWithBothMotors: {torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,headMin:32,headMax:45,jawMin:30,jawMax:60},
+  Normal: {...generator.PRESETS.normal},
+  MovementEyesAndLights: {jawEnabled:false,headEnabled:true,armEnabled:true,torsoEnabled:true,eyesEnabled:true,lightsEnabled:true,clockEnabled:true},
+  HauntedWithBothMotors: {jawEnabled:false,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,headMin:32,headMax:45,jawMin:30,jawMax:60},
   BodyMotorOverlapExperimental: {torsoEnabled:true,armEnabled:true,bodyOverlap:true,eyesEnabled:true},
   FastMotorJawProtected: {torsoEnabled:true,torsoMin:45,torsoMax:60,armEnabled:true,armMin:45,armMax:60,bodyOverlap:true,jawEnabled:true,jawProtectBody:true},
   JawFirstArmTwoSeconds: {headEnabled:false,torsoEnabled:false,armEnabled:true,jawEnabled:true,jawFile:13,jawFollowupMotor:1,jawFollowupDelaySec:2,jawProtectBody:true},

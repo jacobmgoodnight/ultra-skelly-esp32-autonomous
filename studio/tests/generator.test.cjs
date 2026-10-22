@@ -16,15 +16,17 @@ function sample(changes = {}) {
   const defaults = api.DEFAULTS;
   return {
     ...defaults,
+    // Jaw regressions opt in explicitly; the public Studio default is audio-free.
+    jawEnabled: true,
     eyeChoices: [...defaults.eyeChoices],
     ...changes
   };
 }
 
-test("default settings generate conservative head-and-jaw sketch", () => {
-  const sketch = api.generateSketch(sample());
+test("default Studio settings generate an audio-free head sketch", () => {
+  const sketch = api.generateSketch({...api.DEFAULTS});
   assert.match(sketch, /const bool HEAD_ENABLED = true;/);
-  assert.match(sketch, /const bool MOUTH_ENABLED = true;/);
+  assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
   assert.match(sketch, /const bool EYES_ENABLED = false;/);
   assert.match(sketch, /const bool REST_ENABLED = false;/);
   assert.match(sketch, /const uint32_t HEAD_MIN_INTERVAL_MS = 32000;/);
@@ -293,8 +295,8 @@ test("Subtle deliberately disables silent jaw by default", () => {
   assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
   assert.match(sketch, /const bool TORSO_ENABLED = false;/);
   assert.match(sketch, /const bool ARM_ENABLED = false;/);
-  assert.equal(api.PRESETS.normal.jawEnabled, true);
-  assert.equal(api.PRESETS.haunted.jawEnabled, true);
+  assert.equal(api.PRESETS.normal.jawEnabled, false);
+  assert.equal(api.PRESETS.haunted.jawEnabled, false);
 });
 test("Advanced body overlap permits independent motor timers but defaults off", () => {
   const normal=api.generateSketch(sample());

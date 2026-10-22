@@ -2,6 +2,14 @@
 
 ## October 21 implementation update
 
+Studio now starts without mouth playback. Normal and Haunted also leave it OFF.
+The bottom collapsed **Optional mouth routines · limited** panel holds clip setup,
+jaw-first, playback estimates, fair turns, observations and MP3 eye/light behavior.
+Its controls appear only after mouth is enabled. Switching it OFF clears active
+jaw coordination without discarding clip mappings or independent feature settings.
+Storyteller is available only inside this optional section. Imported profiles
+retain their explicit mouth setting. The canonical reference sketch is unchanged.
+
 The next pass implements guided head-only setup, Watchful/Storyteller presets,
 request-only timing feedback, local raw-byte USB capture, a USB clock protocol
 and optional weekday/overnight windows, per-file conservative playback estimates,

@@ -4,6 +4,6 @@ const context=vm.createContext({window:{}});
 for(const file of ["studio/template.js","studio/app.js"])
   vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),context);
 const api=context.window.SkellyStudioGenerator;
-process.stdout.write(api.generateSketch({...api.DEFAULTS,
+process.stdout.write(api.generateSketch({...api.DEFAULTS, jawEnabled:true,
   headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,
   jawExtras:"13, 14",lightsEnabled:false,eyesEnabled:false,restEnabled:false}));

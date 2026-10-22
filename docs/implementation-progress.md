@@ -1,5 +1,9 @@
 # Requested improvements: implementation and evidence
 
+The subsequent [movement-first Studio update](movement-first-studio.md) puts
+optional limited mouth routines at the bottom and makes common presets audio-free.
+Its separate validation record supersedes the earlier Studio defaults below.
+
 October 21, 2026. Work builds on audit PR #25. The owner requested the full
 improvement list, selected USB-set local time with pause after power loss, and
 reported that hardware is unavailable. No upload, firmware deployment, physical
