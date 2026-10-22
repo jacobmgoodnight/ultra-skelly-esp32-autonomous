@@ -8,7 +8,9 @@ def package(source, binary, output, revision):
     if len(data)!=4194304 or data[4096]!=0xe9 or data[65536]!=0xe9:
         raise ValueError('Expected the pinned ESP32 4 MB merged image with bootloader/app headers')
     code=source.read_text(encoding='utf-8')
-    for text in ['const bool MOUTH_ENABLED = false;','const bool HEAD_ENABLED = true;','const uint32_t HEAD_MIN_INTERVAL_MS = 120000;','const uint32_t HEAD_MAX_INTERVAL_MS = 240000;']:
+    required=['const bool HEAD_ENABLED = true;','const uint32_t HEAD_MIN_INTERVAL_MS = 120000;','const uint32_t HEAD_MAX_INTERVAL_MS = 240000;','const uint8_t JAW_FOLLOWUP_MOTOR = 0;']
+    required += ['const bool '+flag+' = false;' for flag in ['MOUTH_ENABLED','ARM_ENABLED','TORSO_ENABLED','EYES_ENABLED','LIGHTS_ENABLED','COMPOUND_BODY_ENABLED','ALLOW_BODY_MOTOR_OVERLAP','REST_ENABLED','CLOCK_WINDOW_ENABLED','FAIR_BODY_TURNS','PLAYBACK_DIAGNOSTICS']]
+    for text in required:
         if text not in code:raise ValueError('Not the fixed head-only profile')
     output.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(binary,output/'head-only.bin')
