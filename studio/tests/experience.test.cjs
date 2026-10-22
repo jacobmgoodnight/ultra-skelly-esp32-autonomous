@@ -4,7 +4,7 @@ const ctx=vm.createContext({window:{}});for(const file of ['template.js','app.js
 const api=ctx.window.SkellyStudioGenerator;
 test('head-only first run clears advanced behavior without audio assumptions',()=>{
   const c=firstRoutine({...api.DEFAULTS,compoundEnabled:true,jawFollowupMotor:3,clockEnabled:true});
-  assert.equal(c.headMin,120);assert.equal(c.headMax,240);assert.equal(c.jawEnabled,false);assert.equal(c.clockEnabled,false);
+  assert.equal(c.headMin,60);assert.equal(c.headMax,120);assert.equal(c.jawEnabled,false);assert.equal(c.clockEnabled,false);
   assert.equal(api.validate(c).length,0);assert.match(api.generateSketch(c),/const bool MOUTH_ENABLED = false;/);
 });
 test('feedback explains real delays without claiming movement',()=>{
@@ -20,9 +20,9 @@ test('old version-one profiles receive safe defaults only for newly added fields
   const config={...api.DEFAULTS};for(const key of ['fairBodyTurns','playbackDiagnostics','clockEnabled','clockStart','clockEnd','clockDays','jawClipSec','jawDurations'])delete config[key];
   const imported=api.parseProfile(JSON.stringify({app:'SkellyStudio',version:1,config,clips:{}}));assert.equal(imported.config.clockEnabled,false);assert.equal(imported.config.jawClipSec,21);
 });
-test('new profiles use version three so older Studio cannot silently drop lighting controls',()=>{
+test('new profiles use version four so older Studio cannot silently drop lighting controls',()=>{
   const encoded=api.createProfile({...api.DEFAULTS,clockEnabled:true,jawClipSec:60},{});
-  const parsed=JSON.parse(encoded);assert.equal(parsed.version,3);
+  const parsed=JSON.parse(encoded);assert.equal(parsed.version,4);
   delete parsed.config.jawClipSec;assert.throws(()=>api.parseProfile(JSON.stringify(parsed)),/Invalid profile setting/);
 });
 test('a clock window with idle breaks resets rest targets on opening',()=>{

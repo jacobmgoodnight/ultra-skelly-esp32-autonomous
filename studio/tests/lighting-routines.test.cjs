@@ -4,14 +4,14 @@ const ctx=vm.createContext({window:{}});for(const f of ['template.js','app.js'])
 const g=ctx.window.SkellyStudioGenerator,c=changes=>({...g.DEFAULTS,...changes});
 const plain=x=>JSON.parse(JSON.stringify(x));
 test('requested personalities have distinct quiet, normal and haunted movement intervals',()=>{
-  assert.equal(g.PRESETS.subtle.headMin,120);assert.equal(g.PRESETS.subtle.headMax,240);assert.equal(g.PRESETS.subtle.armEnabled,false);
+  assert.equal(g.PRESETS.subtle.headMin,60);assert.equal(g.PRESETS.subtle.headMax,120);assert.equal(g.PRESETS.subtle.armEnabled,false);
   assert.equal(g.DEFAULTS.headMin,35);assert.equal(g.DEFAULTS.headMax,75);assert.equal(g.DEFAULTS.armEnabled,true);
   assert.equal(g.PRESETS.normal.armMin,150);assert.equal(g.PRESETS.normal.armMax,240);
-  assert.equal(g.PRESETS.haunted.armMin,120);assert.equal(g.PRESETS.haunted.armMax,240);
+  assert.equal(g.PRESETS.haunted.armMin,60);assert.equal(g.PRESETS.haunted.armMax,120);
 });
 test('preview contains only used lanes, replacing standalone motor lanes in compound mode',()=>{
   assert.deepEqual(previewItems(c()),[['head','Head'],['arm','Arm']]);
-  const mixed=c({compoundEnabled:true,jawEnabled:true,eyesEnabled:true,lightsEnabled:true,lightRotation:true});
+  const mixed=c({compoundEnabled:true,compoundAlongside:false,jawEnabled:true,eyesEnabled:true,lightsEnabled:true,lightRotation:true});
   assert.deepEqual(previewItems(mixed),[['compound','Combined'],['eyes','Eyes'],['lights','Lighting'],['jaw','Jaw']]);
   assert.deepEqual(previewItems(c({headEnabled:false,armEnabled:false,lightsEnabled:true})),[]);
   const events=g.simulateSchedule(mixed);assert.ok(events.some(e=>e.kind==='lights'));assert.ok(!events.some(e=>['head','arm','torso'].includes(e.kind)));
@@ -30,7 +30,7 @@ test('old profiles import with lighting off while new profiles preserve lighting
     assert.equal(p.config.armEnabled,false);assert.equal(p.config.jawEnabled,true);assert.equal(p.config.lightRotation,false);assert.equal(p.config.headEffect,1);
   }
   const current=c({lightsEnabled:true,lightRotation:true,lightPalettes:[0,2],headEffect:3});
-  const saved=g.createProfile(current,{});assert.equal(JSON.parse(saved).version,3);assert.deepEqual(plain(g.parseProfile(saved).config),plain(current));
+  const saved=g.createProfile(current,{});assert.equal(JSON.parse(saved).version,4);assert.deepEqual(plain(g.parseProfile(saved).config),plain(current));
   const bad=JSON.parse(saved);delete bad.config.lightInterval;assert.throws(()=>g.parseProfile(JSON.stringify(bad)));
 });
 test('named rotation palettes agree with the manual Studio palette buttons',()=>{

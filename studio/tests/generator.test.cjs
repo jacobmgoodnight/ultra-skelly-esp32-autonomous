@@ -68,9 +68,9 @@ test("Haunted enables verified torso and arm but keeps advanced overlap OFF", ()
   assert.match(sketch, /const bool TORSO_ENABLED = true;/);
   assert.match(sketch, /const bool ARM_ENABLED = true;/);
   assert.match(sketch, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
-  assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 180000;/);
-  assert.match(sketch, /const uint32_t TORSO_MAX_INTERVAL_MS = 360000;/);
-  assert.match(sketch, /if \(!COMPOUND_BODY_ENABLED && TORSO_ENABLED && reached\(now, nextTorsoAt\)/);
+  assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 75000;/);
+  assert.match(sketch, /const uint32_t TORSO_MAX_INTERVAL_MS = 180000;/);
+  assert.match(sketch, /if \(!sentBodyThisLoop && \(!COMPOUND_BODY_ENABLED \|\| COMPOUND_ALONGSIDE\) && TORSO_ENABLED && reached\(now, nextTorsoAt\)/);
   assert.match(sketch, /ALLOW_BODY_MOTOR_OVERLAP \|\| reached\(now, bodySafeAfter\)/);
 });
 test("Verified 22-second arm uses 0x02 motor bit and per-part cooldown", () => {
@@ -144,8 +144,8 @@ test("Compound body mode emits one tested bitmask and conservative body cooldown
   assert.match(sketch,/const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 240000;/);
   assert.match(sketch,/uint8_t frame\[11\] = \{0xAA, 0xCA, mask,/);
   assert.match(sketch,/duration = max\(duration, TORSO_ANIMATION_MS \+ TORSO_BUFFER_MS\);/);
-  assert.match(sketch,/if \(!COMPOUND_BODY_ENABLED && HEAD_ENABLED/);
-  assert.match(sketch,/if \(!COMPOUND_BODY_ENABLED && ARM_ENABLED/);
+  assert.match(sketch,/if \(!sentBodyThisLoop && \(!COMPOUND_BODY_ENABLED \|\| COMPOUND_ALONGSIDE\) && HEAD_ENABLED/);
+  assert.match(sketch,/if \(!sentBodyThisLoop && \(!COMPOUND_BODY_ENABLED \|\| COMPOUND_ALONGSIDE\) && ARM_ENABLED/);
   assert.throws(()=>api.generateSketch(sample({compoundEnabled:true,compoundMasks:[7]})),/enabled head, arm, and torso/);
   assert.throws(()=>api.generateSketch(sample({headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,compoundMasks:[3],jawFollowupMotor:1})),/separate modes/);
   assert.throws(()=>api.generateSketch(sample({headEnabled:true,armEnabled:true,torsoEnabled:true,compoundEnabled:true,compoundMasks:[]})),/Select at least one combined mask/);
@@ -299,11 +299,11 @@ test("Subtle deliberately disables silent jaw by default", () => {
   assert.equal(api.PRESETS.normal.jawEnabled, false);
   assert.equal(api.PRESETS.haunted.jawEnabled, false);
 });
-test("Advanced body overlap permits independent motor timers but defaults off", () => {
+test("Removed overlap is disabled even for old configuration objects", () => {
   const normal=api.generateSketch(sample());
   assert.match(normal, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
   const advanced=api.generateSketch(sample({bodyOverlap:true,torsoEnabled:true,armEnabled:true}));
-  assert.match(advanced, /const bool ALLOW_BODY_MOTOR_OVERLAP = true;/);
+  assert.match(advanced, /const bool ALLOW_BODY_MOTOR_OVERLAP = false;/);
   assert.match(advanced, /const uint32_t BODY_WRITE_SPACING_MS = 600;/);
   assert.match(advanced, /reached\(now, torsoSafeAfter\)/);
   assert.match(advanced, /reached\(now, armSafeAfter\)/);

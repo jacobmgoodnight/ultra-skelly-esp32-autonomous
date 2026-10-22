@@ -407,3 +407,21 @@ No prop, USB flashing, visible effect/speed result or new endurance observation
 was available. These new physical behaviors remain Untested. Follow the separate
 [Studio refresh checklist](studio-lighting-checklist.md), starting with isolated
 static colors and palette rotation before effects or motor/mouth integration.
+
+
+## October 22, 2026 — owner refresh report and follow-up
+
+The owner reports completing the Studio refresh tests except lighting and browser
+USB. They explicitly report separate-command body overlap fails: a following
+action stops the previous one. Random combined body movements work. No per-mask
+timing log, extended run or new lighting/USB result accompanies this report.
+
+The follow-up removes Studio separate overlap and forces it OFF even for old
+profiles, bundles eye artwork with source attribution, adds four editable palette
+slots and a configurable startup scan interval and normal retry pause, and adjusts Subtle and
+Haunted defaults. Haunted now enables all four combined masks every 240–600 s
+alongside serialized individual actions. Due combos wait for current locks, take
+one turn, then standalone scheduling resumes. Previous profiles preserve
+combined-only behavior. These new scheduling/retry changes need the short
+[follow-up observations](studio-lighting-checklist.md); no new physical pass is
+claimed. Existing lighting effects/rotation and USB remain pending.

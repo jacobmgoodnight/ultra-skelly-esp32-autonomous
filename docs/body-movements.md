@@ -32,15 +32,15 @@ By default the controller uses a **single body-motor lock**, serializing head, t
 
 The independent silent jaw MP3 and live eye commands can still overlap body movement. Each jaw MP3 must have its **saved head, torso and arm movement flags set to `0x00`**, or MP3 playback may unexpectedly move body parts.
 
-Body animation scheduling is **best effort**: the app's random ranges are the target start-to-start delays for each part. If another motor is already running, movement can start *later* than its scheduled target. The most overdue body request gets the next turn. With advanced overlap enabled, separate body motor commands can begin while other body movements are active, but the next BLE command is delayed by 600 ms. The 5-minute timeline is illustrative only.
+Body animation scheduling is **best effort**: the app's random ranges are the target start-to-start delays for each part. If another motor is already running, movement can start *later* than its scheduled target. The most overdue body request gets the next turn. Separate-command overlap failed physically and has been removed from Studio. Combined actions use one frame and retain the full shared cooldown. The 5-minute timeline is illustrative only.
 
 ## Studio presets
 
-- **Subtle:** torso OFF, arm OFF.
-- **Normal:** torso OFF, arm OFF.
-- **Haunted:** torso ON (random 180–360 seconds), arm ON (random 360–720 seconds), body overlap OFF by default.
+- **Subtle:** head 60–120 seconds; torso/arm/combined OFF.
+- **Normal:** head 35–75 seconds, arm 150–240 seconds; torso/combined OFF.
+- **Haunted:** torso 75–180 seconds, arm 60–120 seconds; head 32–45 seconds. All four combined masks ON every 240–600 seconds, interleaved with individual routines.
 
-In all modes, each body part has its own enable switch and frequency controls. **Choosing Haunted explicitly enables both torso and arm movement**; advanced overlap remains OFF. The generated sketch preserves the other tested behaviors, but combinations with torso and arm still need field testing.
+In all modes, each body part has its own enable switch and frequency controls. **Choosing Haunted explicitly enables both torso and arm movement**; separate commands remain serialized. The generated sketch preserves the other tested behaviors, but combinations with torso and arm still need field testing.
 
 ## Checked-in sketch defaults
 

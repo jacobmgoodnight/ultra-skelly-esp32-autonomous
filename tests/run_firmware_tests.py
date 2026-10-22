@@ -39,6 +39,11 @@ def build_and_run(directory, source, assertions, label, expected_error=None):
 
 
 failed = False
+refresh_source = subprocess.check_output(
+    [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-refresh-fixture.cjs")], encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/RefreshFollowup", refresh_source,
+                        (ROOT / "tests/refresh_followup_harness.cpp").read_text(encoding="utf-8"),
+                        "Startup retries and interleaved combined movement")
 for name, flags in [("Static", []), ("Mixed", ["--mixed"]), ("SingleEffect", ["--mixed", "--single"]), ("JawRestore", ["--mixed", "--jaw"])]:
     source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-lighting-fixture.cjs"), *flags], encoding="utf-8")
     failed |= build_and_run(ROOT / (".skelly-build/host/Lighting" + name), source,

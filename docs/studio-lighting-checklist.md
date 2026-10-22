@@ -6,16 +6,48 @@ Untested**. Start with mouth OFF. Use the original ESP32-WROOM, Arduino-ESP32
 Unless a row explicitly uses them, keep clock windows, idle breaks, combined
 movements and jaw-first responses OFF so they do not obscure the observation.
 
-## Browser checks — no prop needed
+## October 22 follow-up status and new spot checks
+
+The owner reports the previous refresh checks complete except lighting and USB.
+Separate motor-command overlap failed (new commands stopped existing motion);
+random combined actions worked. Do not repeat completed checks unnecessarily.
+The new intervals, startup retry policy and interleaved scheduler below are
+Software-only until checked on the prop.
+
+- Subtle: head 60–120 s. Haunted: arm 60–120 s, torso 75–180 s;
+  combined masks 3/5/6/7 every 240–600 s, keeping individual routines between.
+  For a short isolated combo observation, set combined interval to 60–60 s,
+  keep mouth/eyes/lights OFF, and watch at least three events (~4 minutes).
+  Pass: combos wait for any current motion, selected motors complete together,
+  and single actions resume afterward without cutting a combo short. Restore
+  240–600 s afterward. Confirm all four masks separately if random selection
+  does not show each. Existing single-frame success does not verify interleaving.
+- Boot with Skelly unavailable: miss scans target starts every 5 s during
+  the first minute (up to 5 s scanning, with no extra pause after a full miss).
+  Afterward the pause is 30 s; logs must report actual waits.
+  Power Skelly on within the startup minute and confirm full name discovery and
+  connection; after a successful connection, later losses use normal retry timing.
+  Try normal retry 10 s; confirm the configured pause. Normal timing is scan duration
+  plus pause; startup timing includes scanning. Neither guarantees a connection
+  deadline. Save a boot log.
+- Edit a palette name and both colors, save/reload the profile, then use its
+  button and include it in rotation. Generated RGB must match; verify actual
+  colors during the still-pending isolated lighting tests below.
+- Eye thumbnails and enlarged previews now use bundled local assets. Reopen the
+  saved Studio folder without internet and confirm previews plus generation.
+- Browser USB upload/capture remains pending: follow [USB tools](usb-tools.md).
+  It still installs a separate fixed head-only build, not custom Studio settings.
+
+## Browser checks — reference for the previous refresh
 
 1. Open Studio: three main personalities, no top shortcut bar or head-only button.
    Confirm the purple skull/ribcage/arm icons and purple “Make it yours” title.
-2. Select Subtle: head only, 120–240 seconds. Select Normal: head 35–75 seconds,
-   arm 150–240 seconds. Select Haunted: arm 120–240 seconds; torso remains
-   180–360 seconds. All three keep mouth OFF.
+2. Select Subtle: head only, 60–120 seconds. Select Normal: head 35–75 seconds,
+   arm 150–240 seconds. Select Haunted: arm 60–120 seconds; torso
+   75–180 seconds, plus optional combined actions every 240–600 seconds. All three keep mouth OFF.
 3. Watch the five-minute preview: Normal shows Head and Arm only; Subtle shows
    Head only. Enabling eyes adds Eyes; enabling lighting rotation adds Lighting.
-   Combined replaces the separate body lanes only when that mode is enabled;
+   Combined adds a lane in interleaved mode; combined-only mode replaces body lanes;
    Jaw appears only when mouth is enabled. Long intervals may have no event in
    five minutes. Details stay collapsed; the preview is approximate request timing.
 4. Enable palette rotation: lighting turns ON, choices and interval appear. At
@@ -24,9 +56,9 @@ movements and jaw-first responses OFF so they do not obscure the observation.
 5. Save/reload a profile with two palettes, a custom interval and pulsing on one
    channel. Confirm settings survive. Older v1/v2 profiles load with rotation OFF
    and Static effects while retaining their explicit movement/eye/mouth settings.
-   New profiles use v3 so older Studio cannot silently omit lighting controls.
+   New profiles use v4 so older Studio cannot silently omit lighting controls.
 6. Preview/download the sketch, reopen Studio offline, and repeat generation.
-   Eye thumbnails still need internet; generation and inline movement icons do not.
+   Eye thumbnails, generation and inline movement icons all work offline.
    Check the layout on a phone and with keyboard focus.
 
 ## Physical checks — short, separate observations
@@ -34,7 +66,7 @@ movements and jaw-first responses OFF so they do not obscure the observation.
 | Check | Configuration / time | Confirm visually |
 | --- | --- | --- |
 | Normal routine | Normal, eyes/lights/mouth OFF; about 5 minutes after connection | Complete head turns and at least one complete two-part arm animation; no torso/jaw action. Requested starts may wait for shared cooldowns. |
-| Haunted arm frequency | Haunted, eyes/lights/mouth OFF; about 8 minutes | Head, arm and torso each activate and complete; arm requests use 120–240 seconds. Record observed start times; locks can delay them. |
+| Haunted arm frequency | Haunted, eyes/lights/mouth OFF; about 8 minutes | Head, arm and torso each activate and complete; arm requests use 60–120 seconds (disable combined actions for isolation). Record observed start times; locks can delay them. |
 | Eyes, isolated | All motors and mouth OFF; Eyes ON, patterns 2/6/18, every 15–20 seconds; ~1 minute | At least a few changes, all within selected designs; no unexpected movement. Random repeats are allowed. |
 | Static lighting baseline | All motors/eyes/mouth OFF; rotation OFF, both effects Static; choose distinct torso/head colors | Both chosen colors and brightness appear. Identify which physical LEDs each channel affects. |
 | Palette rotation | Same isolation; effects Static; choose only Halloween + Moonlight, every 15 seconds; ~2 minutes | First selected palette appears, then alternating selected pairs; no unselected colors or half-updated pair left indefinitely. Short stagger while channels update is expected. |

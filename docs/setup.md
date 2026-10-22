@@ -59,7 +59,7 @@ Most ESP32 boards restart automatically after a successful upload; the normal co
 1. Power on Skelly and close/disconnect the official app and web controller.
 2. After the upload completes, press **EN/RESET** on the ESP32, or unplug and reconnect **ESP32 USB power** (not Skelly's power).
 3. Reopen Serial Monitor at **115200**, looking for `Scanning for Ultra Skelly v2...`, `Found Skelly by advertised name.`, and `CONNECTED`. The controller does not log device addresses.
-4. Give it time: each scan lasts approximately **5 seconds**; after an unsuccessful scan or connection the sketch waits roughly **30 seconds** before retrying.
+4. Give it time: each scan lasts approximately **5 seconds**; startup targets scan starts every **5 seconds** for the first minute or until first success (scanning time counts toward the interval). Later unsuccessful scans/connections wait roughly **30 seconds** before retrying. Both settings are configurable in Studio.
 5. If it only ever connects after an ESP32 reboot, report your board, Arduino-ESP32 version and serial output; manual power cycling should not be a prerequisite for normal automatic reconnect.
 
 The one-shot eye test is different: it scans **only once** per reset, while the main controller retries automatically. This distinction matters when testing immediately after flashing.

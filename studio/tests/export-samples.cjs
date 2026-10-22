@@ -11,6 +11,8 @@ for(const file of ["studio/template.js","studio/app.js"]) {
 const generator = ctx.window.SkellyStudioGenerator;
 const base = {...generator.DEFAULTS, jawEnabled:true,headMin:32,headMax:60,armEnabled:false,armMin:360,armMax:720, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
+  HauntedInterleaved:{...generator.PRESETS.haunted},
+  CustomPalettesAndRetry:{jawEnabled:false,lightsEnabled:true,lightRotation:true,palette0Name:"Custom",palette0Torso:"#123456",palette0Head:"#abcdef",scanRetrySec:10,startupRetrySec:5,startupWindowSec:90},
   RotatingStaticLights:{headEnabled:false,jawEnabled:false,lightsEnabled:true,lightRotation:true,lightInterval:15,lightPalettes:[0,2]},
   MixedLightEffects:{headEnabled:false,jawEnabled:false,lightsEnabled:true,torsoEffect:3,headEffect:2,torsoSpeed:0,headSpeed:254},
   RotatingEffectsWithClockRest:{lightsEnabled:true,lightRotation:true,lightInterval:30,lightPalettes:[1,3],torsoEffect:3,headEffect:1,clockEnabled:true,restEnabled:true},

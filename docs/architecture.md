@@ -20,7 +20,13 @@ explains locks, jaw-first follow-ups, restoration, rest and optional clock windo
 `scanAndConnect` deletes the previous advertisement, clears scan results, and
 performs a blocking five-second scan. The scan callback copies the matching
 advertisement and stops scanning; connection starts only after scanning returns
-and a 500 ms settling delay. Misses and failed connections retry after 30 seconds.
+and a 500 ms settling delay. Startup scans target five seconds between starts during the first minute after
+setup, ending early on first success. Scan/connection work consumes that interval;
+a full five-second miss can retry immediately. Afterward misses/failures pause
+30 seconds. Studio exposes the startup interval and normal pause (5–300 s), plus
+the startup period (0–300 s; 0 disables). Blocking connection work can delay
+actual scan starts; no second scan starts before the first finishes. The startup period is
+latched expired, including across millis wrap; disconnect does not renew it.
 One BLE client is reused. Each connection now invalidates the application writer
 and explicitly calls `getServices` before looking up AE00/AE01. In pinned
 Bluedroid this deletes the old service objects and rebuilds their cache; the old
@@ -50,12 +56,19 @@ canonical reference sketch's previous head-and-jaw defaults or scheduling code.
 Independent body scheduling chooses the most overdue eligible head, arm, or torso.
 Each motor has a due time and cooldown, now anchored after a successful BLE call
 returns so call latency cannot consume the cooldown. A shared lock serializes body commands by
-default, with 600 ms between body writes. An advanced overlap option bypasses the
-shared lock, preserving per-motor cooldowns. Head uses 25+7 s, arm 22+10 s, torso
+default, with 600 ms between body writes. Separate-command overlap failed the
+owner's physical test: a following action stops its predecessor. Studio removes
+the control, forces its emitted constant OFF and clears it on profile import.
+The canonical constant remains for historical diagnostic compatibility. Head uses 25+7 s, arm 22+10 s, torso
 25+10 s. These are conservative models, not completion telemetry.
 
-Compound mode suppresses independent body scheduling and sends one randomly
-selected allowed mask. It validates selected motors and holds the shared lock
+Combined-only mode suppresses independent body scheduling and sends one randomly
+selected allowed mask. New Studio configurations default to interleaved mode:
+a due combined event gets priority after existing movement cooldowns, then
+individual requests resume after its full lock. Only one body packet can be sent
+in a loop. Selected motors receive fresh individual due targets at combo start;
+unselected motors retain their due targets and wait for the shared lock.
+The canonical COMPOUND_ALONGSIDE flag stays OFF for legacy diagnostics. It validates selected motors and holds the shared lock
 until the longest selected animation plus buffer ends. Studio rejects compound
 mode with jaw-first follow-ups and requires MP3 body protection when jaw is ON.
 Compile-time guards also reject compound mode with jaw-first follow-ups, or with
@@ -86,7 +99,10 @@ one F6 speed write per dynamic channel after its F2 mode write: seven or eight
 spaced writes total. Speed follows upstream's inverted 0–254 UI mapping.
 These effects have software coverage, but no physical observation yet.
 
-With rotation enabled, connection starts at the first selected named palette.
+Studio offers four editable palette slots, each with a name and torso/head RGB.
+Names stay in the browser/profile; only validated RGB bytes enter the firmware
+table. Palette buttons and rotation both use the edited values.
+With rotation enabled, connection starts at the first selected palette.
 After a completed light sequence plus the configured 15–3600-second interval,
 the low-priority scheduler picks another selected palette, excluding the current
 one. A snapshot remains stable throughout each sequence; no partial sequence is
@@ -96,8 +112,9 @@ selected effect/speed, then restarts the rotation interval. Disconnect clears
 selection/work; reconnect starts fresh. Clock closure gates new rotations and
 does not send a lights-off command. Existing sequences/restoration may finish.
 
-Studio now exports v3 profiles. v1/v2 imports supply safe defaults only for newly
-added fields; explicit prior values remain. The timing preview compacts lanes
+Studio now exports v4 profiles. v1/v2/v3 imports supply defaults for new palette
+and retry fields, retain combined-only scheduling, and force failed separate
+overlap OFF. Other explicit prior settings remain. The timing preview compacts lanes
 and its legend to enabled features; longer explanations are collapsed by default.
 
 Eyes use AAF9, an optional independent random schedule and delayed start/end

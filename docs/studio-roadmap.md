@@ -1,6 +1,16 @@
 # Studio usability and next steps
 
-## October 22 Studio and lighting refresh
+## October 22 follow-up
+
+Subtle now uses 60–120 seconds. Haunted uses arm 60–120 and torso 75–180,
+with all four combined masks every 240–600 seconds alongside individual routines.
+Separate-command overlap is removed after a physical failure report. Eye previews
+are bundled; four palette slots can be renamed/recolored and saved in v4 profiles.
+Bluetooth retries expose a five-second startup scan interval and thirty-second
+normal retry pause. Lighting and browser USB remain pending; previous refresh
+checks were reported complete. See the [follow-up checklist](studio-lighting-checklist.md).
+
+## Earlier October 22 Studio and lighting refresh
 
 Subtle now provides the quiet 120–240-second head-only routine; the overlapping
 Watchful button and separate head-only setup button are removed. The internal

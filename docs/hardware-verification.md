@@ -14,7 +14,8 @@ the current status. A transport success alone does not verify an actuator.
 | Arm `0x02` | Verified | Two moves totaling ~22 s |
 | Torso `0x04` | Verified | ~25 s |
 | Single-frame masks `0x03`, `0x05`, `0x06`, `0x07` | Verified | Selected motors activated, without MP3; compound completion durations unmeasured |
-| Recurring random compound scheduler | Untested | Implemented and compile-tested; no extended physical run |
+| Recurring random compound scheduler | Verified (owner report) | October 22: owner reports random combined body movements work. No timed log, exact settings or extended run supplied. New interleaving with standalone routines remains Untested. |
+| Separate motor-command overlap | Failed | October 22: owner reports a following separate action stops the prior movement. Removed from Studio; generated sketches force serialization, including imported profiles. Single-frame combinations remain separate. |
 | Jaw MP3 files #12, #13, #14 on original device | Verified | Device-specific serials; #13/#14 sustained holds ~3 s |
 | Saved movement flags `0x00` with jaw playback | Verified | Jaw still responds without stored full-body animation |
 | MP3 sent after body movement interrupts it | Verified | Observed interruption; internal cause unknown |
@@ -45,4 +46,10 @@ the current status. A transport success alone does not verify an actuator.
 | Browser USB capture / prebuilt installer | Software-only | Mocked stream cleanup, original-byte capture, package/hash rejection and local UI checked. No real USB capture or flashing performed. |
 | Selected-palette rotation | Software-only / physically Untested | First selected palette, no immediate repeats, spacing, clock/idle gating, jaw/restoration deferral, timer wrap and reconnect covered by native C++; visual pairs and integration need observation. |
 | Per-channel Strobe/Pulsing and speed | Software-only / physically Untested | F2/F6 derived from upstream live handlers, CRC/length/order checks and static six-write regression covered. LED regions, actual effects and speed response need attended tests. |
+
+October 22 refresh follow-up: the owner reports completing all Studio refresh
+checks except lighting and USB. This records the reported pass for the previous
+refresh; no logs, per-row timings or independent observations accompanied it.
+It does not verify the subsequent faster retry policy, new Haunted intervals or
+interleaved combined scheduler. Lighting and browser USB remain pending.
 

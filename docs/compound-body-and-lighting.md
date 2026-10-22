@@ -1,12 +1,12 @@
 # Compound body movement and live RGB lighting
 
-**October 20, 2026 — experimental automation with verified movement masks.** Ultra Skelly v2 physically moved on all tested combined `AACA` bitmasks: `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso), and `0x07` (all three). The new autonomous **random scheduler** for those masks is opt-in and has **not yet been run on the prop**.
+**October 20, 2026 — experimental automation with verified movement masks.** Ultra Skelly v2 physically moved on all tested combined `AACA` bitmasks: `0x03` (head+arm), `0x05` (head+torso), `0x06` (arm+torso), and `0x07` (all three). October 22: the owner reports random combined movements work. The new interleaving of individual routines and combined events remains physically Untested.
 
 ## Combined body mode
 
-In [Skelly Studio](../studio/), enable the individual motors you intend to use, then check **Random combined body movements**. Choose the allowed combinations and a randomized start interval (suggest **180–360 seconds** initially).
+In [Skelly Studio](../studio/), enable the individual motors you intend to use, then check **Random combined body movements**. Choose the allowed combinations and a randomized start interval (default **240–600 seconds**).
 
-- The controller selects **ONE combined mask** for each event, sends one AACA BLE frame, and suppresses the old independently timed head/arm/torso commands while this mode is active.
+- The controller selects **ONE combined mask** for each event, sends one AACA BLE frame, and waits for existing body cooldowns. With **Keep individual routines between combined actions** ON, standalone actions resume after the combo lock; OFF retains combined-only scheduling. Haunted enables this option and all four masks.
 - Each motor in the selected mask receives its usual cooldown (head **25+7 sec**, arm **22+10 sec**, torso **25+10 sec**); the shared body lock lasts as long as the **slowest selected motor plus buffer**.
 - The next compound movement waits for its randomized interval, that lock, and any jaw MP3 that is due/playing. Leave **Protect head + arm + torso from jaw MP3** ON: MP3 playback appears to interfere with head motion.
 - This mode **cannot be combined** with *Jaw first → body movement* in the generator. To preserve alternating jaw-first arm/torso mode, leave compound mode OFF. It has about 30 minutes of serial dispatch evidence plus individually verified physical pairings; every recurring physical cycle was not separately confirmed.
