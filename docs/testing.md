@@ -18,6 +18,15 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
+USB settings/scene software coverage and a separate future attended procedure are
+in [USB settings and scenes](usb-settings-scenes.md). Continue the current Studio
+refresh checklist first; no new physical result is implied by these checks.
+The native runtime-offline case services the real loop across the 24.9-day signed
+timer boundary and millis wrap, verifies USB settings persist with the prop absent,
+and preserves an active 32-second head cooldown. CI uses the same complete
+`scripts/compile-validation.py` driver as local verification, with a shared scratch
+sketch/cache and an uploaded source-hash manifest; no compile categories are skipped.
+
 For the new USB/fairness/clock options, see [attended criteria](next-attended-tests.md).
 Hardware is unavailable during implementation; software tests never replace those
 observations. The full compile matrix can now be run with
@@ -29,6 +38,7 @@ From the repository root with Node, Python and a C++17 compiler:
 ```sh
 node --check studio/app.js
 node --check studio/template.js
+node scripts/sync-runtime-schema.cjs --check
 node scripts/sync-template.cjs --check
 node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
@@ -68,10 +78,12 @@ Get-ChildItem .skelly-build -Directory | ForEach-Object {
 On Bash use the guarded loop in `.github/workflows/studio-checks.yml`. Generated
 files and native test output are ignored under `.skelly-build/`. After changing
 canonical firmware, run `node scripts/sync-template.cjs` before checks/export.
+When changing runtime fields or factory scene defaults, run
+`node scripts/sync-runtime-schema.cjs` before syncing the template.
 After changing Studio JavaScript, CSS or the embedded template, run
 `node scripts/version-studio-assets.cjs` to refresh the HTML's content-based
-asset URLs. This prevents returning visitors from reusing an older generator or
-stylesheet with a new page; all three files remain local and work offline.
+asset URLs. This prevents returning visitors from reusing older modules with a
+new page; all modules remain local and work offline.
 
 ## Reference hardware test: isolate jaw and RGB, no body motors
 

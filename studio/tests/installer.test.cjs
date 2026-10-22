@@ -14,6 +14,8 @@ test('installer rejects wrong board, truncated images and mismatched hashes',asy
   const bytes=new Uint8Array(4194304);bytes[4096]=bytes[65536]=0xe9;
   const metadata={profile:'head-only',chipFamily:'ESP32',core:'3.3.12',sourceCommit:'a'.repeat(40),sourceSHA256:'b'.repeat(64),physicalStatus:'Untested',binarySHA256:crypto.createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length};
   assert.equal((await verifyPackage(metadata,bytes)).profile,'head-only');
+  assert.equal((await verifyPackage({...metadata,profile:'universal',binaryFile:'universal.bin'},bytes)).profile,'universal');
+  await assert.rejects(verifyPackage({...metadata,profile:'universal',binaryFile:'head-only.bin'},bytes));
   await assert.rejects(verifyPackage({...metadata,chipFamily:'ESP32-C3'},bytes));
   await assert.rejects(verifyPackage({...metadata,physicalStatus:'Verified'},bytes));
   await assert.rejects(verifyPackage(metadata,bytes.slice(1)));

@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const studio = path.resolve(__dirname, "../studio");
-for(const [page,files] of Object.entries({"index.html":["style.css", "template.js", "experience.js", "app.js"],"usb.html":["style.css","serial.js","usb.js","installer.js"]})) {
+for(const [page,files] of Object.entries({"index.html":["style.css", "template.js", "experience.js", "runtime-schema.js","runtime.js","serial.js","app.js","scenes.js","controller.js"],"usb.html":["style.css","serial.js","usb.js","installer.js"]})) {
 const target = path.join(studio, page);
 const original = fs.readFileSync(target, "utf8").replace(/\r\n/g, "\n");
 let expected = original;

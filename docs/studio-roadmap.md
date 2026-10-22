@@ -1,5 +1,16 @@
 # Studio usability and next steps
 
+## USB settings and saved scenes — October 22
+
+Implemented as an opt-in universal firmware path, with physical checks pending:
+USB read/save/reset, bounded connected status, up to four saved personalities and
+optional autonomous scene rotation. Ordinary sketch downloads keep their existing
+compile-time settings path. See [implementation and later checks](usb-settings-scenes.md).
+Lights-out scheduling was explicitly deferred; the clock still gates new routines
+without switching off stored prop lighting. Existing Studio/light/USB checks remain
+in progress and are not replaced by this follow-up. Older proposals below describe
+their status at the time they were written.
+
 ## October 22 follow-up
 
 Subtle now uses 60–120 seconds. Haunted uses arm 60–120 and torso 75–180,

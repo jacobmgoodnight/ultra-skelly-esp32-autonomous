@@ -425,3 +425,46 @@ one turn, then standalone scheduling resumes. Previous profiles preserve
 combined-only behavior. These new scheduling/retry changes need the short
 [follow-up observations](studio-lighting-checklist.md); no new physical pass is
 claimed. Existing lighting effects/rotation and USB remain pending.
+
+## October 22, 2026 — opt-in universal settings and scenes (software only)
+
+The owner authorized USB-editable settings, saved personalities/scenes and connected
+diagnostics while continuing the existing checklist. Lights-out scheduling was
+explicitly excluded. New universal/scene sketches opt into a bounded runtime schema;
+ordinary sketches retain their compile-time configuration. Saved programs stage,
+validate, wait for full motion/playback/restoration cooldowns, then alternate two
+CRC/header-protected NVS slots with readback before application. Up to four scenes
+can rotate without flash writes, with hold time starting at BLE connection.
+No clock time survives boot and no motor cooldown is editable over USB.
+
+Native execution exercises actual serialized UART transfers, invalid/order failures,
+storage failure, corrupt-slot fallback, sequence wrap, pending head cooldowns,
+scene timing and actual selected file/duration values. Browser checks cover scene
+save/load/export/import/download, local persistence, duration validation, disabled
+USB controls without a port, desktop layout and a 390-pixel viewport without
+horizontal overflow. The preview adds first-request bands, another sample seed
+and a combined range extending beyond five minutes, without inventing movement.
+Studio removes the requested top-level tool links, summary idle-break row and
+unnecessary preparation copy, and adds the larger skull and skeletal hand icon.
+
+No ESP32 was flashed or connected, and no physical result is claimed. The new
+[USB/scene checks](usb-settings-scenes.md) are a separate follow-up when the owner
+is ready; existing lighting/USB and refresh reports retain their previous status.
+
+## October 22, 2026 — independent review: long-disconnection USB blocker
+
+A separate automated review reproduced a P2 bug in the initial universal build:
+after 25 simulated days offline with the loop serviced hourly, stale zero-valued
+cooldown deadlines appeared future under signed comparisons. A USB reset queued
+indefinitely, while the pending update prevented scanning/reconnection from
+refreshing those locks. The original native reproduction observed 600 scans,
+then no NVS write or further scan during 250 seconds of pending work. This was
+continuous serviced operation, distinct from a weeks-long loop stall.
+
+The correction retires elapsed deadlines at every runtime service, including
+disconnected/pending loops, and leaves future motion/playback deadlines untouched.
+A new full-loop regression fails on the original source and covers the offline
+half-range, settings persistence, the full 32-second active cooldown, and subsequent
+millis wrap. The complete pinned compile driver is reused in CI so library caches
+can be shared while preserving all generated, diagnostic, attended and installer
+cases. No physical endurance, USB/NVS or actuator result is claimed.

@@ -1,13 +1,22 @@
-name: Build head-only USB installer package
+name: Build USB installer packages
 on:
   workflow_dispatch:
   pull_request:
-    paths: ['firmware/**', 'studio/**', 'scripts/prepare-prebuilt.cjs', 'scripts/package-prebuilt.py', '.github/workflows/prebuilt.yml']
+    paths: ['firmware/**', 'studio/**', 'scripts/prepare-prebuilt.cjs', 'scripts/prepare-universal.cjs', 'scripts/sync-runtime-schema.cjs', 'scripts/package-prebuilt.py', '.github/workflows/prebuilt.yml']
 permissions:
   contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - profile: head-only
+            sketch: HeadOnly
+            script: prepare-prebuilt.cjs
+          - profile: universal
+            sketch: Universal
+            script: prepare-universal.cjs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,16 +27,17 @@ jobs:
         run: |
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-      - name: Generate and compile fixed head-only firmware
+      - name: Generate and compile installer firmware
         run: |
           node scripts/sync-template.cjs --check
-          node scripts/prepare-prebuilt.cjs
-          arduino-cli compile --fqbn esp32:esp32:esp32 --build-path .skelly-build/prebuilt/binaries .skelly-build/prebuilt/HeadOnly
+          node scripts/sync-runtime-schema.cjs --check
+          node scripts/${{ matrix.script }}
+          arduino-cli compile --fqbn esp32:esp32:esp32 --build-path .skelly-build/prebuilt/binaries .skelly-build/prebuilt/${{ matrix.sketch }}
       - name: Package version and hashes
         run: |
-          python scripts/package-prebuilt.py --source .skelly-build/prebuilt/HeadOnly/HeadOnly.ino --binary .skelly-build/prebuilt/binaries/HeadOnly.ino.merged.bin --output .skelly-build/prebuilt/package --revision "$(git rev-parse HEAD)"
+          python scripts/package-prebuilt.py --source .skelly-build/prebuilt/${{ matrix.sketch }}/${{ matrix.sketch }}.ino --binary .skelly-build/prebuilt/binaries/${{ matrix.sketch }}.ino.merged.bin --output .skelly-build/prebuilt/package --revision "$(git rev-parse HEAD)" --profile ${{ matrix.profile }}
       - uses: actions/upload-artifact@v4
         with:
-          name: head-only-usb-preview
+          name: ${{ matrix.profile }}-usb-preview
           path: .skelly-build/prebuilt/package/
           retention-days: 90

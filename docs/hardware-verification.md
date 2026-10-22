@@ -9,6 +9,8 @@ the current status. A transport success alone does not verify an actuator.
 
 | Behavior | Status | Evidence / limit |
 | --- | --- | --- |
+| Universal USB settings, persistent recovery and scene rotation | Software-only / physically Untested | Actual C++ mocked UART/NVS/time covers chunk ordering, CRC/ranges, idle boundary, failed storage, corrupt-slot recovery, sequence wrap and connected scene timing. Pinned ESP32 compilation does not verify real NVS/USB or prop behavior. [Separate follow-up](usb-settings-scenes.md); existing checklist remains in progress. |
+| Connected USB diagnostics | Software-only / physically Untested | Bounded status/protocol tests; counters and readback acknowledge firmware state, not movement or lighting response. |
 | BLE name discovery, AE00/AE01 WRITE_NR | Verified | Successful real commands; scan/connection failures also occur |
 | Head `0x01` | Verified | ~25 s; protected standalone operation retained |
 | Arm `0x02` | Verified | Two moves totaling ~22 s |

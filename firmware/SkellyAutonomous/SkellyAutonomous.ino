@@ -173,6 +173,620 @@ static_assert(!COMPOUND_BODY_ENABLED || !MOUTH_ENABLED || MOUTH_FILE_SERIAL == 0
               JAW_PROTECTS_ARM_TORSO,
               "Compound mode with jaw playback requires MP3 body protection.");
 
+#ifndef SKELLY_RUNTIME
+#define SKELLY_RUNTIME 0
+#endif
+#if SKELLY_RUNTIME
+#include <Preferences.h>
+// BEGIN GENERATED RUNTIME SCHEMA
+enum RuntimeField {
+  RF_headEnabled,
+  RF_armEnabled,
+  RF_torsoEnabled,
+  RF_jawEnabled,
+  RF_eyesEnabled,
+  RF_lightsEnabled,
+  RF_compoundEnabled,
+  RF_compoundAlongside,
+  RF_jawProtectBody,
+  RF_jawFollowupRecurring,
+  RF_overlap,
+  RF_restEnabled,
+  RF_lightRotation,
+  RF_diagnosticsEnabled,
+  RF_fairBodyTurns,
+  RF_playbackDiagnostics,
+  RF_clockEnabled,
+  RF_headMin,
+  RF_headMax,
+  RF_armMin,
+  RF_armMax,
+  RF_torsoMin,
+  RF_torsoMax,
+  RF_jawMin,
+  RF_jawMax,
+  RF_eyesMin,
+  RF_eyesMax,
+  RF_compoundMin,
+  RF_compoundMax,
+  RF_restMin,
+  RF_restMax,
+  RF_restDurationMin,
+  RF_restDurationMax,
+  RF_jawFile,
+  RF_jawClipSec,
+  RF_jawFollowupMotor,
+  RF_jawFollowupDelaySec,
+  RF_eyeJawMode,
+  RF_lightInterval,
+  RF_torsoBrightness,
+  RF_headBrightness,
+  RF_torsoEffect,
+  RF_headEffect,
+  RF_torsoSpeed,
+  RF_headSpeed,
+  RF_lightRestoreMode,
+  RF_scanRetrySec,
+  RF_startupRetrySec,
+  RF_startupWindowSec,
+  RF_clockStart,
+  RF_clockEnd,
+  RF_clockDays,
+  RF_eyeMask,
+  RF_comboMask,
+  RF_lightMask,
+  RF_fileCount,
+  RF_holdSec,
+  RF_torsoColor,
+  RF_headColor,
+  RF_palette0Torso,
+  RF_palette0Head,
+  RF_palette1Torso,
+  RF_palette1Head,
+  RF_palette2Torso,
+  RF_palette2Head,
+  RF_palette3Torso,
+  RF_palette3Head,
+  RF_file0,
+  RF_duration0,
+  RF_file1,
+  RF_duration1,
+  RF_file2,
+  RF_duration2,
+  RF_file3,
+  RF_duration3,
+  RF_file4,
+  RF_duration4,
+  RF_file5,
+  RF_duration5,
+  RF_file6,
+  RF_duration6,
+  RF_file7,
+  RF_duration7,
+  RF_sceneLabel0,
+  RF_sceneLabel1,
+  RF_sceneLabel2,
+  RF_sceneLabel3,
+  RF_sceneLabel4,
+  RF_sceneLabel5,
+  RF_sceneLabel6,
+  RF_sceneLabel7,
+  RF_sceneLabel8,
+  RF_sceneLabel9,
+  RF_sceneLabel10,
+  RF_sceneLabel11,
+  RF_sceneLabel12,
+  RF_sceneLabel13,
+  RF_sceneLabel14,
+  RF_sceneLabel15,
+  RF_sceneLabel16,
+  RF_sceneLabel17,
+  RF_sceneLabel18,
+  RF_sceneLabel19,
+  RF_sceneLabel20,
+  RF_sceneLabel21,
+  RF_sceneLabel22,
+  RF_sceneLabel23,
+  RF_sceneLabel24,
+  RF_sceneLabel25,
+  RF_sceneLabel26,
+  RF_sceneLabel27,
+  RF_sceneLabel28,
+  RF_sceneLabel29,
+  RF_sceneLabel30,
+  RF_sceneLabel31,
+  RF_paletteLabel0_0,
+  RF_paletteLabel0_1,
+  RF_paletteLabel0_2,
+  RF_paletteLabel0_3,
+  RF_paletteLabel0_4,
+  RF_paletteLabel0_5,
+  RF_paletteLabel0_6,
+  RF_paletteLabel0_7,
+  RF_paletteLabel0_8,
+  RF_paletteLabel0_9,
+  RF_paletteLabel0_10,
+  RF_paletteLabel0_11,
+  RF_paletteLabel0_12,
+  RF_paletteLabel0_13,
+  RF_paletteLabel0_14,
+  RF_paletteLabel0_15,
+  RF_paletteLabel0_16,
+  RF_paletteLabel0_17,
+  RF_paletteLabel0_18,
+  RF_paletteLabel0_19,
+  RF_paletteLabel0_20,
+  RF_paletteLabel0_21,
+  RF_paletteLabel0_22,
+  RF_paletteLabel0_23,
+  RF_paletteLabel1_0,
+  RF_paletteLabel1_1,
+  RF_paletteLabel1_2,
+  RF_paletteLabel1_3,
+  RF_paletteLabel1_4,
+  RF_paletteLabel1_5,
+  RF_paletteLabel1_6,
+  RF_paletteLabel1_7,
+  RF_paletteLabel1_8,
+  RF_paletteLabel1_9,
+  RF_paletteLabel1_10,
+  RF_paletteLabel1_11,
+  RF_paletteLabel1_12,
+  RF_paletteLabel1_13,
+  RF_paletteLabel1_14,
+  RF_paletteLabel1_15,
+  RF_paletteLabel1_16,
+  RF_paletteLabel1_17,
+  RF_paletteLabel1_18,
+  RF_paletteLabel1_19,
+  RF_paletteLabel1_20,
+  RF_paletteLabel1_21,
+  RF_paletteLabel1_22,
+  RF_paletteLabel1_23,
+  RF_paletteLabel2_0,
+  RF_paletteLabel2_1,
+  RF_paletteLabel2_2,
+  RF_paletteLabel2_3,
+  RF_paletteLabel2_4,
+  RF_paletteLabel2_5,
+  RF_paletteLabel2_6,
+  RF_paletteLabel2_7,
+  RF_paletteLabel2_8,
+  RF_paletteLabel2_9,
+  RF_paletteLabel2_10,
+  RF_paletteLabel2_11,
+  RF_paletteLabel2_12,
+  RF_paletteLabel2_13,
+  RF_paletteLabel2_14,
+  RF_paletteLabel2_15,
+  RF_paletteLabel2_16,
+  RF_paletteLabel2_17,
+  RF_paletteLabel2_18,
+  RF_paletteLabel2_19,
+  RF_paletteLabel2_20,
+  RF_paletteLabel2_21,
+  RF_paletteLabel2_22,
+  RF_paletteLabel2_23,
+  RF_paletteLabel3_0,
+  RF_paletteLabel3_1,
+  RF_paletteLabel3_2,
+  RF_paletteLabel3_3,
+  RF_paletteLabel3_4,
+  RF_paletteLabel3_5,
+  RF_paletteLabel3_6,
+  RF_paletteLabel3_7,
+  RF_paletteLabel3_8,
+  RF_paletteLabel3_9,
+  RF_paletteLabel3_10,
+  RF_paletteLabel3_11,
+  RF_paletteLabel3_12,
+  RF_paletteLabel3_13,
+  RF_paletteLabel3_14,
+  RF_paletteLabel3_15,
+  RF_paletteLabel3_16,
+  RF_paletteLabel3_17,
+  RF_paletteLabel3_18,
+  RF_paletteLabel3_19,
+  RF_paletteLabel3_20,
+  RF_paletteLabel3_21,
+  RF_paletteLabel3_22,
+  RF_paletteLabel3_23,
+  RF_name0,
+  RF_name1,
+  RF_name2,
+  RF_name3,
+  RF_name4,
+  RF_name5,
+  RF_name6,
+  RF_name7,
+  RF_name8,
+  RF_name9,
+  RF_name10,
+  RF_name11,
+  RF_COUNT
+};
+const uint32_t RUNTIME_LIMITS[RF_COUNT][2] = {
+  {0UL,1UL}, // headEnabled
+  {0UL,1UL}, // armEnabled
+  {0UL,1UL}, // torsoEnabled
+  {0UL,1UL}, // jawEnabled
+  {0UL,1UL}, // eyesEnabled
+  {0UL,1UL}, // lightsEnabled
+  {0UL,1UL}, // compoundEnabled
+  {0UL,1UL}, // compoundAlongside
+  {0UL,1UL}, // jawProtectBody
+  {0UL,1UL}, // jawFollowupRecurring
+  {0UL,1UL}, // overlap
+  {0UL,1UL}, // restEnabled
+  {0UL,1UL}, // lightRotation
+  {0UL,1UL}, // diagnosticsEnabled
+  {0UL,1UL}, // fairBodyTurns
+  {0UL,1UL}, // playbackDiagnostics
+  {0UL,1UL}, // clockEnabled
+  {32UL,3600UL}, // headMin
+  {32UL,3600UL}, // headMax
+  {45UL,3600UL}, // armMin
+  {45UL,3600UL}, // armMax
+  {45UL,3600UL}, // torsoMin
+  {45UL,3600UL}, // torsoMax
+  {22UL,3600UL}, // jawMin
+  {22UL,3600UL}, // jawMax
+  {15UL,3600UL}, // eyesMin
+  {15UL,3600UL}, // eyesMax
+  {45UL,3600UL}, // compoundMin
+  {45UL,3600UL}, // compoundMax
+  {120UL,3600UL}, // restMin
+  {120UL,3600UL}, // restMax
+  {15UL,300UL}, // restDurationMin
+  {15UL,300UL}, // restDurationMax
+  {1UL,65535UL}, // jawFile
+  {21UL,120UL}, // jawClipSec
+  {0UL,3UL}, // jawFollowupMotor
+  {2UL,10UL}, // jawFollowupDelaySec
+  {0UL,2UL}, // eyeJawMode
+  {15UL,3600UL}, // lightInterval
+  {0UL,255UL}, // torsoBrightness
+  {0UL,255UL}, // headBrightness
+  {1UL,3UL}, // torsoEffect
+  {1UL,3UL}, // headEffect
+  {0UL,254UL}, // torsoSpeed
+  {0UL,254UL}, // headSpeed
+  {0UL,2UL}, // lightRestoreMode
+  {5UL,300UL}, // scanRetrySec
+  {5UL,300UL}, // startupRetrySec
+  {0UL,300UL}, // startupWindowSec
+  {0UL,1439UL}, // clockStart
+  {0UL,1439UL}, // clockEnd
+  {1UL,127UL}, // clockDays
+  {1UL,262143UL}, // eyeMask
+  {0UL,15UL}, // comboMask
+  {1UL,15UL}, // lightMask
+  {1UL,8UL}, // fileCount
+  {60UL,3600UL}, // holdSec
+  {0UL,16777215UL}, // torsoColor
+  {0UL,16777215UL}, // headColor
+  {0UL,16777215UL}, // palette0Torso
+  {0UL,16777215UL}, // palette0Head
+  {0UL,16777215UL}, // palette1Torso
+  {0UL,16777215UL}, // palette1Head
+  {0UL,16777215UL}, // palette2Torso
+  {0UL,16777215UL}, // palette2Head
+  {0UL,16777215UL}, // palette3Torso
+  {0UL,16777215UL}, // palette3Head
+  {0UL,65535UL}, // file0
+  {0UL,120UL}, // duration0
+  {0UL,65535UL}, // file1
+  {0UL,120UL}, // duration1
+  {0UL,65535UL}, // file2
+  {0UL,120UL}, // duration2
+  {0UL,65535UL}, // file3
+  {0UL,120UL}, // duration3
+  {0UL,65535UL}, // file4
+  {0UL,120UL}, // duration4
+  {0UL,65535UL}, // file5
+  {0UL,120UL}, // duration5
+  {0UL,65535UL}, // file6
+  {0UL,120UL}, // duration6
+  {0UL,65535UL}, // file7
+  {0UL,120UL}, // duration7
+  {0UL,4294967295UL}, // sceneLabel0
+  {0UL,4294967295UL}, // sceneLabel1
+  {0UL,4294967295UL}, // sceneLabel2
+  {0UL,4294967295UL}, // sceneLabel3
+  {0UL,4294967295UL}, // sceneLabel4
+  {0UL,4294967295UL}, // sceneLabel5
+  {0UL,4294967295UL}, // sceneLabel6
+  {0UL,4294967295UL}, // sceneLabel7
+  {0UL,4294967295UL}, // sceneLabel8
+  {0UL,4294967295UL}, // sceneLabel9
+  {0UL,4294967295UL}, // sceneLabel10
+  {0UL,4294967295UL}, // sceneLabel11
+  {0UL,4294967295UL}, // sceneLabel12
+  {0UL,4294967295UL}, // sceneLabel13
+  {0UL,4294967295UL}, // sceneLabel14
+  {0UL,4294967295UL}, // sceneLabel15
+  {0UL,4294967295UL}, // sceneLabel16
+  {0UL,4294967295UL}, // sceneLabel17
+  {0UL,4294967295UL}, // sceneLabel18
+  {0UL,4294967295UL}, // sceneLabel19
+  {0UL,4294967295UL}, // sceneLabel20
+  {0UL,4294967295UL}, // sceneLabel21
+  {0UL,4294967295UL}, // sceneLabel22
+  {0UL,4294967295UL}, // sceneLabel23
+  {0UL,4294967295UL}, // sceneLabel24
+  {0UL,4294967295UL}, // sceneLabel25
+  {0UL,4294967295UL}, // sceneLabel26
+  {0UL,4294967295UL}, // sceneLabel27
+  {0UL,4294967295UL}, // sceneLabel28
+  {0UL,4294967295UL}, // sceneLabel29
+  {0UL,4294967295UL}, // sceneLabel30
+  {0UL,4294967295UL}, // sceneLabel31
+  {0UL,4294967295UL}, // paletteLabel0_0
+  {0UL,4294967295UL}, // paletteLabel0_1
+  {0UL,4294967295UL}, // paletteLabel0_2
+  {0UL,4294967295UL}, // paletteLabel0_3
+  {0UL,4294967295UL}, // paletteLabel0_4
+  {0UL,4294967295UL}, // paletteLabel0_5
+  {0UL,4294967295UL}, // paletteLabel0_6
+  {0UL,4294967295UL}, // paletteLabel0_7
+  {0UL,4294967295UL}, // paletteLabel0_8
+  {0UL,4294967295UL}, // paletteLabel0_9
+  {0UL,4294967295UL}, // paletteLabel0_10
+  {0UL,4294967295UL}, // paletteLabel0_11
+  {0UL,4294967295UL}, // paletteLabel0_12
+  {0UL,4294967295UL}, // paletteLabel0_13
+  {0UL,4294967295UL}, // paletteLabel0_14
+  {0UL,4294967295UL}, // paletteLabel0_15
+  {0UL,4294967295UL}, // paletteLabel0_16
+  {0UL,4294967295UL}, // paletteLabel0_17
+  {0UL,4294967295UL}, // paletteLabel0_18
+  {0UL,4294967295UL}, // paletteLabel0_19
+  {0UL,4294967295UL}, // paletteLabel0_20
+  {0UL,4294967295UL}, // paletteLabel0_21
+  {0UL,4294967295UL}, // paletteLabel0_22
+  {0UL,4294967295UL}, // paletteLabel0_23
+  {0UL,4294967295UL}, // paletteLabel1_0
+  {0UL,4294967295UL}, // paletteLabel1_1
+  {0UL,4294967295UL}, // paletteLabel1_2
+  {0UL,4294967295UL}, // paletteLabel1_3
+  {0UL,4294967295UL}, // paletteLabel1_4
+  {0UL,4294967295UL}, // paletteLabel1_5
+  {0UL,4294967295UL}, // paletteLabel1_6
+  {0UL,4294967295UL}, // paletteLabel1_7
+  {0UL,4294967295UL}, // paletteLabel1_8
+  {0UL,4294967295UL}, // paletteLabel1_9
+  {0UL,4294967295UL}, // paletteLabel1_10
+  {0UL,4294967295UL}, // paletteLabel1_11
+  {0UL,4294967295UL}, // paletteLabel1_12
+  {0UL,4294967295UL}, // paletteLabel1_13
+  {0UL,4294967295UL}, // paletteLabel1_14
+  {0UL,4294967295UL}, // paletteLabel1_15
+  {0UL,4294967295UL}, // paletteLabel1_16
+  {0UL,4294967295UL}, // paletteLabel1_17
+  {0UL,4294967295UL}, // paletteLabel1_18
+  {0UL,4294967295UL}, // paletteLabel1_19
+  {0UL,4294967295UL}, // paletteLabel1_20
+  {0UL,4294967295UL}, // paletteLabel1_21
+  {0UL,4294967295UL}, // paletteLabel1_22
+  {0UL,4294967295UL}, // paletteLabel1_23
+  {0UL,4294967295UL}, // paletteLabel2_0
+  {0UL,4294967295UL}, // paletteLabel2_1
+  {0UL,4294967295UL}, // paletteLabel2_2
+  {0UL,4294967295UL}, // paletteLabel2_3
+  {0UL,4294967295UL}, // paletteLabel2_4
+  {0UL,4294967295UL}, // paletteLabel2_5
+  {0UL,4294967295UL}, // paletteLabel2_6
+  {0UL,4294967295UL}, // paletteLabel2_7
+  {0UL,4294967295UL}, // paletteLabel2_8
+  {0UL,4294967295UL}, // paletteLabel2_9
+  {0UL,4294967295UL}, // paletteLabel2_10
+  {0UL,4294967295UL}, // paletteLabel2_11
+  {0UL,4294967295UL}, // paletteLabel2_12
+  {0UL,4294967295UL}, // paletteLabel2_13
+  {0UL,4294967295UL}, // paletteLabel2_14
+  {0UL,4294967295UL}, // paletteLabel2_15
+  {0UL,4294967295UL}, // paletteLabel2_16
+  {0UL,4294967295UL}, // paletteLabel2_17
+  {0UL,4294967295UL}, // paletteLabel2_18
+  {0UL,4294967295UL}, // paletteLabel2_19
+  {0UL,4294967295UL}, // paletteLabel2_20
+  {0UL,4294967295UL}, // paletteLabel2_21
+  {0UL,4294967295UL}, // paletteLabel2_22
+  {0UL,4294967295UL}, // paletteLabel2_23
+  {0UL,4294967295UL}, // paletteLabel3_0
+  {0UL,4294967295UL}, // paletteLabel3_1
+  {0UL,4294967295UL}, // paletteLabel3_2
+  {0UL,4294967295UL}, // paletteLabel3_3
+  {0UL,4294967295UL}, // paletteLabel3_4
+  {0UL,4294967295UL}, // paletteLabel3_5
+  {0UL,4294967295UL}, // paletteLabel3_6
+  {0UL,4294967295UL}, // paletteLabel3_7
+  {0UL,4294967295UL}, // paletteLabel3_8
+  {0UL,4294967295UL}, // paletteLabel3_9
+  {0UL,4294967295UL}, // paletteLabel3_10
+  {0UL,4294967295UL}, // paletteLabel3_11
+  {0UL,4294967295UL}, // paletteLabel3_12
+  {0UL,4294967295UL}, // paletteLabel3_13
+  {0UL,4294967295UL}, // paletteLabel3_14
+  {0UL,4294967295UL}, // paletteLabel3_15
+  {0UL,4294967295UL}, // paletteLabel3_16
+  {0UL,4294967295UL}, // paletteLabel3_17
+  {0UL,4294967295UL}, // paletteLabel3_18
+  {0UL,4294967295UL}, // paletteLabel3_19
+  {0UL,4294967295UL}, // paletteLabel3_20
+  {0UL,4294967295UL}, // paletteLabel3_21
+  {0UL,4294967295UL}, // paletteLabel3_22
+  {0UL,4294967295UL}, // paletteLabel3_23
+  {0UL,4294967295UL}, // name0
+  {0UL,4294967295UL}, // name1
+  {0UL,4294967295UL}, // name2
+  {0UL,4294967295UL}, // name3
+  {0UL,4294967295UL}, // name4
+  {0UL,4294967295UL}, // name5
+  {0UL,4294967295UL}, // name6
+  {0UL,4294967295UL}, // name7
+  {0UL,4294967295UL}, // name8
+  {0UL,4294967295UL}, // name9
+  {0UL,4294967295UL}, // name10
+  {0UL,4294967295UL}, // name11
+};
+const uint32_t RUNTIME_SEED[] = {1UL,1UL,0UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,1UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,60UL,120UL,150UL,240UL,240UL,420UL,100UL,180UL,120UL,300UL,240UL,600UL,180UL,420UL,25UL,60UL,12UL,21UL,0UL,2UL,1UL,90UL,180UL,180UL,1UL,1UL,64UL,64UL,1UL,30UL,5UL,60UL,1080UL,1380UL,127UL,262143UL,15UL,15UL,1UL,300UL,16711680UL,16736256UL,16736256UL,65280UL,8388863UL,59084UL,1534975UL,13166847UL,16717824UL,16756736UL,12UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852138323UL,3219557UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1819042120UL,1701148527UL,110UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1853186376UL,6579572UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852796749UL,1751607660UL,116UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1700949317UL,114UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1920232533UL,1800609889UL,2037148773UL,3307040UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL};
+uint32_t runtimeValues[RF_COUNT] = {};
+uint8_t runtimeEyes[18], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;
+uint16_t runtimeFiles[8];
+uint8_t runtimeFileCount=0;
+uint8_t runtimePalettes[4][6];
+char runtimeName[49];
+#undef HEAD_ENABLED
+#define HEAD_ENABLED (runtimeValues[RF_headEnabled])
+#undef ARM_ENABLED
+#define ARM_ENABLED (runtimeValues[RF_armEnabled])
+#undef TORSO_ENABLED
+#define TORSO_ENABLED (runtimeValues[RF_torsoEnabled])
+#undef MOUTH_ENABLED
+#define MOUTH_ENABLED (runtimeValues[RF_jawEnabled])
+#undef EYES_ENABLED
+#define EYES_ENABLED (runtimeValues[RF_eyesEnabled])
+#undef LIGHTS_ENABLED
+#define LIGHTS_ENABLED (runtimeValues[RF_lightsEnabled])
+#undef COMPOUND_BODY_ENABLED
+#define COMPOUND_BODY_ENABLED (runtimeValues[RF_compoundEnabled])
+#undef COMPOUND_ALONGSIDE
+#define COMPOUND_ALONGSIDE (runtimeValues[RF_compoundAlongside])
+#undef JAW_PROTECTS_ARM_TORSO
+#define JAW_PROTECTS_ARM_TORSO (runtimeValues[RF_jawProtectBody])
+#undef JAW_FOLLOWUP_RECURRING
+#define JAW_FOLLOWUP_RECURRING (runtimeValues[RF_jawFollowupRecurring])
+#undef ALLOW_HEAD_JAW_OVERLAP
+#define ALLOW_HEAD_JAW_OVERLAP (runtimeValues[RF_overlap])
+#undef REST_ENABLED
+#define REST_ENABLED (runtimeValues[RF_restEnabled])
+#undef LIGHT_ROTATION_ENABLED
+#define LIGHT_ROTATION_ENABLED (runtimeValues[RF_lightRotation])
+#undef DIAGNOSTICS_ENABLED
+#define DIAGNOSTICS_ENABLED (runtimeValues[RF_diagnosticsEnabled])
+#undef FAIR_BODY_TURNS
+#define FAIR_BODY_TURNS (runtimeValues[RF_fairBodyTurns])
+#undef PLAYBACK_DIAGNOSTICS
+#define PLAYBACK_DIAGNOSTICS (runtimeValues[RF_playbackDiagnostics])
+#undef CLOCK_WINDOW_ENABLED
+#define CLOCK_WINDOW_ENABLED (runtimeValues[RF_clockEnabled])
+#undef HEAD_MIN_INTERVAL_MS
+#define HEAD_MIN_INTERVAL_MS (runtimeValues[RF_headMin] * 1000UL)
+#undef HEAD_MAX_INTERVAL_MS
+#define HEAD_MAX_INTERVAL_MS (runtimeValues[RF_headMax] * 1000UL)
+#undef ARM_MIN_INTERVAL_MS
+#define ARM_MIN_INTERVAL_MS (runtimeValues[RF_armMin] * 1000UL)
+#undef ARM_MAX_INTERVAL_MS
+#define ARM_MAX_INTERVAL_MS (runtimeValues[RF_armMax] * 1000UL)
+#undef TORSO_MIN_INTERVAL_MS
+#define TORSO_MIN_INTERVAL_MS (runtimeValues[RF_torsoMin] * 1000UL)
+#undef TORSO_MAX_INTERVAL_MS
+#define TORSO_MAX_INTERVAL_MS (runtimeValues[RF_torsoMax] * 1000UL)
+#undef MOUTH_MIN_INTERVAL_MS
+#define MOUTH_MIN_INTERVAL_MS (runtimeValues[RF_jawMin] * 1000UL)
+#undef MOUTH_MAX_INTERVAL_MS
+#define MOUTH_MAX_INTERVAL_MS (runtimeValues[RF_jawMax] * 1000UL)
+#undef EYE_MIN_INTERVAL_MS
+#define EYE_MIN_INTERVAL_MS (runtimeValues[RF_eyesMin] * 1000UL)
+#undef EYE_MAX_INTERVAL_MS
+#define EYE_MAX_INTERVAL_MS (runtimeValues[RF_eyesMax] * 1000UL)
+#undef COMPOUND_BODY_MIN_INTERVAL_MS
+#define COMPOUND_BODY_MIN_INTERVAL_MS (runtimeValues[RF_compoundMin] * 1000UL)
+#undef COMPOUND_BODY_MAX_INTERVAL_MS
+#define COMPOUND_BODY_MAX_INTERVAL_MS (runtimeValues[RF_compoundMax] * 1000UL)
+#undef REST_MIN_INTERVAL_MS
+#define REST_MIN_INTERVAL_MS (runtimeValues[RF_restMin] * 1000UL)
+#undef REST_MAX_INTERVAL_MS
+#define REST_MAX_INTERVAL_MS (runtimeValues[RF_restMax] * 1000UL)
+#undef REST_MIN_DURATION_MS
+#define REST_MIN_DURATION_MS (runtimeValues[RF_restDurationMin] * 1000UL)
+#undef REST_MAX_DURATION_MS
+#define REST_MAX_DURATION_MS (runtimeValues[RF_restDurationMax] * 1000UL)
+#undef MOUTH_FILE_SERIAL
+#define MOUTH_FILE_SERIAL (runtimeValues[RF_jawFile])
+#undef MOUTH_CLIP_MS
+#define MOUTH_CLIP_MS (runtimeValues[RF_jawClipSec] * 1000UL)
+#undef JAW_FOLLOWUP_MOTOR
+#define JAW_FOLLOWUP_MOTOR (runtimeValues[RF_jawFollowupMotor])
+#undef JAW_FOLLOWUP_DELAY_MS
+#define JAW_FOLLOWUP_DELAY_MS (runtimeValues[RF_jawFollowupDelaySec] * 1000UL)
+#undef EYE_JAW_MODE
+#define EYE_JAW_MODE (runtimeValues[RF_eyeJawMode])
+#undef LIGHT_ROTATION_INTERVAL_MS
+#define LIGHT_ROTATION_INTERVAL_MS (runtimeValues[RF_lightInterval] * 1000UL)
+#undef TORSO_LIGHT_BRIGHTNESS
+#define TORSO_LIGHT_BRIGHTNESS (runtimeValues[RF_torsoBrightness])
+#undef HEAD_LIGHT_BRIGHTNESS
+#define HEAD_LIGHT_BRIGHTNESS (runtimeValues[RF_headBrightness])
+#undef TORSO_LIGHT_MODE
+#define TORSO_LIGHT_MODE (runtimeValues[RF_torsoEffect])
+#undef HEAD_LIGHT_MODE
+#define HEAD_LIGHT_MODE (runtimeValues[RF_headEffect])
+#undef TORSO_LIGHT_SPEED
+#define TORSO_LIGHT_SPEED (254UL-runtimeValues[RF_torsoSpeed])
+#undef HEAD_LIGHT_SPEED
+#define HEAD_LIGHT_SPEED (254UL-runtimeValues[RF_headSpeed])
+#undef LIGHT_RESTORE_MODE
+#define LIGHT_RESTORE_MODE (runtimeValues[RF_lightRestoreMode])
+#undef SCAN_RETRY_MS
+#define SCAN_RETRY_MS (runtimeValues[RF_scanRetrySec] * 1000UL)
+#undef STARTUP_SCAN_RETRY_MS
+#define STARTUP_SCAN_RETRY_MS (runtimeValues[RF_startupRetrySec] * 1000UL)
+#undef STARTUP_SCAN_WINDOW_MS
+#define STARTUP_SCAN_WINDOW_MS (runtimeValues[RF_startupWindowSec] * 1000UL)
+#undef CLOCK_START_MINUTE
+#define CLOCK_START_MINUTE (runtimeValues[RF_clockStart])
+#undef CLOCK_END_MINUTE
+#define CLOCK_END_MINUTE (runtimeValues[RF_clockEnd])
+#undef CLOCK_DAYS
+#define CLOCK_DAYS (runtimeValues[RF_clockDays])
+#undef LIGHT_PALETTE_MASK
+#define LIGHT_PALETTE_MASK (runtimeValues[RF_lightMask])
+#define TORSO_LIGHT_R ((runtimeValues[RF_torsoColor] >> 16) & 255UL)
+#define TORSO_LIGHT_G ((runtimeValues[RF_torsoColor] >> 8) & 255UL)
+#define TORSO_LIGHT_B ((runtimeValues[RF_torsoColor] >> 0) & 255UL)
+#define HEAD_LIGHT_R ((runtimeValues[RF_headColor] >> 16) & 255UL)
+#define HEAD_LIGHT_G ((runtimeValues[RF_headColor] >> 8) & 255UL)
+#define HEAD_LIGHT_B ((runtimeValues[RF_headColor] >> 0) & 255UL)
+#undef SKELLY_NAME
+#define SKELLY_NAME runtimeName
+#undef COMPOUND_BODY_MASKS
+#define COMPOUND_BODY_MASKS runtimeMasks
+#undef LIGHT_PALETTES
+#define LIGHT_PALETTES runtimePalettes
+#undef EYE_OPTIONS
+#define EYE_OPTIONS runtimeEyes
+#undef EYE_OPTIONS_COUNT
+#define EYE_OPTIONS_COUNT runtimeEyeCount
+#undef JAW_FILE_POOL
+#define JAW_FILE_POOL runtimeFiles
+#undef JAW_POOL_COUNT
+#define JAW_POOL_COUNT runtimeFileCount
+// END GENERATED RUNTIME SCHEMA
+void runtimeBoot();
+bool runtimeCommand(const char *line);
+void serviceRuntime();
+void runtimeSceneConnected();
+bool runtimePending();
+bool runtimeBusy();
+uint32_t runtimeSceneIndex();
+uint32_t runtimeSequence();
+uint32_t runtimeProgramCRC();
+uint32_t runtimeJawDuration(uint16_t file);
+#else
+void runtimeBoot() {}
+bool runtimeCommand(const char *) { return false; }
+void serviceRuntime() {}
+void runtimeSceneConnected() {}
+bool runtimePending() { return false; }
+bool runtimeBusy() { return false; }
+uint32_t runtimeSceneIndex() { return 0; }
+uint32_t runtimeSequence() { return 0; }
+uint32_t runtimeProgramCRC() { return 0; }
+#endif
+bool routineWindowOpen();
+
 BLEScan *scanner = nullptr;
 BLEClient *client = nullptr;
 BLERemoteCharacteristic *writeChar = nullptr;
@@ -223,7 +837,7 @@ bool clockValid = false;
 uint64_t clockCivilMillis = 0;
 uint32_t clockLastTick = 0;
 bool clockWindowWasOpen = false;
-char usbLine[64];
+char usbLine[SKELLY_RUNTIME ? 192 : 64];
 uint8_t usbUsed = 0;
 bool usbOverflow = false;
 uint32_t lastBleWriteAt = 0;
@@ -260,9 +874,19 @@ void logEvent(const char *format, ...) {
 }
 void logLine(const char *message) { logEvent("%s\n", message); }
 
+void emitUsbStatus() {
+  logEvent("USB STATUS v2 runtime=%u connected=%u scene=%lu sequence=%lu crc=%lu pending=%u scans=%lu connects=%lu writes=%lu failures=%lu heap=%lu minHeap=%lu clock=%u window=%u\n",
+    unsigned(SKELLY_RUNTIME),unsigned(connected),(unsigned long)runtimeSceneIndex(),(unsigned long)runtimeSequence(),(unsigned long)runtimeProgramCRC(),unsigned(runtimePending()),
+    (unsigned long)scanAttempts,(unsigned long)connectionAttempts,(unsigned long)writeAttempts,(unsigned long)writeFailures,
+    (unsigned long)ESP.getFreeHeap(),(unsigned long)ESP.getMinFreeHeap(),unsigned(clockValid),unsigned(routineWindowOpen()));
+}
+
 void acceptUsbCommand(const char *line) {
+  if (runtimeCommand(line)) return;
+  if (strcmp(line,"SKELLY STATUS")==0) { emitUsbStatus(); return; }
   if (strcmp(line, "SKELLY HELLO") == 0) {
     logLine("USB READY v1 CLOCK");
+    logEvent("USB CAPS v2 settings=%u scenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u);
     return;
   }
   const char *prefix = "SKELLY TIME ";
@@ -287,7 +911,7 @@ void serviceUsbClock() {
   if (clockValid) clockCivilMillis += uint32_t(tick - clockLastTick);
   clockLastTick = tick;
   // Bound per-loop work even for a flooding or malformed serial sender.
-  for (uint8_t count = 0; count < 64 && Serial.available(); ++count) {
+  for (uint16_t count = 0; count < (SKELLY_RUNTIME ? 192 : 64) && Serial.available(); ++count) {
     const int c = Serial.read();
     if (c == '\n') {
       if (!usbOverflow) { usbLine[usbUsed] = 0; acceptUsbCommand(usbLine); }
@@ -314,7 +938,11 @@ bool routineWindowOpen() {
   return (minute >= CLOCK_START_MINUTE || minute < CLOCK_END_MINUTE) && (CLOCK_DAYS & (1 << day));
 }
 
+#if SKELLY_RUNTIME
+uint32_t jawDurationMs(uint16_t file) { return runtimeJawDuration(file); }
+#else
 uint32_t jawDurationMs(uint16_t file) { (void)file; return MOUTH_CLIP_MS; }
+#endif
 
 struct PlaybackObservation { uint16_t file; uint16_t duration; uint8_t playing; uint8_t length; };
 PlaybackObservation playbackQueue[8];
@@ -535,7 +1163,11 @@ void serviceLightRotation(uint32_t now) {
 }
 void startCompoundBody(uint32_t now) {
   if (!routineWindowOpen()) return;
+#if SKELLY_RUNTIME
+  const size_t maskCount = runtimeMaskCount;
+#else
   const size_t maskCount = sizeof(COMPOUND_BODY_MASKS) / sizeof(COMPOUND_BODY_MASKS[0]);
+#endif
   if (!maskCount) return;
   const uint8_t mask = COMPOUND_BODY_MASKS[random(maskCount)];
   const uint8_t enabled = (HEAD_ENABLED ? 1 : 0) | (ARM_ENABLED ? 2 : 0) |
@@ -747,6 +1379,7 @@ bool connectToSkelly() {
   } else {
     logLine("Random eyes OFF (enable after confirming eye commands).");
   }
+  runtimeSceneConnected();
   logDiagnostics("connected");
   return true;
 }
@@ -976,9 +1609,185 @@ void changeEyes(uint32_t now) {
                 (unsigned)eye, (unsigned long)(interval / 1000));
 }
 
+#if SKELLY_RUNTIME
+// Fixed-size, versioned records; two NVS slots preserve the last valid program.
+const size_t RUNTIME_WORDS = 3 + 4 * RF_COUNT;
+struct RuntimeRecord { uint32_t magic, sequence, count, crc, guard; uint32_t words[RUNTIME_WORDS]; };
+static_assert(sizeof(RuntimeRecord)==(RUNTIME_WORDS+5)*4,"Unexpected runtime record padding");
+class RuntimeEngine {
+ public:
+  RuntimeRecord active{}, staging{}, dump{};
+  Preferences prefs;
+  bool storage=false, transfer=false, pending=false, savePending=false, dumping=false;
+  uint8_t slot=0, scene=0;
+  uint32_t request=0, received=0, touched=0, sceneAt=0, dumpRequest=0, dumpOffset=0;
+  static uint32_t checksum(const RuntimeRecord &r) {
+    uint32_t c=0xffffffff;
+    for(size_t i=0;i<r.count;++i)for(uint8_t b=0;b<4;++b){c^=(r.words[i]>>(8*b))&255;for(uint8_t k=0;k<8;++k)c=(c>>1)^((c&1)?0xedb88320UL:0);}
+    return c^0xffffffff;
+  }
+  static uint32_t headerGuard(const RuntimeRecord &r) {
+    uint32_t c=0xffffffff;const uint32_t words[]={r.magic,r.sequence,r.count,r.crc};
+    for(uint32_t word:words)for(uint8_t b=0;b<4;++b){c^=(word>>(8*b))&255;for(uint8_t k=0;k<8;++k)c=(c>>1)^((c&1)?0xedb88320UL:0);}
+    return c^0xffffffff;
+  }
+  static bool storedValid(const RuntimeRecord &r){return valid(r)&&r.guard==headerGuard(r);}
+  static bool validText(const uint32_t *v,size_t words,uint16_t maxUnits) {
+    uint16_t units=0;bool ended=false,visible=false;uint8_t remaining=0,low=128,high=191;
+    for(size_t i=0;i<words*4;++i){const uint8_t b=(v[i/4]>>(8*(i%4)))&255;
+      if(!b){if(remaining)return false;ended=true;continue;}if(ended)return false;
+      if(remaining){if(b<low||b>high)return false;low=128;high=191;--remaining;continue;}
+      if(b<32||b==127)return false;
+      if(b<128){++units;if(b!=' ')visible=true;}
+      else if(b>=194&&b<=223){remaining=1;++units;visible=true;}
+      else if(b>=224&&b<=239){remaining=2;++units;low=b==224?160:128;high=b==237?159:191;visible=true;}
+      else if(b>=240&&b<=244){remaining=3;units+=2;low=b==240?144:128;high=b==244?143:191;visible=true;}
+      else return false;
+      if(units>maxUnits)return false;
+    }
+    return !remaining&&visible;
+  }
+  static bool valid(const RuntimeRecord &r) {
+    if(r.magic!=0x534b5231 || r.count<3 || r.count>RUNTIME_WORDS || r.words[0]!=1 ||
+       r.words[1]<1 || r.words[1]>4 || r.words[2]>1 || r.count!=3+r.words[1]*RF_COUNT || checksum(r)!=r.crc)return false;
+    for(uint32_t n=0;n<r.words[1];++n){
+      const uint32_t *v=r.words+3+n*RF_COUNT;
+      for(size_t i=0;i<RF_COUNT;++i)if(v[i]<RUNTIME_LIMITS[i][0]||v[i]>RUNTIME_LIMITS[i][1])return false;
+      if(!validText(v+RF_sceneLabel0,32,32)||!validText(v+RF_name0,12,48))return false;
+      for(uint8_t p=0;p<4;++p)if(!validText(v+RF_paletteLabel0_0+p*24,24,24))return false;
+      for(uint32_t prior=0;prior<n;++prior)if(memcmp(v+RF_sceneLabel0,r.words+3+prior*RF_COUNT+RF_sceneLabel0,32*4)==0)return false;
+      const size_t mins[]={RF_headMin,RF_armMin,RF_torsoMin,RF_jawMin,RF_eyesMin,RF_compoundMin,RF_restMin,RF_restDurationMin};
+      for(size_t i:mins)if(v[i]>v[i+1])return false;
+      if(v[RF_clockStart]==v[RF_clockEnd] || (!v[RF_headEnabled]&&!v[RF_armEnabled]&&!v[RF_torsoEnabled]&&!v[RF_jawEnabled]&&!v[RF_eyesEnabled]&&!v[RF_lightsEnabled]))return false;
+      if(v[RF_lightRotation] && !(v[RF_lightMask]&(v[RF_lightMask]-1)))return false;
+      const uint8_t enabled=(v[RF_headEnabled]?1:0)|(v[RF_armEnabled]?2:0)|(v[RF_torsoEnabled]?4:0);
+      if(v[RF_compoundEnabled]){
+        if(!v[RF_comboMask]||v[RF_jawFollowupMotor]||(v[RF_jawEnabled]&&!v[RF_jawProtectBody]))return false;
+        const uint8_t masks[]={3,5,6,7};for(uint8_t i=0;i<4;++i)if((v[RF_comboMask]&(1<<i))&&(masks[i]&~enabled))return false;
+      }
+      const uint32_t follow=v[RF_jawFollowupMotor];
+      if((follow&&!v[RF_jawEnabled]) || (follow==1&&!v[RF_armEnabled]) || (follow==2&&!v[RF_torsoEnabled]) ||
+         (follow==3&&(!v[RF_armEnabled]||!v[RF_torsoEnabled]||!v[RF_jawFollowupRecurring])))return false;
+      if(v[RF_file0]!=v[RF_jawFile])return false;
+      for(uint32_t i=0;i<8;++i){
+        const uint32_t f=v[RF_file0+i*2],d=v[RF_duration0+i*2];
+        if(i<v[RF_fileCount]){if(!f||(d&&d<21))return false;for(uint32_t j=0;j<i;++j)if(v[RF_file0+j*2]==f)return false;}
+        else if(f||d)return false;
+      }
+      bool ended=false,have=false;
+      for(uint8_t i=0;i<48;++i){const uint8_t b=(v[RF_name0+i/4]>>(8*(i%4)))&255;
+        if(!b)ended=true;else{if(ended||b<32||b==127)return false;have=true;}}
+      if(!have)return false;
+      if(n && memcmp(v+RF_name0,r.words+3+RF_name0,12*4)!=0)return false;
+    }
+    return true;
+  }
+  void error(uint32_t id,const char *reason){logEvent("USB CFG ERROR %lu %s\n",(unsigned long)id,reason);}
+  void select(uint8_t next) {
+    scene=next;
+    memcpy(runtimeValues,active.words+3+scene*RF_COUNT,sizeof(runtimeValues));
+    runtimeEyeCount=runtimeMaskCount=0;
+    for(uint8_t i=0;i<18;++i)if(runtimeValues[RF_eyeMask]&(1UL<<i))runtimeEyes[runtimeEyeCount++]=i+1;
+    const uint8_t masks[]={3,5,6,7};for(uint8_t i=0;i<4;++i)if(runtimeValues[RF_comboMask]&(1<<i))runtimeMasks[runtimeMaskCount++]=masks[i];
+    runtimeFileCount=runtimeValues[RF_fileCount];for(uint8_t i=0;i<8;++i)runtimeFiles[i]=runtimeValues[RF_file0+i*2];
+    for(uint8_t i=0;i<4;++i)for(uint8_t p=0;p<2;++p)for(uint8_t ch=0;ch<3;++ch)runtimePalettes[i][p*3+ch]=(runtimeValues[RF_palette0Torso+i*2+p]>>(16-8*ch))&255;
+    for(uint8_t i=0;i<48;++i)runtimeName[i]=(runtimeValues[RF_name0+i/4]>>(8*(i%4)))&255;runtimeName[48]=0;
+    sceneAt=millis()+runtimeValues[RF_holdSec]*1000UL;
+  }
+  void boot() {
+    clockValid=false;clockCivilMillis=0;clockLastTick=millis();
+    active={};active.magic=0x534b5231;active.count=sizeof(RUNTIME_SEED)/4;memcpy(active.words,RUNTIME_SEED,sizeof(RUNTIME_SEED));active.crc=checksum(active);
+    storage=prefs.begin("skelly-config",false);
+    RuntimeRecord candidate{};bool haveStored=false;
+    if(storage)for(uint8_t i=0;i<2;++i){const char *key=i?"slot1":"slot0";
+      if(prefs.getBytesLength(key)==sizeof(candidate)&&prefs.getBytes(key,&candidate,sizeof(candidate))==sizeof(candidate)&&storedValid(candidate)&&
+         (!haveStored||(int32_t)(candidate.sequence-active.sequence)>0)){active=candidate;slot=i;haveStored=true;}}
+    if(!valid(active)){logLine("USB CFG invalid seed; no routines enabled");memset(runtimeValues,0,sizeof(runtimeValues));return;}
+    select(0);logEvent("USB CFG boot sequence=%lu crc=%lu storage=%u\n",(unsigned long)active.sequence,(unsigned long)active.crc,unsigned(storage));
+  }
+  bool idle(uint32_t now) {
+    return reached(now,bodySafeAfter)&&reached(now,headSafeAfter)&&reached(now,armSafeAfter)&&reached(now,torsoSafeAfter)&&
+      reached(now,mouthPlayingUntil)&&reached(now,mouthSafeAfter)&&!jawFollowupPending&&!mouthEndPending&&!jawEyeStartPending&&!jawEyeEndPending&&!lightApplyPending&&!lightRestorePending;
+  }
+  bool persist() {
+    if(!storage)return false;
+    staging.sequence=active.sequence+1;
+    staging.guard=headerGuard(staging);
+    const char *key=slot?"slot0":"slot1";
+    if(prefs.putBytes(key,&staging,sizeof(staging))!=sizeof(staging))return false;
+    RuntimeRecord check{};
+    return prefs.getBytes(key,&check,sizeof(check))==sizeof(check)&&storedValid(check)&&memcmp(&check,&staging,sizeof(check))==0;
+  }
+  void service() {
+    const uint32_t now=millis();
+    // Keep elapsed locks fresh even while disconnected or awaiting USB apply.
+    // Future motion/playback deadlines retain their complete cooldowns.
+    retireElapsedCooldowns(now);
+    if(transfer && uint32_t(now-touched)>30000){transfer=false;error(request,"TIMEOUT");}
+    if(dumping){
+      if(dumpOffset<dump.count){char data[80];size_t used=0;const uint32_t end=stdMin(dumpOffset+8,dump.count);
+        for(uint32_t i=dumpOffset;i<end;++i)used+=snprintf(data+used,sizeof(data)-used,"%s%08lX",i==dumpOffset?"":" ",(unsigned long)dump.words[i]);
+        logEvent("USB CFG DATA %lu %lu %s\n",(unsigned long)dumpRequest,(unsigned long)dumpOffset,data);dumpOffset=end;
+      }else{logEvent("USB CFG END %lu\n",(unsigned long)dumpRequest);dumping=false;}
+    }
+    if(!pending && !transfer && !dumping && connected && active.words[2] && active.words[1]>1 && reached(now,sceneAt)){pending=true;savePending=false;}
+    if(!pending||!idle(now))return;
+    if(savePending){
+      if(!persist()){error(request,"STORAGE");pending=savePending=false;return;}
+      active=staging;slot=1-slot;select(0);
+      logEvent("USB CFG APPLIED %lu %lu %lu\n",(unsigned long)request,(unsigned long)active.sequence,(unsigned long)active.crc);
+    }else select((scene+1)%active.words[1]);
+    pending=savePending=false;
+    // Reconnect after the complete old routine has drained. No actuator command here.
+    resetConnection();nextRestAt=restUntil=now;
+    logEvent("USB SCENE active=%u sequence=%lu\n",unsigned(scene),(unsigned long)active.sequence);
+  }
+  static uint32_t stdMin(uint32_t a,uint32_t b){return a<b?a:b;}
+  static bool number(const char *&p,uint32_t &value,uint8_t base=10){
+    if(!*p)return false;uint64_t n=0;uint8_t digits=0;
+    while(*p&&*p!=' '){uint8_t d=255;if(*p>='0'&&*p<='9')d=*p-'0';else if(base==16&&*p>='a'&&*p<='f')d=*p-'a'+10;else if(base==16&&*p>='A'&&*p<='F')d=*p-'A'+10;
+      if(d>=base||++digits>10)return false;n=n*base+d;if(n>0xffffffffULL)return false;++p;}
+    value=uint32_t(n);if(*p==' ')++p;return true;
+  }
+  bool command(const char *line) {
+    const char *prefix="SKELLY CFG ";if(strncmp(line,prefix,strlen(prefix)))return false;
+    const char *p=line+strlen(prefix);uint32_t id=0,n=0;
+    if(strncmp(p,"GET ",4)==0){p+=4;if(!number(p,id)||*p){error(id,"FORMAT");return true;}if(dumping){error(id,"BUSY");return true;}
+      dump=active;dumpRequest=id;dumpOffset=0;dumping=true;
+      logEvent("USB CFG DUMP %lu %lu %lu %lu\n",(unsigned long)id,(unsigned long)active.count,(unsigned long)active.sequence,(unsigned long)active.crc);return true;}
+    if(strncmp(p,"ABORT ",6)==0){p+=6;if(number(p,id)&&!*p&&id==request){transfer=pending=savePending=false;logEvent("USB CFG ABORTED %lu\n",(unsigned long)id);}return true;}
+    if(strncmp(p,"RESET ",6)==0){p+=6;if(!number(p,id)||*p){error(id,"FORMAT");return true;}if(transfer||pending){error(id,"BUSY");return true;}
+      staging={};staging.magic=0x534b5231;staging.count=sizeof(RUNTIME_SEED)/4;memcpy(staging.words,RUNTIME_SEED,sizeof(RUNTIME_SEED));staging.crc=checksum(staging);request=id;pending=savePending=true;
+      logEvent("USB CFG QUEUED %lu\n",(unsigned long)id);return true;}
+    if(strncmp(p,"BEGIN ",6)==0){p+=6;if(!number(p,id)||!number(p,n)||*p||n<3||n>RUNTIME_WORDS){error(id,"FORMAT");return true;}if(transfer||pending){error(id,"BUSY");return true;}
+      staging={};staging.magic=0x534b5231;staging.count=n;request=id;received=0;touched=millis();transfer=true;logEvent("USB CFG ACK %lu 0\n",(unsigned long)id);return true;}
+    if(strncmp(p,"DATA ",5)==0){p+=5;if(!number(p,id)||!number(p,n)||!transfer||id!=request||n!=received){error(id,"ORDER");return true;}
+      uint32_t values[8],count=0;while(*p&&count<8)if(!number(p,values[count++],16)){error(id,"FORMAT");return true;}
+      if(*p||!count||received+count>staging.count){error(id,"SIZE");return true;}
+      memcpy(staging.words+received,values,count*4);received+=count;touched=millis();logEvent("USB CFG ACK %lu %lu\n",(unsigned long)id,(unsigned long)received);return true;}
+    if(strncmp(p,"COMMIT ",7)==0){p+=7;if(!number(p,id)||!number(p,n)||*p||!transfer||id!=request||received!=staging.count){error(id,"INCOMPLETE");return true;}
+      staging.crc=n;if(!valid(staging)){transfer=false;error(id,"INVALID");return true;}transfer=false;pending=savePending=true;logEvent("USB CFG QUEUED %lu\n",(unsigned long)id);return true;}
+    error(id,"UNKNOWN");return true;
+  }
+};
+RuntimeEngine runtimeEngine;
+void runtimeBoot(){runtimeEngine.boot();}
+bool runtimeCommand(const char *line){return runtimeEngine.command(line);}
+void serviceRuntime(){runtimeEngine.service();}
+void runtimeSceneConnected(){runtimeEngine.sceneAt=millis()+runtimeValues[RF_holdSec]*1000UL;}
+bool runtimePending(){return runtimeEngine.pending;}
+bool runtimeBusy(){return runtimeEngine.transfer||runtimeEngine.dumping;}
+uint32_t runtimeSceneIndex(){return runtimeEngine.scene;}
+uint32_t runtimeSequence(){return runtimeEngine.active.sequence;}
+uint32_t runtimeProgramCRC(){return runtimeEngine.active.crc;}
+uint32_t runtimeJawDuration(uint16_t file){for(uint8_t i=0;i<runtimeFileCount;++i)if(runtimeFiles[i]==file&&runtimeValues[RF_duration0+i*2])return runtimeValues[RF_duration0+i*2]*1000UL;return MOUTH_CLIP_MS;}
+#endif
+
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  runtimeBoot();
   recordBoot(esp_reset_reason());
   logEvent("BOOT usb-scheduler-v3: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
@@ -999,6 +1808,7 @@ void setup() {
 
 void loop() {
   serviceUsbClock();
+  serviceRuntime();
   if (PLAYBACK_DIAGNOSTICS) drainPlaybackObservation();
   uint32_t now = millis();
   if (connected && (client == nullptr || !client->isConnected())) {
@@ -1007,6 +1817,7 @@ void loop() {
   }
 
   if (!connected) {
+    if (runtimeBusy() || runtimePending()) { delay(10); return; }
     if (reached(now, nextScanAt)) scanAndConnect();
     delay(100);
     return;
@@ -1117,6 +1928,8 @@ void loop() {
     }
   }
   if (!connected) { delay(100); return; }
+
+  if (runtimePending()) { delay(10); return; }
 
   // Head and jaw may overlap only with MP3 body protection explicitly OFF.
   // With protection ON, AAC6 must not interrupt an active head/arm/torso

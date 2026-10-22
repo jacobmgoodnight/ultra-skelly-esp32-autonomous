@@ -8,8 +8,11 @@ Eye thumbnails and firmware generation work offline from the complete folder.
 Choose randomized head/jaw timing, optional arm/torso, live eyes, RGB colors,
 jaw-first follow-ups, compound masks, MP3 pools and idle breaks; then download or
 copy a self-contained `.ino`. Flash with Arduino IDE or CLI, **ESP32 Dev Module**, core
-**3.3.12**. Custom sketches require Arduino compilation/upload; the separate USB page can
-install a fixed head-only package. The five-minute preview
+**3.3.12**. The optional [universal firmware](../docs/usb-settings-scenes.md) can
+subsequently read/save settings over USB without recompiling. It also supports up
+to four saved scenes and optional rotation. The separate USB page accepts reviewed
+head-only or universal packages. New USB/scene behavior is physically Untested.
+The five-minute preview
 is illustrative and does not model all arbitration. Save/load settings keeps your
 configuration and named jaw clip mappings in a portable JSON file.
 
@@ -54,12 +57,13 @@ representative generated sketches and the compound diagnostic with core 3.3.12.
 
 ## Studio usability
 
-Everyday body and mouth controls are visible first; appearance and specialist
-coordination/testing controls expand on demand. The clip library maps readable
+Everyday body controls are visible first; optional mouth routines stay at the bottom.
+Appearance and specialist coordination/testing controls expand on demand. The clip library maps readable
 names to the user's actual uploaded MP3 serials. Settings and clip mappings can
-be saved/loaded as validated version-1 JSON files without an account. Existing
+be saved/loaded as validated version-4 JSON files without an account. Existing
 firmware defaults remain unchanged.
 
 See [Studio next steps](../docs/studio-roadmap.md) for pending hardware checks,
 browser USB uploading, and ideas for future improvements. Studio currently
-generates `.ino` source; it does not compile or flash firmware.
+generates `.ino` source; it does not compile firmware. USB tools provide the separate
+package installer, while Studio's Advanced section owns universal settings/status.

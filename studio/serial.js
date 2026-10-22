@@ -22,12 +22,42 @@
     }
   }
   class Session {
-    constructor(serial,onChange=()=>{}) {this.serial=serial;this.onChange=onChange;this.capture=new Capture();this.port=null;this.reader=null;this.readTask=null;this.writeTask=null;this.closing=false;this.busy=false;this.error="";}
+    constructor(serial,onChange=()=>{}) {this.serial=serial;this.onChange=onChange;this.capture=new Capture();this.port=null;this.reader=null;this.readTask=null;this.writeTask=null;this.closing=false;this.busy=false;this.error="";this.messages=[];this.messageSerial=0;this.partial='';this.protocolDecoder=new TextDecoder();this.waiters=[];this.operation=false;}
+    ingest(bytes){
+      this.partial+=this.protocolDecoder.decode(bytes,{stream:true});
+      let end;while((end=this.partial.indexOf('\n'))>=0){const line=this.partial.slice(0,end).trim();this.partial=this.partial.slice(end+1);const match=/(?:^|\] )(USB (?:CFG|CAPS|STATUS|SCENE) .*)$/.exec(line);if(match){const event={id:++this.messageSerial,text:match[1]};this.messages.push(event);if(this.messages.length>1024)this.messages.shift();for(const w of [...this.waiters])if(event.id>w.after&&w.test(event.text)){clearTimeout(w.timer);this.waiters.splice(this.waiters.indexOf(w),1);w.resolve(event);}}}
+      if(this.partial.length>1024)this.partial=this.partial.slice(-1024);
+    }
+    waitFor(test,after=this.messageSerial,timeout=8000){const found=this.messages.find(e=>e.id>after&&test(e.text));if(found)return Promise.resolve(found);return new Promise((resolve,reject)=>{const w={test,after,resolve,reject};w.timer=setTimeout(()=>{this.waiters=this.waiters.filter(x=>x!==w);reject(Error('No controller acknowledgment. Reconnect and read saved settings before retrying.'));},timeout);this.waiters.push(w);});}
+    async request(command,test,timeout=8000){const after=this.messageSerial;await this.send(command+'\n');return this.waitFor(test,after,timeout);}
+    // A blocking BLE scan/connect may already be running when USB opens.
+    async capabilities(){return this.request('SKELLY HELLO',s=>s.startsWith('USB CAPS v2 '),45000);}
+    async status(){return this.request('SKELLY STATUS',s=>s.startsWith('USB STATUS v2 '),45000);}
+    diagnostics(){const last=[...this.messages].reverse().find(e=>e.text.startsWith('USB STATUS v2 '));return {...this.capture.summary(),controller:last?Object.fromEntries(last.text.slice(14).split(' ').filter(s=>/^[A-Za-z]+=[0-9]+$/.test(s)).map(s=>{const [k,v]=s.split('=');return [k,Number(v)];})):null,notice:'Controller status is reported transport/model state, not observed motor or LED behavior.'};}
+    async configReply(command,id,test,timeout=45000){const r=await this.request(command,s=>s.startsWith('USB CFG ERROR '+id+' ')||test(s),timeout);if(r.text.startsWith('USB CFG ERROR'))throw Error('Controller rejected settings: '+r.text.split(' ').at(-1));return r;}
+    async writeSettings(words,crc,onProgress=()=>{}){
+      if(this.operation)throw Error('Wait for the current controller operation.');this.operation=true;const id=(Date.now()%1000000000)+1,after=this.messageSerial;
+      try{
+        await this.configReply('SKELLY CFG BEGIN '+id+' '+words.length,id,s=>s==='USB CFG ACK '+id+' 0');
+        for(let at=0;at<words.length;at+=8){const chunk=words.slice(at,at+8);await this.configReply('SKELLY CFG DATA '+id+' '+at+' '+chunk.map(n=>(n>>>0).toString(16).padStart(8,'0')).join(' '),id,s=>s==='USB CFG ACK '+id+' '+(at+chunk.length));onProgress(Math.round((at+chunk.length)/words.length*100));}
+        await this.configReply('SKELLY CFG COMMIT '+id+' '+crc,id,s=>s==='USB CFG QUEUED '+id);onProgress('waiting');
+        const result=await this.waitFor(s=>s.startsWith('USB CFG APPLIED '+id+' ')||s.startsWith('USB CFG ERROR '+id+' '),after,210000);
+        if(result.text.startsWith('USB CFG ERROR'))throw Error(result.text);return result;
+      }catch(e){if(this.port)try{await this.send('SKELLY CFG ABORT '+id+'\n');}catch(_){}throw e;}finally{this.operation=false;this.onChange();}
+    }
+    async readSettings(){
+      if(this.operation)throw Error('Wait for the current controller operation.');this.operation=true;const id=(Date.now()%1000000000)+1,after=this.messageSerial;
+      try{const start=await this.configReply('SKELLY CFG GET '+id,id,s=>s.startsWith('USB CFG DUMP '+id+' '));const fields=start.text.split(' '),count=Number(fields[4]);if(count<3||count>4096)throw Error('Unsupported controller settings size.');
+        const end=await this.waitFor(s=>s==='USB CFG END '+id,after,45000),words=[];
+        for(const e of this.messages.filter(e=>e.id>start.id&&e.id<end.id&&e.text.startsWith('USB CFG DATA '+id+' '))){const p=e.text.split(' ');if(Number(p[4])!==words.length)throw Error('Controller settings arrived out of order.');for(const value of p.slice(5)){if(!/^[\da-f]{8}$/i.test(value))throw Error('Malformed controller setting.');words.push(parseInt(value,16));}}
+        if(words.length!==count)throw Error('Incomplete settings response.');return {words,sequence:Number(fields[5]),crc:Number(fields[6])};
+      }finally{this.operation=false;this.onChange();}
+    }
     async connect() {
       if(this.port||this.busy)throw new Error("Close the current USB connection first.");
       this.busy=true;this.error="";this.onChange();
       let port;
-      try {port=await this.serial.requestPort();await port.open({baudRate:115200});this.port=port;this.capture.clear();this.readTask=this.readLoop(port);}
+      try {port=await this.serial.requestPort();await port.open({baudRate:115200});this.port=port;this.capture.clear();this.messages=[];this.partial='';this.protocolDecoder=new TextDecoder();this.readTask=this.readLoop(port);}
       catch(e){this.error=e.message;if(port)try{await port.close();}catch(_){}throw e;}
       finally {this.busy=false;this.onChange();}
     }
@@ -35,13 +65,13 @@
       try {
         while(port.readable&&this.port===port) {
           this.reader=port.readable.getReader();
-          try {while(true){const {value,done}=await this.reader.read();if(done)break;if(value)this.capture.add(value);this.onChange();}}
+          try {while(true){const {value,done}=await this.reader.read();if(done)break;if(value){this.capture.add(value);this.ingest(value);}this.onChange();}}
           finally {this.reader.releaseLock();this.reader=null;}
           // A normally closed stream is final; do not spin/reopen it.
           break;
         }
       } catch(e){this.error=e.message;}
-      finally {this.capture.finish();if(this.port===port)this.port=null;if(this.writeTask)try{await this.writeTask;}catch(_){}try{await port.close();}catch(_){}this.onChange();}
+      finally {this.capture.finish();if(this.port===port)this.port=null;for(const w of this.waiters){clearTimeout(w.timer);w.reject(Error('USB disconnected. Read controller settings after reconnecting.'));}this.waiters=[];if(this.writeTask)try{await this.writeTask;}catch(_){}try{await port.close();}catch(_){}this.onChange();}
     }
     async disconnect() {
       this.closing=true;this.onChange();

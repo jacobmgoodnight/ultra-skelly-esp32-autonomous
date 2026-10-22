@@ -17,11 +17,12 @@ def main():
     subprocess.run(['node','studio/tests/export-samples.cjs'],cwd=ROOT,env=env,check=True,stdout=subprocess.DEVNULL)
     for flags in [[],['--quick']]:subprocess.run(['node','scripts/export-attended-tests.cjs',*flags],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     subprocess.run(['node','scripts/prepare-prebuilt.cjs'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    subprocess.run(['node','scripts/prepare-universal.cjs'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     cases=[('Canonical',ROOT/'firmware/SkellyAutonomous/SkellyAutonomous.ino')]
     cases += [(p.parent.name,p) for p in sorted((build/'matrix').glob('*/*.ino'))]
     cases += [(p.parent.name,p) for p in sorted((ROOT/'experiments').glob('*/*.ino')) if p.parent.name!='SerialIdleTest']
     for pack in ['attended-tests','quick-tests']:cases += [(p.parent.name,p) for p in sorted((ROOT/'.skelly-build'/pack).glob('*/*.ino'))]
-    cases += [('PrebuiltHeadOnly',ROOT/'.skelly-build/prebuilt/HeadOnly/HeadOnly.ino'),('SerialIdleTest',ROOT/'experiments/SerialIdleTest/SerialIdleTest.ino')]
+    cases += [('PrebuiltHeadOnly',ROOT/'.skelly-build/prebuilt/HeadOnly/HeadOnly.ino'),('PrebuiltUniversal',ROOT/'.skelly-build/prebuilt/Universal/Universal.ino'),('SerialIdleTest',ROOT/'experiments/SerialIdleTest/SerialIdleTest.ino')]
     scratch=build/'ValidationSketch';scratch.mkdir(exist_ok=True);results=[]
     for name,source in cases:
         data=source.read_bytes();(scratch/'ValidationSketch.ino').write_bytes(data)
@@ -30,5 +31,6 @@ def main():
         results.append({'name':name,'source':str(source.relative_to(ROOT)), 'sha256':hashlib.sha256(data).hexdigest(),'result':'compiled'})
         (build/'results.json').write_text(json.dumps({'core':'3.3.12','results':results},indent=2))
         if name=='PrebuiltHeadOnly':shutil.copyfile(build/'cache/ValidationSketch.ino.merged.bin',ROOT/'.skelly-build/prebuilt/HeadOnly-tested.merged.bin')
+        if name=='PrebuiltUniversal':shutil.copyfile(build/'cache/ValidationSketch.ino.merged.bin',ROOT/'.skelly-build/prebuilt/Universal-tested.merged.bin')
     print(f'PASS {len(results)} ESP32 3.3.12 builds',flush=True)
 if __name__=='__main__':main()

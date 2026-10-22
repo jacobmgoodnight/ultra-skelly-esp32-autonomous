@@ -1,5 +1,5 @@
 """Packaging tests use a synthetic image, never a flashable artifact."""
-import hashlib,importlib.util,json,tempfile,unittest
+import hashlib,importlib.util,json,tempfile,unittest,subprocess,re
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -7,6 +7,23 @@ spec=importlib.util.spec_from_file_location('package_prebuilt',ROOT/'scripts/pac
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class PackagingTests(unittest.TestCase):
+    def test_universal_seed_and_profile_isolation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base=Path(temp)
+            subprocess.run(['node',str(ROOT/'scripts/prepare-universal.cjs'),str(base/'source')],check=True,capture_output=True)
+            source=base/'source'/'Universal.ino';binary=base/'image.bin';out=base/'package'
+            image=bytearray(4194304);image[4096]=image[65536]=0xe9;binary.write_bytes(image)
+            metadata=module.package(source,binary,out,'a'*40,'universal')
+            self.assertEqual(metadata['profile'],'universal')
+            self.assertEqual(metadata['binaryFile'],'universal.bin')
+            self.assertEqual(json.loads((out/'manifest.json').read_text())['builds'][0]['parts'][0]['path'],'universal.bin')
+            with self.assertRaises(ValueError):module.package(source,binary,out,'a'*40,'head-only')
+            code=source.read_text(encoding='utf-8')
+            changed=re.sub(r'(RUNTIME_SEED\[\] = \{1UL,1UL,)0UL,',r'\g<1>1UL,',code)
+            self.assertNotEqual(changed,code)
+            source.write_text(changed,encoding='utf-8')
+            with self.assertRaises(ValueError):module.package(source,binary,out,'a'*40,'universal')
+
     def test_profile_metadata_and_bad_image_rejection(self):
         with tempfile.TemporaryDirectory() as temp:
             base=Path(temp);source=base/'source.ino';binary=base/'image.bin';out=base/'package'
