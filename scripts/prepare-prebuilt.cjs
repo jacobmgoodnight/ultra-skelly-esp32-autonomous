@@ -4,6 +4,6 @@ const root=path.resolve(__dirname,'..'),out=path.resolve(process.argv[2]||path.j
 const context=vm.createContext({window:{}});
 for(const file of ['template.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'studio',file),'utf8'),context);
 const generator=context.window.SkellyStudioGenerator;
-const config={...generator.DEFAULTS,headMin:120,headMax:240,jawEnabled:false};
+const config={...generator.DEFAULTS,headMin:120,headMax:240,jawEnabled:false,armEnabled:false,torsoEnabled:false,eyesEnabled:false,lightsEnabled:false,compoundEnabled:false,clockEnabled:false};
 fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'HeadOnly.ino'),generator.generateSketch(config));
 console.log(path.join(out,'HeadOnly.ino'));

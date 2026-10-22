@@ -56,6 +56,12 @@ and completion, then extend endurance gradually.
 
 ## P2 — Lighting capabilities
 
+The October 22 branch implements opt-in palette rotation and per-channel
+Static/Strobe/Pulsing with speed. The remaining gate is physical verification;
+use the [focused checklist](studio-lighting-checklist.md). Static defaults and
+the original six-packet path remain. The earlier investigation plan below is
+retained as context; these effects must not be described as hardware-verified.
+
 Studio currently emits static RGB and brightness only. The upstream
 [Ultra Skelly device profile](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
 lists Static (1), Strobe (2), and Pulsing (3), separately for torso/head channels.

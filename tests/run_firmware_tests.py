@@ -39,6 +39,11 @@ def build_and_run(directory, source, assertions, label, expected_error=None):
 
 
 failed = False
+for name, flags in [("Static", []), ("Mixed", ["--mixed"]), ("SingleEffect", ["--mixed", "--single"]), ("JawRestore", ["--mixed", "--jaw"])]:
+    source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-lighting-fixture.cjs"), *flags], encoding="utf-8")
+    failed |= build_and_run(ROOT / (".skelly-build/host/Lighting" + name), source,
+                            (ROOT / "tests/lighting_routines_harness.cpp").read_text(encoding="utf-8"),
+                            "Lighting rotation/effects " + name)
 audio_free = subprocess.check_output(
     [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-host-fixture.cjs"), "--audio-free"], encoding="utf-8")
 audio_free_assertions = """

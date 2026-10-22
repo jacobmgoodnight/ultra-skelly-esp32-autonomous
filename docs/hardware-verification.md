@@ -43,4 +43,6 @@ the current status. A transport success alone does not verify an actuator.
 | Per-file playback estimates | Software-only | Generator and host coverage for selected file durations; fallback 21 seconds by default, accepted values 21–120 seconds. No actual end confirmation. |
 | Passive AE02 playback observations | Software-only | Bounded callback queue, malformed/overflow handling and disconnect cleanup tested; raw duration units, CRC/framing and natural EOF remain unverified. No timer or motor control. Default OFF. |
 | Browser USB capture / prebuilt installer | Software-only | Mocked stream cleanup, original-byte capture, package/hash rejection and local UI checked. No real USB capture or flashing performed. |
+| Selected-palette rotation | Software-only / physically Untested | First selected palette, no immediate repeats, spacing, clock/idle gating, jaw/restoration deferral, timer wrap and reconnect covered by native C++; visual pairs and integration need observation. |
+| Per-channel Strobe/Pulsing and speed | Software-only / physically Untested | F2/F6 derived from upstream live handlers, CRC/length/order checks and static six-write regression covered. LED regions, actual effects and speed response need attended tests. |
 

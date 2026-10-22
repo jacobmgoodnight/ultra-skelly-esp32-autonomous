@@ -71,7 +71,7 @@ test("palettes only enable lighting and set the two colors",()=>{
   for(const name of Object.keys(api.PALETTES)) {
     const changes=plain(api.paletteSettings(name));
     assert.deepEqual(Object.keys(changes).sort(),["headColor","lightsEnabled","torsoColor"]);
-    const c=config({torsoBrightness:24,headBrightness:72,lightRestoreMode:1,...changes});
+    const c=config({armEnabled:false,torsoBrightness:24,headBrightness:72,lightRestoreMode:1,...changes});
     const sketch=api.generateSketch(c);
     assert.match(sketch,/const bool LIGHTS_ENABLED = true;/);
     assert.match(sketch,/const bool ARM_ENABLED = false;/);

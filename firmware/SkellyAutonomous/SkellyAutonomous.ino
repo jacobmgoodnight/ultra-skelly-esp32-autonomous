@@ -84,6 +84,27 @@ const uint8_t TORSO_LIGHT_R = 255, TORSO_LIGHT_G = 0, TORSO_LIGHT_B = 0;
 const uint8_t HEAD_LIGHT_R = 255, HEAD_LIGHT_G = 96, HEAD_LIGHT_B = 0;
 const uint8_t TORSO_LIGHT_BRIGHTNESS = 180;
 const uint8_t HEAD_LIGHT_BRIGHTNESS = 180;
+// Experimental effects: 1 static, 2 strobe, 3 pulsing. Static preserves six writes.
+const uint8_t TORSO_LIGHT_MODE = 1;
+const uint8_t HEAD_LIGHT_MODE = 1;
+// Device scale: 0 fast .. 254 slow (inverse of the upstream UI slider).
+const uint8_t TORSO_LIGHT_SPEED = 190;
+const uint8_t HEAD_LIGHT_SPEED = 190;
+const bool LIGHT_ROTATION_ENABLED = false;
+const uint32_t LIGHT_ROTATION_INTERVAL_MS = 90000;
+const uint8_t LIGHT_PALETTE_MASK = 15; // Halloween, Haunted, Moonlight, Ember.
+const uint8_t LIGHT_PALETTES[4][6] = {
+  {255,96,0,0,255,0}, {128,0,255,0,230,204},
+  {23,107,255,200,232,255}, {255,24,0,255,176,0}
+};
+static_assert(TORSO_LIGHT_MODE >= 1 && TORSO_LIGHT_MODE <= 3 &&
+              HEAD_LIGHT_MODE >= 1 && HEAD_LIGHT_MODE <= 3 &&
+              TORSO_LIGHT_SPEED <= 254 && HEAD_LIGHT_SPEED <= 254,
+              "Invalid light effect or speed.");
+static_assert(LIGHT_ROTATION_INTERVAL_MS >= 15000 && LIGHT_ROTATION_INTERVAL_MS <= 3600000 &&
+              LIGHT_PALETTE_MASK > 0 && LIGHT_PALETTE_MASK < 16 &&
+              (!LIGHT_ROTATION_ENABLED || (LIGHT_PALETTE_MASK & (LIGHT_PALETTE_MASK - 1)) != 0),
+              "Rotation needs two palettes and a 15-3600 second interval.");
 // 0: apply once after connection; 1: also restore AFTER an MP3 (conservative);
 // 2: restore 3s into MP3 and again after MP3 (experimental).
 const uint8_t LIGHT_RESTORE_MODE = 1;
@@ -163,6 +184,8 @@ uint32_t lightRestoreAt = 0;
 bool lightRestorePending = false;
 bool lightApplyPending = false;
 uint8_t lightApplyStep = 0;
+int8_t activeLightPalette = -1;
+uint32_t nextLightRotationAt = 0;
 uint32_t torsoSafeAfter = 0;
 uint32_t armSafeAfter = 0;
 uint32_t nextTorsoAt = 0;
@@ -320,6 +343,7 @@ void drainPlaybackObservation() {
 }
 
 void postponeRoutineTargets(uint32_t at) {
+  nextLightRotationAt = at + LIGHT_ROTATION_INTERVAL_MS;
   nextHeadAt = at + random(HEAD_MIN_INTERVAL_MS, HEAD_MAX_INTERVAL_MS + 1);
   nextArmAt = at + random(ARM_MIN_INTERVAL_MS, ARM_MAX_INTERVAL_MS + 1);
   nextTorsoAt = at + random(TORSO_MIN_INTERVAL_MS, TORSO_MAX_INTERVAL_MS + 1);
@@ -437,20 +461,30 @@ bool progressLights(uint32_t now) {
       !reached(now, nextLightWriteAt) || !reached(now, nextBodyWriteAt) ||
       (haveBleWrite && !reached(now, lastBleWriteAt + 250)) ||
       jawFollowupPending) return false;
-  const uint8_t channel = lightApplyStep >= 3 ? 1 : 0;
-  const uint8_t stage = lightApplyStep % 3;
+  const uint8_t torsoSteps = TORSO_LIGHT_MODE == 1 ? 3 : 4;
+  const uint8_t totalSteps = torsoSteps + (HEAD_LIGHT_MODE == 1 ? 3 : 4);
+  const uint8_t channel = lightApplyStep >= torsoSteps ? 1 : 0;
+  const uint8_t mode = channel ? HEAD_LIGHT_MODE : TORSO_LIGHT_MODE;
+  const uint8_t localStep = channel ? lightApplyStep - torsoSteps : lightApplyStep;
+  // Dynamic modes insert F6 after F2; static channels keep the original bytes/order.
+  const uint8_t stage = mode == 1 ? localStep : localStep == 1 ? 3 : localStep > 1 ? localStep - 1 : 0;
   const uint8_t brightness = channel ? HEAD_LIGHT_BRIGHTNESS : TORSO_LIGHT_BRIGHTNESS;
-  const uint8_t r = channel ? HEAD_LIGHT_R : TORSO_LIGHT_R;
-  const uint8_t g = channel ? HEAD_LIGHT_G : TORSO_LIGHT_G;
-  const uint8_t b = channel ? HEAD_LIGHT_B : TORSO_LIGHT_B;
+  const uint8_t offset = channel ? 3 : 0;
+  const uint8_t r = activeLightPalette >= 0 ? LIGHT_PALETTES[activeLightPalette][offset] : channel ? HEAD_LIGHT_R : TORSO_LIGHT_R;
+  const uint8_t g = activeLightPalette >= 0 ? LIGHT_PALETTES[activeLightPalette][offset+1] : channel ? HEAD_LIGHT_G : TORSO_LIGHT_G;
+  const uint8_t b = activeLightPalette >= 0 ? LIGHT_PALETTES[activeLightPalette][offset+2] : channel ? HEAD_LIGHT_B : TORSO_LIGHT_B;
   bool ok = false;
   if (stage == 0) {
     // F2 static mode: community live-mode implementation uses 8 payload
     // bytes for torso ch0, 9 for head ch1.
-    uint8_t frame[12] = {0xAA, 0xF2, channel, 0x01, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint8_t frame[12] = {0xAA, 0xF2, channel, mode, 0, 0, 0, 0, 0, 0, 0, 0};
     ok = sendVariableFrame(frame, channel ? 12 : 11);
   } else if (stage == 1) {
     uint8_t frame[11] = {0xAA, 0xF3, channel, brightness, 0, 0, 0, 0, 0, 0, 0};
+    ok = sendFrame(frame);
+  } else if (stage == 3) {
+    const uint8_t speed = channel ? HEAD_LIGHT_SPEED : TORSO_LIGHT_SPEED;
+    uint8_t frame[11] = {0xAA, 0xF6, channel, speed, 0, 0, 0, 0, 0, 0, 0};
     ok = sendFrame(frame);
   } else {
     // F4: channel + RGB + cycle=0 + cluster=00000000 + empty filename=00
@@ -463,15 +497,29 @@ bool progressLights(uint32_t now) {
     return false;
   }
   logEvent("LIGHTS: ch%u %s sent (visual effect unverified).\n",
-                channel, stage == 0 ? "static" : stage == 1 ? "brightness" : "RGB");
+                channel, stage == 0 ? "mode" : stage == 1 ? "brightness" : stage == 3 ? "effect speed" : "RGB");
   ++lightApplyStep;
   nextLightWriteAt = millis() + LIGHT_WRITE_SPACING_MS;
-  if (lightApplyStep >= 6) {
+  if (lightApplyStep >= totalSteps) {
     lightApplyPending = false;
-    logLine("LIGHTS: six BLE writes complete; confirm both colors visually.");
+    nextLightRotationAt = millis() + LIGHT_ROTATION_INTERVAL_MS;
+    logEvent("LIGHTS: %u BLE writes complete; confirm colors/effects visually.\n", unsigned(totalSteps));
     logDiagnostics("lights complete");
   }
   return true;
+}
+void serviceLightRotation(uint32_t now) {
+  if (!LIGHTS_ENABLED || !LIGHT_ROTATION_ENABLED || !connected || !routineWindowOpen() ||
+      !reached(now, nextLightRotationAt) || lightApplyPending || lightRestorePending ||
+      jawFollowupPending || mouthEndPending ||
+      (mouthConfigured() && reached(now, nextMouthAt))) return;
+  uint8_t choices[4], count = 0;
+  for (uint8_t i = 0; i < 4; ++i)
+    if ((LIGHT_PALETTE_MASK & (1 << i)) && i != activeLightPalette) choices[count++] = i;
+  if (count < 1) return;
+  activeLightPalette = choices[random(count)];
+  nextLightRotationAt = now + LIGHT_ROTATION_INTERVAL_MS;
+  queueLightSequence(now, 100, "palette rotation");
 }
 void startCompoundBody(uint32_t now) {
   if (!routineWindowOpen()) return;
@@ -539,6 +587,8 @@ class SkellyScanCallbacks : public BLEAdvertisedDeviceCallbacks {
 void resetConnection() {
   logDiagnostics("connection reset");
   connected = false;
+  activeLightPalette = -1;
+  nextLightRotationAt = 0;
   portENTER_CRITICAL(&playbackMux);
   notifySource = nullptr; playbackRead = playbackWrite = 0; playbackDropped = 0;
   portEXIT_CRITICAL(&playbackMux);
@@ -602,6 +652,11 @@ bool connectToSkelly() {
 
   connected = true;
   const uint32_t now = millis();
+  activeLightPalette = -1;
+  if (LIGHT_ROTATION_ENABLED) {
+    for (uint8_t i = 0; i < 4; ++i) if (LIGHT_PALETTE_MASK & (1 << i)) { activeLightPalette = i; break; }
+  }
+  nextLightRotationAt = now + LIGHT_ROTATION_INTERVAL_MS;
   nextHeadAt = now + random(HEAD_MIN_INTERVAL_MS, HEAD_MAX_INTERVAL_MS + 1);
   headSafeAfter = now;
   headMovingUntil = now;
@@ -1136,5 +1191,6 @@ void loop() {
     if (routineWindowOpen()) changeEyes(millis());
   }
 
+  serviceLightRotation(millis()); // Low priority; no new rotation during idle breaks/closed windows.
   delay(100);
 }

@@ -22,13 +22,22 @@
     if(c.restEnabled) messages.push("Idle breaks begin only after active movement finishes and can postpone every new request.");
     if(c.jawEnabled&&c.fairBodyTurns) messages.push(c.jawProtectBody?"Fair turns is experimental: one waiting body request gets a turn after jaw playback, without shortening motor cooldowns.":"Fair turns is inactive while MP3 body protection is OFF. Enable protection to use it.");
     if(c.clockEnabled) messages.push("Clock scheduling pauses new routines until USB time is set after every restart. Only selected days and the configured local-time window are active; existing motion can finish.");
-    if(c.lightsEnabled&&c.jawEnabled&&c.lightRestoreMode) messages.push("The next jaw clip waits for all six light-restoration writes. Playback end is estimated, not confirmed by the prop.");
+    if(c.lightsEnabled&&c.jawEnabled&&c.lightRestoreMode) messages.push("The next jaw clip waits for the complete light-restoration sequence. Playback end is estimated, not confirmed by the prop.");
     const load=(c.headEnabled?32/c.headMin:0)+(c.armEnabled?32/c.armMin:0)+(c.torsoEnabled?35/c.torsoMin:0);
     if(!c.bodyOverlap&&!c.compoundEnabled&&load>1) messages.push("These body intervals request more movement than the shared cooldown allows. Expect delays; increasing the intervals gives each part more room.");
     if(c.jawEnabled&&c.jawProtectBody&&(c.compoundEnabled||c.headEnabled||c.armEnabled||c.torsoEnabled)&&c.jawMin<40) messages.push("Frequent jaw requests can starve body movement under jaw-priority scheduling. Use longer jaw intervals or the optional fair-turn policy.");
     return messages;
   }
-  const api={firstRoutine,withoutMouth,scheduleFeedback};
+  function previewItems(c) {
+    const items=[];
+    if(c.compoundEnabled)items.push(["compound","Combined"]);
+    else for(const [key,name] of [["head","Head"],["torso","Torso"],["arm","Arm"]])if(c[key+"Enabled"])items.push([key,name]);
+    if(c.eyesEnabled)items.push(["eyes","Eyes"]);
+    if(c.lightsEnabled&&c.lightRotation)items.push(["lights","Lighting"]);
+    if(c.jawEnabled)items.push(["jaw","Jaw"]);
+    return items;
+  }
+  const api={firstRoutine,withoutMouth,scheduleFeedback,previewItems};
   if(typeof module!=="undefined")module.exports=api;
   if(typeof window!=="undefined")window.SkellyExperience=api;
 })();
