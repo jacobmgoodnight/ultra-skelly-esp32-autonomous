@@ -7,6 +7,8 @@
 void prepare(uint32_t at = 1000) {
   fakeNow = at;
   fakeWriteLatency = 0;
+  fakeConnectOK = fakeDiscoveryOK = fakeServicePresent = fakeCharacteristicPresent = true;
+  fakeDisconnectOnDiscovery = false;
   scanner = BLEDevice::getScan();
   static BLEAdvertisedDevice device;
   skellyDevice = &device;
@@ -147,6 +149,68 @@ int main() {
     recordBoot(ESP_RST_POWERON); CHECK(bootCount == 1);
     bootCountGuard ^= 1;
     recordBoot(ESP_RST_SW); CHECK(bootCount == 1);
+  });
+  run("body cooldowns and target intervals begin after blocking writes", [] {
+    for (uint32_t at : {1000u, UINT32_MAX - 1000u}) {
+      prepare(at); finishLights(); fakeWriteLatency = 5000;
+      startHead(fakeNow);
+      CHECK(headSafeAfter - fakeNow == HEAD_ANIMATION_MS + HEAD_BUFFER_MS);
+      CHECK(headMovingUntil - fakeNow == HEAD_ANIMATION_MS);
+      CHECK(nextBodyWriteAt - fakeNow == BODY_WRITE_SPACING_MS);
+      CHECK(nextHeadAt - fakeNow >= HEAD_MIN_INTERVAL_MS);
+      startArm(fakeNow);
+      CHECK(armSafeAfter - fakeNow == ARM_ANIMATION_MS + ARM_BUFFER_MS);
+      CHECK(nextArmAt - fakeNow >= ARM_MIN_INTERVAL_MS);
+      startTorso(fakeNow);
+      CHECK(torsoSafeAfter - fakeNow == TORSO_ANIMATION_MS + TORSO_BUFFER_MS);
+      CHECK(nextTorsoAt - fakeNow >= TORSO_MIN_INTERVAL_MS);
+    }
+    fakeWriteLatency = 0;
+  });
+  run("future motor cooldown blocks jaw until full post-write duration", [] {
+    prepare(UINT32_MAX - 10000); finishLights();
+    fakeWriteLatency = 5000; startHead(fakeNow); fakeWriteLatency = 0;
+    const uint32_t safe = headSafeAfter;
+    nextMouthAt = fakeNow; mouthSafeAfter = fakeNow;
+    fakeWrites.clear(); fakeNow = safe - 1; loop();
+    CHECK(fakeWrites.empty()); CHECK(headSafeAfter == safe);
+    fakeNow = safe; loop();
+    CHECK(!fakeWrites.empty() && fakeWrites.back()[1] == 0xc6);
+  });
+  run("inactive motor timers do not stop jaw after 60 simulated days and wrap", [] {
+    for (uint32_t at : {1000u, UINT32_MAX - 10000u}) {
+      prepare(at); finishLights();
+      const uint32_t begin = fakeNow;
+      for (uint32_t day = 0; day < 60; ++day) {
+        fakeNow = begin + uint32_t(uint64_t(day) * 86400000ULL);
+        fakeWrites.clear();
+        // Regular loop servicing is required by the cooperative scheduler.
+        // Sample daily operation with enough time for modeled clips/restores.
+        for (int i = 0; i < 14; ++i) { loop(); fakeNow += 30000; finishLights(); }
+        bool sawJaw = false;
+        for (const auto &frame : fakeWrites) if (frame[1] == 0xc6) sawJaw = true;
+        CHECK(sawJaw);
+      }
+    }
+  });
+  run("each reconnect rediscovers services before accepting a writer", [] {
+    prepare(); const unsigned before = fakeDiscoveryCount;
+    resetConnection(); CHECK(connectToSkelly());
+    CHECK(fakeDiscoveryCount == before + 1);
+    CHECK(connected && writeChar != nullptr);
+    for (int failure = 0; failure < 5; ++failure) {
+      prepare(); resetConnection();
+      if (failure == 0) fakeConnectOK = false;
+      if (failure == 1) fakeDiscoveryOK = false;
+      if (failure == 2) fakeServicePresent = false;
+      if (failure == 3) fakeCharacteristicPresent = false;
+      if (failure == 4) fakeDisconnectOnDiscovery = true;
+      fakeWrites.clear();
+      CHECK(!connectToSkelly()); CHECK(!connected && writeChar == nullptr);
+      CHECK(fakeWrites.empty());
+      CHECK(!lightApplyPending && !lightRestorePending && !jawFollowupPending);
+    }
+    prepare(); // Restore fake transport settings for later tests.
   });
   return failed ? 1 : 0;
 }

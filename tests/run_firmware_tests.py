@@ -17,7 +17,7 @@ sources = {
 harness = (ROOT / "tests/firmware_harness.cpp").read_text(encoding="utf-8")
 
 
-def build_and_run(directory, source, assertions, label):
+def build_and_run(directory, source, assertions, label, expected_error=None):
     directory.mkdir(parents=True, exist_ok=True)
     unit = directory / "test.cpp"
     unit.write_text('#include <stdexcept>\n#include "Arduino.h"\n' + source + assertions, encoding="utf-8")
@@ -26,7 +26,14 @@ def build_and_run(directory, source, assertions, label):
         args = [compiler, "/nologo", "/std:c++17", "/EHsc", f"/I{ROOT / 'tests/stubs'}", str(unit), f"/Fe:{exe}", f"/Fo:{directory / 'test.obj'}"]
     else:
         args = [compiler, "-std=c++17", "-Wall", "-Wextra", "-I", str(ROOT / "tests/stubs"), str(unit), "-o", str(exe)]
-    subprocess.run(args, check=True)
+    result = subprocess.run(args, check=expected_error is None,
+                            capture_output=expected_error is not None, text=True)
+    if expected_error is not None:
+        if result.returncode == 0 or expected_error not in result.stdout + result.stderr:
+            print("FAIL expected compile rejection: " + label, flush=True)
+            return True
+        print("PASS compile rejects " + label, flush=True)
+        return False
     print(label, flush=True)
     return subprocess.run([str(exe)], check=False).returncode != 0
 
@@ -45,6 +52,22 @@ failed |= build_and_run(
     (ROOT / "tests/serial_idle_harness.cpp").read_text(encoding="utf-8"),
     "Serial-only idle diagnostic",
 )
+scheduler_harness = (ROOT / "tests/scheduler_harness.cpp").read_text(encoding="utf-8")
+scheduler_source = sources["Canonical"].replace("const bool ARM_ENABLED = false;", "const bool ARM_ENABLED = true;")
+scheduler_source = scheduler_source.replace("const bool TORSO_ENABLED = false;", "const bool TORSO_ENABLED = true;")
+scheduler_source = scheduler_source.replace("const bool COMPOUND_BODY_ENABLED = false;", "const bool COMPOUND_BODY_ENABLED = true;")
+failed |= build_and_run(ROOT / ".skelly-build/host/SchedulerCanonical", scheduler_source, scheduler_harness, "Canonical scheduler")
+for name, source, message in [
+    ("CompoundJawFirst", scheduler_source.replace("const uint8_t JAW_FOLLOWUP_MOTOR = 0;", "const uint8_t JAW_FOLLOWUP_MOTOR = 1;"),
+     "Compound and jaw-first modes must be selected separately."),
+    ("CompoundUnprotectedJaw", scheduler_source.replace("const bool JAW_PROTECTS_ARM_TORSO = true;", "const bool JAW_PROTECTS_ARM_TORSO = false;"),
+     "Compound mode with jaw playback requires MP3 body protection."),
+]:
+    failed |= build_and_run(ROOT / ".skelly-build/host" / name, source, "", name, expected_error=message)
+generated_scheduler = subprocess.check_output(
+    [os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-scheduler-fixture.cjs")], encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/SchedulerGenerated",
+                        "#define TEST_JAW_POOL\n" + generated_scheduler, scheduler_harness, "Generated scheduler and jaw pool")
 pack_fixtures = []
 for name, flags in [("attended-host-pack", []), ("quick-host-pack", ["--quick"])]:
     pack_dir = ROOT / ".skelly-build" / name

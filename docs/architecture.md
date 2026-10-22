@@ -20,13 +20,14 @@ not reproduce the firmware's full lock/follow-up/lighting arbitration.
 performs a blocking five-second scan. The scan callback copies the matching
 advertisement and stops scanning; connection starts only after scanning returns
 and a 500 ms settling delay. Misses and failed connections retry after 30 seconds.
-One BLE client is reused, and AE00/AE01 lookup is called on each connection.
-In the pinned Bluedroid implementation, `getService` can return a cached service:
-`m_haveServices` is not cleared by its disconnect handler. Explicit `getServices`
-rediscovery clears old services, but the current firmware does not force that
-rediscovery on every reconnect. Stale handles after a changed device profile and
-repeated-cycle heap stability therefore remain audit risks; no reconnection
-rewrite is included in the first lighting-diagnostic PR.
+One BLE client is reused. Each connection now invalidates the application writer
+and explicitly calls `getServices` before looking up AE00/AE01. In pinned
+Bluedroid this deletes the old service objects and rebuilds their cache; the old
+`getService`-only path could reuse a cache retained across disconnects. Empty
+discovery, a missing service/characteristic, or disconnect during discovery rejects
+the connection without sending an actuator command. Native tests exercise those
+failures. Real stack behavior, repeated-cycle heap stability and physical recovery
+still require an attended test; cache rediscovery is not a field-verified fix.
 
 `resetConnection` invalidates the writer, disconnects if needed, cancels eye,
 jaw-follow-up, modeled-end, and light work. Reconnection starts fresh randomized
@@ -39,7 +40,8 @@ cannot currently be recovered from the prop.
 ## Movement and jaw scheduling
 
 Independent body scheduling chooses the most overdue eligible head, arm, or torso.
-Each motor has a due time and cooldown; a shared lock serializes body commands by
+Each motor has a due time and cooldown, now anchored after a successful BLE call
+returns so call latency cannot consume the cooldown. A shared lock serializes body commands by
 default, with 600 ms between body writes. An advanced overlap option bypasses the
 shared lock, preserving per-motor cooldowns. Head uses 25+7 s, arm 22+10 s, torso
 25+10 s. These are conservative models, not completion telemetry.
@@ -48,7 +50,9 @@ Compound mode suppresses independent body scheduling and sends one randomly
 selected allowed mask. It validates selected motors and holds the shared lock
 until the longest selected animation plus buffer ends. Studio rejects compound
 mode with jaw-first follow-ups and requires MP3 body protection when jaw is ON.
-Directly edited firmware does not duplicate every Studio validation constraint.
+Compile-time guards also reject compound mode with jaw-first follow-ups, or with
+configured jaw playback and MP3 body protection OFF. Direct edits still need the
+documented timing/mask constraints; Studio performs additional validation.
 
 `startMouth` sends AAC6 for the device-specific stored file serial. Default MP3
 protection waits for all body cooldowns and suppresses standalone body starts
@@ -103,5 +107,13 @@ the counter is reset on power-on or an invalid guard. RTC memory does not surviv
 every reset/power loss, so this is not a lifetime boot total. Verbose diagnostics add
 per-write outcomes and event-triggered connection/heap/light snapshots. Uptime
 wraps at ~49.7 days. Signed deadline comparisons require deadlines within half
-that range; stale inactive-motor cooldown timestamps are a long-run audit item.
+that range. The loop now retires elapsed cooldown/model-end/spacing deadlines by
+moving them to the current uptime, leaving future deadlines unchanged. Movement
+targets are not refreshed: their overdue age determines dispatch priority. This
+prevents continuously serviced inactive cooldowns from becoming future locks
+after ~24.9 days. As with other signed deadlines, this assumes the cooperative
+loop is serviced within the half-range; a loop blocked for weeks is not recovered
+by this mechanism. Actual C++ tests cover 60 simulated days and wrap, plus body
+cooldowns after a simulated five-second write. Neither is physical endurance
+evidence. See [audit follow-up](audit-follow-up.md) for attended regression criteria.
 

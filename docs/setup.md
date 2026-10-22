@@ -41,7 +41,7 @@ Most ESP32 boards restart automatically after a successful upload; the normal co
 
 1. Power on Skelly and close/disconnect the official app and web controller.
 2. After the upload completes, press **EN/RESET** on the ESP32, or unplug and reconnect **ESP32 USB power** (not Skelly's power).
-3. Reopen Serial Monitor at **115200**, looking for `Scanning for Ultra Skelly v2...`, the discovered BLE address, and `CONNECTED`.
+3. Reopen Serial Monitor at **115200**, looking for `Scanning for Ultra Skelly v2...`, `Found Skelly by advertised name.`, and `CONNECTED`. The controller does not log device addresses.
 4. Give it time: each scan lasts approximately **5 seconds**; after an unsuccessful scan or connection the sketch waits roughly **30 seconds** before retrying.
 5. If it only ever connects after an ESP32 reboot, report your board, Arduino-ESP32 version and serial output; manual power cycling should not be a prerequisite for normal automatic reconnect.
 
@@ -51,17 +51,17 @@ The one-shot eye test is different: it scans **only once** per reset, while the 
 Sample log (illustrative):
 
 ```text
-Found Skelly: [BLE address]
+Found Skelly by advertised name.
 Connecting to Skelly (scan is finished)...
-CONNECTED. Head + jaw running independently; torso OFF.
+CONNECTED. Head ON, jaw ON, torso OFF, arm OFF.
 First head in 47 seconds.
 Jaw file serial 12; first attempt in ~68 seconds.
 HEAD command sent; next head in 39 sec.
-JAW command sent (file #12); next jaw in 77 sec (OVERLAPPING head motion).
+JAW command sent (file #12); next jaw in 77 sec.
 ```
 
 ## 5. Long-running installation
 
 Leave ESP32 powered through USB, near Skelly but protected from rain and moisture. The ESP32 periodically scans while Skelly is off and should reconnect when it is powered. Keep a sensible motor duty cycle. Inspect the animatronic regularly; this project does not bypass the prop's built-in safety interlocks.
 
-**Important:** Verify full off/on cycle recovery in your own setup before trusting it unattended. The head/jaw overlap works on one tested device; behaviors may differ across firmware versions.
+**Important:** Verify full off/on cycle recovery in your own setup before trusting it unattended. Default MP3 protection makes standalone head and jaw take turns; MP3 playback has interrupted head movement in testing. Keep protection enabled. Behaviors may differ across firmware versions.

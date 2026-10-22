@@ -24,18 +24,19 @@ serial corruption remains unknown; mode 2 and motor integration remain unverifie
 3. Exercise repeated Skelly power cycles with heap diagnostics; verify reused
    client/service cleanup, canceled pending jobs, delayed restart targets and no
    unintended repeat movement. A disconnect loses physical animation knowledge.
-   The pinned Bluedroid `getService` can reuse its service cache across reconnects;
-   investigate explicit rediscovery with failure/reconnect tests before changing
-   that lifecycle. Do not describe the current lookup as forced fresh discovery.
+   The audit follow-up now forces service rediscovery with missing-service,
+   missing-characteristic and disconnect tests. Repeated physical reconnect/heap
+   validation remains pending; see [attended regression](audit-follow-up.md).
 
 ## P1 — Scheduler correctness and endurance
 
-Add executable compound/jaw arbitration tests (not just output regexes), including
-frequent jaw playback starving compound movements, permitted motor masks, longest
-cooldown, recurrence fairness, reconnect while moving, and disabled motors. Audit
-stale timestamps beyond the signed half-range (~24.9 days): inactive cooldowns
-initialized once can eventually compare as future deadlines. Test both wrap and
-multi-week idle conditions before changing the timing representation.
+The audit follow-up adds executable all-mask compound/cooldown/jaw protection,
+write-latency, reconnect-failure, jaw-pool selection and 60-day/wrap tests. Elapsed
+cooldowns are retired during loop service; body timers begin after BLE calls
+return. These are software corrections, pending attended regression.
+Remaining work includes frequent jaw playback starving compound movements,
+recurrence fairness, disconnect during physical movement, and broader fault and
+random-sequence coverage. Preserve physical evidence limits.
 
 Keep proven jaw-first and compound modes separate. Run a supervised recurring
 compound test at 180–360 s only after isolated light testing; log physical duration

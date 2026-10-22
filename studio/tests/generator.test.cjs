@@ -360,3 +360,45 @@ test("the sample timeline is deterministic and within five minutes", () => {
   assert.ok(events.every(x => x.time > 0 && x.time < 300));
   assert.deepEqual(events.map(x => x.time), api.simulateSchedule(sample()).map(x => x.time));
 });
+
+test("disabled controls cannot emit invalid C++ constants or pools",()=>{
+  for(const changes of [
+    {headEnabled:false,headMin:-1}, {torsoEnabled:false,torsoMax:NaN},
+    {armEnabled:false,armMin:1.5}, {jawEnabled:false,jawFile:0},
+    {jawEnabled:false,jawExtras:"13, nope"}, {jawEnabled:false,jawExtras:"12"},
+    {eyesEnabled:false,eyesMin:0}, {eyesEnabled:false,eyeChoices:[99]},
+    {lightsEnabled:false,headColor:"invalid"}, {lightsEnabled:false,torsoBrightness:256},
+    {lightsEnabled:false,lightRestoreMode:7}, {restEnabled:false,restMin:0},
+    {restEnabled:false,restDurationMax:Infinity},
+    {compoundEnabled:false,compoundMin:0}, {compoundEnabled:false,compoundMasks:[3,3]},
+    {compoundEnabled:false,compoundMasks:["3"]}
+  ])assert.throws(()=>api.generateSketch(sample(changes)),undefined,JSON.stringify(changes));
+  for(const changes of [{headEnabled:"false"},{jawExtras:[]},{eyeChoices:null},{compoundMasks:null}])
+    assert.throws(()=>api.generateSketch(sample(changes)),/Invalid setting type/);
+  assert.throws(()=>api.generateSketch(null),/valid Studio settings/);
+  // An empty disabled selector has a deliberate safe fallback in the generator.
+  assert.match(api.generateSketch(sample({eyesEnabled:false,eyeChoices:[],compoundMasks:[]})),/EYE_OPTIONS/);
+});
+
+test("missing and duplicate firmware anchors fail closed",()=>{
+  const original=context.window.SKELLY_FIRMWARE_TEMPLATE;
+  const anchor="const uint16_t MOUTH_FILE_SERIAL = 12;";
+  try {
+    for(const changed of [original.replace(anchor,""),original+"\n"+anchor]) {
+      context.window.SKELLY_FIRMWARE_TEMPLATE=changed;
+      assert.throws(()=>api.generateSketch(sample()),/missing or repeated anchor/);
+    }
+  } finally { context.window.SKELLY_FIRMWARE_TEMPLATE=original; }
+});
+
+test("personality presets clear incompatible jaw-first settings",()=>{
+  const previous=sample({armEnabled:true,torsoEnabled:true,jawFollowupMotor:3,
+    jawFollowupRecurring:true,jawProtectBody:false});
+  for(const preset of Object.values(api.PRESETS)) {
+    const settings={...previous,...preset};
+    assert.equal(settings.jawFollowupMotor,0);
+    assert.equal(settings.jawFollowupRecurring,false);
+    assert.equal(settings.jawProtectBody,true);
+    assert.doesNotThrow(()=>api.generateSketch(settings));
+  }
+});

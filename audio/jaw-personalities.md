@@ -16,8 +16,8 @@ The original ~20-second irregular-twitch MP3 is preserved as a known-working sta
 ## Generate or download the clips
 
 - Run `python audio/generate_jaw_clips.py` from the project directory. It uses Python's standard library and an installed **ffmpeg** executable. New MP3s will appear under `audio/generated/`.
-- Alternatively, open GitHub's **Actions → Build sample jaw MP3s** and use its **Run workflow** option. The workflow uploads the generated MP3s as a downloadable build artifact. GitHub build artifacts expire; the Python source is the permanent reference.
-- The project maintainer also has the two ready-made MP3 test files for direct upload.
+- The included [original chatter MP3](Jaw_Idle_Random_20s_v2.mp3) can be downloaded directly from the repository.
+- For the two additional patterns, check [Build sample jaw MP3s](https://github.com/jacobmgoodnight/ultra-skelly-esp32-autonomous/actions/workflows/jaw-audio.yml) for a completed run and download its artifact while available (GitHub sign-in may be required). Only maintainers with workflow permission can start a run. Artifacts expire after 90 days; local Python + ffmpeg generation is the permanent fallback.
 
 ## Upload and verify on your Skelly
 

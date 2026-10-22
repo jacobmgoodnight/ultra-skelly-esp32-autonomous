@@ -35,4 +35,7 @@ the current status. A transport success alone does not verify an actuator.
 | Automatic power-cycle reconnect / many reconnects | Software-only | Test08 logs two successful recoveries, canceled pending restore and resumed MP3/light writes; user tentatively reports it worked. Three-cycle visual/endurance criteria remain incomplete. |
 | Multiple-file jaw pool (#12/#13/#14) | Verified | Test04: user confirms all three clip identities; six logged selections 13,13,13,12,13,14, no reported write failures; isolated jaw setup. |
 | Idle breaks | Software-only | Test05: two complete 30.002-second logged pauses followed by playback; user says it seemed to work. Uninterrupted physical completion not explicitly confirmed. |
+| Inactive cooldowns after ~24.9 days connected | Software-only correction | Initial defect reproduced; normal loop service now retires elapsed cooldowns. Canonical/generated tests retain jaw scheduling across 60 simulated days and wrap. No multi-week physical result. |
+| Body cooldown accounting during a blocking BLE call | Software-only correction | Head/arm/torso/compound timers now start after the write returns. Tests with 5-second simulated latency retain full cooldowns, including wrap; actual latency/physical impact unmeasured. |
+| Fresh BLE service discovery on reconnect | Software-only correction | Writer invalidated before explicit cache rediscovery; native tests reject empty discovery, missing services/characteristics and disconnect. Repeated physical recovery/heap test pending. |
 

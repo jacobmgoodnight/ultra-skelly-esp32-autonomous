@@ -187,7 +187,7 @@ The serial log confirms the request:
 
 ```text
 Scanning 5 seconds... attempt 1/8
-Found Skelly: 5a:e8:18:0a:37:16
+Found Skelly: [device address redacted]
 CONNECTED
 Requested motors: HEAD=YES ARM=NO TORSO=YES
 Sending ONE compound body command, mask 0x05: AA CA 05 00 00 00 00 00 00 00 44
@@ -349,3 +349,19 @@ do not need repetition. Remaining optional spot checks use shorter scheduling
 targets while preserving the **21-second MP3 model, motor cooldowns, body
 protection and BLE spacing**. Longer runs remain available as endurance tests;
 they are not a gate for unrelated Studio usability and color-palette features.
+
+## October 21, 2026 — audit timing/reconnect corrections (software-only)
+
+After the owner requested actionable audit fixes, the canonical sketch was updated
+to retire elapsed cooldowns during normal loop service, start body timers after
+BLE calls return, and explicitly rediscover services before reusing the writer
+on reconnect. Direct edits also reject compound + jaw-first or unprotected-jaw
+compound configurations at compile time. Defaults, packet bytes, conservative
+durations and the failed HEAD-after-jaw diagnostic remain unchanged.
+
+Boot marker: `audit-timing-v2`. New C++ tests exercise post-write durations,
+60 simulated days with timer wrap, reconnect discovery/service/characteristic
+failures, all compound masks, and all configured jaw-pool choices. These are
+**Software-only** results. They are not a new physical/endurance pass and do not
+resolve serial corruption or playback-end feedback. See
+[audit follow-up](audit-follow-up.md) for exact attended regression criteria.

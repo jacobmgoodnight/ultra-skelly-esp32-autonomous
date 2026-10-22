@@ -1,10 +1,46 @@
 # Ultra Skelly ESP32 Autonomous Controller 💀
 
-An autonomous BLE controller for the Home Depot Ultra Skelly v2, with randomized
-body movement, jaw MP3 playback, optional eyes and live RGB lighting. Configure it
+Custom, scheduled routines for the Home Depot Ultra Skelly v2, running autonomously
+on an ESP32: head movement at your own intervals, jaw clips, optional eyes and RGB.
+Configure it
 in **[Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)**,
 flash an inexpensive ESP32-WROOM board, and let it run without a connected phone,
 browser, Wi-Fi, cloud service or subscription. GitHub Pages hosts the static site.
+
+For Ultra Skelly v2 owners who want occasional movement without keeping a phone
+connected. Studio generates Arduino source; **it does not upload MP3s, compile,
+or flash your ESP32**. The software is free and MIT licensed; you supply the prop,
+an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
+computer for the initial Arduino upload. Other prop revisions and ESP32 variants
+are not covered by the current hardware evidence.
+
+Want Skelly's head to move on its own every few minutes, even when nobody walks
+past? Choose **Subtle**, set the head interval to **120–240 seconds**, download
+the sketch and flash the ESP32. It requests a head animation at a random point
+in that range, repeatedly, while powered and connected to the prop. You choose
+the intervals; the ESP32 handles the recurring triggers. Other enabled routines
+and safety locks may delay starts.
+
+This adds a recurring schedule in Bluetooth mode without manual DecorPro taps or
+waiting for the prop's sensor. **Scheduling means fixed or randomized intervals
+after connection, not clock times, days of the week or an evening on/off calendar.**
+The stock sensor mode's active-window timer is a different feature. This project
+does not extend compatibility to the 12-foot app-controlled Skelly or other props.
+
+## What you can configure
+
+![Skelly Studio on desktop: movement presets, interval controls and sketch summary](docs/images/studio-desktop.jpg)
+
+- Random head and jaw intervals, with optional arm and torso movements and
+  conservative motor cooldowns.
+- A mix of your own uploaded jaw clips, optional eye rotations and torso/head RGB.
+- Separate opt-in jaw-first arm/torso and compound body modes, plus idle breaks.
+- Named clip mappings, color palettes and portable JSON settings files.
+- Self-contained `.ino` downloads, generated locally and usable offline.
+
+Treat this as a hobby preview tested on one prop. Start with a simple attended
+routine; advanced combinations and long unattended operation need validation on
+your own setup. The table below separates physical observations from other evidence.
 
 ## Current evidence — October 21, 2026
 
@@ -26,6 +62,10 @@ All observations are from one prop. Logged BLE writes and compile tests do not
 prove actuator response. See the [verification matrix](docs/hardware-verification.md)
 for evidence limits and the [experiment history](docs/experiments.md) for chronology.
 
+The latest timing/reconnect corrections have software coverage; their focused
+[attended regression](docs/audit-follow-up.md) is still pending. Earlier physical
+observations do not establish that this firmware revision passed on the prop.
+
 ## Quick start
 
 1. Install Arduino IDE and **esp32 by Espressif Systems 3.3.12**. Select **ESP32 Dev
@@ -44,6 +84,12 @@ for evidence limits and the [experiment history](docs/experiments.md) for chrono
    after flashing, but automatic retries are intended for regular operation.
 
 [Full setup](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
+
+For a first try without preparing audio, select **Subtle** in Studio. It enables
+occasional head movement and disables jaw, arm and torso. To use Studio offline,
+download the repository ZIP, extract it, and open `studio/index.html`; keep
+`app.js`, `template.js` and `style.css` beside it. Initial toolchain installation
+and MP3 preparation are separate setup steps.
 
 ## Conservative movement scheduling
 
@@ -76,7 +122,7 @@ mode adds heap, connection and write/queue diagnostics. Playback end is still
 is no playback-ended subscription. Longer MP3s require a conservative
 `MOUTH_CLIP_MS` adjustment in the downloaded sketch.
 
-**Next on-device test:** [exact isolated jaw/RGB settings and pass/fail criteria](docs/testing.md).
+**Test reference:** [isolated jaw/RGB settings and pass/fail criteria](docs/testing.md).
 Mode 1 color recovery is now visually verified on the test prop. Serial corruption
 remains unresolved; the log shows steady connected heap and no reported BLE write
 failures during four clips. See the October 21 entry in the experiment log.
@@ -89,6 +135,12 @@ jaw-first follow-ups, eye choices, optional idle breaks, static RGB and sketch
 copy/download. Eye thumbnails need internet; generation uses local assets. The
 five-minute timeline is illustrative, not a full scheduler simulation.
 
+Studio has no application telemetry, login or server-side settings storage.
+Settings remain in the page until you save a JSON profile or sketch. The hosted
+page is served by GitHub Pages, and eye thumbnails are fetched from GitHub's
+upstream image URLs; those services receive normal web requests. Firmware uses
+BLE locally and does not configure Wi-Fi or send data to a backend.
+
 The canonical `.ino` generates `studio/template.js` via
 `node scripts/sync-template.cjs`; CI fails if they differ. Checks include generator
 and gallery tests, actual firmware C++ with mocked clock/BLE, CRC vectors, canonical
@@ -98,9 +150,20 @@ Tests do not replace physical observation.
 - [Architecture and known limitations](docs/architecture.md)
 - [Automated checks and hardware procedure](docs/testing.md)
 - [Prioritized roadmap](docs/roadmap.md)
+- [Owner requests and community research](docs/community-demand.md)
 - [BLE protocol](docs/protocol.md)
 - [Jaw audio recipes](audio/jaw-personalities.md)
 - [Contributor instructions](CONTRIBUTING.md) and [agent instructions](AGENTS.md)
+
+## Report a bug or suggest a feature
+
+Use [GitHub Issues](https://github.com/jacobmgoodnight/ultra-skelly-esp32-autonomous/issues)
+for bugs, setup problems and ideas. Include your board, ESP32 core version,
+browser (for Studio), selected settings, expected result and actual result.
+For hardware reports, separate visible movement/lighting from serial messages.
+Remove device addresses and other private information from logs and profiles.
+Pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and run the
+[documented checks](docs/testing.md) before submitting a change.
 
 ## Credits and license
 
