@@ -16,7 +16,7 @@ computer for the initial Arduino upload. Other prop revisions and ESP32 variants
 are not covered by the current hardware evidence.
 
 Want Skelly's head to move on its own every few minutes, even when nobody walks
-past? Choose **Subtle**, set the head interval to **120–240 seconds**, download
+past? Choose **Subtle**, which defaults to **60–120 seconds**, download
 the sketch and flash the ESP32. It requests a head animation at a random point
 in that range, repeatedly, while powered and connected to the prop. You choose
 the intervals; the ESP32 handles the recurring triggers. Other enabled routines
@@ -81,8 +81,9 @@ observations do not establish that this firmware revision passed on the prop.
    `MOUTH_ENABLED = false` for an audio-free setup; that reference sketch retains
    its previous head-and-jaw defaults.
 4. Compile/upload. The ESP32 finds **Ultra Skelly v2** by name; no MAC entry or
-   physical wiring to the prop is needed. It scans five seconds and retries
-   misses/connection failures after 30 seconds. A board EN/RESET press can help
+   physical wiring to the prop is needed. It scans up to five seconds, targeting five-second scan starts
+   during the first minute (until first connection), then pauses 30 seconds
+   after misses/connection failures. Studio exposes both retry settings. A board EN/RESET press can help
    after flashing, but automatic retries are intended for regular operation.
 
 [Full setup](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
@@ -136,7 +137,8 @@ MP3 protection defaults ON and includes **head, arm and torso**. It prevents an
 MP3 from interrupting active body motion and blocks standalone body commands
 while playback is due/active. Proven jaw-first arm/torso follow-ups are deliberate
 exceptions. Keep compound mode OFF to retain the alternating jaw-first setup;
-Studio rejects selecting both modes. Separate-write body overlap remains advanced.
+Studio rejects selecting both modes. Separate-write body overlap has been removed
+after physical interruption reports; Studio always serializes separate commands.
 
 [Body safety](docs/body-movements.md) · [Jaw-first guide](docs/jaw-first-experiment.md) ·
 [Compound tests](docs/body-combo-test.md)
@@ -166,13 +168,13 @@ failures during four clips. See the October 21 entry in the experiment log.
 Studio runs entirely in the browser and can also be opened as `studio/index.html`
 from a downloaded ZIP. It supports motor intervals, compound masks, jaw file pools,
 jaw-first follow-ups, eye choices, optional idle breaks, static RGB and sketch
-copy/download. Eye thumbnails need internet; generation uses local assets. The
+copy/download. Eye thumbnails and generation use local assets. The
 five-minute timeline is illustrative, not a full scheduler simulation.
 
 Studio has no application telemetry, login or server-side settings storage.
 Settings remain in the page until you save a JSON profile or sketch. The hosted
-page is served by GitHub Pages, and eye thumbnails are fetched from GitHub's
-upstream image URLs; those services receive normal web requests. Firmware uses
+page and bundled eye previews are served by GitHub Pages, which receives normal
+web requests. An extracted local Studio folder works offline. Firmware uses
 BLE locally and does not configure Wi-Fi or send data to a backend.
 
 The canonical `.ino` generates `studio/template.js` via

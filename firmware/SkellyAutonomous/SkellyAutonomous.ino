@@ -44,12 +44,15 @@ const uint32_t HEAD_MAX_INTERVAL_MS = 60000;
 const bool TORSO_ENABLED = false;
 const bool ARM_ENABLED = false;
 // Advanced opt-in only. When true, body motors may run at the same time.
-// This is NOT hardware-verified: test arm+head, then torso+head, then all.
+// FAILED physically: a later separate command interrupts the previous action.
+// Retained only for old diagnostic sketches; Studio always emits false.
 const bool ALLOW_BODY_MOTOR_OVERLAP = false;
 // Opt-in coordinated body motions: send ONE tested AACA mask, not several
 // competing AACA packets. This mode replaces standalone body scheduling.
 // Each mask must contain only motors switched ON below.
 const bool COMPOUND_BODY_ENABLED = false;
+// Keep legacy combined-only sketches compatible; Studio can interleave safely.
+const bool COMPOUND_ALONGSIDE = false;
 const uint8_t COMPOUND_BODY_MASKS[] = {0x03, 0x05, 0x06, 0x07};
 const uint32_t COMPOUND_BODY_MIN_INTERVAL_MS = 180000;
 const uint32_t COMPOUND_BODY_MAX_INTERVAL_MS = 360000;
@@ -143,9 +146,15 @@ const uint8_t EYE_JAW_MODE = 1;
 const uint32_t EYE_JAW_START_DELAY_MS = 1200;
 const uint32_t EYE_JAW_END_GRACE_MS = 500;
 
-// Scan five seconds; retry thirty seconds after misses/failures
+// Scan up to five seconds. Startup retry interval includes time spent scanning;
+// normal retry waits thirty seconds after misses/failures.
 const uint32_t SCAN_SECONDS = 5;
 const uint32_t SCAN_RETRY_MS = 30000;
+const uint32_t STARTUP_SCAN_RETRY_MS = 5000;
+const uint32_t STARTUP_SCAN_WINDOW_MS = 60000;
+static_assert(SCAN_RETRY_MS >= 5000 && SCAN_RETRY_MS <= 300000 &&
+              STARTUP_SCAN_RETRY_MS >= 5000 && STARTUP_SCAN_RETRY_MS <= 300000 &&
+              STARTUP_SCAN_WINDOW_MS <= 300000, "Invalid scan retry timing.");
 
 // Optional experiments. Preserve the existing scheduling policy by default.
 const bool FAIR_BODY_TURNS = false;
@@ -172,6 +181,8 @@ BLEAdvertisedDevice *skellyDevice = nullptr;
 bool found = false;
 bool connected = false;
 uint32_t nextScanAt = 0;
+uint32_t startupScanStartedAt = 0;
+bool startupScanActive = true;
 uint32_t nextHeadAt = 0;
 uint32_t headSafeAfter = 0;
 uint32_t headMovingUntil = 0;
@@ -374,8 +385,9 @@ bool giveWaitingBodyTurn(uint32_t now) {
   if (!FAIR_BODY_TURNS || !JAW_PROTECTS_ARM_TORSO || !lastTurnWasJaw ||
       !reached(now, mouthPlayingUntil) || !reached(now, nextBodyWriteAt) ||
       (!ALLOW_BODY_MOTOR_OVERLAP && !reached(now, bodySafeAfter))) return false;
-  if (COMPOUND_BODY_ENABLED) return reached(now, nextCompoundAt) && reached(now, compoundSafeAfter) &&
-    reached(now, headSafeAfter) && reached(now, armSafeAfter) && reached(now, torsoSafeAfter);
+  if (COMPOUND_BODY_ENABLED && reached(now, nextCompoundAt) && reached(now, compoundSafeAfter) &&
+      reached(now, headSafeAfter) && reached(now, armSafeAfter) && reached(now, torsoSafeAfter)) return true;
+  if (COMPOUND_BODY_ENABLED && !COMPOUND_ALONGSIDE) return false;
   return (HEAD_ENABLED && JAW_FOLLOWUP_MOTOR != 4 && reached(now, nextHeadAt) && reached(now, headSafeAfter)) ||
     (ARM_ENABLED && !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 || JAW_FOLLOWUP_MOTOR == 3)) && reached(now, nextArmAt) && reached(now, armSafeAfter)) ||
     (TORSO_ENABLED && !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 || JAW_FOLLOWUP_MOTOR == 3)) && reached(now, nextTorsoAt) && reached(now, torsoSafeAfter));
@@ -739,7 +751,21 @@ bool connectToSkelly() {
   return true;
 }
 
+uint32_t scanRetryDelay(uint32_t now) {
+  if (startupScanActive && (uint32_t)(now - startupScanStartedAt) >= STARTUP_SCAN_WINDOW_MS)
+    startupScanActive = false;
+  return startupScanActive ? STARTUP_SCAN_RETRY_MS : SCAN_RETRY_MS;
+}
+
+uint32_t scanRetryPause(uint32_t startedAt, uint32_t now) {
+  const uint32_t interval = scanRetryDelay(now);
+  if (!startupScanActive) return interval;
+  const uint32_t elapsed = now - startedAt;
+  return elapsed >= interval ? 0 : interval - elapsed;
+}
+
 void scanAndConnect() {
+  const uint32_t scanStartedAt = millis();
   ++scanAttempts;
   logDiagnostics("scan");
   logLine("Scanning for Ultra Skelly v2...");
@@ -752,15 +778,19 @@ void scanAndConnect() {
   scanner->start(SCAN_SECONDS, false);
 
   if (!found) {
-    logLine("Not found. Retrying after 30 seconds.");
-    nextScanAt = millis() + SCAN_RETRY_MS;
+    const uint32_t retry = scanRetryPause(scanStartedAt, millis());
+    logEvent("Not found. Retrying after %lu seconds.\n", (unsigned long)(retry / 1000));
+    nextScanAt = millis() + retry;
     return;
   }
 
   delay(500);
-  if (!connectToSkelly()) {
-    nextScanAt = millis() + SCAN_RETRY_MS;
-    logLine("Retrying BLE connection after 30 seconds.");
+  if (connectToSkelly()) {
+    startupScanActive = false;
+  } else {
+    const uint32_t retry = scanRetryPause(scanStartedAt, millis());
+    nextScanAt = millis() + retry;
+    logEvent("Retrying BLE connection after %lu seconds.\n", (unsigned long)(retry / 1000));
   }
 }
 
@@ -961,6 +991,8 @@ void setup() {
   scanner->setAdvertisedDeviceCallbacks(new SkellyScanCallbacks());
   scanner->setActiveScan(true);
   nextScanAt = millis();
+  startupScanStartedAt = millis();
+  startupScanActive = true;
   logLine("USB READY v1 CLOCK");
   if (CLOCK_WINDOW_ENABLED) logLine("CLOCK: new routines paused until USB time is set and the window opens.");
 }
@@ -1117,7 +1149,7 @@ void loop() {
     }
     uint8_t choice = 0;
     uint32_t overdue = 0;
-    if (!COMPOUND_BODY_ENABLED && HEAD_ENABLED && reached(now, nextHeadAt) &&
+    if (!sentBodyThisLoop && (!COMPOUND_BODY_ENABLED || COMPOUND_ALONGSIDE) && HEAD_ENABLED && reached(now, nextHeadAt) &&
         // In head-first diagnostic mode, don't let a standalone HEAD
         // preempt the one-shot trial; recurring mode always coordinates it.
         !(JAW_FOLLOWUP_MOTOR == 4 &&
@@ -1126,7 +1158,7 @@ void loop() {
       choice = 1;
       overdue = now - nextHeadAt;
     }
-    if (!COMPOUND_BODY_ENABLED && TORSO_ENABLED && reached(now, nextTorsoAt) &&
+    if (!sentBodyThisLoop && (!COMPOUND_BODY_ENABLED || COMPOUND_ALONGSIDE) && TORSO_ENABLED && reached(now, nextTorsoAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 2 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, torsoSafeAfter) && !blockBodyForJaw &&
@@ -1134,7 +1166,7 @@ void loop() {
       choice = 4;
       overdue = now - nextTorsoAt;
     }
-    if (!COMPOUND_BODY_ENABLED && ARM_ENABLED && reached(now, nextArmAt) &&
+    if (!sentBodyThisLoop && (!COMPOUND_BODY_ENABLED || COMPOUND_ALONGSIDE) && ARM_ENABLED && reached(now, nextArmAt) &&
         !(JAW_FOLLOWUP_RECURRING && (JAW_FOLLOWUP_MOTOR == 1 ||
                                     JAW_FOLLOWUP_MOTOR == 3)) &&
         reached(now, armSafeAfter) && !blockBodyForJaw &&

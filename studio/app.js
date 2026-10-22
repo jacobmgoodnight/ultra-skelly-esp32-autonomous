@@ -9,7 +9,7 @@
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:true, armMin:150, armMax:240,
     bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
-    compoundEnabled:false,compoundMin:180,compoundMax:360,compoundMasks:[3,5,6,7],
+    compoundEnabled:false,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],
     lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:180,headBrightness:180,lightRestoreMode:1,
     jawEnabled:false, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
@@ -17,14 +17,16 @@
     diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1),
     fairBodyTurns:false,playbackDiagnostics:false,jawClipSec:21,jawDurations:"",
     clockEnabled:false,clockStart:1080,clockEnd:1380,clockDays:127,
+    scanRetrySec:30,startupRetrySec:5,startupWindowSec:60,
+    palette0Name:"Halloween",palette0Torso:"#ff6000",palette0Head:"#00ff00",palette1Name:"Haunted",palette1Torso:"#8000ff",palette1Head:"#00e6cc",palette2Name:"Moonlight",palette2Torso:"#176bff",palette2Head:"#c8e8ff",palette3Name:"Ember",palette3Torso:"#ff1800",palette3Head:"#ffb000",
     lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:64,headSpeed:64
   });
   const PRESETS = {
     watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    subtle:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    subtle:{headEnabled:true,headMin:60,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     normal:{headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:120,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   const PALETTES=Object.freeze({
@@ -66,15 +68,16 @@
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
     const profile=JSON.parse(text);
-    if(!profile || profile.app!=="SkellyStudio" || ![1,2,3].includes(profile.version) ||
+    if(!profile || profile.app!=="SkellyStudio" || ![1,2,3,4].includes(profile.version) ||
        !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
-      throw new Error("This is not a supported Skelly Studio profile (version 1, 2 or 3).");
+      throw new Error("This is not a supported Skelly Studio profile (version 1–4).");
     const config={};
     for(const [key,value] of Object.entries(DEFAULTS)) {
       const added=["fairBodyTurns","playbackDiagnostics","jawClipSec","jawDurations","clockEnabled","clockStart","clockEnd","clockDays"];
       const lighting=["lightRotation","lightInterval","lightPalettes","torsoEffect","headEffect","torsoSpeed","headSpeed"];
-      const migrated=(profile.version===1&&added.includes(key))||(profile.version<3&&lighting.includes(key));
-      const entry=migrated&&profile.config[key]===undefined?value:profile.config[key];
+      const refresh=key.startsWith("palette")||["scanRetrySec","startupRetrySec","startupWindowSec","compoundAlongside"].includes(key);
+      const migrated=(profile.version<4&&refresh)||(profile.version===1&&added.includes(key))||(profile.version<3&&lighting.includes(key));
+      const entry=migrated&&profile.config[key]===undefined?(key==="compoundAlongside"?false:value):profile.config[key];
       if(Array.isArray(value)) {
         if(!Array.isArray(entry) || entry.some(n=>!Number.isSafeInteger(n)))throw new Error("Invalid profile setting: "+key);
         config[key]=entry.slice();
@@ -84,6 +87,7 @@
         config[key]=entry;
       }
     }
+    config.bodyOverlap=false; // Separate writes interrupt physical animations.
     // Validate dormant settings too: they will still be emitted into C++ constants.
     const errors=validate(config);
     errors.push(...validate({...config,headEnabled:true,torsoEnabled:true,armEnabled:true,
@@ -93,10 +97,10 @@
        config.compoundMasks.some(n=>![3,5,6,7].includes(n)) || new Set(config.compoundMasks).size!==config.compoundMasks.length)
       errors.push("Invalid combined movement settings.");
     if(errors.length)throw new Error([...new Set(errors)].join("\n"));
-    return {app:"SkellyStudio",version:3,config,clips:normalizeLibrary(profile.clips||{})};
+    return {app:"SkellyStudio",version:4,config,clips:normalizeLibrary(profile.clips||{})};
   }
   function createProfile(config,clips) {
-    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:3,config,clips})),null,2)+"\n";
+    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:4,config,clips})),null,2)+"\n";
   }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
@@ -134,6 +138,12 @@
         error.push("Invalid setting type: "+key+".");
     }
     if(error.length)return error;
+    for(const [key,min,max] of [["scanRetrySec",5,300],["startupRetrySec",5,300],["startupWindowSec",0,300]])
+      if(!Number.isSafeInteger(config[key])||config[key]<min||config[key]>max)error.push("Invalid Bluetooth retry timing: "+key);
+    for(let i=0;i<4;i++) {
+      if(!config["palette"+i+"Name"].trim()||config["palette"+i+"Name"].length>24||/[\x00-\x1f]/.test(config["palette"+i+"Name"]))error.push("Palette names need 1–24 characters.");
+      for(const part of ["Torso","Head"])if(!/^#[0-9a-f]{6}$/i.test(config["palette"+i+part]))error.push("Choose valid palette colors.");
+    }
     if(!Number.isSafeInteger(config.lightInterval)||config.lightInterval<15||config.lightInterval>3600)error.push("Palette interval must be 15–3600 seconds.");
     if(config.lightPalettes.some(n=>!Number.isSafeInteger(n)||n<0||n>3)||new Set(config.lightPalettes).size!==config.lightPalettes.length||
        (config.lightRotation&&config.lightPalettes.length<2))error.push("Rotation needs at least two distinct lighting palettes.");
@@ -251,7 +261,13 @@
       ["const bool HEAD_ENABLED = true;","const bool HEAD_ENABLED = "+Boolean(config.headEnabled)+";"],
       ["const bool TORSO_ENABLED = false;","const bool TORSO_ENABLED = "+Boolean(config.torsoEnabled)+";"],
       ["const bool ARM_ENABLED = false;","const bool ARM_ENABLED = "+Boolean(config.armEnabled)+";"],
-      ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+Boolean(config.bodyOverlap)+";"],
+      ["const bool ALLOW_BODY_MOTOR_OVERLAP = false;","const bool ALLOW_BODY_MOTOR_OVERLAP = "+false+";"],
+      ["const bool COMPOUND_ALONGSIDE = false;","const bool COMPOUND_ALONGSIDE = "+Boolean(config.compoundAlongside)+";"],
+      ["const uint32_t SCAN_RETRY_MS = 30000;","const uint32_t SCAN_RETRY_MS = "+config.scanRetrySec*1000+";"],
+      ["const uint32_t STARTUP_SCAN_RETRY_MS = 5000;","const uint32_t STARTUP_SCAN_RETRY_MS = "+config.startupRetrySec*1000+";"],
+      ["const uint32_t STARTUP_SCAN_WINDOW_MS = 60000;","const uint32_t STARTUP_SCAN_WINDOW_MS = "+config.startupWindowSec*1000+";"],
+      ["const uint8_t LIGHT_PALETTES[4][6] = {\n  {255,96,0,0,255,0}, {128,0,255,0,230,204},\n  {23,107,255,200,232,255}, {255,24,0,255,176,0}\n};",
+       "const uint8_t LIGHT_PALETTES[4][6] = {"+Array.from({length:4},(_,i)=>"{"+["Torso","Head"].flatMap(part=>[1,3,5].map(at=>parseInt(config["palette"+i+part].slice(at,at+2),16))).join(",")+"}").join(",")+"};"],
       ["const bool COMPOUND_BODY_ENABLED = false;","const bool COMPOUND_BODY_ENABLED = "+Boolean(config.compoundEnabled)+";"],
       ["const uint8_t COMPOUND_BODY_MASKS[] = {0x03, 0x05, 0x06, 0x07};",
        "const uint8_t COMPOUND_BODY_MASKS[] = {"+(config.compoundMasks.length?config.compoundMasks:[3]).map(x=>"0x"+x.toString(16).padStart(2,"0")).join(", ")+"};"],
@@ -398,8 +414,10 @@
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
-      bodyOverlap:byId("bodyOverlap").checked,jawProtectBody:byId("jawProtectBody").checked,
-      compoundEnabled:byId("compoundEnabled").checked,compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
+      bodyOverlap:false,jawProtectBody:byId("jawProtectBody").checked,
+      compoundEnabled:byId("compoundEnabled").checked,compoundAlongside:byId("compoundAlongside").checked,
+      scanRetrySec:n("scanRetrySec"),startupRetrySec:n("startupRetrySec"),startupWindowSec:n("startupWindowSec"),
+      ...Object.fromEntries(Array.from({length:4},(_,i)=>["Name","Torso","Head"].map(part=>{const key="palette"+i+part;return [key,byId(key).value]})).flat()),compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
       compoundMasks:Array.from(document.querySelectorAll(".compound-choice:checked")).map(el=>Number(el.value)),
       lightRotation:byId("lightRotation").checked,lightInterval:n("lightInterval"),
       lightPalettes:Array.from(document.querySelectorAll(".light-palette-choice:checked")).map(el=>Number(el.value)),
@@ -423,6 +441,8 @@
     };
   }
   function writeConfig(cfg) {
+    for(const key of ["scanRetrySec","startupRetrySec","startupWindowSec",...Array.from({length:4},(_,i)=>["Name","Torso","Head"].map(p=>"palette"+i+p)).flat()])if(cfg[key]!==undefined)byId(key).value=cfg[key];
+    if(cfg.compoundAlongside!==undefined)byId("compoundAlongside").checked=cfg.compoundAlongside;
     for(const key of ["lightInterval","torsoEffect","headEffect","torsoSpeed","headSpeed"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     if(cfg.lightRotation!==undefined)byId("lightRotation").checked=cfg.lightRotation;
     if(cfg.lightPalettes)document.querySelectorAll(".light-palette-choice").forEach(el=>el.checked=cfg.lightPalettes.includes(Number(el.value)));
@@ -433,7 +453,7 @@
     if(cfg.clockDays!==undefined)document.querySelectorAll(".clock-day").forEach(el=>el.checked=Boolean(cfg.clockDays&Number(el.value)));
     for(const id of ["headMin","headMax","torsoMin","torsoMax","armMin","armMax","jawMin","jawMax","jawFile","jawExtras","jawFollowupMotor","jawFollowupDelaySec","compoundMin","compoundMax","torsoColor","headColor","torsoBrightness","headBrightness","lightRestoreMode","eyesMin","eyesMax","eyeJawMode","restMin","restMax","restDurationMin","restDurationMax","bleName"])
       if(cfg[id]!==undefined)byId(id).value=cfg[id];
-    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","bodyOverlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled","diagnosticsEnabled"])
+    for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled","diagnosticsEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.compoundMasks)document.querySelectorAll(".compound-choice").forEach(el=>el.checked=cfg.compoundMasks.includes(Number(el.value)));
     if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
@@ -448,9 +468,9 @@
       let t=0;
       for(let j=0;j<70;j++){t+=between(min,max);if(t>=300)break;events.push({kind,time:t,duration})}
     };
-    add("head",c.headEnabled&&!c.compoundEnabled,c.headMin,c.headMax,25);
-    add("torso",c.torsoEnabled&&!c.compoundEnabled,c.torsoMin,c.torsoMax,25);
-    add("arm",c.armEnabled&&!c.compoundEnabled,c.armMin,c.armMax,22);
+    add("head",c.headEnabled&&(!c.compoundEnabled||c.compoundAlongside),c.headMin,c.headMax,25);
+    add("torso",c.torsoEnabled&&(!c.compoundEnabled||c.compoundAlongside),c.torsoMin,c.torsoMax,25);
+    add("arm",c.armEnabled&&(!c.compoundEnabled||c.compoundAlongside),c.armMin,c.armMax,22);
     add("compound",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
@@ -477,7 +497,7 @@
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
-    byId("bodyOverlapSummary").textContent=c.compoundEnabled?"Compound mask mode":c.bodyOverlap?"Allowed · experimental":"Serialized · default";
+    byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
     byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
     byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:"Off";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
@@ -509,10 +529,14 @@
     for(const part of ["torso","head"])byId(part+"Speed").disabled=!c.lightsEnabled||c[part+"Effect"]===1;
     byId("eyesStatus").textContent=c.eyesEnabled?"On · "+c.eyeChoices.length+" expressions in rotation":"Off · choose a rotation of eye designs";
     byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
-    const palette=Object.values(PALETTES).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
+    const palette=Array.from({length:4},(_,i)=>({name:c["palette"+i+"Name"],torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"]})).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
     byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":c.lightRotation?"Rotating selected palettes; custom color fields are used when rotation is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
     for(const button of document.querySelectorAll("[data-palette]")) {
-      const p=PALETTES[button.dataset.palette];
+      const i=Object.keys(PALETTES).indexOf(button.dataset.palette);
+      const p={name:c["palette"+i+"Name"],torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"]};
+      button.lastChild.textContent=p.name;
+      const swatches=button.querySelectorAll("i");swatches[0].style.background=p.torsoColor;swatches[1].style.background=p.headColor;
+      document.querySelector('.light-palette-choice[value="'+i+'"]').nextSibling.textContent=" "+p.name;
       button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
     byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · no audio preparation needed";
@@ -540,10 +564,9 @@
       timeline.appendChild(element);
     }
   }
-  // Thumbnails are loaded from the community Web Controller's original images,
-  // not bundled or redistributed. The source includes exactly 18 eye icons.
+  // Bundled eye previews and attribution: images/eyes/README.md.
   function eyeImageUrl(index) {
-    return "https://raw.githubusercontent.com/martinecker/SkellyUltraWebController/main/images/skelly/eye_icon_"+index+".png";
+    return "./images/eyes/eye_icon_"+index+".png";
   }
   function showEyePreview(index) {
     const image=byId("eyePreviewImage");
@@ -613,7 +636,8 @@
       catch(error) { byId("jawChoiceStatus").textContent=error.message; }
     });
     for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
-      writeConfig({...paletteSettings(button.dataset.palette),lightRotation:false});
+      const c=readConfig(),i=Object.keys(PALETTES).indexOf(button.dataset.palette);
+      writeConfig({lightsEnabled:true,torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"],lightRotation:false});
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
     });
     for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{

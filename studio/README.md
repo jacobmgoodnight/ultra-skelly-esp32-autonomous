@@ -3,12 +3,13 @@
 A static browser configurator for the autonomous ESP32 controller.
 [Open Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
-The eye thumbnails require internet; firmware generation works offline.
+Eye thumbnails and firmware generation work offline from the complete folder.
 
 Choose randomized head/jaw timing, optional arm/torso, live eyes, RGB colors,
 jaw-first follow-ups, compound masks, MP3 pools and idle breaks; then download or
 copy a self-contained `.ino`. Flash with Arduino IDE or CLI, **ESP32 Dev Module**, core
-**3.3.12**. The browser does not compile or flash firmware. The five-minute preview
+**3.3.12**. Custom sketches require Arduino compilation/upload; the separate USB page can
+install a fixed head-only package. The five-minute preview
 is illustrative and does not model all arbitration. Save/load settings keeps your
 configuration and named jaw clip mappings in a portable JSON file.
 
@@ -16,7 +17,8 @@ configuration and named jaw clip mappings in a portable JSON file.
 
 See the [current verification matrix](../docs/hardware-verification.md). Head,
 arm, torso, live eyes, jaw-first arm/torso and every compound mask have physical
-evidence on one prop. Recurring compound automation remains untested. The
+evidence on one prop. The owner reports recurring compound actions work; the new interleaved
+standalone/combined scheduler still needs its focused physical check. The
 alternating jaw-first scheduler has ~30 minutes of serial dispatch evidence;
 every full physical cycle was not separately timed. HEAD after jaw failed at
 both 2 and 10 seconds; keep that diagnostic OFF in regular operation.

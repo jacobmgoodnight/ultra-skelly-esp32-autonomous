@@ -92,7 +92,7 @@ jaw-first arm/torso and compound modes are separate selections. MP3 pools, eyes,
 RGB and idle breaks are available, with physical evidence limits documented.
 
 Studio is plain HTML/CSS/JavaScript and generates a self-contained `.ino` from
-canonical source. It works offline except for eye thumbnails, and exports/imports
+canonical source. It works offline with bundled eye thumbnails, and exports/imports
 settings as JSON. Runtime needs a powered original ESP32-WROOM in BLE range;
 there is no Wi-Fi, account, backend or ongoing phone connection. Initial setup
 still requires Arduino IDE/CLI, pinned Arduino-ESP32 3.3.12 and your actual

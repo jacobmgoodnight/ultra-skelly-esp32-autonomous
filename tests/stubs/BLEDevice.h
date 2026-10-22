@@ -11,6 +11,9 @@ inline bool fakeServicePresent = true;
 inline bool fakeCharacteristicPresent = true;
 inline bool fakeDisconnectOnDiscovery = false;
 inline unsigned fakeDiscoveryCount = 0;
+inline bool fakeScanFindsDevice = false;
+inline bool fakeScanInProgress = false;
+inline uint32_t fakeScanDuration = 0;
 class BLEAdvertisedDevice {
  public:
   bool haveName() { return true; }
@@ -44,7 +47,10 @@ class BLEClient {
  public:
   bool active = true;
   bool isConnected() { return active; }
-  bool connect(BLEAdvertisedDevice *) { active = fakeConnectOK; return active; }
+  bool connect(BLEAdvertisedDevice *) {
+    if (fakeScanInProgress) throw std::runtime_error("Must finish scanning before connecting");
+    active = fakeConnectOK; return active;
+  }
   void disconnect() { active = false; }
   std::map<std::string, BLERemoteService *> services;
   BLERemoteService discoveredService;
@@ -63,10 +69,15 @@ class BLEClient {
 };
 class BLEScan {
  public:
+  BLEAdvertisedDeviceCallbacks *callbacks = nullptr;
   void stop() {}
   void clearResults() {}
-  void start(uint32_t, bool) {}
-  void setAdvertisedDeviceCallbacks(BLEAdvertisedDeviceCallbacks *) {}
+  void start(uint32_t, bool) {
+    fakeScanInProgress=true;fakeNow+=fakeScanDuration;
+    if(fakeScanFindsDevice && callbacks) callbacks->onResult(BLEAdvertisedDevice{});
+    fakeScanInProgress=false;
+  }
+  void setAdvertisedDeviceCallbacks(BLEAdvertisedDeviceCallbacks *value) { callbacks=value; }
   void setActiveScan(bool) {}
 };
 class BLEDevice {

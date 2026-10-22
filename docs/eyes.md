@@ -55,4 +55,4 @@ The controller also sends its first live eye selection **about two seconds after
 
 ## Preview what eye IDs 1–18 look like
 
-[Skelly Studio](../studio/) now shows an actual thumbnail for each numbered eye design. Select the patterns you want in your ESP32's random rotation and use **Preview** to enlarge any image. Thumbnails are requested live from the [Skelly Ultra Web Controller's original image files](https://github.com/martinecker/SkellyUltraWebController/tree/main/images/skelly), with attribution; they are not copied into our repository. They require internet access, but generating an Arduino sketch still works offline.
+[Skelly Studio](../studio/) now shows an actual thumbnail for each numbered eye design. Select the patterns you want in your ESP32's random rotation and use **Preview** to enlarge any image. All 18 previews are bundled locally with [source attribution](../studio/images/eyes/README.md). Thumbnails, enlarged previews and sketch generation work offline from the complete Studio folder.
