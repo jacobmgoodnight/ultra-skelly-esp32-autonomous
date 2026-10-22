@@ -18,18 +18,19 @@ function sample(changes = {}) {
     ...defaults,
     // Jaw regressions opt in explicitly; the public Studio default is audio-free.
     jawEnabled: true,
+    headMin:32,headMax:60,armEnabled:false,armMin:360,armMax:720,
     eyeChoices: [...defaults.eyeChoices],
     ...changes
   };
 }
 
-test("default Studio settings generate an audio-free head sketch", () => {
+test("default Studio settings generate the audio-free Normal head and arm routine", () => {
   const sketch = api.generateSketch({...api.DEFAULTS});
   assert.match(sketch, /const bool HEAD_ENABLED = true;/);
   assert.match(sketch, /const bool MOUTH_ENABLED = false;/);
   assert.match(sketch, /const bool EYES_ENABLED = false;/);
   assert.match(sketch, /const bool REST_ENABLED = false;/);
-  assert.match(sketch, /const uint32_t HEAD_MIN_INTERVAL_MS = 32000;/);
+  assert.match(sketch, /const uint32_t HEAD_MIN_INTERVAL_MS = 35000;/);
   assert.match(sketch, /const uint32_t MOUTH_MIN_INTERVAL_MS = 45000;/);
   assert.match(sketch, /const uint16_t MOUTH_FILE_SERIAL = 12;/);
   assert.doesNotMatch(sketch, /const uint16_t JAW_FILE_POOL\[\]/);
@@ -37,9 +38,9 @@ test("default Studio settings generate an audio-free head sketch", () => {
   assert.match(sketch, /void startMouth\(uint32_t now\)/);
   assert.match(sketch, /uint8_t frame\[11\] = \{0xAA, 0xCA, 0x01/);
   assert.match(sketch, /const bool TORSO_ENABLED = false;/);
-  assert.match(sketch, /const bool ARM_ENABLED = false;/);
+  assert.match(sketch, /const bool ARM_ENABLED = true;/);
   assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 240000;/);
-  assert.match(sketch, /const uint32_t ARM_MIN_INTERVAL_MS = 360000;/);
+  assert.match(sketch, /const uint32_t ARM_MIN_INTERVAL_MS = 150000;/);
 });
 
 test("eyes option respects selected eye designs and avoids forced torso animation", () => {

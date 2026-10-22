@@ -386,3 +386,24 @@ USB parser, wrap, overnight weekday boundaries, no-time pause, queue overflow an
 per-file selection have software coverage. The owner says hardware is unavailable,
 so no new physical observation, serial root-cause result, upload or flashing
 success is claimed. [Next attended checks](next-attended-tests.md) record criteria.
+
+## October 22, 2026 — Studio cleanup and optional lighting routines (software-only)
+
+The owner requested simpler preview text/lanes, fewer duplicate controls, adjusted
+movement personalities and timed lighting presets. Studio now consolidates the
+quiet head-only routine under Subtle, uses Normal head 35–75 s / arm 150–240 s,
+and Haunted arm 120–240 s. These are requested intervals; motor cooldowns and
+arbitration remain unchanged. Static canonical feature defaults are preserved.
+
+Palette rotation and per-channel Static/Strobe/Pulsing with speed are implemented
+as opt-in settings. Static retains the original six-write path; dynamic channels
+add the upstream-derived F6 speed write. Rotation excludes the current palette,
+waits for clock/idle/jaw/restoration work and resets its interval after a complete
+sequence. Profiles use v3, with safe v1/v2 defaults for the new fields. New native
+fixtures cover rotation, mode/speed frames, spacing, CRC, gating, wrap, failure and
+reconnect, plus restoration of the current palette after modeled mouth playback.
+
+No prop, USB flashing, visible effect/speed result or new endurance observation
+was available. These new physical behaviors remain Untested. Follow the separate
+[Studio refresh checklist](studio-lighting-checklist.md), starting with isolated
+static colors and palette rotation before effects or motor/mouth integration.

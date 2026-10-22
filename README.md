@@ -111,11 +111,14 @@ Existing saved Studio profiles retain their explicit mouth setting when loaded.
 
 ### Lighting effects
 
-Studio currently generates **static RGB and brightness** for torso and head.
+Studio generates **static RGB and brightness** for torso and head, plus optional
+selected-palette rotation at your chosen interval. Each channel can also select
+**Strobe or Pulsing with speed**; these new options are experimental and physically
+untested. Static and rotation OFF remain the defaults.
 The upstream controller lists [Static, Strobe and Pulsing](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
-for Ultra Skelly. Those animated modes appear feasible as future direct commands,
-without audio preparation; they are **not implemented or hardware-verified here**.
-See the [lighting plan](docs/roadmap.md#p2--lighting-capabilities).
+for Ultra Skelly. Effects use direct commands without audio preparation.
+Use the [new Studio and lighting checklist](docs/studio-lighting-checklist.md)
+before combining these options with motors or mouth playback.
 
 [USB tools](studio/usb.html) capture original serial bytes and set the optional
 clock. A fixed head-only installer uses a versioned, hash-checked build package;

@@ -5,9 +5,9 @@
 (function () {
   "use strict";
   const DEFAULTS = Object.freeze({
-    headEnabled:true, headMin:32, headMax:60,
+    headEnabled:true, headMin:35, headMax:75,
     torsoEnabled:false, torsoMin:240, torsoMax:420,
-    armEnabled:false, armMin:360, armMax:720,
+    armEnabled:true, armMin:150, armMax:240,
     bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
     compoundEnabled:false,compoundMin:180,compoundMax:360,compoundMasks:[3,5,6,7],
     lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:180,headBrightness:180,lightRestoreMode:1,
@@ -16,14 +16,15 @@
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
     diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1),
     fairBodyTurns:false,playbackDiagnostics:false,jawClipSec:21,jawDurations:"",
-    clockEnabled:false,clockStart:1080,clockEnd:1380,clockDays:127
+    clockEnabled:false,clockStart:1080,clockEnd:1380,clockDays:127,
+    lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:64,headSpeed:64
   });
   const PRESETS = {
     watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    subtle:{headEnabled:true,headMin:65,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    normal:{headEnabled:true,headMin:32,headMax:60,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:360,armMax:720,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
+    subtle:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    normal:{headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:180,torsoMax:360,armEnabled:true,armMin:120,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   const PALETTES=Object.freeze({
@@ -65,13 +66,15 @@
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
     const profile=JSON.parse(text);
-    if(!profile || profile.app!=="SkellyStudio" || ![1,2].includes(profile.version) ||
+    if(!profile || profile.app!=="SkellyStudio" || ![1,2,3].includes(profile.version) ||
        !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
-      throw new Error("This is not a supported Skelly Studio profile (version 1 or 2).");
+      throw new Error("This is not a supported Skelly Studio profile (version 1, 2 or 3).");
     const config={};
     for(const [key,value] of Object.entries(DEFAULTS)) {
       const added=["fairBodyTurns","playbackDiagnostics","jawClipSec","jawDurations","clockEnabled","clockStart","clockEnd","clockDays"];
-      const entry=profile.version===1&&profile.config[key]===undefined&&added.includes(key)?value:profile.config[key];
+      const lighting=["lightRotation","lightInterval","lightPalettes","torsoEffect","headEffect","torsoSpeed","headSpeed"];
+      const migrated=(profile.version===1&&added.includes(key))||(profile.version<3&&lighting.includes(key));
+      const entry=migrated&&profile.config[key]===undefined?value:profile.config[key];
       if(Array.isArray(value)) {
         if(!Array.isArray(entry) || entry.some(n=>!Number.isSafeInteger(n)))throw new Error("Invalid profile setting: "+key);
         config[key]=entry.slice();
@@ -90,10 +93,10 @@
        config.compoundMasks.some(n=>![3,5,6,7].includes(n)) || new Set(config.compoundMasks).size!==config.compoundMasks.length)
       errors.push("Invalid combined movement settings.");
     if(errors.length)throw new Error([...new Set(errors)].join("\n"));
-    return {app:"SkellyStudio",version:2,config,clips:normalizeLibrary(profile.clips||{})};
+    return {app:"SkellyStudio",version:3,config,clips:normalizeLibrary(profile.clips||{})};
   }
   function createProfile(config,clips) {
-    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:2,config,clips})),null,2)+"\n";
+    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:3,config,clips})),null,2)+"\n";
   }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
@@ -131,6 +134,11 @@
         error.push("Invalid setting type: "+key+".");
     }
     if(error.length)return error;
+    if(!Number.isSafeInteger(config.lightInterval)||config.lightInterval<15||config.lightInterval>3600)error.push("Palette interval must be 15–3600 seconds.");
+    if(config.lightPalettes.some(n=>!Number.isSafeInteger(n)||n<0||n>3)||new Set(config.lightPalettes).size!==config.lightPalettes.length||
+       (config.lightRotation&&config.lightPalettes.length<2))error.push("Rotation needs at least two distinct lighting palettes.");
+    if(![config.torsoEffect,config.headEffect].every(n=>[1,2,3].includes(n)))error.push("Choose Static, Strobe or Pulsing.");
+    if(![config.torsoSpeed,config.headSpeed].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=254))error.push("Effect speed must be 0–254.");
     if(!Number.isSafeInteger(config.jawClipSec)||config.jawClipSec<21||config.jawClipSec>120)
       error.push("Jaw clip estimate must be 21–120 seconds, including padding. Never shorten protection below 21 seconds.");
     if(!Number.isSafeInteger(config.clockStart)||!Number.isSafeInteger(config.clockEnd)||
@@ -224,6 +232,13 @@
     if(typeof out!=="string" || out.length<5000)throw new Error("The tested firmware template did not load. Refresh this page.");
     // These substitutions fail closed rather than emitting a partial or invalid sketch.
     const assignments=[
+      ["const bool LIGHT_ROTATION_ENABLED = false;","const bool LIGHT_ROTATION_ENABLED = "+config.lightRotation+";"],
+      ["const uint32_t LIGHT_ROTATION_INTERVAL_MS = 90000;","const uint32_t LIGHT_ROTATION_INTERVAL_MS = "+config.lightInterval*1000+";"],
+      ["const uint8_t LIGHT_PALETTE_MASK = 15;","const uint8_t LIGHT_PALETTE_MASK = "+(config.lightPalettes.reduce((m,n)=>m|(1<<n),0)||1)+";"],
+      ["const uint8_t TORSO_LIGHT_MODE = 1;","const uint8_t TORSO_LIGHT_MODE = "+config.torsoEffect+";"],
+      ["const uint8_t HEAD_LIGHT_MODE = 1;","const uint8_t HEAD_LIGHT_MODE = "+config.headEffect+";"],
+      ["const uint8_t TORSO_LIGHT_SPEED = 190;","const uint8_t TORSO_LIGHT_SPEED = "+(254-config.torsoSpeed)+";"],
+      ["const uint8_t HEAD_LIGHT_SPEED = 190;","const uint8_t HEAD_LIGHT_SPEED = "+(254-config.headSpeed)+";"],
       ["const bool FAIR_BODY_TURNS = false;","const bool FAIR_BODY_TURNS = "+config.fairBodyTurns+";"],
       ["const bool PLAYBACK_DIAGNOSTICS = false;","const bool PLAYBACK_DIAGNOSTICS = "+config.playbackDiagnostics+";"],
       ["const bool CLOCK_WINDOW_ENABLED = false;","const bool CLOCK_WINDOW_ENABLED = "+config.clockEnabled+";"],
@@ -386,6 +401,9 @@
       bodyOverlap:byId("bodyOverlap").checked,jawProtectBody:byId("jawProtectBody").checked,
       compoundEnabled:byId("compoundEnabled").checked,compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
       compoundMasks:Array.from(document.querySelectorAll(".compound-choice:checked")).map(el=>Number(el.value)),
+      lightRotation:byId("lightRotation").checked,lightInterval:n("lightInterval"),
+      lightPalettes:Array.from(document.querySelectorAll(".light-palette-choice:checked")).map(el=>Number(el.value)),
+      torsoEffect:n("torsoEffect"),headEffect:n("headEffect"),torsoSpeed:n("torsoSpeed"),headSpeed:n("headSpeed"),
       lightsEnabled:byId("lightsEnabled").checked,torsoColor:byId("torsoColor").value,headColor:byId("headColor").value,
       torsoBrightness:n("torsoBrightness"),headBrightness:n("headBrightness"),lightRestoreMode:n("lightRestoreMode"),
       jawFollowupMotor:n("jawFollowupMotor"),jawFollowupDelaySec:n("jawFollowupDelaySec"),jawFollowupRecurring:byId("jawFollowupRecurring").checked,
@@ -405,6 +423,9 @@
     };
   }
   function writeConfig(cfg) {
+    for(const key of ["lightInterval","torsoEffect","headEffect","torsoSpeed","headSpeed"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
+    if(cfg.lightRotation!==undefined)byId("lightRotation").checked=cfg.lightRotation;
+    if(cfg.lightPalettes)document.querySelectorAll(".light-palette-choice").forEach(el=>el.checked=cfg.lightPalettes.includes(Number(el.value)));
     if(cfg.jawEnabled===true)byId("mouth").open=true;
     for(const key of ["fairBodyTurns","playbackDiagnostics","clockEnabled"])if(cfg[key]!==undefined)byId(key).checked=cfg[key];
     for(const key of ["jawClipSec","jawDurations"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
@@ -433,6 +454,7 @@
     add("compound",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
     add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
+    add("lights",c.lightsEnabled&&c.lightRotation,c.lightInterval,c.lightInterval,0);
     events.sort((a,b)=>a.time-b.time);
     // Show requested intervals only. A partial arbitration model gave false
     // precision about actual starts and could leave events out of time order.
@@ -440,6 +462,13 @@
   }
   function render() {
     const c=readConfig(),errors=validate(c);
+    const previewItems=window.SkellyExperience.previewItems(c);
+    const legend=byId("timelineLegend");legend.replaceChildren();
+    for(const [kind,label] of previewItems) {
+      const item=document.createElement("span"),dot=document.createElement("i");
+      dot.className="dot "+kind;item.append(dot,document.createTextNode(" "+label));legend.append(item);
+    }
+    byId("timelineEmpty").hidden=simulateSchedule(c).length>0;
     const feedback=byId("scheduleFeedback");
     feedback.replaceChildren();
     for(const text of window.SkellyExperience.scheduleFeedback(c)) {
@@ -473,11 +502,15 @@
     const eyeLabel=!c.jawEnabled?"Direct rotation":[ "MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
     byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
     byId("restSummary").textContent=c.restEnabled?c.restDurationMin+"–"+c.restDurationMax+" sec":"Off";
-    byId("lightingStatus").textContent=c.lightsEnabled?"On · body "+c.torsoColor+" / head "+c.headColor:"Off · body and head colors";
+    byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · rotate "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · body "+c.torsoColor+" / head "+c.headColor):"Off · body and head colors";
+    byId("lightRotationOptions").disabled=!c.lightsEnabled||!c.lightRotation;
+    byId("lightRotationOptions").hidden=!c.lightRotation;
+    for(const id of ["torsoColor","headColor"])byId(id).disabled=c.lightRotation;
+    for(const part of ["torso","head"])byId(part+"Speed").disabled=!c.lightsEnabled||c[part+"Effect"]===1;
     byId("eyesStatus").textContent=c.eyesEnabled?"On · "+c.eyeChoices.length+" expressions in rotation":"Off · choose a rotation of eye designs";
     byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
     const palette=Object.values(PALETTES).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
-    byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
+    byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":c.lightRotation?"Rotating selected palettes; custom color fields are used when rotation is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
     for(const button of document.querySelectorAll("[data-palette]")) {
       const p=PALETTES[button.dataset.palette];
       button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
@@ -496,10 +529,13 @@
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
     const timeline=byId("timeline");timeline.replaceChildren();
+    timeline.style.height=Math.max(38,previewItems.length*24+10)+"px";
     for(const ev of simulateSchedule(c)){
       const element=document.createElement("span");
       element.className="event "+ev.kind;
       element.style.left=(ev.time/3)+"%";
+      element.style.top=(8+previewItems.findIndex(([kind])=>kind===ev.kind)*24)+"px";
+      element.style.height="14px";
       element.title=ev.kind+" requested at "+Math.floor(ev.time/60)+":"+String(ev.time%60).padStart(2,"0")+"; actual start may be later";
       timeline.appendChild(element);
     }
@@ -525,11 +561,6 @@
     document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
   }
   function init(){
-    byId("startHeadOnly").addEventListener("click",()=>{
-      writeConfig(window.SkellyExperience.firstRoutine(DEFAULTS));
-      byId("firstRunStatus").textContent="Head only: 120–240 seconds. Download, upload, and observe a complete head movement before adding other routines.";
-      for(const p of document.querySelectorAll(".preset"))p.classList.remove("chosen");
-    });
     const eyeGrid=byId("eyeGrid");
     for(let i=1;i<=18;i++){
       const card=document.createElement("div");
@@ -564,6 +595,7 @@
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       if(el.id==="jawEnabled"&&!el.checked)writeConfig(window.SkellyExperience.withoutMouth(readConfig()));
+      else if(el.id==="lightRotation"&&el.checked)writeConfig({lightsEnabled:true});
       else render();
     });
     byId("selectAllEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
@@ -581,7 +613,7 @@
       catch(error) { byId("jawChoiceStatus").textContent=error.message; }
     });
     for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
-      writeConfig(paletteSettings(button.dataset.palette));
+      writeConfig({...paletteSettings(button.dataset.palette),lightRotation:false});
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
     });
     for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{

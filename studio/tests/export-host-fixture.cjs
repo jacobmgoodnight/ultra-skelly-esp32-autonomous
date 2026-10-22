@@ -13,5 +13,5 @@ process.stdout.write(api.generateSketch({
   ...api.DEFAULTS,
   ...(process.argv.includes('--audio-free')
     ? {headEnabled:true,armEnabled:true,torsoEnabled:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true}
-    : {jawEnabled:true,headEnabled:false,lightsEnabled:true,diagnosticsEnabled:true})
+    : {jawEnabled:true,headEnabled:false,armEnabled:false,lightsEnabled:true,diagnosticsEnabled:true})
 }));

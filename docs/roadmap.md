@@ -56,18 +56,22 @@ and completion, then extend endurance gradually.
 
 ## P2 — Lighting capabilities
 
-Studio currently emits static RGB and brightness only. The upstream
+The October 22 branch implements opt-in palette rotation and per-channel
+Static/Strobe/Pulsing with speed. The remaining gate is physical verification;
+use the [focused checklist](studio-lighting-checklist.md). Static defaults and
+the original six-packet path remain. These effects must not be described as
+hardware-verified.
+
+The upstream
 [Ultra Skelly device profile](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
 lists Static (1), Strobe (2), and Pulsing (3), separately for torso/head channels.
-This supports investigating direct effects without MP3s; it does not establish
-their physical response on this controller. Next implement opt-in per-channel
-effect selection with Static as the default, packet/CRC tests, pinned generated
-builds, and an attended torso/head effect-and-speed observation. Keep effect
-speed, preset rotation and per-file controls separate from this Studio cleanup.
+Live [F2/F6 handlers](https://github.com/martinecker/SkellyUltraWebController/blob/main/app-modular.js)
+and the upstream [speed conversion](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/protocol.js)
+provide the protocol reference, rather than physical evidence on this controller.
 
-After static restoration is visually reliable, test channel mapping and independent
-enablement. Then evaluate upstream F2 strobe/pulse, F6 speed, presets, rotation and
-per-file overrides. New experimental features default OFF.
+Next confirm channel mapping, both dynamic modes, speed response, complete palette
+pairs and integration with restoration/motors. True lights-out scheduling,
+independent channel enablement and per-file overrides remain separate work.
 
 ## P3 — Studio architecture and usability
 

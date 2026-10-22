@@ -31,6 +31,11 @@ def main():
         ([0xAA,0xF3,1,180]+[0]*6, 0x08, "head brightness F3"),
         ([0xAA,0xF4,0,255,0,0]+[0]*6, 0xD3, "torso red F4"),
         ([0xAA,0xF4,1,255,96,0]+[0]*6, 0xFC, "head amber F4"),
+        # Derived from upstream live handlers; effects are physically UNTESTED.
+        ([0xAA,0xF2,0,3]+[0]*6, 0xDF, "torso pulsing F2 (untested)"),
+        ([0xAA,0xF2,1,2]+[0]*7, 0xF1, "head strobe F2 (untested)"),
+        ([0xAA,0xF6,0,254]+[0]*6, 0x01, "torso slow speed F6 (untested)"),
+        ([0xAA,0xF6,1,0]+[0]*6, 0x79, "head fast speed F6 (untested)"),
     ]
     for packet, expected, label in lights:
         result = crc8(packet)

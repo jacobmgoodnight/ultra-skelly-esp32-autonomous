@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=59dff71a2b34">
-<script src="./template.js?v=8636bdd77c2e" defer></script>
-<script src="./experience.js?v=3d6a1c89b7f7" defer></script>
-<script src="./app.js?v=b2333bebdfc8" defer></script>
+<link rel="stylesheet" href="./style.css?v=588ae9304098">
+<script src="./template.js?v=9a0e0f047691" defer></script>
+<script src="./experience.js?v=e4046381c1d4" defer></script>
+<script src="./app.js?v=703a5c314916" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -20,41 +20,37 @@
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
   <h1>Make your Skelly<br><em>come alive.</em></h1>
   <p>Pick a personality, choose his moves, and make the night a little stranger. Your ESP32 takes it from there.</p>
-  <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Your settings stay yours</span></div>
+  <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Custom movement, eyes &amp; lights</span></div>
 </section>
-<nav class="studio-nav" aria-label="Studio sections"><a href="#movement">Movement</a><a href="#expressions">Eyes</a><a href="#lighting">Lighting</a><a href="#advanced">Advanced</a><a href="#finish">Save &amp; upload</a><a href="#mouth">Optional mouth · limited</a></nav>
 <main class="layout">
   <div class="controls">
     <section class="panel" id="first-run" aria-labelledby="first-run-title">
       <div class="section-head"><div><span class="step">START HERE</span><h2 id="first-run-title">Your first autonomous routine</h2></div></div>
-      <p>Start with a head turn every 2–4 minutes. No audio preparation or wiring to the prop is needed.</p>
-      <button type="button" id="startHeadOnly" class="secondary">Set up head-only movement</button>
+      <p>Choose Subtle for a head turn every 2–4 minutes. No audio preparation or wiring to the prop is needed.</p>
       <ol><li>Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Download the sketch, then compile/upload using ESP32 Dev Module and core 3.3.12.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li>Add arm, torso, eyes or lighting as desired. These use direct commands and need no audio upload or web controller. Mouth routines are a separate optional setup at the bottom.</li></ol>
-      <p id="firstRunStatus" class="selection-status" role="status">Your existing settings stay selected until you choose the head-only setup.</p>
       <p><a href="./usb.html">USB logs, clock and installation →</a> · <a href="../docs/audit-follow-up.md">Attended test criteria →</a></p>
     </section>
     <section class="panel">
       <div class="section-head"><div><span class="step">01</span><h2>Choose a personality</h2></div><span class="tiny">Starting points; customize below</span></div>
       <div class="presets" role="group" aria-label="Movement presets">
-        <button class="preset" type="button" data-preset="subtle"><span class="preset-symbol">☾</span><b>Subtle</b><small>Quiet and occasional</small></button>
-        <button class="preset chosen" type="button" data-preset="normal"><span class="preset-symbol">◈</span><b>Normal</b><small>Head movement · no audio</small></button>
+        <button class="preset" type="button" data-preset="subtle"><span class="preset-symbol">☾</span><b>Subtle</b><small>Head only · every 2–4 min</small></button>
+        <button class="preset chosen" type="button" data-preset="normal"><span class="preset-symbol">◈</span><b>Normal</b><small>Head + occasional arm</small></button>
         <button class="preset" type="button" data-preset="haunted"><span class="preset-symbol">✺</span><b>Haunted</b><small>A little more active</small></button>
-        <button class="preset" type="button" data-preset="watchful"><span class="preset-symbol">↻</span><b>Watchful</b><small>Head only · every 2–4 min</small></button>
       </div>
     </section>
     <section class="panel" id="movement">
       <div class="section-head"><div><span class="step">02</span><h2>Body movement</h2></div><span class="tiny">Intervals are start-to-start</span></div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">↻</span><div><strong>Head movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="headEnabled" checked><span></span><span class="sr-only">Enable head movement</span></label></div>
-        <div class="frequency" data-for="headEnabled"><label>Start every <input id="headMin" type="number" min="32" max="3600" value="32" inputmode="numeric" aria-label="Head minimum seconds"> to <input id="headMax" type="number" min="32" max="3600" value="60" inputmode="numeric" aria-label="Head maximum seconds"> seconds</label></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8 14v5h8v-5M9 8h.01M15 8h.01M10 11h4M10 19v2m4-2v2"/></svg></span><div><strong>Head movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="headEnabled" checked><span></span><span class="sr-only">Enable head movement</span></label></div>
+        <div class="frequency" data-for="headEnabled"><label>Start every <input id="headMin" type="number" min="32" max="3600" value="35" inputmode="numeric" aria-label="Head minimum seconds"> to <input id="headMax" type="number" min="32" max="3600" value="75" inputmode="numeric" aria-label="Head maximum seconds"> seconds</label></div>
       </div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">⌁</span><div><strong>Torso movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="torsoEnabled"><span></span><span class="sr-only">Enable torso movement</span></label></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 6c0 3 14 3 14 0M4 10c0 3 16 3 16 0M5 14c0 3 14 3 14 0M8 18l4 3 4-3"/></svg></span><div><strong>Torso movement</strong><small>Turns for about 25 seconds</small></div></div><label class="switch"><input type="checkbox" id="torsoEnabled"><span></span><span class="sr-only">Enable torso movement</span></label></div>
         <div class="frequency" data-for="torsoEnabled"><label>Start every <input id="torsoMin" type="number" min="45" max="3600" value="240" inputmode="numeric" aria-label="Torso minimum seconds"> to <input id="torsoMax" type="number" min="45" max="3600" value="420" inputmode="numeric" aria-label="Torso maximum seconds"> seconds</label></div>
       </div>
       <div class="movement-block">
-        <div class="movement-top"><div class="movement-label"><span class="movement-icon">☞</span><div><strong>Arm movement</strong><small>Two motions over about 22 seconds</small></div></div><label class="switch"><input type="checkbox" id="armEnabled"><span></span><span class="sr-only">Enable arm movement</span></label></div>
-        <div class="frequency" data-for="armEnabled"><label>Start every <input id="armMin" type="number" min="45" max="3600" value="360" inputmode="numeric" aria-label="Arm minimum seconds"> to <input id="armMax" type="number" min="45" max="3600" value="720" inputmode="numeric" aria-label="Arm maximum seconds"> seconds</label></div>
+        <div class="movement-top"><div class="movement-label"><span class="movement-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l-2 7 5 6 6-2 4-7M6 3l4 1-1 6 3 2 3-1 2-5 3 1M10 16l1 5m3-6 2 5"/></svg></span><div><strong>Arm movement</strong><small>Two motions over about 22 seconds</small></div></div><label class="switch"><input type="checkbox" id="armEnabled" checked><span></span><span class="sr-only">Enable arm movement</span></label></div>
+        <div class="frequency" data-for="armEnabled"><label>Start every <input id="armMin" type="number" min="45" max="3600" value="150" inputmode="numeric" aria-label="Arm minimum seconds"> to <input id="armMax" type="number" min="45" max="3600" value="240" inputmode="numeric" aria-label="Arm maximum seconds"> seconds</label></div>
       </div>
     </section>
     <details class="panel fold-panel" id="expressions"><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · choose a rotation of eye designs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
@@ -75,15 +71,26 @@
     </div></details>
     <details class="panel fold-panel" id="lighting"><summary><span><strong>Lighting</strong><small id="lightingStatus">Off · body and head colors</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><span class="step">04</span><h2>Lighting</h2></div><label class="switch"><input type="checkbox" id="lightsEnabled"><span></span><span class="sr-only">Enable live color control</span></label></div>
-      <p class="small-description">Choose static body and head colors and brightness directly. No audio upload or web controller is needed. Strobe and pulsing are planned; they are not generated yet.</p>
+      <p class="small-description">Choose colors and brightness directly, or rotate selected palettes. No audio upload is needed. Palette rotation, strobe and pulsing are experimental and need a physical check.</p>
       <div class="palette-grid" role="group" aria-label="Lighting palettes">
         <button type="button" data-palette="halloween" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#ff6000"></i><i style="background:#00ff00"></i></span>Halloween</button>
         <button type="button" data-palette="haunted" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#8000ff"></i><i style="background:#00e6cc"></i></span>Haunted</button>
         <button type="button" data-palette="moonlight" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#176bff"></i><i style="background:#c8e8ff"></i></span>Moonlight</button>
         <button type="button" data-palette="ember" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i style="background:#ff1800"></i><i style="background:#ffb000"></i></span>Ember</button>
       </div>
+      <div class="lighting-routines">
+        <label><input id="lightRotation" type="checkbox"> Rotate lighting palettes · experimental</label>
+        <fieldset id="lightRotationOptions" hidden disabled><legend>Palette rotation</legend>
+          <label>Change every <input id="lightInterval" type="number" value="90" min="15" max="3600" aria-label="Lighting palette interval seconds"> seconds</label>
+          <p>Choose at least two. Starts with the first selected palette, then randomly picks a different one.</p>
+          <div class="field-row"><label><input class="light-palette-choice" type="checkbox" value="0" checked> Halloween</label><label><input class="light-palette-choice" type="checkbox" value="1" checked> Haunted</label><label><input class="light-palette-choice" type="checkbox" value="2" checked> Moonlight</label><label><input class="light-palette-choice" type="checkbox" value="3" checked> Ember</label></div>
+        </fieldset>
+        <div class="field-row"><label for="torsoEffect">Torso effect<select id="torsoEffect"><option value="1">Static</option><option value="3">Pulsing · untested</option><option value="2">Strobe · untested</option></select></label><label for="headEffect">Head effect<select id="headEffect"><option value="1">Static</option><option value="3">Pulsing · untested</option><option value="2">Strobe · untested</option></select></label></div>
+        <div class="field-row"><label>Torso effect speed <input id="torsoSpeed" type="number" value="64" min="0" max="254" aria-label="Torso effect speed"></label><label>Head effect speed <input id="headSpeed" type="number" value="64" min="0" max="254" aria-label="Head effect speed"></label></div>
+        <p class="small-description">Speed: 0 slow → 254 fast. Static ignores speed. Strobe flashes; avoid it where flashing lights are unsuitable.</p>
+      </div>
       <p id="paletteStatus" class="selection-status" role="status">Lighting is off.</p>
-      <p class="small-description">Choose a palette to enable lighting. Brightness and playback behavior stay as you set them.</p>
+      <p class="small-description">Palette buttons apply one look and turn rotation off. Brightness, effects and playback behavior stay as you set them.</p>
       <div class="eye-sync-control">
         <div class="field-row">
           <label>Torso RGB <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
@@ -201,15 +208,15 @@
   </div>
   <aside class="output" id="finish">
     <div class="panel output-panel">
-      <span class="eyebrow">YOUR SKELLY</span><h2>Make it yours.</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">32–60 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">Off</strong></div><div><span>JAW</span><strong id="jawSummary">Off · optional</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div></div>
+      <span class="eyebrow">YOUR SKELLY</span><h2 class="purple-title">Make it yours.</h2>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div><span>JAW</span><strong id="jawSummary">Off · optional</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div><span>IDLE BREAKS</span><strong id="restSummary">Off</strong></div></div>
       <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>RGB LIGHTING</span><strong id="lightSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
-      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Illustrative only</span></div>
-      <div class="legend"><span><i class="dot head"></i> Head</span><span><i class="dot compound"></i> Combined</span><span><i class="dot jaw"></i> Jaw</span><span><i class="dot torso"></i> Torso</span><span><i class="dot arm"></i> Arm</span><span><i class="dot eyes"></i> Eyes</span></div>
+      <div class="preview-title"><strong>Five-minute timing preview</strong><span>Approximate requests</span></div>
+      <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
       <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over five minutes, not actual movement times"></div>
       <div class="timeline-axis"><span>0:00</span><span>2:30</span><span>5:00</span></div>
-<p class="small-description">Example requests, not predicted movement. Locks, jaw-first coordination, breaks and light restoration can delay starts.</p>
-      <ul id="scheduleFeedback" class="small-description" aria-live="polite"></ul>
+      <p id="timelineEmpty" class="small-description" hidden>No scheduled events in this window.</p>
+      <details class="instructions"><summary>Timing details</summary><ul id="scheduleFeedback" class="small-description"></ul></details>
       <div class="error" id="error" role="alert" hidden></div>
       <button id="download" class="download" type="button">↓ Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>

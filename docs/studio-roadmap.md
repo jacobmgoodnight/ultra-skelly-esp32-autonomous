@@ -1,5 +1,20 @@
 # Studio usability and next steps
 
+## October 22 Studio and lighting refresh
+
+Subtle now provides the quiet 120–240-second head-only routine; the overlapping
+Watchful button and separate head-only setup button are removed. The internal
+Watchful configuration remains for compatibility. Normal requests head every
+35–75 seconds and arm every 150–240; Haunted requests arm every 120–240 seconds.
+Main presets remain movement-focused; eyes and lighting can be added manually.
+The top shortcut bar is removed, body icons are inline purple SVGs, and preview
+lanes/legend show enabled features only. Timing explanations are optional details.
+
+Lighting supports opt-in selected-palette rotation, independently selected
+Static/Strobe/Pulsing modes and speed for torso/head. New behavior is physically
+Untested. Defaults retain Static with rotation OFF. Profiles are now v3, with
+safe v1/v2 migration. Use the [new focused checklist](studio-lighting-checklist.md).
+
 ## October 21 implementation update
 
 Studio now starts without mouth playback. Normal and Haunted also leave it OFF.

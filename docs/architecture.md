@@ -80,10 +80,30 @@ Experimental AE02 observations are separately opt-in and never change these time
 
 ## Eyes and lights
 
+October 22 adds opt-in palette rotation and per-channel light effects. Static
+mode preserves the original six packet bytes and ordering. Strobe/pulsing insert
+one F6 speed write per dynamic channel after its F2 mode write: seven or eight
+spaced writes total. Speed follows upstream's inverted 0–254 UI mapping.
+These effects have software coverage, but no physical observation yet.
+
+With rotation enabled, connection starts at the first selected named palette.
+After a completed light sequence plus the configured 15–3600-second interval,
+the low-priority scheduler picks another selected palette, excluding the current
+one. A snapshot remains stable throughout each sequence; no partial sequence is
+overwritten by a rotation. New rotations wait for the clock window, idle breaks,
+jaw work and pending restoration. A restoration uses the current palette and
+selected effect/speed, then restarts the rotation interval. Disconnect clears
+selection/work; reconnect starts fresh. Clock closure gates new rotations and
+does not send a lights-off command. Existing sequences/restoration may finish.
+
+Studio now exports v3 profiles. v1/v2 imports supply safe defaults only for newly
+added fields; explicit prior values remain. The timing preview compacts lanes
+and its legend to enabled features; longer explanations are collapsed by default.
+
 Eyes use AAF9, an optional independent random schedule and delayed start/end
 corrections around the modeled MP3. Corrections are separate from motor commands.
 
-Lights use six spaced requests: torso F2/F3/F4, then head F2/F3/F4. F2 lengths are
+Static lights use six spaced requests: torso F2/F3/F4, then head F2/F3/F4. F2 lengths are
 11/12 bytes for channel 0/1; F3 is 11 bytes; F4 is 13 bytes. CRC covers every byte
 before the final CRC. Initial live colors and MP3 overriding them were physically
 observed. On October 21 the user confirmed mode 1 restores both red body and green
@@ -96,7 +116,8 @@ Restore mode 0 initializes only. Mode 1 discards an unfinished older light
 sequence on MP3 start and schedules a complete sequence at modeled end +500 ms,
 then a 100 ms queue delay. Mode 2 also queues a full sequence three seconds after
 MP3 start. A final restore replaces any unfinished during-playback sequence.
-The next MP3 waits for pending restoration and the complete six-write sequence.
+The next MP3 waits for pending restoration and the complete selected sequence
+(six writes for Static; seven/eight with effects).
 Lighting yields to pending jaw-first follow-ups and waits at least 250 ms after
 other BLE writes; a light write yields the loop for 250 ms before other commands.
 This can postpone due targets slightly. It does not detect the LEDs' actual state.
