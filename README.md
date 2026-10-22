@@ -137,7 +137,8 @@ MP3 protection defaults ON and includes **head, arm and torso**. It prevents an
 MP3 from interrupting active body motion and blocks standalone body commands
 while playback is due/active. Proven jaw-first arm/torso follow-ups are deliberate
 exceptions. Keep compound mode OFF to retain the alternating jaw-first setup;
-Studio rejects selecting both modes. Separate-write body overlap remains advanced.
+Studio rejects selecting both modes. Separate-write body overlap has been removed
+after physical interruption reports; Studio always serializes separate commands.
 
 [Body safety](docs/body-movements.md) · [Jaw-first guide](docs/jaw-first-experiment.md) ·
 [Compound tests](docs/body-combo-test.md)
