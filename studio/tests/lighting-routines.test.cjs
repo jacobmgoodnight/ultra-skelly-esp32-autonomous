@@ -33,3 +33,20 @@ test('old profiles import with lighting off while new profiles preserve lighting
   const saved=g.createProfile(current,{});assert.equal(JSON.parse(saved).version,3);assert.deepEqual(plain(g.parseProfile(saved).config),plain(current));
   const bad=JSON.parse(saved);delete bad.config.lightInterval;assert.throws(()=>g.parseProfile(JSON.stringify(bad)));
 });
+test('named rotation palettes agree with the manual Studio palette buttons',()=>{
+  const source=ctx.window.SKELLY_FIRMWARE_TEMPLATE;
+  const block=/LIGHT_PALETTES\[4\]\[6\] = \{([\s\S]*?)\};/.exec(source);assert.ok(block);
+  const actual=Array.from(block[1].matchAll(/\{([^}]+)\}/g),m=>m[1].split(',').map(Number));
+  const expected=Object.values(g.PALETTES).map(p=>[p.torsoColor,p.headColor].flatMap(color=>[1,3,5].map(i=>parseInt(color.slice(i,i+2),16))));
+  assert.deepEqual(actual,plain(expected));
+});
+test('lighting template drift rejects missing or duplicated configuration anchors',()=>{
+  const original=ctx.window.SKELLY_FIRMWARE_TEMPLATE;
+  try {
+    for(const anchor of ['const bool LIGHT_ROTATION_ENABLED = false;','const uint8_t LIGHT_PALETTE_MASK = 15;','const uint8_t HEAD_LIGHT_MODE = 1;','const uint8_t TORSO_LIGHT_SPEED = 190;'])
+      for(const changed of [original.replace(anchor,''),original+'\n'+anchor]) {
+        ctx.window.SKELLY_FIRMWARE_TEMPLATE=changed;
+        assert.throws(()=>g.generateSketch(c({lightsEnabled:true,lightRotation:true})),/missing or repeated anchor/);
+      }
+  }finally{ctx.window.SKELLY_FIRMWARE_TEMPLATE=original;}
+});

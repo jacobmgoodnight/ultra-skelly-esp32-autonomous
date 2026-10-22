@@ -116,7 +116,8 @@ Restore mode 0 initializes only. Mode 1 discards an unfinished older light
 sequence on MP3 start and schedules a complete sequence at modeled end +500 ms,
 then a 100 ms queue delay. Mode 2 also queues a full sequence three seconds after
 MP3 start. A final restore replaces any unfinished during-playback sequence.
-The next MP3 waits for pending restoration and the complete six-write sequence.
+The next MP3 waits for pending restoration and the complete selected sequence
+(six writes for Static; seven/eight with effects).
 Lighting yields to pending jaw-first follow-ups and waits at least 250 ms after
 other BLE writes; a light write yields the loop for 250 ms before other commands.
 This can postpone due targets slightly. It does not detect the LEDs' actual state.
