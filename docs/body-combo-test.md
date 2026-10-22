@@ -2,7 +2,7 @@
 
 **Physically verified on the original Ultra Skelly v2: all four requested combined-motor masks physically activated their selected motors**, including **all three (HEAD+ARM+TORSO) with `0x07`**. Individual motion-completion durations were not separately measured in the latest tests. The community [Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js) specifies `AACA` as a movement **bitfield** (head `0x01`, arm `0x02`, torso `0x04`). Its live controller can select multiple bits in a *single* command, but that does not establish that multiple motors will continue moving concurrently on every Skelly.
 
-The ESP32 sketch [BodyComboSingleTest.ino](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) is intentionally separate from the stable autonomous firmware and from Skelly Studio's independent body-overlap switch. It connects over BLE and sends **one `AA CA` frame**, then stops sending commands. It never plays a jaw MP3 or changes eyes.
+The ESP32 sketch [BodyComboSingleTest.ino](../experiments/BodyComboSingleTest/BodyComboSingleTest.ino) is intentionally separate from autonomous scheduling. Studio's separate-command overlap switch was removed after interruption reports; combined masks remain available under Body movement. This diagnostic connects over BLE and sends **one `AA CA` frame**, then stops sending commands. It never plays a jaw MP3 or changes eyes.
 
 ## Suggested progressive order
 
