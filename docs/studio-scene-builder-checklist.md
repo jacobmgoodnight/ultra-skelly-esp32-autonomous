@@ -77,3 +77,18 @@ or physical transition/retention observations were supplied with that report.
 
 No firmware reinstall is needed for these interface changes. Selecting the new
 personality defaults changes only the editor until you explicitly save/upload.
+
+## Compact scene library and decorative motion previews
+
+- Saved cards keep Edit visible. More options reveals duplicate, rename, reorder,
+  delete and timing notes. A timing-note hint remains visible when folded.
+- Routine preview shows one saved scene at a time; use Preview scene to choose.
+  Changing this dropdown never loads the editor, changes the saved order or sends
+  settings. Rename/reorder preserves the chosen preview; deleting it chooses a
+  remaining scene. New/updated scenes select their own preview.
+- Body illustrations move gently only for enabled options, with long still pauses.
+  Animate previews stops decorative movement without changing routine settings.
+  The system reduced-motion preference disables animation; hidden pages pause it.
+  These are illustrations, not a Bluetooth/physical animation status indicator.
+- Check the new controls at phone width and with a keyboard. Existing USB and
+  physical checks do not need repeating just for this interface-only change.

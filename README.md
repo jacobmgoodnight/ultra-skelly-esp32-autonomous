@@ -64,10 +64,17 @@ movement, eyes and lighting. Customize it, name it and save it in Scene builder.
 Normal selects fixed eye #1. Haunted randomly switches eyes #1–8 every 150–300
 seconds. The summary shows a small eye preview and a rotation marker when needed.
 
-![Scene builder routine preview: separate sample request tracks for three saved scenes](docs/images/studio-scene-routine.jpg)
+![Studio eye picker: preview all 18 designs and choose fixed or random expressions](docs/images/studio-eye-picker.jpg)
+
+Preview each design before selecting a fixed expression or a random set. Bundled
+eye images remain available offline.
+
+![Compact scene library and the selected scene’s sample request tracks](docs/images/studio-scene-routine.jpg)
 
 Each scene defaults to a 10-minute hold. The small **Routine preview** shows sample
-requests within each saved scene; unfinished editor changes are excluded. Ordered
+requests for the saved scene selected in its dropdown; unfinished editor changes
+are excluded. Compact scene rows keep Edit visible, with other actions under More
+options. Ordered
 rotation follows the saved list. Random starts with the first scene, then chooses
 another without immediate repeats. Holds begin after connection; active actions,
 cooldowns and reconnects can extend transitions. These charts illustrate requests,
@@ -78,6 +85,10 @@ not predicted physical movement.
 Choose a palette or edit your own colors, link head and torso, and optionally rotate
 palettes. Effects, speed and brightness apply per channel across that scene. Start
 here can collapse; idle breaks, clock settings and diagnostics live under Advanced.
+Small head, torso and arm illustrations animate gently beside enabled movement
+toggles. Animate previews stops them, and reduced-motion preferences keep them
+static. These illustrations do not indicate live prop movement.
+
 Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
 or save scenes. First-time Arduino installation instructions fold away after setup.
 

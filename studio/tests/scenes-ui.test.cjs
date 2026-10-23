@@ -69,5 +69,17 @@ test('routine preview follows saved scenes rather than unfinished editor changes
  assert.equal(initial.children[0].children[0].textContent,'My spooky Skelly');assert.match(initial.children[1].children[0].textContent,/Head · 35–75/);
  p.change({headMin:80,headMax:90});assert.match(p.nodes.sceneSequence.children[0].children[1].children[0].textContent,/35–75/);
  p.nodes.sceneUpdate.onclick();assert.match(p.nodes.sceneSequence.children[0].children[1].children[0].textContent,/80–90/);
- p.name('Second');p.nodes.sceneSave.onclick();assert.match(p.nodes.sceneSequence.children[1].className,/is-inactive/);p.nodes.sceneRotate.checked=true;p.nodes.sceneRotate.onchange();p.nodes.sceneOrder.value='random';p.nodes.sceneOrder.onchange();assert.match(p.nodes.sceneSequence.children[1].children[0].children[1].textContent,/Random choice/);
+ p.name('Second');p.nodes.sceneSave.onclick();assert.match(p.nodes.sceneSequence.children[0].className,/is-inactive/);p.nodes.sceneRotate.checked=true;p.nodes.sceneRotate.onchange();p.nodes.sceneOrder.value='random';p.nodes.sceneOrder.onchange();assert.match(p.nodes.sceneSequence.children[0].children[0].children[1].textContent,/Random choice/);
+});
+
+
+test('compact preview selector preserves the library, unsaved editor and selection through rename/reorder/delete',()=>{
+ const p=page();assert.equal(p.nodes.scenePreviewSelect.disabled,true);p.nodes.sceneSave.onclick();p.name('Second');p.nodes.sceneSave.onclick();
+ assert.equal(p.nodes.sceneSequence.children.length,1);assert.equal(p.nodes.scenePreviewSelect.children.length,2);assert.equal(p.nodes.scenePreviewSelect.value,'Second');
+ p.change({headMin:80,headMax:90});const before=JSON.stringify(p.api.snapshot());p.nodes.scenePreviewSelect.value='My spooky Skelly';p.nodes.scenePreviewSelect.onchange();
+ assert.equal(JSON.stringify(p.api.snapshot()),before);assert.equal(p.config.headMin,80);assert.match(p.nodes.editorStatus.textContent,/Unsaved/);assert.equal(p.nodes.sceneSequence.children[0].children[0].children[0].textContent,'My spooky Skelly');
+ p.click('Rename scene My spooky Skelly');p.nodes.sceneRenameInput.value='First';p.nodes.sceneRenameForm.onsubmit({preventDefault(){}});assert.equal(p.nodes.scenePreviewSelect.value,'First');
+ p.click('Move scene First down');assert.equal(p.nodes.scenePreviewSelect.value,'First');p.click('Delete scene First');assert.equal(p.nodes.scenePreviewSelect.value,'Second');assert.equal(p.nodes.sceneSequence.children.length,1);
+ const card=p.nodes.sceneList.children[0];assert.equal(card.children[0].querySelector('button').textContent,'Edit');assert.equal(card.children.at(-1).tagName,'DETAILS');assert.equal(card.children.at(-1).open,false);
+ p.click('Delete scene Second');assert.equal(p.nodes.scenePreviewSelect.disabled,true);assert.equal(p.nodes.sceneSequence.children.length,0);p.nodes.sceneUndo.onclick();assert.equal(p.nodes.sceneSequence.children.length,1);
 });
