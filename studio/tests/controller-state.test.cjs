@@ -62,3 +62,11 @@ test('manual operation waits for the real serial writer to release after canceli
  const work=state.run(async()=>{assert.equal(released,true);assert.equal(s.writeTask,null);manualStarted=true;});await flush();assert.equal(manualStarted,false);
  releaseWrite();await work;assert.equal(manualStarted,true);assert.equal(s.waiters.length,0);assert.equal(state.pollTask,null);await state.pausePolling();
 });
+
+test('default timers do not invoke browser timer functions with the controller as their receiver',async()=>{
+ const vm=require('node:vm'),fs=require('node:fs');let scheduled=0,cleared=0;
+ const context=vm.createContext({module:{exports:{}},setTimeout:function(fn,delay){assert.notEqual(this?.constructor?.name,'ControllerState');assert.equal(delay,5000);scheduled++;return 7;},clearTimeout:function(id){assert.notEqual(this?.constructor?.name,'ControllerState');assert.equal(id,7);cleared++;}});
+ vm.runInContext(fs.readFileSync(require.resolve('../controller-state.js'),'utf8'),context);
+ const session={port:{}},state=new context.module.exports.ControllerState(session);state.identified=true;
+ state.schedule();assert.equal(scheduled,1);await state.pausePolling();assert.equal(cleared,1);
+});

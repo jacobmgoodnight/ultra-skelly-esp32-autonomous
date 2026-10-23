@@ -14,7 +14,7 @@
     if(data.scene>3)throw Error('Malformed controller status.');return data;
   }
   class ControllerState {
-    constructor(session,{onChange=()=>{},hidden=()=>false,now=()=>Date.now(),setTimer=setTimeout,clearTimer=clearTimeout}={}){
+    constructor(session,{onChange=()=>{},hidden=()=>false,now=()=>Date.now(),setTimer=(fn,delay)=>setTimeout(fn,delay),clearTimer=id=>clearTimeout(id)}={}){
       Object.assign(this,{session,onChange,hidden,now,setTimer,clearTimer});
       this.port=session.port;this.generation=0;this.identified=false;this.capable=false;this.randomScenes=false;
       this.usb='disconnected';this.busy=false;this.suspended=false;this.message='Connect your ESP32 to read or save settings.';this.tone='info';
