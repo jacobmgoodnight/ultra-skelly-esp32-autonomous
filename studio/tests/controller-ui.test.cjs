@@ -8,14 +8,14 @@ class Element{
  constructor(){Object.assign(this,{textContent:'',dataset:{},disabled:false,hidden:false,checked:false,open:false,children:[]});}
  replaceChildren(...nodes){this.children=nodes;}append(...nodes){this.children.push(...nodes);}
 }
-function page({supported=true,settings=true,statusFails=false,badReadback=false,allowScenes=true,keepRead=false}={}){
+function page({supported=true,settings=true,audio=false,statusFails=false,badReadback=false,allowScenes=true,keepRead=false}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()])),events={},windowEvents={};
  let sceneLibrary=[],connects=0,config={...generator.DEFAULTS},created=0,records=[];
  class FakeSession{
   constructor(){created++;this.port=null;this.capture={size:40,text:'Mock UART log'};this.messageSerial=0;this.operations=[];this.words=runtime.encode([{name:'Saved',seconds:600,config}],false,generator.validate);}
   async connect(){connects++;this.port={};this.onChange();}
   async disconnect(){this.port=null;this.onChange();}
-  async capabilities(){return {text:'USB CAPS v2 settings='+Number(settings)+' scenes=4 randomScenes=1'};}
+  async capabilities(){return {text:'USB CAPS v2 settings='+Number(settings)+' scenes=4 randomScenes=1 audioScenes='+Number(audio)};}
   async status(){if(statusFails)throw Error('timeout');return {text:'USB STATUS v2 runtime=1 connected=0 scene=0 sequence=2 crc=42 pending=0 failures=0 heap=133324 clock=0 window=1'};}
   async readSettings(){this.operations.push('read');return {words:this.words,sequence:2,crc:runtime.crc(this.words)+(badReadback?1:0)};}
   async writeSettings(words,crc,progress){this.operations.push('write');assert.equal(crc,runtime.crc(words));progress(20);progress('waiting');this.words=words;}
@@ -26,7 +26,7 @@ function page({supported=true,settings=true,statusFails=false,badReadback=false,
   SkellyScenes:{snapshot:()=>({scenes:sceneLibrary}),program:()=>({scenes:sceneLibrary,rotate:false}),confirmSendScenes:async()=>allowScenes,recordController:(program,kind)=>records.push({program,kind}),loadProgram:async program=>{if(keepRead)return false;sceneLibrary=program.scenes;events['skelly-scenes-changed']?.();return true;}},
   SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>config=c,writeLibrary:()=>{},downloadText:()=>{}},addEventListener:(name,fn)=>windowEvents[name]=fn};
  const context=vm.createContext({window,document,navigator:supported?{serial:{}}:{}});vm.runInContext(source,context);events.DOMContentLoaded();
- return {nodes,document,events,windowEvents,records,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
+ return {nodes,document,events,window,windowEvents,records,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
 }
 test('one explicit USB session serves the separate everyday panel and diagnostics; USB ready is independent of Bluetooth',async()=>{
  const p=page();try{
@@ -69,4 +69,11 @@ test('canceling the asynchronous unsaved-scenes confirmation sends no settings',
 
 test('canceling replacement after a verified USB read preserves editor configuration and browser scenes',async()=>{
  const p=page({keepRead:true});try{await p.nodes.controllerConnect.onclick();p.session.words=runtime.encode([{name:'Other',seconds:600,config:{...generator.DEFAULTS,headMin:40}}],false,generator.validate);await p.nodes.controllerRead.onclick();assert.equal(p.config.headMin,35);assert.equal(p.nodes.controllerScenes.disabled,true);assert.match(p.nodes.controllerMessage.textContent,/were kept/);assert.equal(p.records[0].program.scenes[0].config.headMin,40);}finally{await p.close();}
+});
+
+test('audio mode requires advertised firmware capability and reveals installation recovery before any write',async()=>{
+ for(const audio of [false,true]){const p=page({audio});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;
+ p.window.SkellyStudioGenerator.writeConfig({...generator.DEFAULTS,jawEnabled:true,eyeJawMode:3,overlap:false,jawProtectBody:true,lightRestoreMode:1});
+ await p.nodes.controllerWrite.onclick();if(audio)assert.deepEqual(p.session.operations,['write','read']);else{assert.equal(p.session.operations.length,0);assert.match(p.nodes.controllerMessage.textContent,/updated universal firmware/);assert.equal(p.nodes.controllerSetup.open,true);}}
+ finally{await p.close();}}
 });

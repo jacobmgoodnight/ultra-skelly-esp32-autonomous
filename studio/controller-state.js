@@ -16,7 +16,7 @@
   class ControllerState {
     constructor(session,{onChange=()=>{},hidden=()=>false,now=()=>Date.now(),setTimer=(fn,delay)=>setTimeout(fn,delay),clearTimer=id=>clearTimeout(id)}={}){
       Object.assign(this,{session,onChange,hidden,now,setTimer,clearTimer});
-      this.port=session.port;this.generation=0;this.identified=false;this.capable=false;this.randomScenes=false;
+      this.port=session.port;this.generation=0;this.identified=false;this.capable=false;this.randomScenes=this.audioScenes=false;
       this.usb='disconnected';this.busy=false;this.suspended=false;this.message='Connect your ESP32 to read or save settings.';this.tone='info';
       this.data=null;this.receivedAt=null;this.stale=false;this.timer=null;this.pollTask=null;this.pollAbort=null;
       session.onChange=()=>this.transportChanged();
@@ -28,7 +28,7 @@
       if(this.port!==this.session.port){
         const hadPort=!!this.port;this.port=this.session.port;++this.generation;
         this.stopTimer();this.pollAbort?.abort();this.data=null;this.receivedAt=null;this.stale=false;
-        this.identified=this.capable=this.randomScenes=false;this.usb=this.port?'identifying':'disconnected';
+        this.identified=this.capable=this.randomScenes=this.audioScenes=false;this.usb=this.port?'identifying':'disconnected';
         if(hadPort&&!this.port){this.message='USB disconnected. Reconnect to read or save settings.';this.tone=this.session.error?'error':'info';}
       }
       this.notify();
@@ -68,10 +68,11 @@
     }
     async identify(){
       const generation=this.generation,port=this.port;
-      this.identified=this.capable=this.randomScenes=false;this.usb='identifying';this.data=null;this.receivedAt=null;this.stale=false;
+      this.identified=this.capable=this.randomScenes=this.audioScenes=false;this.usb='identifying';this.data=null;this.receivedAt=null;this.stale=false;
       const caps=await this.session.capabilities({onAttempt:n=>this.say('Identifying firmware · attempt '+n+'. The ESP32 may restart; allow up to 45 seconds.','busy')});
       if(!port||port!==this.session.port||generation!==this.generation)throw Error('USB disconnected. Reconnect to identify the firmware.');
       this.identified=true;this.capable=/settings=1(?:\s|$)/.test(caps.text);this.randomScenes=/randomScenes=1(?:\s|$)/.test(caps.text);
+      this.audioScenes=/audioScenes=1(?:\s|$)/.test(caps.text);
       this.usb=this.capable?'ready':'unsupported';await this.refreshStatus();
       if(port!==this.session.port||generation!==this.generation)throw Error('USB disconnected. Reconnect to identify the firmware.');
       this.say(this.capable?'Ready. Read saved settings, or save your routine to the ESP32.':'USB connected. Install universal firmware using First-time setup to save settings here.',this.capable?'ready':'info');

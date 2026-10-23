@@ -58,7 +58,7 @@
   }
   function sceneSummary(c){
     const motors=['head','arm','torso'].filter(k=>c[k+'Enabled']).map(k=>k[0].toUpperCase()+k.slice(1));
-    return {motors:motors.join(' + ')||'No body movement',eyes:c.eyesEnabled?(c.eyeChoices.length===1?'Fixed eye #'+c.eyeChoices[0]:c.eyeChoices.length+' random eyes'):'Stored eyes',lights:c.lightsEnabled?(c.lightRotation?c.lightPalettes.length+' rotating palettes':'Selected colors'):'Stored lights'};
+    return {motors:(motors.join(' + ')||'No body movement')+(c.jawEnabled&&c.eyeJawMode===3?' · Audio #'+c.jawFile:''),eyes:c.eyesEnabled?(c.eyeChoices.length===1?'Fixed eye #'+c.eyeChoices[0]:c.eyeChoices.length+' random eyes'):'Stored eyes',lights:c.lightsEnabled?(c.lightRotation?c.lightPalettes.length+' rotating palettes':'Selected colors'):'Stored lights'};
   }
   function routinePreview(value,g){
     return value.scenes.map((scene,index)=>{

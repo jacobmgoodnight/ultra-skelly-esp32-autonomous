@@ -22,11 +22,11 @@
     lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:125,headSpeed:125
   });
   const PRESETS = {
-    watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    subtle:{headEnabled:true,headMin:60,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    normal:{eyesEnabled:true,eyeChoices:[1],headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    haunted:{eyesEnabled:true,eyeChoices:[1,2,3,4,5,6,7,8],eyesMin:150,eyesMax:300,headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
+    watchful:{eyeJawMode:1,headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    storyteller:{eyeJawMode:1,headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    subtle:{eyeJawMode:1,headEnabled:true,headMin:60,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    normal:{eyeJawMode:1,eyesEnabled:true,eyeChoices:[1],headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    haunted:{eyeJawMode:1,eyesEnabled:true,eyeChoices:[1,2,3,4,5,6,7,8],eyesMin:150,eyesMax:300,headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   const PALETTES=Object.freeze({
@@ -229,10 +229,12 @@
       error.push("Enable the torso switch to test Torso after jaw.");
     if(config.jawFollowupMotor===4 && !config.headEnabled)
       error.push("Enable the head switch to test Head after jaw.");
-    if (![0,1,2].includes(config.eyeJawMode))
+    if (![0,1,2,3].includes(config.eyeJawMode))
       error.push("Choose a valid eye/jaw behavior (0, 1 or 2).");
     if((config.eyesEnabled && !config.eyeChoices.length) || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length)
       error.push("Select at least one valid eye design number between 1 and 18.");
+    if(config.eyeJawMode===3 && (!config.jawProtectBody || config.overlap || config.jawFollowupMotor || (config.lightsEnabled&&config.lightRestoreMode!==1)))
+      error.push("Audio scenes need full body protection, no jaw-first/overlap and restore lighting after playback.");
     return error;
   }
   function generateSketch(config) {
@@ -447,7 +449,7 @@
     for(const key of ["lightInterval","torsoEffect","headEffect","torsoSpeed","headSpeed"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     if(cfg.lightRotation!==undefined)byId("lightRotation").checked=cfg.lightRotation;
     if(cfg.lightPalettes)document.querySelectorAll(".light-palette-choice").forEach(el=>el.checked=cfg.lightPalettes.includes(Number(el.value)));
-    if(cfg.jawEnabled===true)byId("mouth").open=true;
+    if(cfg.jawEnabled===true){byId(cfg.eyeJawMode===3?"audioScenes":"mouth").open=true;if(cfg.eyeJawMode===3)byId("mouth").open=false;}
     for(const key of ["fairBodyTurns","playbackDiagnostics","clockEnabled"])if(cfg[key]!==undefined)byId(key).checked=cfg[key];
     for(const key of ["jawClipSec","jawDurations"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     for(const key of ["clockStart","clockEnd"])if(cfg[key]!==undefined)byId(key).value=String(Math.floor(cfg[key]/60)).padStart(2,"0")+":"+String(cfg[key]%60).padStart(2,"0");
@@ -567,7 +569,7 @@
       document.querySelector('.light-palette-choice[value="'+i+'"]').nextSibling.textContent=" "+p.name;
       button.setAttribute("aria-pressed",String(!c.lightRotation && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
-    byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · optional";
+    byId("mouthStatus").textContent=c.jawEnabled?(c.eyeJawMode===3?"Audio scene active · advanced playback controls":"On · limited coordination; audio required"):"Off · optional";
     byId("mouthOptions").disabled=!c.jawEnabled;
     byId("mouthOptions").hidden=!c.jawEnabled;
     byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
@@ -673,7 +675,7 @@
     }
     showEyePreview(1);
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
-      if(el.id==="scenePreviewSelect")return;
+      if(el.id==="scenePreviewSelect"||el.closest("#audioScenes"))return;
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       if(el.closest('.eye-choice')){
         if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
@@ -701,7 +703,7 @@
     });
     for(const button of document.querySelectorAll("[data-jaw-choice]"))button.addEventListener("click",()=>{
       try {
-        writeConfig(jawSelection(button.dataset.jawChoice,readLibrary()));
+        writeConfig({...jawSelection(button.dataset.jawChoice,readLibrary()),eyeJawMode:1});
         for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       }
       catch(error) { byId("jawChoiceStatus").textContent=error.message; }

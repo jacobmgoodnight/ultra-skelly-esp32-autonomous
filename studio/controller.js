@@ -13,7 +13,7 @@
       text('controllerSkelly',view.skelly);el('controllerSkelly').dataset.state=view.skellyTone;
       text('controllerScene',view.scene);
       text('controllerMessage',state.message);el('controllerMessage').dataset.state=state.tone;
-      el('controllerConnect').disabled=!navigator.serial||port||session.busy||state.busy;
+      el('controllerConnect').disabled=!navigator.serial||port||session.busy||state.busy||!!window.SkellyAudioConnection?.();
       el('controllerDisconnect').disabled=!port||state.busy;
       el('controllerStatus').disabled=!port||!state.identified||state.busy;
       el('controllerIdentify').hidden=!port||state.identified||state.usb!=='unidentified';
@@ -32,8 +32,11 @@
         }
       }
     }
+    window.SkellyControllerPortOpen=()=>!!session.port;
+    document.addEventListener("skelly-audio-connection",render);
     function consent(){if(!el('controllerConsent').checked)throw Error('Confirm replacing the controller’s saved routine first.');}
     el('controllerConnect').onclick=()=>state.run(async()=>{
+      if(window.SkellyAudioConnection?.())throw Error('Disconnect direct Skelly audio Bluetooth before connecting the ESP32.');
       state.usb='choosing';state.say('Choose your ESP32 USB port, often CP2102 or CH340.','busy');
       try{await session.connect();}catch(error){state.usb='disconnected';throw error;}
       await state.identify();
@@ -48,6 +51,7 @@
     async function write(program,kind='routine'){
       consent();
       if(program.rotate&&program.random&&!state.randomScenes)throw Error('Random scenes need the updated universal firmware. Open First-time setup, upload it, then reconnect.');
+      if(program.scenes.some(s=>s.config.eyeJawMode===3)&&!state.audioScenes){el('controllerSetup').open=true;throw Error('Audio scenes need updated universal firmware. Install it from First-time setup, then reconnect.');}
       const words=r.encode(program.scenes,program.rotate,g.validate,program.random);
       await session.writeSettings(words,r.crc(words),p=>state.say(p==='waiting'?'Received. Waiting for current actions and full cooldowns to finish…':'Sending settings · '+p+'%','busy'));
       state.say('Saved. Checking the controller’s read-back…','busy');

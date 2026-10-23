@@ -546,3 +546,17 @@ sample-request tracks using their individual holds; random order promises no exa
 sequence. Firmware, USB commands, saved formats and motor cooldowns are unchanged.
 Browser defaults affect the editor only until an explicit save or upload. Root
 README screenshots show illustrative local browser settings, not connected hardware.
+
+## October 23, 2026 — optional audio-scene software preview
+
+The owner requests replacing duplicate body icons with purple animated left icons
+and beginning optional audio scenes. The new collapsed panel prepares MP3s directly
+on Skelly and saves per-file metadata. Opt-in mode 3 owns all action paths for the
+padded estimate plus full 35-second motor settling; ordinary scene appearance is
+restored afterward. A same-boot reconnect retains the protected window. Existing
+legacy modes, defaults, profile/scene shapes, commands and motor cooldowns remain.
+
+Mock browser/BLE and native C++ tests are Software-only. No physical upload, stored
+motor combination, natural EOF, restoration integration or power-cycle observation
+is claimed. The [focused result sheet](audio-scenes.md) records every hardware item
+as Untested. This does not supersede earlier isolated jaw/light confirmations.

@@ -39,6 +39,15 @@ def build_and_run(directory, source, assertions, label, expected_error=None):
 
 
 failed = False
+for name, flags in [("AudioScene", []), ("RuntimeAudioScene", ["--runtime"])]:
+    audio_source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-audio-fixture.cjs"), *flags], encoding="utf-8")
+    failed |= build_and_run(ROOT / (".skelly-build/host/" + name), audio_source,
+                            (ROOT / "tests/audio_scene_harness.cpp").read_text(encoding="utf-8"), name)
+audio_guard_source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-audio-fixture.cjs")], encoding="utf-8")
+for name, old, new in [("AudioUnprotected", "const bool JAW_PROTECTS_ARM_TORSO = true;", "const bool JAW_PROTECTS_ARM_TORSO = false;"),
+                        ("AudioFollowup", "const uint8_t JAW_FOLLOWUP_MOTOR = 0;", "const uint8_t JAW_FOLLOWUP_MOTOR = 1;")]:
+    failed |= build_and_run(ROOT / (".skelly-build/host/" + name), audio_guard_source.replace(old, new), "", name,
+                            expected_error="Audio scenes require full protection")
 fixed_eye_source = subprocess.check_output([os.environ.get("NODE", "node"), "-e", "const fs=require('fs'),vm=require('vm');const c=vm.createContext({window:{}});for(const f of ['template.js','app.js'])vm.runInContext(fs.readFileSync('studio/'+f,'utf8'),c);const g=c.window.SkellyStudioGenerator;process.stdout.write(g.generateSketch({...g.DEFAULTS,headEnabled:false,armEnabled:false,eyesEnabled:true,eyeChoices:[7]}));"], cwd=ROOT, encoding="utf-8")
 failed |= build_and_run(ROOT / ".skelly-build/host/FixedEye", fixed_eye_source,
                        (ROOT / "tests/fixed_eye_harness.cpp").read_text(encoding="utf-8"), "Fixed eye without rotation")

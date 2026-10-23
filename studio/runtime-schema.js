@@ -7,7 +7,7 @@
   for(const [name,min,max,macro,expr] of [
     ['restDurationMin',15,300,'REST_MIN_DURATION_MS','v * 1000UL'],['restDurationMax',15,300,'REST_MAX_DURATION_MS','v * 1000UL'],
     ['jawFile',1,65535,'MOUTH_FILE_SERIAL'],['jawClipSec',21,120,'MOUTH_CLIP_MS','v * 1000UL'],
-    ['jawFollowupMotor',0,3,'JAW_FOLLOWUP_MOTOR'],['jawFollowupDelaySec',2,10,'JAW_FOLLOWUP_DELAY_MS','v * 1000UL'],['eyeJawMode',0,2,'EYE_JAW_MODE'],
+    ['jawFollowupMotor',0,3,'JAW_FOLLOWUP_MOTOR'],['jawFollowupDelaySec',2,10,'JAW_FOLLOWUP_DELAY_MS','v * 1000UL'],['eyeJawMode',0,3,'EYE_JAW_MODE'],
     ['lightInterval',15,3600,'LIGHT_ROTATION_INTERVAL_MS','v * 1000UL'],['torsoBrightness',0,255,'TORSO_LIGHT_BRIGHTNESS'],['headBrightness',0,255,'HEAD_LIGHT_BRIGHTNESS'],
     ['torsoEffect',1,3,'TORSO_LIGHT_MODE'],['headEffect',1,3,'HEAD_LIGHT_MODE'],['torsoSpeed',0,254,'TORSO_LIGHT_SPEED','254UL-v'],['headSpeed',0,254,'HEAD_LIGHT_SPEED','254UL-v'],
     ['lightRestoreMode',0,2,'LIGHT_RESTORE_MODE'],['scanRetrySec',5,300,'SCAN_RETRY_MS','v * 1000UL'],['startupRetrySec',5,300,'STARTUP_SCAN_RETRY_MS','v * 1000UL'],['startupWindowSec',0,300,'STARTUP_SCAN_WINDOW_MS','v * 1000UL'],

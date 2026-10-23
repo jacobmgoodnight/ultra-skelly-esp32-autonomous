@@ -143,6 +143,7 @@ const uint32_t EYE_MAX_INTERVAL_MS = 300000; // 5 minutes
 // 1 = restore the chosen eye shortly after jaw starts and when it ends (default)
 // 2 = choose a new random eye when jaw starts, then keep it after playback
 // Eye/jaw coordination is a NEW feature. Eyes stay OFF until enabled above.
+// Mode 3: opt-in audio scene; saved file owns all actions, then restore.
 const uint8_t EYE_JAW_MODE = 1;
 const uint32_t EYE_JAW_START_DELAY_MS = 1200;
 const uint32_t EYE_JAW_END_GRACE_MS = 500;
@@ -168,6 +169,10 @@ static_assert(CLOCK_START_MINUTE < 1440 && CLOCK_END_MINUTE < 1440 &&
               CLOCK_START_MINUTE != CLOCK_END_MINUTE && CLOCK_DAYS > 0 && CLOCK_DAYS < 128,
               "Invalid clock window.");
 
+static_assert(EYE_JAW_MODE != 3 || (JAW_PROTECTS_ARM_TORSO &&
+              !ALLOW_BODY_MOTOR_OVERLAP && JAW_FOLLOWUP_MOTOR == 0 &&
+              (!LIGHTS_ENABLED || LIGHT_RESTORE_MODE == 1)),
+              "Audio scenes require full protection, no follow-ups and post-playback restoration.");
 static_assert(!COMPOUND_BODY_ENABLED || JAW_FOLLOWUP_MOTOR == 0,
               "Compound and jaw-first modes must be selected separately.");
 static_assert(!COMPOUND_BODY_ENABLED || !MOUTH_ENABLED || MOUTH_FILE_SERIAL == 0 ||
@@ -444,7 +449,7 @@ const uint32_t RUNTIME_LIMITS[RF_COUNT][2] = {
   {21UL,120UL}, // jawClipSec
   {0UL,3UL}, // jawFollowupMotor
   {2UL,10UL}, // jawFollowupDelaySec
-  {0UL,2UL}, // eyeJawMode
+  {0UL,3UL}, // eyeJawMode
   {15UL,3600UL}, // lightInterval
   {0UL,255UL}, // torsoBrightness
   {0UL,255UL}, // headBrightness
@@ -821,6 +826,9 @@ uint32_t nextArmAt = 0;
 uint32_t nextMouthAt = 0;
 uint32_t mouthSafeAfter = 0;
 uint32_t mouthPlayingUntil = 0;
+// Preserve an in-flight audio scene across a brief BLE reconnect in this boot.
+bool audioHoldPending = false;
+uint32_t audioHoldUntil = 0;
 uint32_t nextEyeAt = 0;
 uint8_t lastEye = 0; // Last successfully requested eye icon.
 bool jawDelayNotified = false;
@@ -889,7 +897,7 @@ void acceptUsbCommand(const char *line) {
   if (strcmp(line,"SKELLY STATUS")==0) { emitUsbStatus(); return; }
   if (strcmp(line, "SKELLY HELLO") == 0) {
     logLine("USB READY v1 CLOCK");
-    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME));
+    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u audioScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME),unsigned(SKELLY_RUNTIME));
     return;
   }
   const char *prefix = "SKELLY TIME ";
@@ -1336,6 +1344,11 @@ bool connectToSkelly() {
   lastJawFollowupMotor = 0;
   jawEyeStartPending = false;
   jawEyeEndPending = false;
+  if (audioHoldPending && !reached(now, audioHoldUntil)) {
+    headSafeAfter = armSafeAfter = torsoSafeAfter = bodySafeAfter = audioHoldUntil;
+    mouthPlayingUntil = audioHoldUntil; mouthSafeAfter = audioHoldUntil + MOUTH_BUFFER_MS;
+    logLine("AUDIO SCENE: reconnect retains the previous protected estimate.");
+  }
 
   if (PLAYBACK_DIAGNOSTICS) {
     auto *notify = service->getCharacteristic("0000ae02-0000-1000-8000-00805f9b34fb");
@@ -1539,7 +1552,16 @@ void startMouth(uint32_t now) {
   // Base the estimate on completion of the BLE call, which may block.
   now = millis();
   const uint32_t clipDuration = jawDurationMs(MOUTH_FILE_SERIAL);
-  mouthPlayingUntil = now + clipDuration;
+  // A stored file may start any motor near its end. Keep the full longest
+  // motor cooldown after its padded estimate; this remains a model, not EOF.
+  const uint32_t audioSettle = max(HEAD_ANIMATION_MS + HEAD_BUFFER_MS,
+      max(ARM_ANIMATION_MS + ARM_BUFFER_MS, TORSO_ANIMATION_MS + TORSO_BUFFER_MS));
+  mouthPlayingUntil = now + clipDuration + (EYE_JAW_MODE == 3 ? audioSettle : 0UL);
+  if (EYE_JAW_MODE == 3) {
+    audioHoldPending = true; audioHoldUntil = mouthPlayingUntil;
+    headSafeAfter = armSafeAfter = torsoSafeAfter = bodySafeAfter = mouthPlayingUntil;
+    logLine("AUDIO SCENE: saved actions own playback; 35-second motor settling follows the clip estimate.");
+  }
   lastTurnWasJaw = true;
   mouthEndPending = true;
   logEvent("MP3: modeled duration %lu ms; playback end unconfirmed.\n",
@@ -1574,7 +1596,7 @@ void startMouth(uint32_t now) {
   if (EYES_ENABLED && EYE_JAW_MODE != 0) {
     jawEyeStartAt = now + EYE_JAW_START_DELAY_MS;
     jawEyeEndAt = mouthPlayingUntil + EYE_JAW_END_GRACE_MS;
-    jawEyeStartPending = true;
+    jawEyeStartPending = EYE_JAW_MODE != 3;
     jawEyeEndPending = true;
   }
   const uint32_t jawInterval = random(MOUTH_MIN_INTERVAL_MS,
@@ -1671,6 +1693,8 @@ class RuntimeEngine {
       const uint32_t follow=v[RF_jawFollowupMotor];
       if((follow&&!v[RF_jawEnabled]) || (follow==1&&!v[RF_armEnabled]) || (follow==2&&!v[RF_torsoEnabled]) ||
          (follow==3&&(!v[RF_armEnabled]||!v[RF_torsoEnabled]||!v[RF_jawFollowupRecurring])))return false;
+      if(v[RF_eyeJawMode]==3 && (!v[RF_jawProtectBody] || v[RF_overlap] || v[RF_jawFollowupMotor] ||
+          (v[RF_lightsEnabled] && v[RF_lightRestoreMode]!=1)))return false;
       if(v[RF_file0]!=v[RF_jawFile])return false;
       for(uint32_t i=0;i<8;++i){
         const uint32_t f=v[RF_file0+i*2],d=v[RF_duration0+i*2];
@@ -1796,7 +1820,7 @@ void setup() {
   delay(1000);
   runtimeBoot();
   recordBoot(esp_reset_reason());
-  logEvent("BOOT usb-scheduler-v3: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+  logEvent("BOOT usb-audio-scenes-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
            DIAGNOSTICS_ENABLED ? "ON" : "OFF");
@@ -1814,6 +1838,8 @@ void setup() {
 }
 
 void loop() {
+  // Retire the transient hold even while offline, before signed timer half-range.
+  if (audioHoldPending && reached(millis(), audioHoldUntil)) audioHoldPending = false;
   serviceUsbClock();
   serviceRuntime();
   if (PLAYBACK_DIAGNOSTICS) drainPlaybackObservation();
@@ -1831,6 +1857,10 @@ void loop() {
   }
 
   retireElapsedCooldowns(now);
+  if (audioHoldPending) {
+    if (!reached(now, audioHoldUntil)) { delay(100); return; }
+    audioHoldPending = false;
+  }
   const bool windowOpen = routineWindowOpen();
   if (CLOCK_WINDOW_ENABLED && windowOpen != clockWindowWasOpen) {
     clockWindowWasOpen = windowOpen;
@@ -2038,7 +2068,9 @@ void loop() {
 
   // Experimental independent eye expressions. Can overlap animations.
   // Give adjacent BLE write-without-response commands a small gap.
-  if (connected && EYES_ENABLED && (lastEye == 0 || EYE_ROTATION_ENABLED) && reached(millis(), nextEyeAt) && routineWindowOpen()) {
+  if (connected && EYES_ENABLED && (lastEye == 0 || EYE_ROTATION_ENABLED) &&
+      !(EYE_JAW_MODE == 3 && !reached(millis(), mouthPlayingUntil)) &&
+      reached(millis(), nextEyeAt) && routineWindowOpen()) {
     if (sentBodyThisLoop || sentMouthThisLoop) delay(250);
     if (routineWindowOpen()) changeEyes(millis());
   }
