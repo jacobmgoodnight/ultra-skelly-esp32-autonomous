@@ -85,9 +85,9 @@ not predicted physical movement.
 Choose a palette or edit your own colors, link head and torso, and optionally rotate
 palettes. Effects, speed and brightness apply per channel across that scene. Start
 here can collapse; idle breaks, clock settings and diagnostics live under Advanced.
-Small head, torso and arm illustrations animate gently beside enabled movement
-toggles. Animate previews stops them, and reduced-motion preferences keep them
-static. These illustrations do not indicate live prop movement.
+Small bone-white head, torso and arm illustrations animate automatically beside
+enabled movement toggles. Reduced-motion preferences keep them static, and hidden
+pages pause them. These illustrations do not indicate live prop movement.
 
 Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
 or save scenes. First-time Arduino installation instructions fold away after setup.

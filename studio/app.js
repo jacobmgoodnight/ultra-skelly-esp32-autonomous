@@ -489,7 +489,7 @@
     for(const demo of document.querySelectorAll("[data-motion-for]")){
       const enabled=byId(demo.dataset.motionFor).checked;
       demo.classList.toggle("is-enabled",enabled);
-      demo.classList.toggle("is-animated",enabled&&byId("motionPreviews").checked);
+      demo.classList.toggle("is-animated",enabled);
     }
   }
   function render() {
@@ -673,7 +673,6 @@
     }
     showEyePreview(1);
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
-      if(el.id==="motionPreviews"){renderMotionPreviews();return;}
       if(el.id==="scenePreviewSelect")return;
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       if(el.closest('.eye-choice')){
