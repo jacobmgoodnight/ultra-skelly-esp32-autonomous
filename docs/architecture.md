@@ -42,6 +42,17 @@ clears the current snapshot. Generation/port checks discard late replies after
 disconnect. No polling callback changes save progress or error text. This browser
 workflow changes neither USB commands nor firmware/program formats.
 
+`scene-model.js` validates complete library mutations before committing them, tracks
+the edited scene through ordering/deletion, and retains one library Undo snapshot.
+`scenes.js` separates the live editor baseline, the saved browser library and an
+acknowledged controller program. Controller comparison uses runtime encoding rather
+than display formatting; it is cleared on port changes. A separate bounded draft
+envelope validates both the edited profile and revert baseline before explicit
+recovery. Invalid input never replaces the last valid draft. File imports and USB
+reads preview replacement before applying; asynchronous confirmations are serialized
+with the existing controller workflow. None of these browser models opens a port,
+applies an actuator command, changes runtime formats or shortens cooldowns.
+
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye

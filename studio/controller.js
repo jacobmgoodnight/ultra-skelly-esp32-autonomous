@@ -8,6 +8,7 @@
     const text=(id,value)=>{const node=el(id),next=String(value);if(node.textContent!==next)node.textContent=next;};
     function render(){
       const view=window.SkellyControllerState.connectionView(state),port=!!session.port;
+      window.SkellyScenes.usbState?.(session.port);
       text('controllerUsb',view.usb);el('controllerUsb').dataset.state=view.usbTone;
       text('controllerSkelly',view.skelly);el('controllerSkelly').dataset.state=view.skellyTone;
       text('controllerScene',view.scene);
@@ -44,7 +45,7 @@
       state.say(ok?'Controller status refreshed.':'USB is connected, but status is unavailable. The last snapshot may be out of date.',ok?'info':'error');
     });
     el('controllerLog').onclick=()=>g.downloadText(session.capture.text,'Skelly-USB-log.txt','text/plain');
-    async function write(program){
+    async function write(program,kind='routine'){
       consent();
       if(program.rotate&&program.random&&!state.randomScenes)throw Error('Random scenes need the updated universal firmware. Open First-time setup, upload it, then reconnect.');
       const words=r.encode(program.scenes,program.rotate,g.validate,program.random);
@@ -52,17 +53,21 @@
       state.say('Saved. Checking the controller’s read-back…','busy');
       const saved=await session.readSettings();
       if(r.crc(saved.words)!==saved.crc||saved.crc!==r.crc(words))throw Error('Read-back did not match. Read saved settings before trying again.');
+      window.SkellyScenes.recordController?.(r.decode(saved.words,g.DEFAULTS),kind);
       state.say('Saved to ESP32 · read-back verified. Watch Skelly to confirm your changes.','ready');
       await state.refreshStatus();
     }
     el('controllerWrite').onclick=()=>state.run(()=>write({scenes:[{name:'My routine',seconds:600,config:g.readConfig()}],rotate:false}));
-    el('controllerScenes').onclick=()=>state.run(()=>write(window.SkellyScenes.program()));
+    el('controllerScenes').onclick=()=>state.run(async()=>{if(await window.SkellyScenes.confirmSendScenes?.()===false){state.say('No scenes sent. Update the scene or save as new first.');return;}await write(window.SkellyScenes.program(),'scenes');});
     el('controllerRead').onclick=()=>state.run(async()=>{
       state.say('Reading saved settings…','busy');const saved=await session.readSettings();
       if(r.crc(saved.words)!==saved.crc)throw Error('Read-back checksum mismatch.');
       const program=r.decode(saved.words,g.DEFAULTS);
       for(const scene of program.scenes){const errors=g.validate(scene.config);if(errors.length)throw Error(errors.join('\n'));}
-      window.SkellyScenes.loadProgram(program);g.writeLibrary({});g.writeConfig(program.scenes[0].config);
+      const loaded=await window.SkellyScenes.loadProgram(program);
+      window.SkellyScenes.recordController?.(program,'scenes');
+      if(loaded===false){state.say('Settings read and verified. Your browser library and editor were kept.');await state.refreshStatus();return;}
+      g.writeLibrary({});g.writeConfig(program.scenes[0].config);
       for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');
       state.say('Read '+program.scenes.length+' saved scene(s). The first is loaded in Studio.');await state.refreshStatus();
     });
@@ -72,6 +77,7 @@
       await session.configReply('SKELLY CFG RESET '+id,id,s=>s==='USB CFG QUEUED '+id);
       const done=await session.waitFor(s=>s.startsWith('USB CFG APPLIED '+id+' ')||s.startsWith('USB CFG ERROR '+id+' '),after,210000);
       if(done.text.startsWith('USB CFG ERROR'))throw Error(done.text);
+      window.SkellyScenes.recordController?.(null);
       state.say('Firmware defaults restored. Read saved settings to load them in Studio.','ready');await state.refreshStatus();
     });
     el('universalDownload').onclick=()=>{

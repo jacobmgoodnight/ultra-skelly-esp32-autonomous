@@ -8,9 +8,9 @@ class Element{
  constructor(){Object.assign(this,{textContent:'',dataset:{},disabled:false,hidden:false,checked:false,open:false,children:[]});}
  replaceChildren(...nodes){this.children=nodes;}append(...nodes){this.children.push(...nodes);}
 }
-function page({supported=true,settings=true,statusFails=false,badReadback=false}={}){
+function page({supported=true,settings=true,statusFails=false,badReadback=false,allowScenes=true,keepRead=false}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()])),events={},windowEvents={};
- let sceneLibrary=[],connects=0,config={...generator.DEFAULTS},created=0;
+ let sceneLibrary=[],connects=0,config={...generator.DEFAULTS},created=0,records=[];
  class FakeSession{
   constructor(){created++;this.port=null;this.capture={size:40,text:'Mock UART log'};this.messageSerial=0;this.operations=[];this.words=runtime.encode([{name:'Saved',seconds:600,config}],false,generator.validate);}
   async connect(){connects++;this.port={};this.onChange();}
@@ -23,10 +23,10 @@ function page({supported=true,settings=true,statusFails=false,badReadback=false}
  let session;
  const document={hidden:false,getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener:(name,fn)=>events[name]=fn};
  const window={SkellySerial:{Session:class extends FakeSession{constructor(){super();session=this;}}},SkellyRuntime:runtime,SkellyControllerState:stateApi,
-  SkellyScenes:{snapshot:()=>({scenes:sceneLibrary}),program:()=>({scenes:sceneLibrary,rotate:false}),loadProgram:program=>{sceneLibrary=program.scenes;events['skelly-scenes-changed']?.();}},
+  SkellyScenes:{snapshot:()=>({scenes:sceneLibrary}),program:()=>({scenes:sceneLibrary,rotate:false}),confirmSendScenes:async()=>allowScenes,recordController:(program,kind)=>records.push({program,kind}),loadProgram:async program=>{if(keepRead)return false;sceneLibrary=program.scenes;events['skelly-scenes-changed']?.();return true;}},
   SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>config=c,writeLibrary:()=>{},downloadText:()=>{}},addEventListener:(name,fn)=>windowEvents[name]=fn};
  const context=vm.createContext({window,document,navigator:supported?{serial:{}}:{}});vm.runInContext(source,context);events.DOMContentLoaded();
- return {nodes,document,events,windowEvents,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
+ return {nodes,document,events,windowEvents,records,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
 }
 test('one explicit USB session serves the separate everyday panel and diagnostics; USB ready is independent of Bluetooth',async()=>{
  const p=page();try{
@@ -60,5 +60,13 @@ test('replacement confirmation gates actual saves and successful read-back is sh
  }finally{await p.close();}
 });
 test('checksum mismatch is never labeled saved and never auto-retries a mutation',async()=>{
- const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/did not match/);assert.equal(p.nodes.controllerMessage.dataset.state,'error');assert.deepEqual(p.session.operations,['write','read']);}finally{await p.close();}
+ const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/did not match/);assert.equal(p.nodes.controllerMessage.dataset.state,'error');assert.deepEqual(p.session.operations,['write','read']);assert.equal(p.records.length,0);}finally{await p.close();}
+});
+
+test('canceling the asynchronous unsaved-scenes confirmation sends no settings',async()=>{
+ const p=page({allowScenes:false});try{await p.nodes.controllerConnect.onclick();await p.nodes.controllerRead.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerScenes.onclick();assert.deepEqual(p.session.operations,['read']);assert.match(p.nodes.controllerMessage.textContent,/No scenes sent/);}finally{await p.close();}
+});
+
+test('canceling replacement after a verified USB read preserves editor configuration and browser scenes',async()=>{
+ const p=page({keepRead:true});try{await p.nodes.controllerConnect.onclick();p.session.words=runtime.encode([{name:'Other',seconds:600,config:{...generator.DEFAULTS,headMin:40}}],false,generator.validate);await p.nodes.controllerRead.onclick();assert.equal(p.config.headMin,35);assert.equal(p.nodes.controllerScenes.disabled,true);assert.match(p.nodes.controllerMessage.textContent,/were kept/);assert.equal(p.records[0].program.scenes[0].config.headMin,40);}finally{await p.close();}
 });

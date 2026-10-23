@@ -1,5 +1,20 @@
 # Studio usability and next steps
 
+## October 23 — scene editing and compact lighting
+
+The owner confirms the separated USB workflow works well. Browser connection,
+read/save and observed changed routines are confirmed; power-cycle retention,
+recovery and scene transitions remain separate. Later dated sections below retain
+their historical status rather than defining current evidence.
+
+Implemented: visual scene cards; explicit update/new; rename, duplicate, ordering
+and one-step library Undo; recoverable valid editor drafts; import previews and
+unsaved-change protection; separate editor/browser/verified-controller indicators;
+compact lighting channels and per-palette editing; longer optional timing windows;
+and three opt-in complete looks. Formats and firmware are unchanged. The
+[refresh checklist](studio-scene-builder-checklist.md) records browser spot checks
+and the remaining physical limits.
+
 ## USB settings and saved scenes — October 22
 
 Implemented as an opt-in universal firmware path, with physical checks pending:

@@ -520,3 +520,14 @@ progress. Mocked state/DOM/serial tests cover these paths and read-back/consent
 guards. This pass changes no firmware, wire commands or profile/scene formats and
 opens no physical port. The new automatic status UI remains Software-only until
 the owner checks it; the owner-confirmed read/save result is retained separately.
+
+## October 23, 2026 — USB workflow accepted; scene editing refresh
+
+The owner reports the published separated USB workflow works great and requests
+scene-builder improvements plus shorter lighting controls. This is usability
+confirmation; it does not establish power-cycle retention, recovery or scene
+transitions. The new browser pass adds explicit scene mutations, card summaries,
+draft/revert protection, import previews, controller comparison and compact lighting.
+Complete scene looks reuse existing settings with mouth/clock windows OFF and
+have software/compile coverage only. Firmware, USB wire protocol and saved formats
+are unchanged. No physical port is opened during this implementation.

@@ -53,6 +53,7 @@ const cases = {
   EyeChangeWithJaw: {eyesEnabled:true,eyeJawMode:2,eyesMin:20,eyesMax:40,eyeChoices:[1,3,5,9]},
   JawMP3EyeMode: {eyesEnabled:true,eyeJawMode:0,eyesMin:20,eyesMax:40}
 };
+for(const key of ['moonlit','haunted','ember'])cases['SceneStarter_'+key]=require('../scene-model.js').starter(key,generator).profile.config;
 for(const [name,options] of Object.entries(cases)) {
   const settings={...base,...options};
   const code=generator.generateSketch(settings);

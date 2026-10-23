@@ -59,6 +59,20 @@ representative generated sketches and the compound diagnostic with core 3.3.12.
 
 ## Studio usability
 
+Scene builder uses visual cards with explicit Update/Save as new, Duplicate,
+Rename, keyboard-accessible ordering and one-step library Undo. Saved libraries
+keep their existing version-1 format and storage key. A separate recoverable draft
+stores valid editor changes locally; importing scenes or replacing unfinished edits
+asks first. Editor, browser library and last verified ESP32 program have separate
+status. Complete looks combine existing movements, eyes and lights without mouth
+or clock scheduling. Their combined physical behavior is not newly verified.
+
+Lighting uses compact per-channel cards, percentage brightness (exact 0–255 values
+retained), conditional speed and an individual palette editor. The timing preview
+supports five minutes, fifteen minutes and the current scene duration. It remains
+an illustration of requests, not a movement simulator. See the
+[short scene-builder checklist](../docs/studio-scene-builder-checklist.md).
+
 Everyday body controls are visible first; optional mouth routines stay at the bottom.
 Eye/lighting previews stay open with their feature toggles OFF; detailed choices
 expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
