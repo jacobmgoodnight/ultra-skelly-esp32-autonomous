@@ -11,7 +11,7 @@ test('requested personalities have distinct quiet, normal and haunted movement i
 });
 test('preview contains only used lanes, replacing standalone motor lanes in compound mode',()=>{
   assert.deepEqual(previewItems(c()),[['head','Head'],['arm','Arm']]);
-  const mixed=c({compoundEnabled:true,compoundAlongside:false,jawEnabled:true,eyesEnabled:true,lightsEnabled:true,lightRotation:true});
+  const mixed=c({compoundEnabled:true,compoundAlongside:false,jawEnabled:true,eyesEnabled:true,eyeChoices:[1,2],lightsEnabled:true,lightRotation:true});
   assert.deepEqual(previewItems(mixed),[['compound','Combined'],['eyes','Eyes'],['lights','Lighting'],['jaw','Jaw']]);
   assert.deepEqual(previewItems(c({headEnabled:false,armEnabled:false,lightsEnabled:true})),[]);
   const events=g.simulateSchedule(mixed);assert.ok(events.some(e=>e.kind==='lights'));assert.ok(!events.some(e=>['head','arm','torso'].includes(e.kind)));

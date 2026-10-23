@@ -58,7 +58,14 @@ representative generated sketches and the compound diagnostic with core 3.3.12.
 ## Studio usability
 
 Everyday body controls are visible first; optional mouth routines stay at the bottom.
-Appearance and specialist coordination/testing controls expand on demand. The clip library maps readable
+Eye/lighting previews stay open with their feature toggles OFF; detailed choices
+expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
+Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
+brightness apply to all palettes in a scene; palettes hold torso/head colors.
+Colors can be linked for the current look or individually per palette.
+Scene builder sits above Advanced, uses minutes (10 by default), and supports
+ordered or random switching after full old-action cooldowns. Sketch downloads
+include a local date/time suffix. The clip library maps readable
 names to the user's actual uploaded MP3 serials. Settings and clip mappings can
 be saved/loaded as validated version-4 JSON files without an account. Existing
 firmware defaults remain unchanged.

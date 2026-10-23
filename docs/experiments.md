@@ -468,3 +468,36 @@ half-range, settings persistence, the full 32-second active cooldown, and subseq
 millis wrap. The complete pinned compile driver is reused in CI so library caches
 can be shared while preserving all generated, diagnostic, attended and installer
 cases. No physical endurance, USB/NVS or actuator result is claimed.
+
+## October 22, 2026 — lighting confirmed, USB identification failure and Studio follow-up
+
+The owner confirms lighting effects and rotating palettes work. Exact effect,
+channel, speed and integration settings were not supplied; this is an owner
+physical report, not a pass for every combination. Previous pending labels are
+superseded in the verification matrix, without changing historical entries.
+
+The uploaded universal log opens NVS at 1,012 ms (`storage=1`, sequence 0), emits
+USB READY at 1,535 ms and connects to Skelly at 7,980 ms after one failed attempt.
+Studio reports identifying indefinitely, then no acknowledgment; reconnect/read
+did not recover. No browser settings acknowledgment or successful save is supplied.
+The single immediate browser HELLO can be lost during a USB-triggered restart;
+this is a plausible explanation, not a demonstrated physical cause. Studio now
+retries only that idempotent command within 45 seconds, offers explicit retry/log
+download, and explains first-time Arduino upload plus CP2102/COM selection.
+Synthetic lost-first-request and split-prefix responses recover in tests.
+
+Scene builder moves above Advanced with a 10-minute default and ordered/random
+switching. Existing NVS layout and 0/1 order semantics remain; order 2 excludes
+the current scene and requires an advertised capability before browser writes.
+Single-eye selections send once per connection rather than periodically; MP3
+corrections and conservative motion locks remain. Native tests exercise all
+random choices for three current scenes, a fixed eye over ten simulated minutes,
+and reconnect. These are software-only, not new prop observations.
+
+Eye/lighting previews open while controls remain OFF. Detailed choices fold away,
+each enabled feature has an explicit selected expression/color, lighting defaults
+to brightness 255/speed 125, and torso/head colors can be linked per look/palette.
+Effects remain global per channel within each scene. Downloads gain local date/time
+suffixes; the summary omits jaw and the arm uses a bone icon. New attended criteria
+focus on identification, fixed eye, linked colors and random scenes; completed
+lighting checks need no repetition. No hardware port was opened during development.

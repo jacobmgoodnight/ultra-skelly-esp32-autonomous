@@ -10,16 +10,16 @@
     armEnabled:true, armMin:150, armMax:240,
     bodyOverlap:false, jawProtectBody:true, jawFollowupMotor:0, jawFollowupDelaySec:2, jawFollowupRecurring:false,
     compoundEnabled:false,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],
-    lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:180,headBrightness:180,lightRestoreMode:1,
+    lightsEnabled:false,torsoColor:"#ff0000",headColor:"#ff6000",torsoBrightness:255,headBrightness:255,lightRestoreMode:1,
     jawEnabled:false, jawMin:45, jawMax:90, jawFile:12, jawExtras:"",
     overlap:true, eyesEnabled:false, eyesMin:120, eyesMax:300, eyeJawMode:1,
     restEnabled:false,restMin:180,restMax:420,restDurationMin:25,restDurationMax:60,
-    diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:Array.from({length:18},(_,i)=>i+1),
+    diagnosticsEnabled:false,bleName:"Ultra Skelly v2", eyeChoices:[1],
     fairBodyTurns:false,playbackDiagnostics:false,jawClipSec:21,jawDurations:"",
     clockEnabled:false,clockStart:1080,clockEnd:1380,clockDays:127,
     scanRetrySec:30,startupRetrySec:5,startupWindowSec:60,
     palette0Name:"Halloween",palette0Torso:"#ff6000",palette0Head:"#00ff00",palette1Name:"Haunted",palette1Torso:"#8000ff",palette1Head:"#00e6cc",palette2Name:"Moonlight",palette2Torso:"#176bff",palette2Head:"#c8e8ff",palette3Name:"Ember",palette3Torso:"#ff1800",palette3Head:"#ffb000",
-    lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:64,headSpeed:64
+    lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:125,headSpeed:125
   });
   const PRESETS = {
     watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
@@ -377,6 +377,7 @@
       "      !(LIGHTS_ENABLED && (lightApplyPending || lightRestorePending)) &&\n"+
       "      (ALLOW_HEAD_JAW_OVERLAP || !HEAD_ENABLED || reached(millis(), headMovingUntil))) {");
     const eyes=(config.eyeChoices.length?config.eyeChoices:DEFAULTS.eyeChoices).slice().sort((a,b)=>a-b);
+    out=replaceOnce(out,"const bool EYE_ROTATION_ENABLED = true;","const bool EYE_ROTATION_ENABLED = "+(eyes.length>1)+";");
     out=replaceOnce(out,
       "const bool EYES_ENABLED = "+Boolean(config.eyesEnabled)+";",
       "const bool EYES_ENABLED = "+Boolean(config.eyesEnabled)+";\n"+
@@ -456,7 +457,9 @@
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled","overlap","jawProtectBody","jawFollowupRecurring","compoundEnabled","lightsEnabled","eyesEnabled","restEnabled","diagnosticsEnabled"])
       if(cfg[id]!==undefined)byId(id).checked=cfg[id];
     if(cfg.compoundMasks)document.querySelectorAll(".compound-choice").forEach(el=>el.checked=cfg.compoundMasks.includes(Number(el.value)));
-    if(cfg.eyeChoices)document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));
+    if(cfg.eyeChoices){document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=cfg.eyeChoices.includes(Number(el.value)));byId('eyeBehavior').value=cfg.eyeChoices.length>1?'random':'fixed';showEyePreview(cfg.eyeChoices[0]||1);}
+    if(cfg.torsoColor!==undefined||cfg.headColor!==undefined)byId('linkLightColors').checked=byId('torsoColor').value===byId('headColor').value;
+    for(let i=0;i<4;i++)if(cfg['palette'+i+'Torso']!==undefined||cfg['palette'+i+'Head']!==undefined)document.querySelector('[data-palette-link="'+i+'"]').checked=byId('palette'+i+'Torso').value===byId('palette'+i+'Head').value;
     render();
   }
   function simulateSchedule(c,exampleSeed=0x582A) {
@@ -473,7 +476,7 @@
     add("arm",c.armEnabled&&(!c.compoundEnabled||c.compoundAlongside),c.armMin,c.armMax,22);
     add("compound",c.compoundEnabled,c.compoundMin,c.compoundMax,35); // illustration: compound body events
     add("jaw",c.jawEnabled,c.jawMin,c.jawMax,21);
-    add("eyes",c.eyesEnabled,c.eyesMin,c.eyesMax,0);
+    add("eyes",c.eyesEnabled&&c.eyeChoices.length>1,c.eyesMin,c.eyesMax,0);
     add("lights",c.lightsEnabled&&c.lightRotation,c.lightInterval,c.lightInterval,0);
     events.sort((a,b)=>a.time-b.time);
     // Show requested intervals only. A partial arbitration model gave false
@@ -500,11 +503,10 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
     byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
-    byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+(c.jawEnabled?" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:""):"Off";
+    byId("lightSummary").textContent=c.lightsEnabled?(c.lightRotation?'Rotating '+c.lightPalettes.length+' palettes':'Selected torso/head colors')+(c.jawEnabled?" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:""):"Off";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
-    byId("jawSummary").textContent=c.jawEnabled?c.jawMin+"–"+c.jawMax+" sec · "+(extraFileNumbers(c).length+1)+" file(s)":"Off · optional";
     const files=[c.jawFile,...extraFileNumbers(c)];
     const clips=readLibrary();
     const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
@@ -520,14 +522,17 @@
       } catch { button.disabled=true; }
       button.setAttribute("aria-pressed",String(selected));
     }
-    const eyeLabel=!c.jawEnabled?"Direct rotation":[ "MP3 controls eyes","Restore chosen eye","New eye on jaw"][c.eyeJawMode] || "Custom";
-    byId("eyeSummary").textContent=c.eyesEnabled?c.eyesMin+"–"+c.eyesMax+" sec · "+eyeLabel:"Off · optional";
-    byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · rotate "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · body "+c.torsoColor+" / head "+c.headColor):"Off · body and head colors";
+    const fixedEyes=c.eyeChoices.length===1;
+    byId("eyeSummary").textContent=c.eyesEnabled?(fixedEyes?'Eye #'+c.eyeChoices[0]+' · fixed':c.eyesMin+"–"+c.eyesMax+" sec · random"):"Off · stored eyes";
+    byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · selected colors"):"Off · stored colors";
     byId("lightRotationOptions").disabled=!c.lightsEnabled||!c.lightRotation;
     byId("lightRotationOptions").hidden=!c.lightRotation;
-    for(const id of ["torsoColor","headColor"])byId(id).disabled=c.lightRotation;
+    byId('torsoColor').disabled=c.lightRotation;byId('headColor').disabled=c.lightRotation||byId('linkLightColors').checked;
+    for(let i=0;i<4;i++)byId('palette'+i+'Head').disabled=document.querySelector('[data-palette-link="'+i+'"]').checked;
     for(const part of ["torso","head"])byId(part+"Speed").disabled=!c.lightsEnabled||c[part+"Effect"]===1;
-    byId("eyesStatus").textContent=c.eyesEnabled?"On · "+c.eyeChoices.length+" expressions in rotation":"Off · choose a rotation of eye designs";
+    byId("eyesStatus").textContent=c.eyesEnabled?(fixedEyes?'On · eye #'+c.eyeChoices[0]+' · stays the same':"On · "+c.eyeChoices.length+" expressions in random rotation"):"Off · preview your chosen expression";
+    byId('eyeTiming').hidden=byId('eyeBehavior').value==='fixed';
+    for(const id of ['eyesMin','eyesMax'])byId(id).disabled=byId('eyeBehavior').value==='fixed';
     byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
     const palette=Array.from({length:4},(_,i)=>({name:c["palette"+i+"Name"],torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"]})).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
     byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":c.lightRotation?"Rotating selected palettes; custom color fields are used when rotation is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
@@ -537,7 +542,7 @@
       button.lastChild.textContent=p.name;
       const swatches=button.querySelectorAll("i");swatches[0].style.background=p.torsoColor;swatches[1].style.background=p.headColor;
       document.querySelector('.light-palette-choice[value="'+i+'"]').nextSibling.textContent=" "+p.name;
-      button.setAttribute("aria-pressed",String(c.lightsEnabled && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
+      button.setAttribute("aria-pressed",String(!c.lightRotation && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
     byId("mouthStatus").textContent=c.jawEnabled?"On · limited coordination; audio required":"Off · optional";
     byId("mouthOptions").disabled=!c.jawEnabled;
@@ -545,9 +550,11 @@
     byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
     byId("overlapSummary").textContent=!c.jawEnabled?"Not needed":(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
-    byId("eyeOptions").classList.toggle("muted",!c.eyesEnabled);
-    byId("eyeOptions").inert=!c.eyesEnabled;
-    byId("selectedEyeCount").textContent=c.eyeChoices.length+" of 18 selected";
+    const firstPalette=c.lightPalettes[0]??0;
+    byId('lightPreviewTorso').style.background=c.lightRotation?c['palette'+firstPalette+'Torso']:c.torsoColor;
+    byId('lightPreviewHead').style.background=c.lightRotation?c['palette'+firstPalette+'Head']:c.headColor;
+    byId('lightPreviewLabel').textContent=c.lightRotation?'Starts with '+c['palette'+firstPalette+'Name']:palette?palette.name:'Custom colors';
+    byId("selectedEyeCount").textContent=fixedEyes?'Selected: eye #'+c.eyeChoices[0]+' · fixed':c.eyeChoices.length+" of 18 selected";
     byId("restOptions").classList.toggle("muted",!c.restEnabled);
     byId("restOptions").inert=!c.restEnabled;
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
@@ -571,9 +578,9 @@
       timeline.appendChild(element);
     }
   }
-  function generateRuntimeSketch(scenes,rotate=false) {
+  function generateRuntimeSketch(scenes,rotate=false,random=false) {
     if(!window.SkellyRuntime)throw Error('The offline USB settings module did not load.');
-    const words=window.SkellyRuntime.encode(scenes,rotate,validate);
+    const words=window.SkellyRuntime.encode(scenes,rotate,validate,random);
     // Include every optional scheduling hook in the universal build; runtime
     // settings, rather than these compile-time seed values, control activation.
     let source=generateSketch({...DEFAULTS,jawEnabled:false,jawExtras:'13',restEnabled:true,clockEnabled:true});
@@ -599,9 +606,13 @@
   function writeLibrary(clips) {
     for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=clips[key]??"";
   }
+  function sketchFilename(name,now=new Date()) {
+    const pad=n=>String(n).padStart(2,'0');
+    return name.replace(/\.ino$/i,'')+'_'+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'_'+pad(now.getHours())+pad(now.getMinutes())+pad(now.getSeconds())+'.ino';
+  }
   function downloadText(text,name,type) {
     const href=URL.createObjectURL(new Blob([text],{type}));
-    const a=document.createElement("a");a.href=href;a.download=name;
+    const a=document.createElement("a");a.href=href;a.download=/\.ino$/i.test(name)?sketchFilename(name):name;
     document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
   }
   function init(){
@@ -611,9 +622,9 @@
       card.className="eye-card";
       const label=document.createElement("label");
       label.className="eye-choice";
-      label.title="Toggle eye pattern "+i+" for random rotation";
+      label.title="Choose eye pattern "+i;
       const input=document.createElement("input");
-      input.type="checkbox";input.value=i;input.checked=true;
+      input.type="checkbox";input.value=i;input.checked=i===1;
       input.setAttribute("aria-label","Include eye pattern "+i);
       const content=document.createElement("span");
       content.className="eye-tile";
@@ -638,12 +649,20 @@
     showEyePreview(1);
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+      if(el.closest('.eye-choice')){
+        if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
+        else if(!document.querySelector('.eye-choice input:checked'))el.checked=true;
+        if(el.checked)showEyePreview(Number(el.value));
+      }
+      if(el.id==='eyeBehavior'&&el.value==='fixed')writeConfig({eyeChoices:readConfig().eyeChoices.slice(0,1)});
+      if(el.id==='linkLightColors'||el.id==='torsoColor')if(byId('linkLightColors').checked)byId('headColor').value=byId('torsoColor').value;
+      for(let i=0;i<4;i++)if(el.id==='palette'+i+'Torso'||el.dataset.paletteLink===String(i))if(document.querySelector('[data-palette-link="'+i+'"]').checked)byId('palette'+i+'Head').value=byId('palette'+i+'Torso').value;
       if(el.id==="jawEnabled"&&!el.checked)writeConfig(window.SkellyExperience.withoutMouth(readConfig()));
       else if(el.id==="lightRotation"&&el.checked)writeConfig({lightsEnabled:true});
       else render();
     });
-    byId("selectAllEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
-    byId("selectFewEyes").addEventListener("click",()=>{document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
+    byId("selectAllEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
+    byId("selectFewEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
     byId('newExample').addEventListener('click',()=>{previewSeed=(previewSeed+1)>>>0;render();});
     for(const b of document.querySelectorAll(".preset"))b.addEventListener("click",()=>{
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
@@ -659,7 +678,7 @@
     });
     for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
       const c=readConfig(),i=Object.keys(PALETTES).indexOf(button.dataset.palette);
-      writeConfig({lightsEnabled:true,torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"],lightRotation:false});
+      writeConfig({torsoColor:c["palette"+i+"Torso"],headColor:byId('linkLightColors').checked?c["palette"+i+"Torso"]:c["palette"+i+"Head"],lightRotation:false});
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
     });
     for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{
@@ -706,6 +725,6 @@
     });
     writeConfig(DEFAULTS);
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,readLibrary,writeLibrary};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

@@ -1,5 +1,18 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {Capture,Session}=require('../serial.js');
+test('identification retries HELLO lost during a USB-triggered boot and accepts split prefixed replies',async()=>{
+ const s=new Session(null);s.port={};let attempts=0;
+ s.send=async line=>{assert.equal(line,'\nSKELLY HELLO\n');if(++attempts===2){s.ingest(new TextEncoder().encode('[ 1535 ms] USB READY v1 CLOCK\n[ 1540 ms] USB CA'));s.ingest(new TextEncoder().encode('PS v2 settings=1 scenes=4\n'));}};
+ const reply=await s.capabilities({timeout:1000,retry:5});assert.equal(attempts,2);assert.match(reply.text,/settings=1/);assert.equal(s.waiters.length,0);
+});
+test('identification times out with recovery guidance and sends no settings',async()=>{
+ const s=new Session(null);s.port={};const sent=[];s.send=async line=>sent.push(line);
+ await assert.rejects(s.capabilities({timeout:15,retry:5}),/EN\/Reset/);assert.ok(sent.length>=1);assert.ok(sent.every(line=>line==='\nSKELLY HELLO\n'));assert.equal(s.waiters.length,0);
+});
+test('identification ignores old capability messages and does not retry a transport error',async()=>{
+ const s=new Session(null);s.port={};s.ingest(new TextEncoder().encode('USB CAPS v2 settings=1\n'));
+ let count=0;s.send=async()=>{count++;throw Error('unplugged');};await assert.rejects(s.capabilities(),/unplugged/);assert.equal(count,1);assert.equal(s.waiters.length,0);
+});
 test('raw capture preserves split UTF-8, invalid bytes and bounded prefix',()=>{
   const c=new Capture(7);c.add(Uint8Array.from([0x41,0xe2]));c.add(Uint8Array.from([0x82,0xac,0xff,0,0x42,0x43]));
   assert.deepEqual([...c.bytes()],[0x41,0xe2,0x82,0xac,0xff,0,0x42]);

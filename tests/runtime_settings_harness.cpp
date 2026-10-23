@@ -28,9 +28,22 @@ int main(){try{
   // Scene boundary waits for full cooldown, then updates all settings together.
   runtimeIdle(10000);runtimeEngine.sceneAt=fakeNow;serviceRuntime();REQUIRE(!runtimeEngine.pending);connected=true;torsoSafeAfter=fakeNow+35000;serviceRuntime();REQUIRE(runtimeEngine.pending&&runtimeEngine.scene==0);
   fakeNow=torsoSafeAfter;serviceRuntime();REQUIRE(!runtimeEngine.pending&&runtimeEngine.scene==1);REQUIRE(ARM_ENABLED&&TORSO_ENABLED&&COMPOUND_BODY_ENABLED&&COMPOUND_ALONGSIDE&&LIGHTS_ENABLED&&EYES_ENABLED);
-  REQUIRE(runtimeMaskCount==4 && runtimeFileCount==1);REQUIRE(HEAD_ANIMATION_MS+HEAD_BUFFER_MS==32000);
+  REQUIRE(runtimeMaskCount==4 && runtimeFileCount==1);REQUIRE(runtimeEyeCount==1&&!EYE_ROTATION_ENABLED);REQUIRE(HEAD_ANIMATION_MS+HEAD_BUFFER_MS==32000);
   runtimeSceneConnected();REQUIRE(runtimeEngine.sceneAt-fakeNow==120000);
   REQUIRE(fakeNVSWriteCount==1); // automatic scene rotation never writes flash
+  RuntimeRecord randomProgram=runtimeEngine.active;
+  randomProgram.words[1]=3;randomProgram.words[2]=2;randomProgram.count=3+3*RF_COUNT;
+  memcpy(randomProgram.words+3+2*RF_COUNT,randomProgram.words+3+RF_COUNT,RF_COUNT*4);
+  memset(randomProgram.words+3+2*RF_COUNT+RF_sceneLabel0,0,32*4);
+  memcpy(randomProgram.words+3+2*RF_COUNT+RF_sceneLabel0,"Third",5);seal(randomProgram);
+  REQUIRE(RuntimeEngine::valid(randomProgram));
+  for(uint8_t current=0;current<3;++current)for(uint8_t draw=0;draw<2;++draw){
+    runtimeIdle(fakeNow+1000);runtimeEngine.active=randomProgram;runtimeEngine.select(current);
+    connected=true;runtimeEngine.sceneAt=fakeNow;fakeRandomChoices.clear();fakeRandomChoices.push_back(draw);
+    serviceRuntime();const uint8_t expected=draw>=current?draw+1:draw;
+    REQUIRE(runtimeEngine.scene==expected&&runtimeEngine.scene!=current);REQUIRE(fakeNVSWriteCount==1);
+  }
+  randomProgram.words[2]=3;seal(randomProgram);REQUIRE(!RuntimeEngine::valid(randomProgram));
   RuntimeRecord wrap=runtimeEngine.active;wrap.sequence=0;wrap.guard=RuntimeEngine::headerGuard(wrap);fakeNVS["slot0"]=std::vector<uint8_t>((uint8_t*)&wrap,(uint8_t*)&wrap+sizeof(wrap));
   wrap.sequence=UINT32_MAX;wrap.guard=RuntimeEngine::headerGuard(wrap);fakeNVS["slot1"]=std::vector<uint8_t>((uint8_t*)&wrap,(uint8_t*)&wrap+sizeof(wrap));runtimeBoot();REQUIRE(runtimeEngine.active.sequence==0);
   runtimeIdle(100000);runtimeEngine.active=initial;
