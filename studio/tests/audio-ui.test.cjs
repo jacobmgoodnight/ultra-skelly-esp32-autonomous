@@ -5,7 +5,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 class Element{constructor(){Object.assign(this,{value:'',checked:false,disabled:false,hidden:false,textContent:'',dataset:{},children:[],files:[]});}replaceChildren(){this.children=[];}append(node){this.children.push(node);}}
 function page({supported=true,usb=false,saveError=false}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()]));nodes.audioMin.value='180';nodes.audioMax.value='300';
- const events={};const document={getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:()=>new Element(),addEventListener:(name,fn)=>(events[name]??=[]).push(fn),dispatchEvent:e=>{for(const fn of events[e.type]??[])fn(e);}};
+ let chosen=true;const preset={classList:{remove:()=>chosen=false}};const events={};const document={getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:()=>new Element(),querySelectorAll:()=>[preset],addEventListener:(name,fn)=>(events[name]??=[]).push(fn),dispatchEvent:e=>{for(const fn of events[e.type]??[])fn(e);}};
  let config={...generator.DEFAULTS},connects=0,saves=0,session;
  const file={serial:27,cluster:45,name:'Greeting.mp3',action:3,eye:8,lights:[0,1].map(()=>({mode:1,brightness:255,color:'#b28df9',speed:129,cycle:0}))};
  class FakeSession{constructor(_,options){session=this;this.onChange=options.onChange;this.connected=this.busy=false;this.files=[];}
@@ -16,7 +16,7 @@ function page({supported=true,usb=false,saveError=false}={}){
  }
  const window={SkellyAudio:{...a,Session:FakeSession},SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>{config={...config,...c};document.dispatchEvent({type:'skelly-config-changed'});}},SkellyExperience:experience,SkellyControllerPortOpen:()=>usb,addEventListener:()=>{}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'audio-ui.js'),'utf8'),{document,window,navigator:{bluetooth:supported?{}:undefined},CustomEvent:class{constructor(type){this.type=type;}},Uint8Array,Date});events.DOMContentLoaded[0]();
- return {nodes,window,session,get config(){return config;},get connects(){return connects;},get saves(){return saves;},async settle(){await new Promise(r=>setImmediate(r));}};
+ return {nodes,window,session,get chosen(){return chosen;},get config(){return config;},get connects(){return connects;},get saves(){return saves;},async settle(){await new Promise(r=>setImmediate(r));}};
 }
 test('optional audio starts disconnected and unsupported browsers retain routine editing',()=>{
  const p=page();assert.equal(p.connects,0);assert.equal(p.nodes.audioEdit.hidden,true);assert.equal(p.nodes.audioUpload.disabled,true);assert.equal(p.nodes.audioEdit.disabled,true);assert.equal(p.config.jawEnabled,false);
@@ -42,4 +42,10 @@ test('saved scene previews name the selected audio file instead of a generic jaw
  const g=generator,model=require('../scene-model.js'),config=a.audioRoutine({...g.DEFAULTS},{serial:27},32,180,300);
  const value={scenes:[{name:'Greeting',seconds:600,profile:JSON.parse(g.createProfile(config,{}))}],rotate:false};
  const preview=model.routinePreview(value,g);assert.equal(preview[0].lanes.find(x=>x.kind==='jaw').label,'Audio #27');
+});
+
+test('copying a rotating regular look uses its first selected palette and audio edits clear personality selection',async()=>{
+ const p=page();p.nodes.audioConnect.onclick();await p.settle();p.window.SkellyStudioGenerator.writeConfig({lightRotation:true,lightPalettes:[2,3],palette2Torso:'#123456',palette2Head:'#abcdef',eyeChoices:[5,8]});
+ p.nodes.audioCopyLook.onclick();assert.equal(p.nodes.audioTorsoColor.value,'#123456');assert.equal(p.nodes.audioHeadColor.value,'#abcdef');assert.equal(p.nodes.audioEye.value,5);assert.equal(p.chosen,true);
+ p.nodes.audioGuard.value='32';p.nodes.audioUse.onclick();assert.equal(p.chosen,false);assert.equal(p.config.eyeJawMode,3);
 });
