@@ -19,6 +19,14 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
+The [scene-builder checklist](studio-scene-builder-checklist.md) covers the latest
+browser refresh. Model/DOM tests exercise explicit CRUD and atomic validation,
+selection through reorder/delete/Undo, draft recovery and invalid/storage failure
+paths, asynchronous confirmation/cancellation, controller snapshot comparison and
+longer illustrative preview windows. The three complete look configurations are
+included in the full generated ESP32 compile matrix. These are software checks;
+they do not establish physical scene transitions or integration results.
+
 USB settings/scene software coverage and a separate future attended procedure are
 in [USB settings and scenes](usb-settings-scenes.md). Continue the current Studio
 refresh checklist first; no new physical result is implied by these checks.
