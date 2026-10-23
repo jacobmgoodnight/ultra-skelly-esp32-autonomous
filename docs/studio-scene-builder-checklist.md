@@ -86,9 +86,10 @@ personality defaults changes only the editor until you explicitly save/upload.
   Changing this dropdown never loads the editor, changes the saved order or sends
   settings. Rename/reorder preserves the chosen preview; deleting it chooses a
   remaining scene. New/updated scenes select their own preview.
-- Body illustrations move gently only for enabled options, with long still pauses.
-  Animate previews stops decorative movement without changing routine settings.
-  The system reduced-motion preference disables animation; hidden pages pause it.
+- Bone-white body illustrations animate automatically only for enabled options,
+  with still pauses between turns. Torso turns include a visible side-to-side lean.
+  There is no animation checkbox or helper text. The system reduced-motion
+  preference disables animation; hidden pages pause it.
   These are illustrations, not a Bluetooth/physical animation status indicator.
 - Check the new controls at phone width and with a keyboard. Existing USB and
   physical checks do not need repeating just for this interface-only change.
