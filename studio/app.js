@@ -503,7 +503,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
     byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
-    byId("lightSummary").textContent=c.lightsEnabled?"Torso "+c.torsoColor+" · Head "+c.headColor+(c.jawEnabled?" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:""):"Off";
+    byId("lightSummary").textContent=c.lightsEnabled?(c.lightRotation?'Rotating '+c.lightPalettes.length+' palettes':'Selected torso/head colors')+(c.jawEnabled?" · "+["Once","After MP3","During + after"][c.lightRestoreMode]:""):"Off";
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
     const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
     byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
