@@ -44,7 +44,7 @@ test('import preview cancellation including Escape cannot reuse an earlier Repla
 });
 test('rename, reorder, delete and Undo retain the selected scene and edited name',()=>{
  const p=page();p.nodes.sceneSave.onclick();p.name('Second');p.nodes.sceneSave.onclick();p.name('Unfinished name');p.click('Rename scene Second');p.nodes.sceneRenameInput.value='Renamed';p.nodes.sceneRenameForm.onsubmit({preventDefault(){}});assert.equal(p.nodes.sceneName.value,'Unfinished name');
- p.click('Move scene Renamed up');p.nodes.sceneUpdate.onclick();assert.equal(p.api.snapshot().scenes[0].name,'Unfinished name');p.click('Delete scene Unfinished name');assert.equal(p.api.snapshot().scenes.length,1);p.nodes.sceneUndo.onclick();assert.equal(p.api.snapshot().scenes.length,2);assert.equal(p.api.snapshot().scenes[0].name,'Unfinished name');
+ p.click('Move scene Renamed up');p.nodes.sceneUpdate.onclick();assert.equal(p.api.snapshot().scenes[0].name,'Unfinished name');p.click('Delete scene Unfinished name');assert.equal(p.api.snapshot().scenes.length,1);assert.equal(p.nodes.sceneUndo.focused,true);p.nodes.sceneUndo.onclick();assert.equal(p.api.snapshot().scenes.length,2);assert.equal(p.api.snapshot().scenes[0].name,'Unfinished name');
 });
 test('verified controller status compares only the acknowledged snapshot and disconnect clears comparison',async()=>{
  const p=page(),port={};p.nodes.sceneSave.onclick();p.api.usbState(port);p.api.recordController(p.api.program(),'scenes');assert.match(p.nodes.deviceSaveStatus.textContent,/library matches/);

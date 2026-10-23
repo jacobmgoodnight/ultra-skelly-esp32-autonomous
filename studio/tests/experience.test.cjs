@@ -52,3 +52,9 @@ test('audio-free common presets retain eyes, lights and scheduled-window configu
   const original={...api.DEFAULTS,jawEnabled:true,jawFile:413};
   assert.equal(api.parseProfile(api.createProfile(original,{})).config.jawEnabled,true);
 });
+
+test('lighting summary shows rotation and both effects without losing exact stored brightness',()=>{
+  const {lightingSummary}=require('../experience.js');const c={...api.DEFAULTS,lightsEnabled:true,lightRotation:true,torsoEffect:3,headEffect:2,torsoBrightness:127};const before=JSON.stringify(c),text=lightingSummary(c);
+  for(const part of ['4 palettes','90 sec','Pulsing / Strobe','50% / 100%'])assert.ok(text.includes(part),part);
+  assert.equal(JSON.stringify(c),before);assert.equal(lightingSummary({...c,lightsEnabled:false}),'Off · stored lights');
+});

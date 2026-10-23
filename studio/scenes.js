@@ -30,7 +30,7 @@
     async function confirmReplace(label){return !dirty()||await ask(label+' Discard the current unsaved editor changes? Saved scenes are unchanged.');}
     function applyEditor(scene,index=null){
       loading=true;library.editing=index;pendingNew=index===null;el('sceneName').value=scene.name;el('sceneMinutes').value=Number((scene.seconds/60).toFixed(4));
-      g.writeLibrary(scene.profile.clips);g.writeConfig(scene.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();
+      g.writeLibrary(scene.profile.clips);g.writeConfig(scene.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
     }
     function wireKey(program){return JSON.stringify(window.SkellyRuntime.encode(program.scenes,program.rotate,g.validate,program.random));}
     function renderDevice(){
@@ -69,10 +69,10 @@
         for(const note of m.timingNotes(c,s.seconds))row.append(make('p',note,'scene-timing-note'));
         const buttons=make('div',undefined,'scene-card-actions');
         buttons.append(action('Edit','Edit scene '+s.name,async()=>{if(await confirmReplace('Edit '+s.name+'?')){applyEditor(s,index);message('Editing '+s.name+'. Update this scene after changing the controls above.');}}),
-          action('Duplicate','Duplicate scene '+s.name,()=>{library.duplicate(index);persist();renderLibrary();message('Scene duplicated in this browser.');},value.scenes.length>=4),
+          action('Duplicate','Duplicate scene '+s.name,()=>{library.duplicate(index);persist();renderLibrary();el('sceneList').querySelectorAll('.scene-card')[index+1].querySelector('button').focus();message('Scene duplicated in this browser.');},value.scenes.length>=4),
           action('Rename','Rename scene '+s.name,()=>openRename(index)),
           action('↑','Move scene '+s.name+' up',()=>move(index,-1),index===0),action('↓','Move scene '+s.name+' down',()=>move(index,1),index===value.scenes.length-1),
-          action('Delete','Delete scene '+s.name,()=>{const wasEditing=library.editing===index;library.remove(index);if(wasEditing)pendingNew=true;persist();renderLibrary();message('Deleted '+s.name+'. Use Undo to restore it.');}));row.append(buttons);list.append(row);
+          action('Delete','Delete scene '+s.name,()=>{const wasEditing=library.editing===index;library.remove(index);if(wasEditing)pendingNew=true;persist();renderLibrary();el('sceneUndo').focus();message('Deleted '+s.name+'. Use Undo to restore it.');}));row.append(buttons);list.append(row);
       });
       el('sceneRotate').checked=value.rotate;el('sceneOrder').value=value.random?'random':'ordered';el('sceneOrder').disabled=!value.rotate;
       el('sceneDownload').disabled=!value.scenes.length;el('sceneExport').disabled=!value.scenes.length;el('sceneUndo').disabled=!library.undoEntry;
@@ -84,7 +84,7 @@
     function move(index,delta){if(library.move(index,delta)){persist();renderLibrary();el('sceneList').querySelectorAll('.scene-card')[index+delta].querySelector('button').focus();}}
     let renaming=null;
     function openRename(index){renaming=index;el('sceneRenameInput').value=library.value.scenes[index].name;el('sceneRenameError').textContent='';el('sceneRenameDialog').showModal();el('sceneRenameInput').focus();}
-    el('sceneRenameForm').onsubmit=e=>{e.preventDefault();try{const name=el('sceneRenameInput').value.trim(),index=renaming;library.rename(index,name);if(library.editing===index){if(el('sceneName').value.trim()===baseline.name)el('sceneName').value=name;baseline={...baseline,name};}persist();renderLibrary();el('sceneRenameDialog').close();message('Scene renamed.');}catch(err){el('sceneRenameError').textContent=err.message;}};
+    el('sceneRenameForm').onsubmit=e=>{e.preventDefault();try{const name=el('sceneRenameInput').value.trim(),index=renaming;library.rename(index,name);if(library.editing===index){if(el('sceneName').value.trim()===baseline.name)el('sceneName').value=name;baseline={...baseline,name};}persist();renderLibrary();el('sceneRenameDialog').close();el('sceneList').querySelectorAll('.scene-card')[index].querySelector('button').focus();message('Scene renamed.');}catch(err){el('sceneRenameError').textContent=err.message;}};
     el('sceneRenameCancel').onclick=()=>el('sceneRenameDialog').close();
     function previewImport(value,label){
       const parsed=m.validateLibrary(value,g),dialog=el('sceneImportDialog'),preview=el('sceneImportPreview');preview.replaceChildren();

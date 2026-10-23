@@ -37,7 +37,12 @@
     if(c.jawEnabled)items.push(["jaw","Jaw"]);
     return items;
   }
-  const api={firstRoutine,withoutMouth,scheduleFeedback,previewItems};
+  function lightingSummary(c){
+    if(!c.lightsEnabled)return 'Off · stored lights';
+    const names={1:'Static',2:'Strobe',3:'Pulsing'},effects=c.torsoEffect===c.headEffect?names[c.torsoEffect]:names[c.torsoEffect]+' / '+names[c.headEffect];
+    return (c.lightRotation?c.lightPalettes.length+' palettes · '+c.lightInterval+' sec · ':'')+effects+' · '+Math.round(c.torsoBrightness/255*100)+'% / '+Math.round(c.headBrightness/255*100)+'%';
+  }
+  const api={firstRoutine,withoutMouth,scheduleFeedback,previewItems,lightingSummary};
   if(typeof module!=="undefined")module.exports=api;
   if(typeof window!=="undefined")window.SkellyExperience=api;
 })();

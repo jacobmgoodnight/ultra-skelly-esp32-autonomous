@@ -7,13 +7,13 @@
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
 <link rel="stylesheet" href="./style.css?v=c1fe1b179e77">
 <script src="./template.js?v=563ec99c120a" defer></script>
-<script src="./experience.js?v=6c17473e1d71" defer></script>
+<script src="./experience.js?v=d6d8118bdbb9" defer></script>
 <script src="./runtime-schema.js?v=1d6fbe6d9993" defer></script>
 <script src="./runtime.js?v=1e84fc8b2dc1" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=a66c5a815583" defer></script>
+<script src="./app.js?v=5e4125d05f99" defer></script>
 <script src="./scene-model.js?v=748518071c28" defer></script>
-<script src="./scenes.js?v=3d137cff7ee9" defer></script>
+<script src="./scenes.js?v=47e7c1fab050" defer></script>
 <script src="./controller-state.js?v=330a73fd9341" defer></script>
 <script src="./controller.js?v=1eabd9245ebf" defer></script>
 </head>
@@ -138,7 +138,7 @@
       <div class="save-locations"><p id="editorStatus" role="status">Editing a new scene</p><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p><p id="deviceSaveStatus">ESP32 · connect and read to compare</p></div>
       <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
-      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label>Stay for <input id="sceneMinutes" type="number" min="1" max="60" step="0.1" value="10"> minutes</label></div>
+      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label>Stay for <input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> minutes</label></div>
       <div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><p id="sceneMessage" role="status">No custom scenes saved.</p>
       <details class="instructions"><summary>Start with a complete look</summary><div class="scene-starters"><button type="button" data-scene-starter="moonlit">Moonlit Watcher</button><button type="button" data-scene-starter="haunted">Haunted Porch</button><button type="button" data-scene-starter="ember">Ember Glow</button></div><p>Loads movement, eyes and lighting into the editor. All start at 10 minutes with mouth off.</p></details>
       <div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>

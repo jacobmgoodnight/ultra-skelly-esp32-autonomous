@@ -509,8 +509,7 @@
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
     byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
-    const effectNames={1:'Static',2:'Strobe',3:'Pulsing'};
-    byId('lightSummary').textContent=!c.lightsEnabled?'Off · stored lights':(c.lightRotation?c.lightPalettes.length+' palettes · '+c.lightInterval+' sec':c.torsoEffect===c.headEffect?effectNames[c.torsoEffect]:effectNames[c.torsoEffect]+' / '+effectNames[c.headEffect])+' · '+Math.round(c.torsoBrightness/255*100)+'% / '+Math.round(c.headBrightness/255*100)+'%';
+    byId('lightSummary').textContent=window.SkellyExperience.lightingSummary(c);
     const summaryPalette=c.lightPalettes[0]??0;
     for(const part of ['torso','head']){const dot=byId(part==='torso'?'summaryTorsoColor':'summaryHeadColor');dot.hidden=!c.lightsEnabled;dot.style.background=c.lightRotation?c['palette'+summaryPalette+(part==='torso'?'Torso':'Head')]:c[part+'Color'];}
     byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
