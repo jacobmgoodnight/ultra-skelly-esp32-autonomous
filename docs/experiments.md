@@ -546,3 +546,27 @@ sample-request tracks using their individual holds; random order promises no exa
 sequence. Firmware, USB commands, saved formats and motor cooldowns are unchanged.
 Browser defaults affect the editor only until an explicit save or upload. Root
 README screenshots show illustrative local browser settings, not connected hardware.
+
+## October 23, 2026 — conservative owner tools and isolated status experiment
+
+The owner explicitly deferred PIR development without a sensor and requested
+useful incremental improvements. No PIR hooks, scheduling-policy changes or new
+Studio radio controls are introduced. Three portable v4 profiles reuse current
+personalities with mouth OFF; existing presets, saved formats and cooldowns remain.
+Jaw setup now explains own-device serials, per-file movement flags, physical
+volume, stored eye/light overrides and selected fallback duration estimates.
+
+Boot marker `usb-scheduler-v4`, build `2026102301`, adds numeric read-only status
+for model activity/wait, estimated jaw time and accepted transport-write age.
+The shared USB panel retains stale-state handling and operation priority.
+The ordinary build compiles out a separately generated read-only BLE status
+experiment. Its characteristic uses both READ properties and READ access
+permissions; public snapshot reads cannot configure or command the controller.
+Phone callbacks copy bounded data or flag loop work; no BLE payload/address is logged.
+
+All new behavior is **Software-only / physically Untested**. Browser/native
+checks do not establish RF reliability or physical response. The existing USB
+read/save and lighting owner confirmations stand. Scene retention/recovery and
+transitions remain pending in the [focused result sheet](conservative-release-checklist.md).
+The [wireless experiment](wireless-status-experiment.md) requires its own attended
+gate before any wireless configuration/security work. No ESP32 was flashed.

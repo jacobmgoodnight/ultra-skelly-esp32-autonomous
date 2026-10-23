@@ -10,8 +10,18 @@
       const value=Number(match[2]);if(!Number.isSafeInteger(value)||value>0xffffffff)throw Error('Malformed controller status.');data[match[1]]=value;
     }
     for(const key of ['connected','scene','sequence','pending'])if(!Object.hasOwn(data,key))throw Error('Incomplete controller status.');
-    for(const key of ['connected','pending','clock','window','runtime'])if(data[key]!==undefined&&![0,1].includes(data[key]))throw Error('Malformed controller status.');
-    if(data.scene>3)throw Error('Malformed controller status.');return data;
+    for(const key of ['connected','pending','clock','window','runtime','accepted'])if(data[key]!==undefined&&![0,1].includes(data[key]))throw Error('Malformed controller status.');
+    if(data.scene>3||data.wait!==undefined&&data.wait>7||data.accepted===1&&data.acceptedAge===undefined)throw Error('Malformed controller status.');return data;
+  }
+  function diagnosticView(data,stale=false){
+    if(!data)return [];
+    const reasons=['Waiting for requested intervals','Waiting for Skelly Bluetooth','Estimated jaw playback','Eye/light restoration or correction queued','Motor cooldown (modeled)','Idle break','Existing clock window / time not set','Jaw-first follow-up'];
+    const rows=[];
+    if(data.firmware!==undefined)rows.push(['Firmware','usb-scheduler-v'+data.firmware+(data.build===undefined?'':' · build '+data.build)]);
+    if(data.wait!==undefined)rows.push([stale?'Last reported activity / wait':'Controller activity / wait',(data.pending?'Settings/scene change pending · ':'')+(reasons[data.wait]??'Unknown reason')]);
+    if(data.jawMs!==undefined)rows.push([stale?'Last jaw estimate':'Jaw estimate',Math.ceil(data.jawMs/1000)+' seconds remaining (modeled)']);
+    if(data.accepted!==undefined)rows.push([stale?'Last reported write age':'Last accepted BLE write',data.accepted?Math.floor(data.acceptedAge/1000)+' seconds before this snapshot':'None reported']);
+    return rows;
   }
   class ControllerState {
     constructor(session,{onChange=()=>{},hidden=()=>false,now=()=>Date.now(),setTimer=(fn,delay)=>setTimeout(fn,delay),clearTimer=id=>clearTimeout(id)}={}){
@@ -83,7 +93,7 @@
     const skelly=!data?'Unknown':state.stale?'Last reported: '+(data.connected?'Connected':'Not connected'):data.connected?'Connected':'Not connected yet';
     return {usb,skelly,scene:data?'Scene '+(data.scene+1):'—',usbTone:state.usb==='ready'?'ready':'info',skellyTone:data&&!state.stale&&data.connected?'ready':'info'};
   }
-  const api={ControllerState,parseStatus,connectionView};
+  const api={ControllerState,parseStatus,connectionView,diagnosticView};
   if(typeof module!=='undefined')module.exports=api;
   if(typeof window!=='undefined')window.SkellyControllerState=api;
 })();

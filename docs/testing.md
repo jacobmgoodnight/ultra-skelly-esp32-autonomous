@@ -56,6 +56,7 @@ node --check studio/app.js
 node --check studio/template.js
 node scripts/sync-runtime-schema.cjs --check
 node scripts/sync-template.cjs --check
+node scripts/prepare-owner-tools.cjs --check
 node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
 python tests/test_packets.py

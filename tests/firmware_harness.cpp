@@ -138,7 +138,7 @@ int main() {
   run("text logger bounds output and prefixes uptime", [] {
     prepare(1234);
     logEvent("%s", std::string(1000, 'x').c_str());
-    CHECK(Serial.output.size() <= 383);
+    CHECK(Serial.output.size() <= 639); // Bounded 640-byte logger includes additive status fields.
     CHECK(Serial.output.find("[      1234 ms] ") == 0);
   });
   run("boot counter validates retained memory and resets on power-on", [] {

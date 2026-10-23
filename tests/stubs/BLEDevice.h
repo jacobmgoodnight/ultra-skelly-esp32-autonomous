@@ -80,9 +80,19 @@ class BLEScan {
   void setAdvertisedDeviceCallbacks(BLEAdvertisedDeviceCallbacks *value) { callbacks=value; }
   void setActiveScan(bool) {}
 };
+class BLEServer;
+class BLEAdvertising {
+ public:
+  void addServiceUUID(const char *) {}
+  void setScanResponse(bool) {}
+};
+inline unsigned fakeAdvertisingStarts=0;
 class BLEDevice {
  public:
   static void init(const char *) {}
   static BLEScan *getScan() { static BLEScan scan; return &scan; }
   static BLEClient *createClient() { static BLEClient value; return &value; }
+  static BLEServer *createServer();
+  static BLEAdvertising *getAdvertising(){static BLEAdvertising a;return &a;}
+  static void startAdvertising(){++fakeAdvertisingStarts;}
 };

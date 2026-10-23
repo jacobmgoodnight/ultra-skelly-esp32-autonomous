@@ -1,5 +1,18 @@
 # Controller architecture
 
+October 23 conservative owner-tools follow-up: boot marker `usb-scheduler-v4`,
+build `2026102301`, adds numeric status fields for firmware/build, primary
+activity/wait, modeled jaw time and last accepted-write age. Old numeric parsers
+remain compatible; saved programs, scheduling and cooldowns are unchanged.
+Studio explains device-specific audio setup and offers three complete v4 profiles.
+See [attended release checks](conservative-release-checklist.md).
+
+`SKELLY_WIRELESS_STATUS` defaults to 0. Only the separately generated
+[status experiment](wireless-status-experiment.md) enables a public read-only GATT
+snapshot. It has no write or notification property and no normal Studio control.
+Callbacks copy a bounded snapshot or flag advertising restart; main-loop sampling
+never changes actuator targets or settings. Hardware reliability remains Untested.
+
 The canonical Arduino sketch runs one cooperative loop on an original ESP32-WROOM
 using Arduino-ESP32 3.3.12's BLE library. Studio is a static HTML/CSS/JavaScript
 application that embeds this sketch and replaces validated constants plus several
@@ -212,7 +225,7 @@ Packet arrays are bounded stack buffers; this audit found no direct binary UART
 output or demonstrated buffer overrun. That does not establish a cause for the
 reported garbled serial output.
 
-Text event logs use one bounded formatting buffer and an uptime prefix. Boot logs
+Text event logs use one bounded 640-byte formatting buffer and an uptime prefix. Boot logs
 include a build marker, numeric ESP-IDF reset reason, validated RTC-NOINIT boot count, and
 heap. [RTC-NOINIT retains values across software restarts](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/memory-types.html);
 the counter is reset on power-on or an invalid guard. RTC memory does not survive

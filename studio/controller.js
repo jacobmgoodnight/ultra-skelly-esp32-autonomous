@@ -27,7 +27,7 @@
       const dl=el('controllerDetails');dl.replaceChildren();
       if(port&&state.data){
         const d=state.data;
-        for(const [label,value] of [['Saved revision',d.sequence],['Pending settings',d.pending?'Waiting for current actions':'None'],['BLE write failures',d.failures],['Free heap',d.heap===undefined?'Unknown':d.heap+' bytes'],['Clock',d.clock===undefined?'Unknown':d.clock?'Set for this boot':'Not set for this boot']]){
+        for(const [label,value] of [...window.SkellyControllerState.diagnosticView(d,state.stale),['Saved revision',d.sequence],['Pending settings',d.pending?'Waiting for current actions':'None'],['BLE write failures',d.failures],['Free heap',d.heap===undefined?'Unknown':d.heap+' bytes'],['Clock',d.clock===undefined?'Unknown':d.clock?'Set for this boot':'Not set for this boot']]){
           const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value??'Unknown';dl.append(dt,dd);
         }
       }

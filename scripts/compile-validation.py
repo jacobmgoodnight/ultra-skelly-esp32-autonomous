@@ -18,7 +18,9 @@ def main():
     for flags in [[],['--quick']]:subprocess.run(['node','scripts/export-attended-tests.cjs',*flags],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     subprocess.run(['node','scripts/prepare-prebuilt.cjs'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     subprocess.run(['node','scripts/prepare-universal.cjs'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    subprocess.run(['node','scripts/prepare-owner-tools.cjs','--wireless'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     cases=[('Canonical',ROOT/'firmware/SkellyAutonomous/SkellyAutonomous.ino')]
+    cases += [('WirelessStatusExperiment',ROOT/'.skelly-build/WirelessStatusExperiment/WirelessStatusExperiment.ino')]
     cases += [(p.parent.name,p) for p in sorted((build/'matrix').glob('*/*.ino'))]
     cases += [(p.parent.name,p) for p in sorted((ROOT/'experiments').glob('*/*.ino')) if p.parent.name!='SerialIdleTest']
     for pack in ['attended-tests','quick-tests']:cases += [(p.parent.name,p) for p in sorted((ROOT/'.skelly-build'/pack).glob('*/*.ino'))]

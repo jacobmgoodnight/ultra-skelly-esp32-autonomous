@@ -321,6 +321,8 @@
       "const uint32_t REST_MAX_DURATION_MS = "+(config.restDurationMax*1000)+";");
     out=replaceOnce(out,"uint32_t nextEyeAt = 0;",
       "uint32_t nextEyeAt = 0;\nuint32_t nextRestAt = 0;\nuint32_t restUntil = 0;");
+    out=replaceOnce(out,"bool diagnosticResting(uint32_t now) { (void)now; return false; }",
+      "bool diagnosticResting(uint32_t now) { return REST_ENABLED && !reached(now, restUntil); }");
     out=replaceOnce(out,
       "  nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);",
       "  nextEyeAt = now + random(EYE_MIN_INTERVAL_MS, EYE_MAX_INTERVAL_MS + 1);\n"+
@@ -487,6 +489,7 @@
   let previewSeed=0x582A;
   function render() {
     const c=readConfig(),errors=validate(c);
+    byId('jawSetupStatus').textContent=errors.length&&c.jawEnabled?'Correct the highlighted settings before checking your clip estimates.':window.SkellyExperience.jawSetupFeedback(c).join(' ');
     const seconds=Number(byId('previewWindow').value);
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
     byId('timelineTitle').textContent=seconds===300?'Five-minute timing preview':'Timing preview · '+Number((seconds/60).toFixed(2))+' min';

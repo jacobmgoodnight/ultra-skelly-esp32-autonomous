@@ -8,6 +8,16 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Isolated status experiment only. Normal/generated/universal builds stay OFF.
+#ifndef SKELLY_WIRELESS_STATUS
+#define SKELLY_WIRELESS_STATUS 0
+#endif
+#if SKELLY_WIRELESS_STATUS
+#include <BLEServer.h>
+#endif
+const uint32_t FIRMWARE_REVISION = 4; // usb-scheduler-v4
+const uint32_t FIRMWARE_BUILD = 2026102301UL;
+
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
 // ESP32 Dev Module, Arduino-ESP32 3.3.12
@@ -866,7 +876,7 @@ void recordBoot(esp_reset_reason_t reason) {
 // Format into a bounded buffer and write text once per event. No BLE payload is
 // ever sent to UART. millis() is uptime and wraps after about 49.7 days.
 void logEvent(const char *format, ...) {
-  char line[384];
+  char line[640];
   const int prefix = snprintf(line, sizeof(line), "[%10lu ms] ", (unsigned long)millis());
   if (prefix < 0 || (size_t)prefix >= sizeof(line)) return;
   va_list args;
@@ -877,12 +887,99 @@ void logEvent(const char *format, ...) {
 }
 void logLine(const char *message) { logEvent("%s\n", message); }
 
+bool reached(uint32_t now, uint32_t when);
+// Generator supplies the existing idle-break state; never changes scheduling.
+bool diagnosticResting(uint32_t now) { (void)now; return false; }
+// Numeric additions keep older Studio status parsers compatible.
+// 0 intervals, 1 disconnected, 2 playback estimate, 3 restoration/correction,
+// 4 motor cooldown, 5 idle break, 6 existing window, 7 jaw follow-up.
+uint8_t diagnosticWait(uint32_t now) {
+  if (!connected) return 1;
+  if (!reached(now, mouthPlayingUntil)) return 2;
+  if (lightApplyPending || lightRestorePending || mouthEndPending || jawEyeStartPending || jawEyeEndPending) return 3;
+  if (jawFollowupPending) return 7;
+  if (!reached(now, bodySafeAfter) || !reached(now, headSafeAfter) ||
+      !reached(now, armSafeAfter) || !reached(now, torsoSafeAfter)) return 4;
+  if (!routineWindowOpen()) return 6;
+  if (diagnosticResting(now)) return 5;
+  return 0;
+}
+
 void emitUsbStatus() {
-  logEvent("USB STATUS v2 runtime=%u connected=%u scene=%lu sequence=%lu crc=%lu pending=%u scans=%lu connects=%lu writes=%lu failures=%lu heap=%lu minHeap=%lu clock=%u window=%u\n",
+  const uint32_t now = millis();
+  logEvent("USB STATUS v2 runtime=%u connected=%u scene=%lu sequence=%lu crc=%lu pending=%u scans=%lu connects=%lu writes=%lu failures=%lu heap=%lu minHeap=%lu clock=%u window=%u firmware=%lu build=%lu wait=%u jawMs=%lu accepted=%u acceptedAge=%lu\n",
     unsigned(SKELLY_RUNTIME),unsigned(connected),(unsigned long)runtimeSceneIndex(),(unsigned long)runtimeSequence(),(unsigned long)runtimeProgramCRC(),unsigned(runtimePending()),
     (unsigned long)scanAttempts,(unsigned long)connectionAttempts,(unsigned long)writeAttempts,(unsigned long)writeFailures,
-    (unsigned long)ESP.getFreeHeap(),(unsigned long)ESP.getMinFreeHeap(),unsigned(clockValid),unsigned(routineWindowOpen()));
+    (unsigned long)ESP.getFreeHeap(),(unsigned long)ESP.getMinFreeHeap(),unsigned(clockValid),unsigned(routineWindowOpen()),
+    (unsigned long)FIRMWARE_REVISION,(unsigned long)FIRMWARE_BUILD,unsigned(diagnosticWait(now)),
+    (unsigned long)(reached(now,mouthPlayingUntil)?0:uint32_t(mouthPlayingUntil-now)),
+    unsigned(lastAcceptedTag!=0),(unsigned long)(lastAcceptedTag?uint32_t(now-lastAcceptedAt):0));
 }
+
+#if SKELLY_WIRELESS_STATUS
+// Read-only, public model status. No configuration, actuator writes or notifications.
+// Snapshot is copied under a lock; BLE callbacks never inspect live scheduler state.
+portMUX_TYPE wirelessStatusMux = portMUX_INITIALIZER_UNLOCKED;
+char wirelessStatusSnapshot[320] = "Experimental status starting";
+BLEServer *wirelessStatusServer = nullptr;
+uint32_t wirelessStatusAt = 0;
+bool wirelessAdvertisingPending = false;
+class WirelessStatusConnections : public BLEServerCallbacks {
+  void onDisconnect(BLEServer *) override {
+    portENTER_CRITICAL(&wirelessStatusMux);
+    wirelessAdvertisingPending=true;
+    portEXIT_CRITICAL(&wirelessStatusMux);
+  }
+};
+class WirelessStatusRead : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *characteristic) override {
+    char snapshot[sizeof(wirelessStatusSnapshot)];
+    portENTER_CRITICAL(&wirelessStatusMux);
+    memcpy(snapshot,wirelessStatusSnapshot,sizeof(snapshot));
+    portEXIT_CRITICAL(&wirelessStatusMux);
+    characteristic->setValue(snapshot);
+  }
+};
+void serviceWirelessStatus() {
+  const uint32_t now=millis();
+  bool restart=false;
+  portENTER_CRITICAL(&wirelessStatusMux);
+  restart=wirelessAdvertisingPending;
+  wirelessAdvertisingPending=false;
+  portEXIT_CRITICAL(&wirelessStatusMux);
+  if (restart && wirelessStatusServer && wirelessStatusServer->getConnectedCount()==0) {
+    BLEDevice::startAdvertising();
+  }
+  if (!reached(now,wirelessStatusAt)) return;
+  char snapshot[sizeof(wirelessStatusSnapshot)];
+  snprintf(snapshot,sizeof(snapshot),"Experimental status v1 firmware=%lu build=%lu uptime=%lu connected=%u scene=%lu sequence=%lu crc=%lu pending=%u wait=%u heap=%lu minHeap=%lu failures=%lu",
+    (unsigned long)FIRMWARE_REVISION,(unsigned long)FIRMWARE_BUILD,(unsigned long)now,unsigned(connected),
+    (unsigned long)runtimeSceneIndex(),(unsigned long)runtimeSequence(),(unsigned long)runtimeProgramCRC(),
+    unsigned(runtimePending()),unsigned(diagnosticWait(now)),(unsigned long)ESP.getFreeHeap(),
+    (unsigned long)ESP.getMinFreeHeap(),(unsigned long)writeFailures);
+  portENTER_CRITICAL(&wirelessStatusMux);
+  memcpy(wirelessStatusSnapshot,snapshot,sizeof(snapshot));
+  portEXIT_CRITICAL(&wirelessStatusMux);
+  wirelessStatusAt=now+5000;
+}
+void setupWirelessStatus() {
+  wirelessStatusServer=BLEDevice::createServer();
+  wirelessStatusServer->setCallbacks(new WirelessStatusConnections());
+  BLEService *service=wirelessStatusServer->createService("765a1000-c347-4e63-8b97-40d64ef88261");
+  BLECharacteristic *status=service->createCharacteristic("765a1001-c347-4e63-8b97-40d64ef88261",BLECharacteristic::PROPERTY_READ);
+  status->setAccessPermissions(ESP_GATT_PERM_READ); // Bluedroid otherwise defaults to read/write permissions.
+  status->setCallbacks(new WirelessStatusRead());
+  service->start();
+  BLEDevice::getAdvertising()->addServiceUUID(service->getUUID());
+  BLEDevice::getAdvertising()->setScanResponse(true);
+  wirelessStatusAt=millis(); // First snapshot also works near millis wrap.
+  serviceWirelessStatus();
+  BLEDevice::startAdvertising();
+  logLine("EXPERIMENT: public read-only phone status enabled; physical reliability UNTESTED.");
+}
+#else
+void serviceWirelessStatus() {}
+#endif
 
 void acceptUsbCommand(const char *line) {
   if (runtimeCommand(line)) return;
@@ -1796,13 +1893,18 @@ void setup() {
   delay(1000);
   runtimeBoot();
   recordBoot(esp_reset_reason());
-  logEvent("BOOT usb-scheduler-v3: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+  logEvent("BOOT usb-scheduler-v4: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
            DIAGNOSTICS_ENABLED ? "ON" : "OFF");
   logLine("\n=== ULTRA SKELLY: AUTONOMOUS HEAD/JAW/EYES + OPTIONAL TORSO/ARM ===");
   randomSeed(micros());
+#if SKELLY_WIRELESS_STATUS
+  BLEDevice::init("Skelly Status Experiment");
+  setupWirelessStatus();
+#else
   BLEDevice::init("");
+#endif
   scanner = BLEDevice::getScan();
   scanner->setAdvertisedDeviceCallbacks(new SkellyScanCallbacks());
   scanner->setActiveScan(true);
@@ -1816,6 +1918,7 @@ void setup() {
 void loop() {
   serviceUsbClock();
   serviceRuntime();
+  serviceWirelessStatus();
   if (PLAYBACK_DIAGNOSTICS) drainPlaybackObservation();
   uint32_t now = millis();
   if (connected && (client == nullptr || !client->isConnected())) {
