@@ -155,17 +155,20 @@ Existing saved Studio profiles retain their explicit mouth setting when loaded.
 
 Studio generates **static RGB and brightness** for torso and head, plus optional
 selected-palette rotation at your chosen interval. Each channel can also select
-**Strobe or Pulsing with speed**; these new options are experimental and physically
-untested. Static and rotation OFF remain the defaults.
+**Strobe or Pulsing with speed**. The owner confirms effects and palette rotation
+work; exact speed/channel coverage and advanced integration remain unconfirmed.
+Static and rotation OFF remain the personality defaults.
 The upstream controller lists [Static, Strobe and Pulsing](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
 for Ultra Skelly. Effects use direct commands without audio preparation.
 Use the [new Studio and lighting checklist](docs/studio-lighting-checklist.md)
 before combining these options with motors or mouth playback.
 
 [USB tools](studio/usb.html) capture original serial bytes and set the optional
-clock. A fixed head-only installer uses a versioned, hash-checked build package;
-it needs internet to load its pinned installer library. Custom settings still
-need Arduino compilation. See [USB setup and evidence limits](docs/usb-tools.md).
+clock. Its installer accepts versioned, hash-checked head-only or universal build
+packages and needs internet to load its pinned installer library. Source downloads
+require Arduino compilation. Once universal firmware is installed, use Studio to
+read and save custom routines or scenes over USB without recompiling. See
+[USB setup](docs/usb-tools.md) and [settings/scenes](docs/usb-settings-scenes.md).
 
 ## Conservative movement scheduling
 
@@ -195,9 +198,9 @@ isolated jaw/lighting setup on one prop, not mode 2 or integration with motors.
 The reliability changes honor BLE write failures, add timestamped text and boot/reset
 information, and complete all six restore writes before the next MP3. Verbose
 mode adds heap, connection and write/queue diagnostics. Playback end is still
-**estimated at 21 seconds**, with a 500 ms grace before queuing restoration; there
-is no playback-ended subscription. Longer MP3s require a conservative
-`MOUTH_CLIP_MS` adjustment in the downloaded sketch.
+**estimated**, defaulting to 21 seconds, with a 500 ms grace before queuing
+restoration. Studio accepts conservative per-file estimates for longer clips;
+experimental playback observations do not control motor or restoration timing.
 
 **Test reference:** [isolated jaw/RGB settings and pass/fail criteria](docs/testing.md).
 Mode 1 color recovery is now visually verified on the test prop. Serial corruption
@@ -208,12 +211,14 @@ failures during four clips. See the October 21 entry in the experiment log.
 
 Studio runs entirely in the browser and can also be opened as `studio/index.html`
 from a downloaded ZIP. It supports motor intervals, compound masks, jaw file pools,
-jaw-first follow-ups, eye choices, optional idle breaks, static RGB and sketch
-copy/download. Eye thumbnails and generation use local assets. The
-five-minute timeline is illustrative, not a full scheduler simulation.
+jaw-first follow-ups, fixed/random eyes, optional idle breaks, custom lighting
+palettes/effects, scenes and USB settings read/save. Eye thumbnails and sketch
+generation use local assets. Editor and saved-scene timelines illustrate requests;
+they do not simulate physical movement.
 
 Studio has no application telemetry, login or server-side settings storage.
-Settings remain in the page until you save a JSON profile or sketch. The hosted
+Saved scenes and valid recovery drafts stay in this browser; export a JSON copy
+for backup or transfer. A controller changes only after an explicit save/upload. The hosted
 page and bundled eye previews are served by GitHub Pages, which receives normal
 web requests. An extracted local Studio folder works offline. Firmware uses
 BLE locally and does not configure Wi-Fi or send data to a backend.
@@ -221,7 +226,7 @@ BLE locally and does not configure Wi-Fi or send data to a backend.
 The canonical `.ino` generates `studio/template.js` via
 `node scripts/sync-template.cjs`; CI fails if they differ. Checks include generator
 and gallery tests, actual firmware C++ with mocked clock/BLE, CRC vectors, canonical
-and representative generated ESP32 compilation, and the isolated compound sketch.
+and the full pinned ESP32 3.3.12 generated/diagnostic compile matrix.
 Tests do not replace physical observation.
 
 - [Architecture and known limitations](docs/architecture.md)
