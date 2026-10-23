@@ -1,29 +1,32 @@
 # USB settings, scenes and connected diagnostics
 
-This is an opt-in software implementation. Your current Studio refresh checklist
-remains in progress; no result there is changed or marked complete by this work.
-No USB flashing, saved-setting recovery, autonomous scene transition or physical
-lighting result is claimed. Continue testing the existing sketch until you are
-ready to try the separate universal build.
+October 23 owner confirmation: browser USB identification, reading saved settings,
+saving changes and observing the changed routine on Skelly worked. This supersedes
+the earlier identification failure. Power-cycle retention, interrupted-transfer
+recovery and ordered/random scene transitions remain separately unconfirmed.
+The USB workflow refresh changes browser controls only; existing universal firmware
+and saved profiles/scenes stay compatible. No additional firmware upload is needed
+for this interface update.
 
 ## Install once, then change settings
 
 Use the **universal** preview package on the USB tools page, or download universal
-firmware from Studio's **Advanced & testing** panel and compile/upload once using
+firmware from Studio's **Send to your ESP32 → First-time setup** and compile/upload once using
 original ESP32-WROOM, ESP32 Dev Module and Arduino-ESP32 **3.3.12**. Its factory
 routine is Subtle: head 60–120 seconds, all optional features OFF. The old fixed
 head-only installer remains separate at 120–240 seconds; it does not load USB
 settings. Neither build requires Wi-Fi, a phone, an account or a backend at runtime.
 
 In desktop Chrome/Edge, close Arduino Serial Monitor and other port users. Connect
-USB in Studio's Advanced panel, read the controller's capability/status, then
-choose **Save this routine** or **Save scenes** after checking the replacement
+with **Connect ESP32** in **Send to your ESP32**, read saved settings, then
+choose **Save routine** or **Save scenes** after checking the replacement
 notice. The browser waits for chunk acknowledgments, an applied acknowledgment
 and a matching read-back checksum. That confirms configuration, not physical motion.
 While actions finish, the status reports pending settings. Disconnecting after a
 commit may leave it pending/applied; reconnect and read settings before retrying.
 
-Settings survive restart and a firmware upload that preserves NVS. Erasing the
+The storage design retains settings through restart and a firmware upload that
+preserves NVS; this still needs the separate physical power-cycle check. Erasing the
 ESP32's data deletes them. Existing saved settings take priority over sketch
 defaults; **Restore firmware defaults** replaces them explicitly after current
 actions finish. Clock **time** is never saved: enabled clock windows still wait
@@ -65,12 +68,12 @@ not an endurance or hardware pass.
 
 ### First setup and identification recovery
 
-Download **universal firmware** in Studio → Advanced & testing. Open the timestamped
+Download **universal firmware** in Studio → Send to your ESP32 → First-time setup. Open the timestamped
 `.ino` in Arduino IDE, choose **ESP32 Dev Module** and **Arduino-ESP32 3.3.12**,
 then compile/upload. Close Serial Monitor and all other serial tools/tabs. In
-desktop Chrome/Edge choose **Connect ESP32 USB**, then the board's USB adapter
+desktop Chrome/Edge choose **Connect ESP32**, then the board's USB adapter
 (for example **CP2102 USB to UART Bridge Controller (COM3)**; the number varies).
-Wait for **Ready · universal firmware identified** before read/save.
+Wait for **Ready** under **Computer → ESP32** before read/save.
 
 Opening a serial port can restart this board. The browser now retries only the
 read-only `SKELLY HELLO` request every three seconds, for at most 45 seconds;
@@ -90,12 +93,39 @@ session/adapter interaction; it does not establish an NVS or BLE fault.
 
 October 22 owner log: NVS opens (`storage=1`, sequence 0), the universal build boots
 and connects to Skelly at 7,980 ms after one failed connection. No HELLO/CAPS reply
-was supplied. The reported browser timeout is **Failed**; real read/save, NVS
-recovery and scene transitions remain **Untested** after the software correction.
+was supplied then, and browser identification failed. On October 23, manual
+HELLO/CAPS and STATUS replies were supplied, followed by confirmation that browser
+connection, reading, saving and the changed physical routine worked. NVS recovery
+and scene transitions remain **Untested** on hardware.
+
+### Everyday controls and live status
+
+The open **Send to your ESP32** panel sits below Scene builder and above Advanced.
+Connect, read and save here; scene saving becomes available after at least one
+scene is saved in the builder. **First-time setup** is collapsed unless firmware
+identification reports that universal settings support is missing. It explains
+installing once, closing Serial Monitor and subsequently saving through Studio.
+The right-column finishing link scrolls here without opening a USB port.
+
+**Computer → ESP32** describes USB; **ESP32 → Skelly** describes Bluetooth.
+Bluetooth can be disconnected while USB is Ready and settings remain available.
+The last-received timestamp belongs to a controller snapshot. Idle status requests
+run approximately every five seconds with an eight-second timeout. A timeout marks
+the snapshot older, preserving its last reported Bluetooth state rather than
+claiming a new disconnection. These are reported controller states, not actuator
+feedback.
+
+Polling pauses during all manual operations and while the page is hidden. A manual
+operation cancels and drains the background request before using the same serial
+writer; settings transfers and read-back verification stay serialized. Background
+replies never replace progress/error text. USB disconnect clears current details
+and returns Skelly to Unknown. Revision, heap, failures, clock details, log download
+and restore-defaults live in collapsed **USB diagnostics** under Advanced, sharing
+the same port. Clock is needed only for enabled clock windows.
 
 ### Scene durations and order
 
-Scene builder sits above Advanced & testing. Durations display **minutes**, default
+Scene builder sits above Send to your ESP32. Durations display **minutes**, default
 **10**, range 1–60 (fractional minutes supported); JSON/USB retain integer seconds.
 Automatic switching OFF runs only the first scene. **In order** loops through the
 list. **Random** starts with the first scene, then chooses a different scene each
@@ -111,9 +141,11 @@ capability before sending random order; upload the updated universal build first
 
 ### Focused follow-up after the identification correction
 
-1. Close other serial clients; connect Studio. Pass: status becomes Ready and
-   **Read saved settings** returns a checked configuration. If not, collect the
-   two manual replies above and **Download USB log**. Do not keep reflashing blindly.
+1. Connection/read/save and observing changed behavior are already owner-confirmed.
+   For the refreshed UI, check separate USB/Bluetooth indicators and status age,
+   including Skelly OFF, an idle auto-refresh, a hidden tab and disconnect cleanup.
+   If identification regresses, collect the two manual replies above and
+   **Download USB log** rather than repeatedly reflashing.
 2. Select one eye with all motors/mouth OFF. Observe it initialize and remain the
    same for two minutes; reconnect and confirm it returns. Then optionally choose
    two eyes in random mode and observe both. Existing random-eye passes need no repeat.
@@ -126,7 +158,7 @@ capability before sending random order; upload the updated universal build first
    scene**, separately for head/torso; a palette stores only its two colors.
 
 Do not repeat the already-confirmed effects/rotation tests solely for this UI
-refresh. New fixed-eye, color-link, USB recovery and random-scene behavior remains
+refresh. New fixed-eye, color-link, power-cycle recovery and random-scene behavior remains
 software-only until observed on hardware.
 
 `SKELLY HELLO` retains `USB READY v1 CLOCK` and adds `USB CAPS v2 settings=0|1`.

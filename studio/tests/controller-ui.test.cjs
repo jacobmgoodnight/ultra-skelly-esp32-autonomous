@@ -1,0 +1,54 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const stateApi=require('../controller-state.js'),runtime=require('../runtime.js');
+const root=path.resolve(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const source=fs.readFileSync(path.join(root,'controller.js'),'utf8');
+const generatorContext=vm.createContext({window:{}});for(const file of ['template.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),generatorContext);
+const generator=generatorContext.window.SkellyStudioGenerator;
+class Element{
+ constructor(){Object.assign(this,{textContent:'',dataset:{},disabled:false,hidden:false,checked:false,open:false,children:[]});}
+ replaceChildren(...nodes){this.children=nodes;}append(...nodes){this.children.push(...nodes);}
+}
+function page({supported=true,settings=true,statusFails=false,badReadback=false}={}){
+ const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()])),events={},windowEvents={};
+ let sceneLibrary=[],connects=0,config={...generator.DEFAULTS},created=0;
+ class FakeSession{
+  constructor(){created++;this.port=null;this.capture={size:40,text:'Mock UART log'};this.messageSerial=0;this.operations=[];this.words=runtime.encode([{name:'Saved',seconds:600,config}],false,generator.validate);}
+  async connect(){connects++;this.port={};this.onChange();}
+  async disconnect(){this.port=null;this.onChange();}
+  async capabilities(){return {text:'USB CAPS v2 settings='+Number(settings)+' scenes=4 randomScenes=1'};}
+  async status(){if(statusFails)throw Error('timeout');return {text:'USB STATUS v2 runtime=1 connected=0 scene=0 sequence=2 crc=42 pending=0 failures=0 heap=133324 clock=0 window=1'};}
+  async readSettings(){this.operations.push('read');return {words:this.words,sequence:2,crc:runtime.crc(this.words)+(badReadback?1:0)};}
+  async writeSettings(words,crc,progress){this.operations.push('write');assert.equal(crc,runtime.crc(words));progress(20);progress('waiting');this.words=words;}
+ }
+ let session;
+ const document={hidden:false,getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener:(name,fn)=>events[name]=fn};
+ const window={SkellySerial:{Session:class extends FakeSession{constructor(){super();session=this;}}},SkellyRuntime:runtime,SkellyControllerState:stateApi,
+  SkellyScenes:{snapshot:()=>({scenes:sceneLibrary}),program:()=>({scenes:sceneLibrary,rotate:false}),loadProgram:program=>{sceneLibrary=program.scenes;events['skelly-scenes-changed']?.();}},
+  SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>config=c,writeLibrary:()=>{},downloadText:()=>{}},addEventListener:(name,fn)=>windowEvents[name]=fn};
+ const context=vm.createContext({window,document,navigator:supported?{serial:{}}:{}});vm.runInContext(source,context);events.DOMContentLoaded();
+ return {nodes,document,events,windowEvents,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
+}
+test('one explicit USB session serves the separate everyday panel and diagnostics; USB ready is independent of Bluetooth',async()=>{
+ const p=page();try{
+  assert.equal(p.connects,0);assert.equal(p.created,1);assert.equal(p.nodes.controllerWrite.disabled,true);
+  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerUsb.textContent,'Ready');assert.equal(p.nodes.controllerSkelly.textContent,'Not connected yet');assert.equal(p.nodes.controllerRead.disabled,false);assert.equal(p.nodes.controllerScenes.disabled,true);
+  await p.nodes.controllerRead.onclick();assert.equal(p.config.headMin,generator.DEFAULTS.headMin);assert.equal(p.nodes.controllerScenes.disabled,false);assert.match(p.nodes.controllerMessage.textContent,/Read 1/);
+  assert.ok(p.nodes.controllerDetails.children.length);await p.nodes.controllerDisconnect.onclick();assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');assert.equal(p.nodes.controllerDetails.children.length,0);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.created,1);
+ }finally{await p.close();}
+});
+test('incompatible firmware reveals first-time setup without sending settings',async()=>{
+ const p=page({settings:false});try{await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,true);assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.session.operations.length,0);}finally{await p.close();}
+});
+test('unsupported browsers retain editing/download guidance and do not open a port',()=>{
+ const p=page({supported:false});assert.equal(p.nodes.controllerConnect.disabled,true);assert.match(p.nodes.controllerMessage.textContent,/Chrome or Edge/);assert.equal(p.connects,0);p.windowEvents.pagehide();
+});
+test('replacement confirmation gates actual saves and successful read-back is shown even if status is unavailable',async()=>{
+ const p=page({statusFails:true});try{
+  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerUsb.textContent,'Ready');assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');
+  await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/Confirm replacing/);assert.equal(p.session.operations.length,0);
+  p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.deepEqual(p.session.operations,['write','read']);assert.match(p.nodes.controllerMessage.textContent,/read-back verified/);assert.equal(p.nodes.controllerMessage.dataset.state,'ready');
+ }finally{await p.close();}
+});
+test('checksum mismatch is never labeled saved and never auto-retries a mutation',async()=>{
+ const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/did not match/);assert.equal(p.nodes.controllerMessage.dataset.state,'error');assert.deepEqual(p.session.operations,['write','read']);}finally{await p.close();}
+});

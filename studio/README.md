@@ -11,7 +11,9 @@ copy a self-contained `.ino`. Flash with Arduino IDE or CLI, **ESP32 Dev Module*
 **3.3.12**. The optional [universal firmware](../docs/usb-settings-scenes.md) can
 subsequently read/save settings over USB without recompiling. It also supports up
 to four saved scenes and optional rotation. The separate USB page accepts reviewed
-head-only or universal packages. New USB/scene behavior is physically Untested.
+head-only or universal packages. The owner confirms browser USB connection,
+read/save and observing changed behavior; power-cycle recovery and scene transitions
+remain physically Untested.
 The five-minute preview
 is illustrative and does not model all arbitration. Save/load settings keeps your
 configuration and named jaw clip mappings in a portable JSON file.
@@ -63,7 +65,7 @@ expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
 Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
 brightness apply to all palettes in a scene; palettes hold torso/head colors.
 Colors can be linked for the current look or individually per palette.
-Scene builder sits above Advanced, uses minutes (10 by default), and supports
+Scene builder sits above Send to your ESP32 and Advanced, uses minutes (10 by default), and supports
 ordered or random switching after full old-action cooldowns. Sketch downloads
 include a local date/time suffix. The clip library maps readable
 names to the user's actual uploaded MP3 serials. Settings and clip mappings can
@@ -73,4 +75,9 @@ firmware defaults remain unchanged.
 See [Studio next steps](../docs/studio-roadmap.md) for pending hardware checks,
 browser USB uploading, and ideas for future improvements. Studio currently
 generates `.ino` source; it does not compile firmware. USB tools provide the separate
-package installer, while Studio's Advanced section owns universal settings/status.
+package installer. **Send to your ESP32** groups connect/read/save with separate
+USB and Skelly Bluetooth indicators. **First-time setup** folds away the one-time
+universal installation. Advanced contains collapsed diagnostics using the same port.
+Status refreshes every five seconds while identified and idle; manual operations
+cancel the background request, and hidden pages pause polling. An eight-second
+timeout marks the last snapshot stale without declaring Bluetooth disconnected.

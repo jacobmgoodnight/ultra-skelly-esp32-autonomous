@@ -31,6 +31,17 @@ Saved local scene libraries are separate from controller storage. Status counter
 describe transport/model state, never physical completion. See the
 [protocol and attended criteria](usb-settings-scenes.md) for limits and recovery.
 
+Studio's open Send to your ESP32 panel and collapsed Advanced USB diagnostics share
+one `SkellySerial.Session`. `controller-state.js` manages status snapshots separately
+from operation progress. Identified, idle, visible sessions poll every five seconds;
+each background request has an eight-second timeout and AbortSignal cleanup.
+Manual operations cancel/drain polling before using the writer, and settings
+transactions remain serialized. Hidden/page-suspended sessions stop polling.
+Timeout preserves an explicitly stale last-reported Bluetooth state; disconnect
+clears the current snapshot. Generation/port checks discard late replies after
+disconnect. No polling callback changes save progress or error text. This browser
+workflow changes neither USB commands nor firmware/program formats.
+
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye
@@ -206,8 +217,9 @@ evidence. See [audit follow-up](audit-follow-up.md) for attended regression crit
 ## Optional USB clock, fairness and observations
 
 Boot marker `usb-scheduler-v3` identifies the next software revision. USB accepts
-only bounded HELLO/TIME lines; no serial command starts a motor or changes a
-configuration. Clock windows default OFF. Enabled windows fail closed after every
+bounded HELLO/TIME lines in ordinary generated sketches; the optional universal
+build additionally accepts validated settings transactions described below.
+Clock windows default OFF. Enabled windows fail closed after every
 boot until USB local time is accepted, use Sunday-based weekday bits and a daily
 start-inclusive/end-exclusive interval, including overnight windows owned by their
 start day. The cooperative loop accumulates unsigned millis deltas in 64 bits.

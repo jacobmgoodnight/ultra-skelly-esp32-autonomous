@@ -1,6 +1,6 @@
 # Hardware verification matrix
 
-Latest evidence: engineering handoff and October 20–21, 2026 reports on one Ultra
+Latest evidence: engineering handoff and October 20–23, 2026 reports on one Ultra
 Skelly v2 with an original ESP32-WROOM board. **Verified** means a reported physical
 observation, **Failed** an observed unsuccessful physical test, **Software-only**
 automated checks or serial dispatch evidence, **Untested** no qualifying observation.
@@ -9,8 +9,9 @@ the current status. A transport success alone does not verify an actuator.
 
 | Behavior | Status | Evidence / limit |
 | --- | --- | --- |
-| Universal USB settings, persistent recovery and scene rotation | USB identification Failed (owner report); storage/rotation Untested | October 22: uploaded universal firmware boots, opens NVS (`storage=1`, sequence 0), discovers Skelly and connects on its second attempt; Studio remains identifying and times out. No successful browser settings read/save reported. Bounded HELLO retries are a software-only correction for a possible startup race, not a verified physical fix. Ordered/random scene changes and recovery retain native coverage. [Follow-up](usb-settings-scenes.md). |
-| Connected USB diagnostics | Software-only / physically Untested | Bounded status/protocol tests; counters and readback acknowledge firmware state, not movement or lighting response. |
+| Universal browser USB connection, settings read/save | Verified (owner report) | October 23: owner confirms browser identification, reading saved settings, saving changes and observing the changed routine on the prop. This supersedes the October 22 identification failure; its exact cause remains unconfirmed. No timing log or exact saved profile supplied. |
+| Saved-settings power-cycle retention/recovery and scene transitions | Untested on hardware / Software-only coverage | The connection/read/save report does not establish retention after power loss, interrupted-transfer recovery, or ordered/random scene transitions. Native storage and scene coverage remains separate. [Follow-up](usb-settings-scenes.md). |
+| Connected USB diagnostics and automatic status refresh | Software-only; manual status received | Owner supplied HELLO/CAPS and STATUS replies. New five-second polling, cancellation, stale snapshots and shared-session UI have mocked browser coverage; counters acknowledge controller state, not movement or lighting response. |
 | BLE name discovery, AE00/AE01 WRITE_NR | Verified | Successful real commands; scan/connection failures also occur |
 | Head `0x01` | Verified | ~25 s; protected standalone operation retained |
 | Arm `0x02` | Verified | Two moves totaling ~22 s |
@@ -54,5 +55,6 @@ checks except lighting and USB. This records the reported pass for the previous
 refresh; no logs, per-row timings or independent observations accompanied it.
 It does not verify the subsequent faster retry policy, new Haunted intervals or
 interleaved combined scheduler. The later lighting/effect report above supersedes
-the earlier pending status; browser USB identification currently fails.
+the earlier pending status. The October 23 browser connection/read/save and
+observed changed routine report also supersedes the earlier USB failure.
 

@@ -24,6 +24,7 @@
         const load=document.createElement('button');load.type='button';load.textContent='Load';load.setAttribute('aria-label','Load scene '+s.name);load.onclick=()=>{g.writeLibrary(s.profile.clips);g.writeConfig(s.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');el('sceneName').value=s.name;el('sceneMinutes').value=Number((s.seconds/60).toFixed(4));message('Loaded '+s.name+'. Changes stay in Studio until you save to the controller.');};
         const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.setAttribute('aria-label','Remove scene '+s.name);remove.onclick=()=>{scenes.splice(index,1);const saved=persist();render();if(saved)message('Scene removed from this browser.');};row.append(label,load,remove);list.append(row);}
       el('sceneDownload').disabled=!scenes.length;el('sceneExport').disabled=!scenes.length;
+      document.dispatchEvent(new CustomEvent('skelly-scenes-changed'));
     }
     function importValue(v){const parsed=validateLibrary(v,g);scenes=parsed.scenes;rotate=parsed.rotate;random=parsed.random;render();}
     api.loadProgram=program=>{importValue({app:'SkellyScenes',version:1,rotate:program.rotate,random:program.random??false,scenes:program.scenes.map(s=>({name:s.name,seconds:s.seconds,profile:JSON.parse(g.createProfile(s.config,{}))}))});persist();};
