@@ -40,7 +40,8 @@
     el('controllerIdentify').onclick=()=>state.run(()=>state.identify());
     el('controllerDisconnect').onclick=()=>state.run(async()=>{await session.disconnect();state.say('USB disconnected. Your saved routine runs without the computer.');});
     el('controllerStatus').onclick=()=>state.run(async()=>{
-      const ok=await state.refreshStatus();state.say(ok?'Controller status refreshed.':'USB is connected, but status is unavailable. The last snapshot may be out of date.',ok?'info':'error');
+      const ok=await state.refreshStatus();if(!session.port)return;
+      state.say(ok?'Controller status refreshed.':'USB is connected, but status is unavailable. The last snapshot may be out of date.',ok?'info':'error');
     });
     el('controllerLog').onclick=()=>g.downloadText(session.capture.text,'Skelly-USB-log.txt','text/plain');
     async function write(program){

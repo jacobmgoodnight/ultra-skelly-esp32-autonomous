@@ -39,6 +39,16 @@ test('one explicit USB session serves the separate everyday panel and diagnostic
 test('incompatible firmware reveals first-time setup without sending settings',async()=>{
  const p=page({settings:false});try{await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,true);assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.session.operations.length,0);}finally{await p.close();}
 });
+
+test('unplug during a manual status refresh keeps the disconnected message and clears current details',async()=>{
+ const p=page();try{
+  await p.nodes.controllerConnect.onclick();
+  p.session.status=async()=>{p.session.port=null;p.session.onChange();throw Error('USB disconnected');};
+  await p.nodes.controllerStatus.onclick();
+  assert.equal(p.nodes.controllerUsb.textContent,'Not connected');assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');
+  assert.match(p.nodes.controllerMessage.textContent,/USB disconnected/);assert.equal(p.nodes.controllerDetails.children.length,0);
+ }finally{await p.close();}
+});
 test('unsupported browsers retain editing/download guidance and do not open a port',()=>{
  const p=page({supported:false});assert.equal(p.nodes.controllerConnect.disabled,true);assert.match(p.nodes.controllerMessage.textContent,/Chrome or Edge/);assert.equal(p.connects,0);p.windowEvents.pagehide();
 });
