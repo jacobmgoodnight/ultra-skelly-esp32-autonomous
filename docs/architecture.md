@@ -122,7 +122,8 @@ October 22 adds opt-in palette rotation and per-channel light effects. Static
 mode preserves the original six packet bytes and ordering. Strobe/pulsing insert
 one F6 speed write per dynamic channel after its F2 mode write: seven or eight
 spaced writes total. Speed follows upstream's inverted 0–254 UI mapping.
-These effects have software coverage, but no physical observation yet.
+The owner subsequently confirmed effects and palette rotation work (October 22).
+The report did not enumerate channels, speeds or jaw/clock integration.
 
 Studio offers four editable palette slots, each with a name and torso/head RGB.
 Names stay in the browser/profile; only validated RGB bytes enter the firmware
@@ -144,6 +145,18 @@ and its legend to enabled features; longer explanations are collapsed by default
 
 Eyes use AAF9, an optional independent random schedule and delayed start/end
 corrections around the modeled MP3. Corrections are separate from motor commands.
+Studio defaults to one selected eye with eyes still OFF. A single-eye build sends
+its expression once after connection, without periodic repeats; reconnect and
+opted-in jaw corrections still restore it. Multiple selections use the existing
+random schedule. The canonical reference retains its previous random-eye default.
+
+Scene builder displays minutes (10 by default), retaining integer seconds in
+compatible exports/wire records. Order word 0 runs the first scene only, 1 loops
+in order, and 2 chooses uniformly from other scenes at each idle boundary. Existing
+0/1 records retain their meaning and layout. Older firmware rejects order 2; new
+firmware advertises `randomScenes=1`, which Studio requires before sending it.
+USB identification retries only HELLO, within 45 seconds, to recover an initial
+request lost to a USB-triggered boot. Settings writes are never retried implicitly.
 
 Static lights use six spaced requests: torso F2/F3/F4, then head F2/F3/F4. F2 lengths are
 11/12 bytes for channel 0/1; F3 is 11 bytes; F4 is 13 bytes. CRC covers every byte

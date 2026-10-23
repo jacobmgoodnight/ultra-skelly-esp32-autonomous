@@ -13,6 +13,18 @@ test('runtime rejects failed diagnostics, mismatched Skelly names and invalid sc
  assert.throws(()=>r.encode([{config:config()},{config:config({bleName:'Other'})}],false,g.validate),/same Skelly/);
  assert.throws(()=>r.encode(Array(5).fill({config:config()}),true,g.validate),/one to four/);
 });
+test('random scenes extend the order enum without changing old settings or record size',()=>{
+ const scenes=[{name:'One',config:config()},{name:'Two',config:config()}];
+ const ordered=r.encode(scenes,true,g.validate),random=r.encode(scenes,true,g.validate,true);
+ assert.equal(ordered[2],1);assert.equal(random[2],2);assert.equal(random.length,ordered.length);
+ assert.equal(r.decode(random,g.DEFAULTS).random,true);assert.equal(r.decode(ordered,g.DEFAULTS).random,false);
+ assert.equal(r.decode(random,g.DEFAULTS).scenes[0].seconds,600);
+ const invalid=[...random];invalid[2]=3;assert.throws(()=>r.decode(invalid,g.DEFAULTS),/Unsupported/);
+});
+test('minute scene entry retains seconds in compatible exports',()=>{
+ const {minutesToSeconds}=require('../scenes.js');assert.equal(minutesToSeconds(10),600);assert.equal(minutesToSeconds(1.5),90);
+ for(const value of [0,61,NaN,Infinity])assert.throws(()=>minutesToSeconds(value),/1–60 minutes/);
+});
 test('universal sketch enables runtime hooks without changing ordinary generated defaults',()=>{
  const sketch=g.generateRuntimeSketch([{name:'Haunted',seconds:300,config:config(g.PRESETS.haunted)}]);assert.ok(sketch.startsWith('#define SKELLY_RUNTIME 1'));assert.match(sketch,/class RuntimeEngine/);assert.match(sketch,/Preferences/);assert.match(sketch,/USB CFG APPLIED/);assert.match(sketch,/REST_ENABLED = true/);
  assert.ok(!g.generateSketch(config()).startsWith('#define SKELLY_RUNTIME 1'));

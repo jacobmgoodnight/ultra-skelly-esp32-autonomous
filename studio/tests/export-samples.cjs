@@ -11,6 +11,7 @@ for(const file of ["studio/template.js","studio/runtime-schema.js","studio/runti
 const generator = ctx.window.SkellyStudioGenerator;
 const base = {...generator.DEFAULTS, jawEnabled:true,headMin:32,headMax:60,armEnabled:false,armMin:360,armMax:720, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
+  FixedEye:{eyesEnabled:true,eyeChoices:[7]},
   HauntedInterleaved:{...generator.PRESETS.haunted},
   CustomPalettesAndRetry:{jawEnabled:false,lightsEnabled:true,lightRotation:true,palette0Name:"Custom",palette0Torso:"#123456",palette0Head:"#abcdef",scanRetrySec:10,startupRetrySec:5,startupWindowSec:90},
   RotatingStaticLights:{headEnabled:false,jawEnabled:false,lightsEnabled:true,lightRotation:true,lightInterval:15,lightPalettes:[0,2]},
@@ -60,8 +61,9 @@ for(const [name,options] of Object.entries(cases)) {
   fs.writeFileSync(path.join(dir,name+".ino"),code,"utf8");
   console.log("Generated "+name+" ("+code.length+" characters)");
 }
-for(const [name,scenes,rotate] of [
+for(const [name,scenes,rotate,random] of [
+  ['RuntimeRandomScenes',[{name:'One',seconds:600,config:{...generator.DEFAULTS}},{name:'Two',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Three',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted}}],true,true],
   ['RuntimeSingle',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}}],false],
   ['RuntimeScenes',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Haunted',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted,eyesEnabled:true,lightsEnabled:true}}],true],
   ['RuntimeJawProtected',[{name:'Limited mouth',seconds:600,config:{...generator.DEFAULTS,jawEnabled:true,jawFile:13,jawExtras:'12,14',jawDurations:'12:30,14:45',fairBodyTurns:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true,clockEnabled:true}}],false]
-]) {const dir=path.join(buildRoot,name);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.ino'),generator.generateRuntimeSketch(scenes,rotate));console.log('Generated '+name);}
+]) {const dir=path.join(buildRoot,name);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.ino'),generator.generateRuntimeSketch(scenes,rotate,random));console.log('Generated '+name);}

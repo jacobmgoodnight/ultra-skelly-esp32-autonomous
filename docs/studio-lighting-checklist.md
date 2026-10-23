@@ -1,14 +1,19 @@
 # Studio refresh: checks to confirm
 
-October 22, 2026. New rotation and effect behavior is **Software-only / physically
-Untested**. Start with mouth OFF. Use the original ESP32-WROOM, Arduino-ESP32
+October 22, 2026. The owner now confirms **lighting effects and rotating palettes
+work**. The rows below remain references for untested integration, not a request
+to repeat completed observations. USB identification failed; use the focused
+[USB recovery, fixed-eye and scene checks](usb-settings-scenes.md#focused-follow-up-after-the-identification-correction).
+Start with mouth OFF. Use the original ESP32-WROOM, Arduino-ESP32
 3.3.12 and a 6.5-foot Ultra Skelly v2. Keep a copy of the working sketch.
 Unless a row explicitly uses them, keep clock windows, idle breaks, combined
 movements and jaw-first responses OFF so they do not obscure the observation.
 
 ## October 22 follow-up status and new spot checks
 
-The owner reports the previous refresh checks complete except lighting and USB.
+The owner first reported refresh checks complete except lighting and USB, then
+confirmed effects and palette rotation work. Browser USB opens the CP2102 port
+but fails identification; settings saves/reads remain untested.
 Separate motor-command overlap failed (new commands stopped existing motion);
 random combined actions worked. Do not repeat completed checks unnecessarily.
 The new intervals, startup retry policy and interleaved scheduler below are
@@ -35,8 +40,9 @@ Software-only until checked on the prop.
   colors during the still-pending isolated lighting tests below.
 - Eye thumbnails and enlarged previews now use bundled local assets. Reopen the
   saved Studio folder without internet and confirm previews plus generation.
-- Browser USB upload/capture remains pending: follow [USB tools](usb-tools.md).
-  It still installs a separate fixed head-only build, not custom Studio settings.
+- Browser USB setup now explains the one-time universal Arduino upload, adapter
+  selection, closed-monitor requirement and identification retries. Use
+  [USB settings/scenes](usb-settings-scenes.md) for the current follow-up.
 
 ## Browser checks — reference for the previous refresh
 
@@ -46,13 +52,15 @@ Software-only until checked on the prop.
    arm 150–240 seconds. Select Haunted: arm 60–120 seconds; torso
    75–180 seconds, plus optional combined actions every 240–600 seconds. All three keep mouth OFF.
 3. Watch the five-minute preview: Normal shows Head and Arm only; Subtle shows
-   Head only. Enabling eyes adds Eyes; enabling lighting rotation adds Lighting.
+   Head only. Multiple selected eyes add Eyes; a fixed eye is shown in the summary
+   without periodic events. Enabling lighting rotation adds Lighting.
    Combined adds a lane in interleaved mode; combined-only mode replaces body lanes;
    Jaw appears only when mouth is enabled. Long intervals may have no event in
    five minutes. Details stay collapsed; the preview is approximate request timing.
 4. Enable palette rotation: lighting turns ON, choices and interval appear. At
    least two palettes and 15–3600 whole seconds are required. A single palette
-   button applies that look and turns rotation OFF. Static ignores effect speed.
+   button chooses that look and turns rotation OFF; the explicit lighting toggle
+   controls activation. Static ignores effect speed.
 5. Save/reload a profile with two palettes, a custom interval and pulsing on one
    channel. Confirm settings survive. Older v1/v2 profiles load with rotation OFF
    and Static effects while retaining their explicit movement/eye/mouth settings.
@@ -90,8 +98,9 @@ checks remain in [the earlier attended list](next-attended-tests.md).
 
 - A clock window gates new requests; it does not switch lights off or physically
   stop an animation. True lights-out behavior needs its own design and test.
-- Custom generated settings still require Arduino compilation/upload. The browser
-  installer remains a separate fixed head-only profile, regardless of Normal's arm default.
+- Custom generated sketches require Arduino compilation/upload. Universal firmware
+  needs that upload once, then supports USB settings/scenes in Studio; USB tools
+  also accept reviewed universal and fixed head-only installer packages.
 - More personalities can eventually include eyes and lighting. The three main
   movement presets remain deliberately simple for this pass.
 - Actual playback-end telemetry, automatic daylight-saving adjustment, a retained

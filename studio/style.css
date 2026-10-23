@@ -149,3 +149,16 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{o
 .event{z-index:2;min-width:3px;border-radius:2px}
 .preview-title{flex-wrap:wrap;gap:8px}
 #timelineBeyond{color:#e6bf80;font-size:11px}
+.light-preview{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:18px 0;font-size:13px}
+[hidden]{display:none!important}
+.light-preview span{display:flex;gap:7px;align-items:center}.light-preview i{width:30px;height:30px;border-radius:50%;border:1px solid #ffffff66}
+.light-preview strong{color:var(--purple)}
+.scene-order{display:flex;gap:10px;align-items:center;margin:14px 0}
+.scene-order select,#eyeBehavior{max-width:100%;background:#101725;color:var(--text);border:1px solid #52647e;border-radius:8px;padding:9px}
+#controllerMessage{font-size:15px;line-height:1.65;font-weight:600;border-left:4px solid var(--purple);background:#b28df912;padding:14px;border-radius:8px;overflow-wrap:anywhere}
+#controllerMessage[data-state=busy]{border-color:#e6bf80;color:#ffe2b2}
+#controllerMessage[data-state=ready]{border-color:var(--green);color:var(--green)}
+#controllerMessage[data-state=error]{border-color:#ff8e9d;color:#ffc4cc;background:#ff8e9d12}
+.usb-setup{padding-left:22px;line-height:1.8}.usb-setup li{margin:9px 0}
+#lightingChoicesPanel>label{display:block;margin:12px 0}
+@media(max-width:520px){.scene-order{flex-wrap:wrap}.controller-details{grid-template-columns:1fr}.controller-details dd{text-align:left;margin-bottom:8px}}

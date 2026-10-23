@@ -25,13 +25,23 @@
     constructor(serial,onChange=()=>{}) {this.serial=serial;this.onChange=onChange;this.capture=new Capture();this.port=null;this.reader=null;this.readTask=null;this.writeTask=null;this.closing=false;this.busy=false;this.error="";this.messages=[];this.messageSerial=0;this.partial='';this.protocolDecoder=new TextDecoder();this.waiters=[];this.operation=false;}
     ingest(bytes){
       this.partial+=this.protocolDecoder.decode(bytes,{stream:true});
-      let end;while((end=this.partial.indexOf('\n'))>=0){const line=this.partial.slice(0,end).trim();this.partial=this.partial.slice(end+1);const match=/(?:^|\] )(USB (?:CFG|CAPS|STATUS|SCENE) .*)$/.exec(line);if(match){const event={id:++this.messageSerial,text:match[1]};this.messages.push(event);if(this.messages.length>1024)this.messages.shift();for(const w of [...this.waiters])if(event.id>w.after&&w.test(event.text)){clearTimeout(w.timer);this.waiters.splice(this.waiters.indexOf(w),1);w.resolve(event);}}}
+      let end;while((end=this.partial.indexOf('\n'))>=0){const line=this.partial.slice(0,end).trim();this.partial=this.partial.slice(end+1);const match=/(?:^|\] )(USB (?:CFG|CAPS|STATUS|SCENE|READY) .*)$/.exec(line);if(match){const event={id:++this.messageSerial,text:match[1]};this.messages.push(event);if(this.messages.length>1024)this.messages.shift();for(const w of [...this.waiters])if(event.id>w.after&&w.test(event.text)){clearTimeout(w.timer);this.waiters.splice(this.waiters.indexOf(w),1);w.resolve(event);}}}
       if(this.partial.length>1024)this.partial=this.partial.slice(-1024);
     }
-    waitFor(test,after=this.messageSerial,timeout=8000){const found=this.messages.find(e=>e.id>after&&test(e.text));if(found)return Promise.resolve(found);return new Promise((resolve,reject)=>{const w={test,after,resolve,reject};w.timer=setTimeout(()=>{this.waiters=this.waiters.filter(x=>x!==w);reject(Error('No controller acknowledgment. Reconnect and read saved settings before retrying.'));},timeout);this.waiters.push(w);});}
+    waitFor(test,after=this.messageSerial,timeout=8000){const found=this.messages.find(e=>e.id>after&&test(e.text));if(found)return Promise.resolve(found);return new Promise((resolve,reject)=>{const w={test,after,resolve,reject};w.timer=setTimeout(()=>{this.waiters=this.waiters.filter(x=>x!==w);const e=Error('No controller acknowledgment. Retry identification; close Arduino Serial Monitor and other USB tools first.');e.code='ACK_TIMEOUT';reject(e);},timeout);this.waiters.push(w);});}
     async request(command,test,timeout=8000){const after=this.messageSerial;await this.send(command+'\n');return this.waitFor(test,after,timeout);}
     // A blocking BLE scan/connect may already be running when USB opens.
-    async capabilities(){return this.request('SKELLY HELLO',s=>s.startsWith('USB CAPS v2 '),45000);}
+    async capabilities({timeout=45000,retry=3000,onAttempt=()=>{}}={}){
+      // Opening CP210x/CH340 ports can restart the ESP32. A first HELLO may
+      // disappear during boot; retry only this harmless, idempotent request.
+      const after=this.messageSerial,start=performance.now();let attempt=0;
+      while(this.port && performance.now()-start<timeout){
+        onAttempt(++attempt);await this.send('\nSKELLY HELLO\n');
+        try{return await this.waitFor(s=>s.startsWith('USB CAPS v2 '),after,Math.min(retry,Math.max(1,timeout-(performance.now()-start))));}
+        catch(e){if(e.code!=='ACK_TIMEOUT')throw e;}
+      }
+      throw Error('USB port opened, but firmware identification did not reply. Close Arduino Serial Monitor and other USB tabs, then Retry identification. If needed, press the ESP32 EN/Reset button once and retry. No settings were sent.');
+    }
     async status(){return this.request('SKELLY STATUS',s=>s.startsWith('USB STATUS v2 '),45000);}
     diagnostics(){const last=[...this.messages].reverse().find(e=>e.text.startsWith('USB STATUS v2 '));return {...this.capture.summary(),controller:last?Object.fromEntries(last.text.slice(14).split(' ').filter(s=>/^[A-Za-z]+=[0-9]+$/.test(s)).map(s=>{const [k,v]=s.split('=');return [k,Number(v)];})):null,notice:'Controller status is reported transport/model state, not observed motor or LED behavior.'};}
     async configReply(command,id,test,timeout=45000){const r=await this.request(command,s=>s.startsWith('USB CFG ERROR '+id+' ')||test(s),timeout);if(r.text.startsWith('USB CFG ERROR'))throw Error('Controller rejected settings: '+r.text.split(' ').at(-1));return r;}

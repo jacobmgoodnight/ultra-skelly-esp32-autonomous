@@ -9,7 +9,7 @@ the current status. A transport success alone does not verify an actuator.
 
 | Behavior | Status | Evidence / limit |
 | --- | --- | --- |
-| Universal USB settings, persistent recovery and scene rotation | Software-only / physically Untested | Actual C++ mocked UART/NVS/time covers chunk ordering, CRC/ranges, idle boundary, failed storage, corrupt-slot recovery, sequence wrap and connected scene timing. Pinned ESP32 compilation does not verify real NVS/USB or prop behavior. [Separate follow-up](usb-settings-scenes.md); existing checklist remains in progress. |
+| Universal USB settings, persistent recovery and scene rotation | USB identification Failed (owner report); storage/rotation Untested | October 22: uploaded universal firmware boots, opens NVS (`storage=1`, sequence 0), discovers Skelly and connects on its second attempt; Studio remains identifying and times out. No successful browser settings read/save reported. Bounded HELLO retries are a software-only correction for a possible startup race, not a verified physical fix. Ordered/random scene changes and recovery retain native coverage. [Follow-up](usb-settings-scenes.md). |
 | Connected USB diagnostics | Software-only / physically Untested | Bounded status/protocol tests; counters and readback acknowledge firmware state, not movement or lighting response. |
 | BLE name discovery, AE00/AE01 WRITE_NR | Verified | Successful real commands; scan/connection failures also occur |
 | Head `0x01` | Verified | ~25 s; protected standalone operation retained |
@@ -46,12 +46,13 @@ the current status. A transport success alone does not verify an actuator.
 | Per-file playback estimates | Software-only | Generator and host coverage for selected file durations; fallback 21 seconds by default, accepted values 21–120 seconds. No actual end confirmation. |
 | Passive AE02 playback observations | Software-only | Bounded callback queue, malformed/overflow handling and disconnect cleanup tested; raw duration units, CRC/framing and natural EOF remain unverified. No timer or motor control. Default OFF. |
 | Browser USB capture / prebuilt installer | Software-only | Mocked stream cleanup, original-byte capture, package/hash rejection and local UI checked. No real USB capture or flashing performed. |
-| Selected-palette rotation | Software-only / physically Untested | First selected palette, no immediate repeats, spacing, clock/idle gating, jaw/restoration deferral, timer wrap and reconnect covered by native C++; visual pairs and integration need observation. |
-| Per-channel Strobe/Pulsing and speed | Software-only / physically Untested | F2/F6 derived from upstream live handlers, CRC/length/order checks and static six-write regression covered. LED regions, actual effects and speed response need attended tests. |
+| Selected-palette rotation | Verified (owner report) | October 22: owner explicitly confirms rotating lighting palettes work. Exact palettes, interval and integration settings were not supplied; clock/idle/jaw integration remains separately scoped. |
+| Per-channel lighting effects | Verified (owner report) | October 22: owner explicitly confirms lighting effects work. Individual channels/effects and speed measurements were not enumerated; no claim of all speeds, LED-region mapping or jaw restoration integration. Packet CRC/order/spacing retain native coverage. |
 
 October 22 refresh follow-up: the owner reports completing all Studio refresh
 checks except lighting and USB. This records the reported pass for the previous
 refresh; no logs, per-row timings or independent observations accompanied it.
 It does not verify the subsequent faster retry policy, new Haunted intervals or
-interleaved combined scheduler. Lighting and browser USB remain pending.
+interleaved combined scheduler. The later lighting/effect report above supersedes
+the earlier pending status; browser USB identification currently fails.
 

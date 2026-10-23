@@ -32,7 +32,7 @@
     const items=[];
     if(c.compoundEnabled)items.push(["compound","Combined"]);
     if(!c.compoundEnabled||c.compoundAlongside)for(const [key,name] of [["head","Head"],["torso","Torso"],["arm","Arm"]])if(c[key+"Enabled"])items.push([key,name]);
-    if(c.eyesEnabled)items.push(["eyes","Eyes"]);
+    if(c.eyesEnabled&&c.eyeChoices.length>1)items.push(["eyes","Eyes"]);
     if(c.lightsEnabled&&c.lightRotation)items.push(["lights","Lighting"]);
     if(c.jawEnabled)items.push(["jaw","Jaw"]);
     return items;

@@ -11,6 +11,10 @@ for (const name of ["template.js", "app.js"]) {
 }
 const api = context.window.SkellyStudioGenerator;
 assert.ok(api && typeof api.generateSketch === "function");
+test('sketch downloads get an Arduino-safe local date/time suffix',()=>{
+ assert.equal(api.sketchFilename('SkellyAutonomous.ino',new Date(2026,9,22,8,4,9)),'SkellyAutonomous_20261022_080409.ino');
+ assert.equal(api.sketchFilename('SkellyUniversal.ino',new Date(2026,0,1,0,0,0)),'SkellyUniversal_20260101_000000.ino');
+});
 
 function sample(changes = {}) {
   const defaults = api.DEFAULTS;

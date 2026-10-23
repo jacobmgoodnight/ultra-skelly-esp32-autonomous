@@ -11,6 +11,8 @@ for (const file of ["studio/template.js", "studio/app.js"]) {
 const api = context.window.SkellyStudioGenerator;
 process.stdout.write(api.generateSketch({
   ...api.DEFAULTS,
+  // Preserve these independently known packet vectors across Studio default changes.
+  torsoBrightness:180,headBrightness:180,eyeChoices:Array.from({length:18},(_,i)=>i+1),
   ...(process.argv.includes('--audio-free')
     ? {headEnabled:true,armEnabled:true,torsoEnabled:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true}
     : {jawEnabled:true,headEnabled:false,armEnabled:false,lightsEnabled:true,diagnosticsEnabled:true})

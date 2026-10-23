@@ -63,6 +63,72 @@ not an endurance or hardware pass.
 
 ## Protocol and storage contract
 
+### First setup and identification recovery
+
+Download **universal firmware** in Studio → Advanced & testing. Open the timestamped
+`.ino` in Arduino IDE, choose **ESP32 Dev Module** and **Arduino-ESP32 3.3.12**,
+then compile/upload. Close Serial Monitor and all other serial tools/tabs. In
+desktop Chrome/Edge choose **Connect ESP32 USB**, then the board's USB adapter
+(for example **CP2102 USB to UART Bridge Controller (COM3)**; the number varies).
+Wait for **Ready · universal firmware identified** before read/save.
+
+Opening a serial port can restart this board. The browser now retries only the
+read-only `SKELLY HELLO` request every three seconds, for at most 45 seconds;
+an initial request may have been lost during boot. This is a plausible software
+cause, not a confirmed diagnosis of the owner's board. **Retry identification**
+works without closing/reopening the port. The status box distinguishes identifying,
+ready and error, and **Download USB log** preserves the received text.
+
+If it still fails, close Studio's USB connection and open Arduino Serial Monitor
+at **115200**, line ending **Newline**. Send `SKELLY HELLO`, then `SKELLY STATUS`.
+The new firmware should answer `USB CAPS v2 settings=1 ...` and `USB STATUS v2 ...`.
+If neither answers, press **EN/Reset** once, wait for boot/connection to finish,
+then repeat those two commands. Save the full responses and boot log. Close the
+monitor before retrying Studio. No actuator command is issued by these requests.
+If the monitor replies but Studio does not, that narrows the problem to the browser
+session/adapter interaction; it does not establish an NVS or BLE fault.
+
+October 22 owner log: NVS opens (`storage=1`, sequence 0), the universal build boots
+and connects to Skelly at 7,980 ms after one failed connection. No HELLO/CAPS reply
+was supplied. The reported browser timeout is **Failed**; real read/save, NVS
+recovery and scene transitions remain **Untested** after the software correction.
+
+### Scene durations and order
+
+Scene builder sits above Advanced & testing. Durations display **minutes**, default
+**10**, range 1–60 (fractional minutes supported); JSON/USB retain integer seconds.
+Automatic switching OFF runs only the first scene. **In order** loops through the
+list. **Random** starts with the first scene, then chooses a different scene each
+time, without immediate repeats. Each hold starts at a successful BLE connection.
+When time expires, pending motion/playback/restoration and conservative cooldowns
+finish before switching; reconnect time can add a visible gap. Disconnected scenes
+do not advance. Automatic rotation never writes NVS.
+
+The existing version-1 order word extends from 0/1 to 0/1/2; record size and all
+field offsets stay the same. Old records and scene exports retain their settings.
+Old firmware safely rejects 2. The browser requires the new `randomScenes=1`
+capability before sending random order; upload the updated universal build first.
+
+### Focused follow-up after the identification correction
+
+1. Close other serial clients; connect Studio. Pass: status becomes Ready and
+   **Read saved settings** returns a checked configuration. If not, collect the
+   two manual replies above and **Download USB log**. Do not keep reflashing blindly.
+2. Select one eye with all motors/mouth OFF. Observe it initialize and remain the
+   same for two minutes; reconnect and confirm it returns. Then optionally choose
+   two eyes in random mode and observe both. Existing random-eye passes need no repeat.
+3. Save two distinct mouth-OFF scenes for **1 minute** each, then test ordered
+   switching and random switching. With only two, both orders alternate; use three
+   to observe random selection. Pass: no immediate repeat, no interrupted motion,
+   correct settings per scene, continued operation after USB disconnect.
+4. Check linked torso/head colors visually with rotation OFF; for rotation use
+   each palette's link checkbox. Effects/brightness apply to **all palettes in the
+   scene**, separately for head/torso; a palette stores only its two colors.
+
+Do not repeat the already-confirmed effects/rotation tests solely for this UI
+refresh. New fixed-eye, color-link, USB recovery and random-scene behavior remains
+software-only until observed on hardware.
+
 `SKELLY HELLO` retains `USB READY v1 CLOCK` and adds `USB CAPS v2 settings=0|1`.
 `SKELLY STATUS` reports bounded text: link state, scene index, saved revision/CRC,
 pending state, scan/connect/write/failure counters, heap and clock/window state.

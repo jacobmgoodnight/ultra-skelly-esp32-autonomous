@@ -1,8 +1,9 @@
 # Reproducible testing and the next on-device test
 
 For the October 22 UI/palette/effects changes, start with the shorter
-[Studio refresh checklist](studio-lighting-checklist.md). Existing physical
-results remain scoped to their original configurations; new effects are Untested.
+[Studio refresh checklist](studio-lighting-checklist.md). The owner now confirms
+lighting effects and palette rotation work; integration and exact speed/channel
+coverage remain scoped to the observations actually reported.
 
 The October 21 jaw/mix/break/reconnect reports are recorded in the
 [experiment log](experiments.md). No completed test needs repetition before

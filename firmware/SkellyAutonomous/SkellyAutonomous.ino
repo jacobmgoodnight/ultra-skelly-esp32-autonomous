@@ -134,6 +134,7 @@ const uint32_t MOUTH_MAX_INTERVAL_MS = 90000; // maximum 90 sec between starts
 // First run experiments/EyeSingleTest before changing this to true.
 // One-shot and randomized eye changes were physically verified on the test prop.
 const bool EYES_ENABLED = false;
+const bool EYE_ROTATION_ENABLED = true;
 const uint32_t EYE_MIN_INTERVAL_MS = 120000; // 2 minutes
 const uint32_t EYE_MAX_INTERVAL_MS = 300000; // 5 minutes
 
@@ -630,7 +631,7 @@ const uint32_t RUNTIME_LIMITS[RF_COUNT][2] = {
   {0UL,4294967295UL}, // name10
   {0UL,4294967295UL}, // name11
 };
-const uint32_t RUNTIME_SEED[] = {1UL,1UL,0UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,1UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,60UL,120UL,150UL,240UL,240UL,420UL,100UL,180UL,120UL,300UL,240UL,600UL,180UL,420UL,25UL,60UL,12UL,21UL,0UL,2UL,1UL,90UL,180UL,180UL,1UL,1UL,64UL,64UL,1UL,30UL,5UL,60UL,1080UL,1380UL,127UL,262143UL,15UL,15UL,1UL,300UL,16711680UL,16736256UL,16736256UL,65280UL,8388863UL,59084UL,1534975UL,13166847UL,16717824UL,16756736UL,12UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852138323UL,3219557UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1819042120UL,1701148527UL,110UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1853186376UL,6579572UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852796749UL,1751607660UL,116UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1700949317UL,114UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1920232533UL,1800609889UL,2037148773UL,3307040UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL};
+const uint32_t RUNTIME_SEED[] = {1UL,1UL,0UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,1UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,60UL,120UL,150UL,240UL,240UL,420UL,100UL,180UL,120UL,300UL,240UL,600UL,180UL,420UL,25UL,60UL,12UL,21UL,0UL,2UL,1UL,90UL,255UL,255UL,1UL,1UL,125UL,125UL,1UL,30UL,5UL,60UL,1080UL,1380UL,127UL,1UL,15UL,15UL,1UL,600UL,16711680UL,16736256UL,16736256UL,65280UL,8388863UL,59084UL,1534975UL,13166847UL,16717824UL,16756736UL,12UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852138323UL,3219557UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1819042120UL,1701148527UL,110UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1853186376UL,6579572UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852796749UL,1751607660UL,116UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1700949317UL,114UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1920232533UL,1800609889UL,2037148773UL,3307040UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL};
 uint32_t runtimeValues[RF_COUNT] = {};
 uint8_t runtimeEyes[18], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;
 uint16_t runtimeFiles[8];
@@ -759,6 +760,8 @@ char runtimeName[49];
 #define EYE_OPTIONS runtimeEyes
 #undef EYE_OPTIONS_COUNT
 #define EYE_OPTIONS_COUNT runtimeEyeCount
+#undef EYE_ROTATION_ENABLED
+#define EYE_ROTATION_ENABLED (runtimeEyeCount > 1)
 #undef JAW_FILE_POOL
 #define JAW_FILE_POOL runtimeFiles
 #undef JAW_POOL_COUNT
@@ -886,7 +889,7 @@ void acceptUsbCommand(const char *line) {
   if (strcmp(line,"SKELLY STATUS")==0) { emitUsbStatus(); return; }
   if (strcmp(line, "SKELLY HELLO") == 0) {
     logLine("USB READY v1 CLOCK");
-    logEvent("USB CAPS v2 settings=%u scenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u);
+    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME));
     return;
   }
   const char *prefix = "SKELLY TIME ";
@@ -1649,7 +1652,7 @@ class RuntimeEngine {
   }
   static bool valid(const RuntimeRecord &r) {
     if(r.magic!=0x534b5231 || r.count<3 || r.count>RUNTIME_WORDS || r.words[0]!=1 ||
-       r.words[1]<1 || r.words[1]>4 || r.words[2]>1 || r.count!=3+r.words[1]*RF_COUNT || checksum(r)!=r.crc)return false;
+       r.words[1]<1 || r.words[1]>4 || r.words[2]>2 || r.count!=3+r.words[1]*RF_COUNT || checksum(r)!=r.crc)return false;
     for(uint32_t n=0;n<r.words[1];++n){
       const uint32_t *v=r.words+3+n*RF_COUNT;
       for(size_t i=0;i<RF_COUNT;++i)if(v[i]<RUNTIME_LIMITS[i][0]||v[i]>RUNTIME_LIMITS[i][1])return false;
@@ -1736,7 +1739,11 @@ class RuntimeEngine {
       if(!persist()){error(request,"STORAGE");pending=savePending=false;return;}
       active=staging;slot=1-slot;select(0);
       logEvent("USB CFG APPLIED %lu %lu %lu\n",(unsigned long)request,(unsigned long)active.sequence,(unsigned long)active.crc);
-    }else select((scene+1)%active.words[1]);
+    }else {
+      uint8_t next=(scene+1)%active.words[1];
+      if(active.words[2]==2){next=uint8_t(random(0,long(active.words[1]-1)));if(next>=scene)++next;}
+      select(next);
+    }
     pending=savePending=false;
     // Reconnect after the complete old routine has drained. No actuator command here.
     resetConnection();nextRestAt=restUntil=now;
@@ -2031,7 +2038,7 @@ void loop() {
 
   // Experimental independent eye expressions. Can overlap animations.
   // Give adjacent BLE write-without-response commands a small gap.
-  if (connected && EYES_ENABLED && reached(millis(), nextEyeAt) && routineWindowOpen()) {
+  if (connected && EYES_ENABLED && (lastEye == 0 || EYE_ROTATION_ENABLED) && reached(millis(), nextEyeAt) && routineWindowOpen()) {
     if (sentBodyThisLoop || sentMouthThisLoop) delay(250);
     if (routineWindowOpen()) changeEyes(millis());
   }
