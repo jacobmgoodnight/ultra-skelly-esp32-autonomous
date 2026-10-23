@@ -1,5 +1,5 @@
 #include <iostream>
-#define REQUIRE(c) do { if (!(c)) throw std::runtime_error(#c); } while (false)
+#define REQUIRE(c) do { if (!(c)) throw std::runtime_error(std::to_string(__LINE__)+": "+#c); } while (false)
 void readyRefresh(uint32_t at) {
   fakeNow=at;fakeWriteLatency=0;fakeWriteOK=true;fakeRandomChoices.clear();
   fakeConnectOK=fakeDiscoveryOK=fakeServicePresent=fakeCharacteristicPresent=true;
@@ -43,7 +43,13 @@ int main() {
       const uint32_t safe=bodySafeAfter;
       REQUIRE(safe-at==35000);
       nextHeadAt=nextArmAt=nextTorsoAt=at; // overdue singles must wait
-      fakeWrites.clear();fakeNow=safe-1;loop();REQUIRE(fakeWrites.empty());
+      // Haunted now selects its first eye during the body cooldown. That AAF9
+      // write is permitted; a second motor command must still wait.
+      REQUIRE(EYES_ENABLED && EYE_MIN_INTERVAL_MS==150000 && EYE_MAX_INTERVAL_MS==300000);
+      fakeWrites.clear();fakeNow=safe-1;loop();
+      REQUIRE(fakeWrites.size()==1 && fakeWrites[0][1]==0xF9);
+      REQUIRE(fakeWrites[0][2]>=1 && fakeWrites[0][2]<=8);
+      fakeWrites.clear();
       fakeNow=safe;loop();REQUIRE(fakeWrites.size()==1);
       REQUIRE(fakeWrites[0][2]==1); // individual requests resume after combo
       fakeWrites.clear();fakeNow=bodySafeAfter-1;loop();REQUIRE(fakeWrites.empty());

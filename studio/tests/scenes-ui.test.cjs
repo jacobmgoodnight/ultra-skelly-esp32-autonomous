@@ -63,3 +63,11 @@ test('reverting an initial unsaved edit returns to a clean new-scene baseline',a
 test('an empty imported library replaces an invalid editor with a valid new-scene baseline',async()=>{
  const p=page();p.nodes.sceneSave.onclick();p.change({headMin:1});const pending=p.api.loadProgram({scenes:[],rotate:false,random:false});p.nodes.sceneImportDialog.close('replace');assert.equal(await pending,true);assert.equal(p.api.snapshot().scenes.length,0);assert.equal(p.config.headMin,35);
 });
+
+test('routine preview follows saved scenes rather than unfinished editor changes',()=>{
+ const p=page();p.nodes.sceneSave.onclick();const initial=p.nodes.sceneSequence.children[0];
+ assert.equal(initial.children[0].children[0].textContent,'My spooky Skelly');assert.match(initial.children[1].children[0].textContent,/Head · 35–75/);
+ p.change({headMin:80,headMax:90});assert.match(p.nodes.sceneSequence.children[0].children[1].children[0].textContent,/35–75/);
+ p.nodes.sceneUpdate.onclick();assert.match(p.nodes.sceneSequence.children[0].children[1].children[0].textContent,/80–90/);
+ p.name('Second');p.nodes.sceneSave.onclick();assert.match(p.nodes.sceneSequence.children[1].className,/is-inactive/);p.nodes.sceneRotate.checked=true;p.nodes.sceneRotate.onchange();p.nodes.sceneOrder.value='random';p.nodes.sceneOrder.onchange();assert.match(p.nodes.sceneSequence.children[1].children[0].children[1].textContent,/Random choice/);
+});

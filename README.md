@@ -12,7 +12,9 @@ connected. Custom configurations download as Arduino source. An optional
 [universal firmware](docs/usb-settings-scenes.md) adds USB settings updates and
 up to four saved scenes: compile/install once, then change routines from Studio.
 Separate USB tools accept reviewed head-only or universal build packages.
-These new USB and scene features have software coverage; physical testing is pending.
+The owner confirms USB connection, reading/saving settings and observed changed
+routines. Power-cycle retention, recovery and physical scene transitions remain
+separate checks.
 The software is free and MIT licensed; you supply the prop,
 an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
 computer for the initial Arduino upload. Other prop revisions and ESP32 variants
@@ -34,15 +36,17 @@ does not extend compatibility to the 12-foot app-controlled Skelly or other prop
 
 ## What you can configure
 
-![Skelly Studio on desktop: movement presets, interval controls and sketch summary](docs/images/studio-desktop.jpg)
+![Skelly Studio: movement controls and live routine summary](docs/images/studio-routine-overview.jpg)
 
 - Random head intervals, with optional arm and torso movements and
   conservative motor cooldowns.
-- Eye rotations, torso/head static RGB and brightness, without uploaded audio.
+- Fixed or random eye expressions, torso/head RGB, brightness, Static/Strobe/Pulsing
+  effects, custom palettes and palette rotation, without uploaded audio.
 - Optional **limited mouth routines**, OFF by default, using your own uploaded clips.
 - Separate opt-in jaw-first arm/torso and compound body modes, plus idle breaks.
 - Named clip mappings, color palettes and portable JSON settings files.
-- Up to four locally saved personalities, with optional scene rotation in universal firmware.
+- Up to four named scenes: duplicate, rename, reorder, undo and recover drafts,
+  with ordered or random rotation in universal firmware.
 - USB settings readback and connected diagnostics with universal firmware.
 - Self-contained `.ino` downloads, generated locally and usable offline.
 
@@ -50,17 +54,49 @@ Treat this as a hobby preview tested on one prop. Start with a simple attended
 routine; advanced combinations and long unattended operation need validation on
 your own setup. The table below separates physical observations from other evidence.
 
-## Current evidence — October 21, 2026
+## Build a complete routine
+
+Start with a personality or a complete look. **Moonlit Watcher** requests a head
+turn every 60–120 seconds; **Ember Glow** adds an arm request every 150–240 seconds;
+**Haunted Porch** adds torso and combined movements. Every complete look loads
+movement, eyes and lighting. Customize it, name it and save it in Scene builder.
+
+Normal selects fixed eye #1. Haunted randomly switches eyes #1–8 every 150–300
+seconds. The summary shows a small eye preview and a rotation marker when needed.
+
+![Scene builder routine preview: separate sample request tracks for three saved scenes](docs/images/studio-scene-routine.jpg)
+
+Each scene defaults to a 10-minute hold. The small **Routine preview** shows sample
+requests within each saved scene; unfinished editor changes are excluded. Ordered
+rotation follows the saved list. Random starts with the first scene, then chooses
+another without immediate repeats. Holds begin after connection; active actions,
+cooldowns and reconnects can extend transitions. These charts illustrate requests,
+not predicted physical movement.
+
+![Studio lighting: palette choices and separate head and torso effects](docs/images/studio-lighting-controls.jpg)
+
+Choose a palette or edit your own colors, link head and torso, and optionally rotate
+palettes. Effects, speed and brightness apply per channel across that scene. Start
+here can collapse; idle breaks, clock settings and diagnostics live under Advanced.
+Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
+or save scenes. First-time Arduino installation instructions fold away after setup.
+
+Screenshots show illustrative browser settings, with no hardware connection.
+
+## Current evidence — October 23, 2026
 
 | Feature | Latest result |
 | --- | --- |
 | Head / arm / torso commands | Physically verified: ~25 / 22 / 25 seconds; arm includes two motions |
 | Compound masks `0x03`, `0x05`, `0x06`, `0x07` | All activated the selected motors from one packet, with no MP3 |
-| Recurring compound scheduler | Implemented, OFF by default; extended field testing pending |
+| Recurring compound scheduler | Owner reports random combined movements work; detailed interleaving/endurance remains unconfirmed |
 | Jaw MP3 → 2 s → arm or torso | Physical overlap verified; protected alternating scheduler logged ~30 minutes without reported mid-session reconnects/skips |
 | Jaw MP3 → head at 2 or 10 s | **Failed physically** despite logged writes; use protected standalone head |
 | Live one-shot / randomized eyes | Physically verified; MP3 eye restoration still needs observation |
 | Live torso/head RGB initialization | Both chosen colors physically appeared |
+| Lighting effects / palette rotation | Owner confirms both work; exact channel/speed and integration coverage not enumerated |
+| Browser USB connection / read / save | Owner confirms success and physically observed changed behavior |
+| Saved-settings retention / recovery / scene transitions | Software coverage; physical confirmation still pending |
 | MP3 lighting override | **Observed:** file #13 restored its saved colors |
 | Post-MP3 lighting restoration (mode 1) | **Physically confirmed:** red body and green head return after MP3 #13; isolated jaw/lighting setup |
 | Garbled Serial Monitor output | Reported near playback/restoration; cause unknown |

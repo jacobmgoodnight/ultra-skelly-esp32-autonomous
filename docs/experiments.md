@@ -531,3 +531,18 @@ draft/revert protection, import previews, controller comparison and compact ligh
 Complete scene looks reuse existing settings with mouth/clock windows OFF and
 have software/compile coverage only. Firmware, USB wire protocol and saved formats
 are unchanged. No physical port is opened during this implementation.
+
+## October 23, 2026 — scene checklist feedback and request previews
+
+The owner reports the focused scene-builder checklist seemed to work. This is a
+broad usability report without per-item results; power-cycle retention, recovery
+and physical scene transitions remain separately unconfirmed.
+
+Studio now folds Start here, moves idle breaks into Advanced and shows a subtle
+selected-eye thumbnail/rotation marker. Normal explicitly selects fixed eye #1;
+Haunted selects eyes 1–8 randomly every 150–300 seconds, also in Haunted Porch.
+Complete look buttons show the motor intervals they load. Saved scenes have local
+sample-request tracks using their individual holds; random order promises no exact
+sequence. Firmware, USB commands, saved formats and motor cooldowns are unchanged.
+Browser defaults affect the editor only until an explicit save or upload. Root
+README screenshots show illustrative local browser settings, not connected hardware.

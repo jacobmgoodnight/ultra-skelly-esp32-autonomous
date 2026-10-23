@@ -60,13 +60,26 @@
     const motors=['head','arm','torso'].filter(k=>c[k+'Enabled']).map(k=>k[0].toUpperCase()+k.slice(1));
     return {motors:motors.join(' + ')||'No body movement',eyes:c.eyesEnabled?(c.eyeChoices.length===1?'Fixed eye #'+c.eyeChoices[0]:c.eyeChoices.length+' random eyes'):'Stored eyes',lights:c.lightsEnabled?(c.lightRotation?c.lightPalettes.length+' rotating palettes':'Selected colors'):'Stored lights'};
   }
+  function routinePreview(value,g){
+    return value.scenes.map((scene,index)=>{
+      const c=scene.profile.config,events=g.simulateSchedule(c,0x582A+index,scene.seconds),kinds=[];
+      if(!c.compoundEnabled||c.compoundAlongside)for(const kind of ['head','arm','torso'])if(c[kind+'Enabled'])kinds.push(kind);
+      if(c.compoundEnabled)kinds.push('compound');
+      if(c.eyesEnabled&&c.eyeChoices.length>1)kinds.push('eyes');
+      if(c.lightsEnabled&&c.lightRotation)kinds.push('lights');
+      if(c.jawEnabled)kinds.push('jaw');
+      return {name:scene.name,seconds:scene.seconds,inactive:!value.rotate&&index>0,
+        position:index===0?'Starts here':!value.rotate?'Switching off':value.random?'Random choice':'Next in order',
+        lanes:kinds.map(kind=>({kind,min:kind==='lights'?c.lightInterval:c[kind+'Min'],max:kind==='lights'?c.lightInterval:c[kind+'Max'],ticks:Array.from(events.filter(e=>e.kind===kind),e=>e.time)}))};
+    });
+  }
   function starter(key,g,connection={}){
-    const looks={moonlit:{name:'Moonlit Watcher',preset:'subtle',palette:'moonlight',eyes:[8],effect:1},haunted:{name:'Haunted Porch',preset:'haunted',palette:'haunted',eyes:[2,6],effect:3},ember:{name:'Ember Glow',preset:'normal',palette:'ember',eyes:[4],effect:3}};
+    const looks={moonlit:{name:'Moonlit Watcher',preset:'subtle',palette:'moonlight',eyes:[8],effect:1},haunted:{name:'Haunted Porch',preset:'haunted',palette:'haunted',eyes:[1,2,3,4,5,6,7,8],effect:3},ember:{name:'Ember Glow',preset:'normal',palette:'ember',eyes:[4],effect:3}};
     const look=looks[key];if(!look)throw Error('Choose a scene starting point.');
     const target=Object.fromEntries(['bleName','scanRetrySec','startupRetrySec','startupWindowSec'].filter(k=>connection[k]!==undefined).map(k=>[k,connection[k]]));
     const config={...clone(g.DEFAULTS),...clone(g.PRESETS[look.preset]),...g.paletteSettings(look.palette),...target,eyesEnabled:true,eyeChoices:look.eyes,torsoEffect:look.effect,headEffect:look.effect,torsoBrightness:255,headBrightness:255,torsoSpeed:125,headSpeed:125,clockEnabled:false,restEnabled:false,jawEnabled:false};
     return {name:look.name,seconds:600,profile:JSON.parse(g.createProfile(config,{}))};
   }
-  const api={SceneLibrary,validateLibrary,minutesToSeconds,editorKey,parseDraft,timingNotes,sceneSummary,starter};
+  const api={SceneLibrary,validateLibrary,minutesToSeconds,editorKey,parseDraft,timingNotes,sceneSummary,routinePreview,starter};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellySceneModel=api;
 })();

@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=c1fe1b179e77">
+<link rel="stylesheet" href="./style.css?v=e6bf501bb113">
 <script src="./template.js?v=563ec99c120a" defer></script>
 <script src="./experience.js?v=d6d8118bdbb9" defer></script>
 <script src="./runtime-schema.js?v=1d6fbe6d9993" defer></script>
 <script src="./runtime.js?v=1e84fc8b2dc1" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=5e4125d05f99" defer></script>
-<script src="./scene-model.js?v=748518071c28" defer></script>
-<script src="./scenes.js?v=47e7c1fab050" defer></script>
+<script src="./app.js?v=20cece04c0eb" defer></script>
+<script src="./scene-model.js?v=964cfed40767" defer></script>
+<script src="./scenes.js?v=dfd45f70e6e8" defer></script>
 <script src="./controller-state.js?v=330a73fd9341" defer></script>
 <script src="./controller.js?v=1eabd9245ebf" defer></script>
 </head>
@@ -32,11 +32,11 @@
 <p id="draftTopNotice" class="draft-top-notice" hidden><a id="draftReview" href="#scenes">Previous editor draft found · review or restore your edits →</a></p>
 <main class="layout">
   <div class="controls">
-    <section class="panel" id="first-run" aria-labelledby="first-run-title">
-      <div class="section-head"><div><span class="step">START HERE</span><h2 id="first-run-title">Your first autonomous routine</h2></div></div>
+    <details class="panel fold-panel" id="first-run" open>
+      <summary><span><small>START HERE</small><strong>Your first autonomous routine</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p>Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.</p>
       <ol><li>Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Open <a href="#controllerPanel">Send to your ESP32</a>, install universal firmware once, then save your routine over USB.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li>Add arm, torso, eyes or lighting to make the routine your own.</li></ol>
-    </section>
+    </div></details>
     <section class="panel">
       <div class="section-head"><div><span class="step">01</span><h2>Choose a personality</h2></div><span class="tiny">Starting points; customize below</span></div>
       <div class="presets" role="group" aria-label="Movement presets">
@@ -126,26 +126,18 @@
         <details class="instructions light-help"><summary>Lighting help</summary><p>Palette buttons choose one look and stop rotation. Edit a palette to change its saved colors or link Head to Torso. Rotation uses those saved colors; effect and brightness controls apply across the scene. When lighting is off, Skelly keeps its stored lighting.</p></details>
       </details>
     </div></details>
-    <details class="panel fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small id="breaksStatus">Off · pauses between routines</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <div class="section-head"><div><span class="step">05</span><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
-      <p class="small-description">Occasional quiet stretches after animations finish. Hardware integration is still untested.</p>
-      <div id="restOptions" class="eye-advanced muted">
-        <label class="freq-inline">After every <input type="number" id="restMin" value="180" min="120" max="3600" aria-label="Rest interval minimum seconds"> to <input type="number" id="restMax" value="420" min="120" max="3600" aria-label="Rest interval maximum seconds"> seconds, take a break</label>
-        <label class="freq-inline" style="margin-top:12px">Rest for <input type="number" id="restDurationMin" value="25" min="15" max="300" aria-label="Rest duration minimum seconds"> to <input type="number" id="restDurationMax" value="60" min="15" max="300" aria-label="Rest duration maximum seconds"> seconds</label>
-      </div>
-    </div></details>
     <details class="panel fold-panel" id="scenes"><summary><span><strong>Scene builder</strong><small>Save a complete look, or rotate a few throughout the evening</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="save-locations"><p id="editorStatus" role="status">Editing a new scene</p><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p><p id="deviceSaveStatus">ESP32 · connect and read to compare</p></div>
       <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
       <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label>Stay for <input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> minutes</label></div>
       <div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><p id="sceneMessage" role="status">No custom scenes saved.</p>
-      <details class="instructions"><summary>Start with a complete look</summary><div class="scene-starters"><button type="button" data-scene-starter="moonlit">Moonlit Watcher</button><button type="button" data-scene-starter="haunted">Haunted Porch</button><button type="button" data-scene-starter="ember">Ember Glow</button></div><p>Loads movement, eyes and lighting into the editor. All start at 10 minutes with mouth off.</p></details>
+      <details class="instructions"><summary>Start with a complete look</summary><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Each look replaces movement intervals, eyes and lighting. Customize above, then save. All start at 10 minutes with mouth off.</p></details>
       <div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>
       <div class="scene-library-actions"><button id="sceneUndo" type="button" disabled>Undo last library change</button><span>Up to four scenes · saved in this browser</span></div>
       <label><input id="sceneRotate" type="checkbox"> Automatically switch scenes</label>
       <label class="scene-order">Scene order <select id="sceneOrder"><option value="ordered">In order</option><option value="random">Random · no immediate repeats</option></select></label>
-      <div id="sceneSequence" class="scene-sequence" aria-label="Scene sequence"></div><p class="small-description" id="sceneSequenceNote">Save your first scene using the controls above.</p>
+      <section class="routine-preview" aria-labelledby="routinePreviewTitle"><h3 id="routinePreviewTitle">Routine preview</h3><p class="small-description">Saved scenes · sample requests within each hold</p><div id="sceneSequence" class="scene-sequence" aria-label="Saved scene timing previews"></div></section><p class="small-description" id="sceneSequenceNote">Save your first scene using the controls above.</p>
       <details class="instructions"><summary>Scene timing help</summary><p>Each scene starts its hold when Bluetooth connects. Switching waits for current actions and full cooldowns, then reconnects with the next scene. Scenes do not advance while disconnected. Random starts with the first scene and avoids immediate repeats.</p></details>
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
     </div></details>
@@ -169,7 +161,7 @@
         <p class="small-description">Prefer a reviewed prebuilt package? The <a href="./usb.html#firmware">browser installer</a> accepts its local package files. Studio does not compile source in the browser. Keep a copy of your working firmware and settings before reinstalling.</p>
       </details>
     </section>
-    <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Clock window, Bluetooth and logs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Idle breaks, clock, Bluetooth and logs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <details class="instructions controller-diagnostics" id="controllerDiagnostics"><summary>USB diagnostics &amp; recovery</summary>
         <p>These are the last reported controller values. They do not confirm physical movement. Clock time is only needed when a scheduled window is enabled.</p>
         <dl id="controllerDetails" class="controller-details"></dl>
@@ -178,6 +170,14 @@
         <p>If identification stalls, close other serial apps/tabs and use Retry identification above. If needed, press EN/Reset once and retry. To diagnose separately, disconnect Studio, open Arduino Serial Monitor at <strong>115200 / Newline</strong>, then send <strong>SKELLY HELLO</strong> and <strong>SKELLY STATUS</strong>. Close Serial Monitor before reconnecting Studio.</p>
         <p><a href="./usb.html">USB tools: clock, raw capture &amp; package installer →</a></p>
       </details>
+    <details class="instructions fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small id="breaksStatus">Off · pauses between routines</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+      <div class="section-head"><div><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
+      <p class="small-description">Occasional quiet stretches after animations finish. Hardware integration is still untested.</p>
+      <div id="restOptions" class="eye-advanced muted">
+        <label class="freq-inline">After every <input type="number" id="restMin" value="180" min="120" max="3600" aria-label="Rest interval minimum seconds"> to <input type="number" id="restMax" value="420" min="120" max="3600" aria-label="Rest interval maximum seconds"> seconds, take a break</label>
+        <label class="freq-inline" style="margin-top:12px">Rest for <input type="number" id="restDurationMin" value="25" min="15" max="300" aria-label="Rest duration minimum seconds"> to <input type="number" id="restDurationMax" value="60" min="15" max="300" aria-label="Rest duration maximum seconds"> seconds</label>
+      </div>
+    </div></details>
       <h3>Connection &amp; diagnostics</h3>
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>
@@ -269,10 +269,10 @@
   <aside class="output" id="finish">
     <div class="panel output-panel">
       <span class="eyebrow">YOUR SKELLY</span><h2 class="purple-title">Make it yours.</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div><span>EYES</span><strong id="eyeSummary">Off · optional</strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><i id="summaryTorsoColor"></i><i id="summaryHeadColor"></i><span id="lightSummary">Off</span></strong></div></div>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><i id="summaryTorsoColor"></i><i id="summaryHeadColor"></i><span id="lightSummary">Off</span></strong></div></div>
       <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
       <div class="preview-title"><strong id="timelineTitle">Five-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
-      <label class="preview-window">Window <select id="previewWindow"><option value="300">5 minutes</option><option value="900">15 minutes</option><option value="scene">Scene duration</option></select></label>
+      <label class="preview-window">Window <select id="previewWindow"><option value="300">5 minutes</option><option value="900">15 minutes</option></select></label>
       <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
       <p class="small-description preview-key">Bands: first request range · ticks: sample requests</p>
       <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over five minutes, not actual movement times"></div>

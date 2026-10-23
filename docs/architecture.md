@@ -52,6 +52,10 @@ recovery. Invalid input never replaces the last valid draft. File imports and US
 reads preview replacement before applying; asynchronous confirmations are serialized
 with the existing controller workflow. None of these browser models opens a port,
 applies an actuator command, changes runtime formats or shortens cooldowns.
+`routinePreview` draws bounded sample requests for each saved scene using its own
+hold, enabled lanes and the existing deterministic schedule illustration. It never
+uses an unfinished editor draft or predicts arbitration/physical starts. Ordered,
+random and switching-off labels describe selection policy rather than clock time.
 
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
