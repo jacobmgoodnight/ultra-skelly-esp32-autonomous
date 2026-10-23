@@ -57,7 +57,7 @@
     return {action,eye,lights};
   }
   function sameSettings(file,expected){
-    return file.action===expected.action&&file.eye===expected.eye&&expected.lights.every((l,i)=>{const a=file.lights[i];return a.mode===l.mode&&a.brightness===l.brightness&&a.color===l.color&&a.cycle===l.cycle&&(l.mode===1||a.speed===254-l.speed);});
+    return file.action===expected.action&&file.eye===expected.eye&&expected.lights.every((l,i)=>{const a=file.lights[i];return a.mode===l.mode&&a.brightness===l.brightness&&a.color===l.color&&a.cycle===l.cycle&&(l.mode===1||(a.speed===255?0:a.speed)===254-l.speed);});
   }
   function audioRoutine(config,file,guard,min,max){
     integer(file.serial,1,65535);integer(guard,21,120);integer(min,60,3600);integer(max,min,3600);

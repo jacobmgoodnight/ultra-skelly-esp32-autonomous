@@ -66,3 +66,8 @@ test('incomplete duplicate file lists and cancellation during upload never enabl
  const p=fake({files:[clip(),clip()]});await assert.rejects(p.session.connect('Ultra Skelly v2'),/reply/);assert.deepEqual(p.session.files,[]);
  const q=fake();await q.session.connect('Ultra Skelly v2');q.session.sleep=async()=>q.session.cancel();await assert.rejects(q.session.upload(mp3(5),'New.mp3'),/cancelled|disconnected/);assert.equal(q.writes.some(b=>b[1]===0xc3),false);assert.equal(q.session.waiters.size,0);
 });
+
+test('read-back accepts the device’s equivalent fastest effect speed encodings',()=>{
+ const expected=a.settings({action:0,eye:1,lights:[0,1].map(()=>({mode:3,brightness:255,color:'#b28df9',speed:254}))});
+ const f=clip();f.lights=f.lights.map(l=>({...l,mode:3,speed:255}));assert.equal(a.sameSettings(f,expected),true);
+});

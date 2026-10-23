@@ -9,6 +9,7 @@
     window.SkellyAudioConnection=()=>session.connected||session.busy;
     function say(message,error=false){el('audioMessage').textContent=message;el('audioMessage').dataset.state=error?'error':'info';}
     function markCustom(){for(const button of document.querySelectorAll('.preset'))button.classList.remove('chosen');}
+    function clipSettings(){return {action:(el('audioHead').checked?1:0)|(el('audioArm').checked?2:0)|(el('audioTorso').checked?4:0),eye:Number(el('audioEye').value),lights:['Torso','Head'].map(channel=>({color:el('audio'+channel+'Color').value,cycle:el('audio'+channel+'Cycle').checked,brightness:Number(el('audio'+channel+'Brightness').value),mode:Number(el('audio'+channel+'Effect').value),speed:Number(el('audio'+channel+'Speed').value)}))};}
     function current(){return session.files.find(f=>key(f)===selected);}
     function render(){
       const connected=session.connected,busy=session.busy;
@@ -66,11 +67,11 @@
     };
     el('audioSaveLook').onclick=()=>{
       const file=current();if(!file)return;
-      const value={action:(el('audioHead').checked?1:0)|(el('audioArm').checked?2:0)|(el('audioTorso').checked?4:0),eye:Number(el('audioEye').value),lights:['Torso','Head'].map(channel=>({color:el('audio'+channel+'Color').value,cycle:el('audio'+channel+'Cycle').checked,brightness:Number(el('audio'+channel+'Brightness').value),mode:Number(el('audio'+channel+'Effect').value),speed:Number(el('audio'+channel+'Speed').value)}))};
+      const value=clipSettings();
       say('Saving this clip’s movements and appearance…');void perform(async()=>{const saved=await session.save(file,value);load(saved,true);},'Clip settings saved · read-back verified. Physical playback still needs your attended check.');
     };
     el('audioUse').onclick=()=>{
-      try{const file=current();if(!file)throw Error('Connect and select a file read from Skelly.');if(g.readConfig().bleName.trim()!==session.name)throw Error('The routine Bluetooth name changed. Reconnect to the intended Skelly before using its file number.');const guard=Number(el('audioGuard').value);
+      try{const file=current();if(!file)throw Error('Connect and select a file read from Skelly.');if(!a.sameSettings(file,a.settings(clipSettings()))){el('audioClipLook').open=true;throw Error('Save clip look to Skelly and verify read-back before using this clip in a routine.');}if(g.readConfig().bleName.trim()!==session.name)throw Error('The routine Bluetooth name changed. Reconnect to the intended Skelly before using its file number.');const guard=Number(el('audioGuard').value);
         if(guards.has(selected)&&guard<guards.get(selected))throw Error('Keep at least the measured, padded clip estimate.');
         const config=a.audioRoutine(g.readConfig(),file,guard,Number(el('audioMin').value),Number(el('audioMax').value)),errors=g.validate(config);if(errors.length)throw Error(errors.join('\n'));
         markCustom();g.writeConfig(config);el('mouth').open=false;say('Audio scene added to the editor. Disconnect Skelly, power the ESP32 again, then Save routine or update and Save scenes.');

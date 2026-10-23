@@ -18,7 +18,8 @@ Existing isolated jaw and lighting confirmations retain their previous scope.
    `audio/Jaw_Idle_Random_20s_v2.mp3` (silent jaw, not a spoken greeting).
 5. Edit the selected clip's stored head/arm/torso flags, fixed eye, both channel
    colors, brightness, effects, speed and color cycling. Save its look and require
-   **read-back verified** before continuing. These are per-file settings; ordinary
+   **read-back verified** before continuing. Unsaved clip edits block Use clip in
+   routine and reopen the clip look controls; they are never silently ignored. These are per-file settings; ordinary
    routine controls remain separate. Copy current eyes & lighting fills the form
    without sending anything. Saved head flags are a different path from the
    physically failed head-after-jaw command, and still need their own observation.

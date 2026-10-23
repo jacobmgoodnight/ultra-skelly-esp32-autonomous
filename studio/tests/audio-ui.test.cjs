@@ -12,7 +12,7 @@ function page({supported=true,usb=false,saveError=false}={}){
   async connect(name){this.name=name.trim();connects++;this.connected=true;this.files=[file];this.onChange();}
   disconnect(){this.connected=false;this.files=[];this.onChange();}cancel(){this.disconnect();}
   async refresh(){this.onChange();}
-  async save(f,value){saves++;if(saveError)throw Error('Clip settings did not match read-back.');return {...f,action:value.action,eye:value.eye};}
+  async save(f,value){saves++;if(saveError)throw Error('Clip settings did not match read-back.');const saved={...f,action:value.action,eye:value.eye,lights:value.lights.map(l=>({mode:l.mode,brightness:l.brightness,color:l.color,speed:254-l.speed,cycle:Number(l.cycle)}))};this.files=[saved];return saved;}
  }
  const window={SkellyAudio:{...a,Session:FakeSession},SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>{config={...config,...c};document.dispatchEvent({type:'skelly-config-changed'});}},SkellyExperience:experience,SkellyControllerPortOpen:()=>usb,addEventListener:()=>{}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'audio-ui.js'),'utf8'),{document,window,navigator:{bluetooth:supported?{}:undefined},CustomEvent:class{constructor(type){this.type=type;}},Uint8Array,Date});events.DOMContentLoaded[0]();
@@ -46,6 +46,12 @@ test('saved scene previews name the selected audio file instead of a generic jaw
 
 test('copying a rotating regular look uses its first selected palette and audio edits clear personality selection',async()=>{
  const p=page();p.nodes.audioConnect.onclick();await p.settle();p.window.SkellyStudioGenerator.writeConfig({lightRotation:true,lightPalettes:[2,3],palette2Torso:'#123456',palette2Head:'#abcdef',eyeChoices:[5,8]});
- p.nodes.audioCopyLook.onclick();assert.equal(p.nodes.audioTorsoColor.value,'#123456');assert.equal(p.nodes.audioHeadColor.value,'#abcdef');assert.equal(p.nodes.audioEye.value,5);assert.equal(p.chosen,true);
+ p.nodes.audioCopyLook.onclick();assert.equal(p.nodes.audioTorsoColor.value,'#123456');assert.equal(p.nodes.audioHeadColor.value,'#abcdef');assert.equal(p.nodes.audioEye.value,5);assert.equal(p.chosen,true);p.nodes.audioSaveLook.onclick();await p.settle();
  p.nodes.audioGuard.value='32';p.nodes.audioUse.onclick();assert.equal(p.chosen,false);assert.equal(p.config.eyeJawMode,3);
+});
+
+test('unsaved clip edits cannot schedule the device’s previous movement flags',async()=>{
+ const p=page();p.nodes.audioConnect.onclick();await p.settle();p.nodes.audioGuard.value='32';p.nodes.audioHead.checked=false;p.nodes.audioUse.onclick();
+ assert.equal(p.config.jawEnabled,false);assert.equal(p.chosen,true);assert.match(p.nodes.audioMessage.textContent,/Save clip look to Skelly/);assert.equal(p.saves,0);assert.equal(p.nodes.audioClipLook.open,true);
+ p.nodes.audioSaveLook.onclick();await p.settle();p.nodes.audioUse.onclick();assert.equal(p.config.eyeJawMode,3);assert.equal(p.config.jawEnabled,true);
 });
