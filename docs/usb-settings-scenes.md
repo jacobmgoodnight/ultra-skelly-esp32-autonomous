@@ -1,5 +1,15 @@
 # USB settings, scenes and connected diagnostics
 
+The conservative owner-tools update adds optional numeric `firmware`, `build`,
+`wait`, `jawMs`, `accepted` and `acceptedAge` fields to `USB STATUS v2`. Old Studio
+numeric parsers accept them; new Studio accepts older firmware without these fields.
+Wait codes are documented in the [isolated experiment](wireless-status-experiment.md).
+`acceptedAge` is milliseconds before the snapshot (uptime delta, wrapping after
+about 49.7 days), meaningful only when `accepted=1`. `jawMs` is modeled remaining
+time; neither field confirms physical completion. Diagnostics remain collapsed.
+Saved schema/program/profile formats are unchanged. See the focused
+[remaining physical checks](conservative-release-checklist.md); they remain Untested.
+
 October 23 owner confirmation: browser USB identification, reading saved settings,
 saving changes and observing the changed routine on Skelly worked. This supersedes
 the earlier identification failure. Power-cycle retention, interrupted-transfer

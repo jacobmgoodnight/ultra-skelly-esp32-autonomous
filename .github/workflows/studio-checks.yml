@@ -35,6 +35,7 @@ jobs:
         run: |
           node scripts/sync-runtime-schema.cjs --check
           node scripts/sync-template.cjs --check
+          node scripts/prepare-owner-tools.cjs --check
       - name: Check Studio asset cache versions
         run: node scripts/version-studio-assets.cjs --check
       - name: Execute firmware with mocked BLE and clock

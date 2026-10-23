@@ -40,6 +40,18 @@ test('incompatible firmware reveals first-time setup without sending settings',a
  const p=page({settings:false});try{await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,true);assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.session.operations.length,0);}finally{await p.close();}
 });
 
+test('new diagnostics render in the shared advanced panel and keep stale estimates labeled',async()=>{
+ const p=page();try{
+  await p.nodes.controllerConnect.onclick();
+  p.session.status=async()=>({text:'USB STATUS v2 connected=1 scene=0 sequence=2 pending=1 firmware=4 build=2026102301 wait=4 jawMs=0 accepted=1 acceptedAge=32000'});
+  await p.nodes.controllerStatus.onclick();
+  let details=p.nodes.controllerDetails.children.map(n=>n.textContent).join(' ');
+  assert.match(details,/usb-scheduler-v4/);assert.match(details,/Settings\/scene change pending/);assert.match(details,/Motor cooldown \(modeled\)/);assert.match(details,/before this snapshot/);
+  p.session.status=async()=>{throw Error('timeout');};await p.nodes.controllerStatus.onclick();
+  details=p.nodes.controllerDetails.children.map(n=>n.textContent).join(' ');assert.match(details,/Last reported activity/);assert.match(details,/Last jaw estimate/);
+ }finally{await p.close();}
+});
+
 test('unplug during a manual status refresh keeps the disconnected message and clears current details',async()=>{
  const p=page();try{
   await p.nodes.controllerConnect.onclick();

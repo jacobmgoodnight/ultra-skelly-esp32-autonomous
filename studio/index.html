@@ -6,16 +6,16 @@
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
 <link rel="stylesheet" href="./style.css?v=e6bf501bb113">
-<script src="./template.js?v=563ec99c120a" defer></script>
-<script src="./experience.js?v=d6d8118bdbb9" defer></script>
+<script src="./template.js?v=316d2f346241" defer></script>
+<script src="./experience.js?v=96b31b2f4ef4" defer></script>
 <script src="./runtime-schema.js?v=1d6fbe6d9993" defer></script>
 <script src="./runtime.js?v=1e84fc8b2dc1" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=20cece04c0eb" defer></script>
+<script src="./app.js?v=c72fdaa1cdec" defer></script>
 <script src="./scene-model.js?v=964cfed40767" defer></script>
 <script src="./scenes.js?v=dfd45f70e6e8" defer></script>
-<script src="./controller-state.js?v=330a73fd9341" defer></script>
-<script src="./controller.js?v=1eabd9245ebf" defer></script>
+<script src="./controller-state.js?v=1b1da043e409" defer></script>
+<script src="./controller.js?v=56df0109c215" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -44,6 +44,11 @@
         <button class="preset chosen" type="button" data-preset="normal"><span class="preset-symbol">◈</span><b>Normal</b><small>Head + occasional arm</small></button>
         <button class="preset" type="button" data-preset="haunted"><span class="preset-symbol">✺</span><b>Haunted</b><small>A little more active</small></button>
       </div>
+      <details class="instructions"><summary>What these personalities change</summary>
+        <ul><li><strong>Subtle:</strong> head every 60–120 seconds; arm, torso, mouth, combinations and live lights off. Keeps your eye selection.</li><li><strong>Normal:</strong> head every 35–75 seconds, arm every 150–240 seconds, fixed eye #1; torso, mouth, combinations and live lights off.</li><li><strong>Haunted:</strong> head 32–45, arm 60–120, torso 75–180 seconds; combinations requested every 240–600 seconds and eyes 1–8 every 150–300 seconds. Mouth and live lights off.</li></ul>
+        <p>Buttons change the listed settings; other custom settings remain. Requests wait for safe turns, so actual starts can be later.</p>
+        <p>For a complete portable starting point, download <a href="./presets/subtle.json" download>Subtle</a>, <a href="./presets/normal.json" download>Normal</a> or <a href="./presets/haunted.json" download>Haunted</a>, then use <strong>Load settings</strong> below. These complete profiles have mouth, lighting, idle breaks and clock windows off. Import previews replacement; sending to ESP32 is separate.</p>
+      </details>
     </section>
     <section class="panel" id="movement">
       <div class="section-head"><div><span class="step">02</span><h2>Body movement</h2></div><span class="tiny">Intervals are start-to-start</span></div>
@@ -217,7 +222,8 @@
             <div class="field-row"><label for="jawFile">Primary file # <input id="jawFile" type="number" min="1" max="65535" value="12" inputmode="numeric"></label><span class="helper">Use your own uploaded file number. #12 is an example.</span></div>
             <label class="single-field" for="jawExtras">Extra file numbers for random selection<input id="jawExtras" type="text" value="" placeholder="e.g. 13, 14"></label>
           </details>
-          <details class="instructions"><summary>Set up silent mouth clips</summary><ol><li>Upload a jaw MP3 with the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a> and note its file number.</li><li>Save head, arm and torso movement as OFF on every clip (flags <strong>0x00</strong>).</li><li>Turn the prop’s volume knob to zero for silent movement.</li></ol><p>Keep clips at 20–21 seconds. Long open and whisper &amp; gasp each produced ~3-second holds on the test prop. <a href="../audio/jaw-personalities.md">Get the clips and setup guide ↗</a></p></details>
+          <details class="instructions"><summary>Prepare and check your mouth clips</summary><ol><li>Disconnect the ESP32 from Skelly before opening the <a href="https://martinecker.github.io/SkellyUltraWebController/" target="_blank" rel="noopener">web controller</a>. Use it to upload or edit MP3s.</li><li>Record each file’s actual serial number from your prop. Numbers such as #12 or #13 belong to one device, not a universal slot.</li><li>Save head, arm and torso movement as OFF on <strong>every</strong> selected clip (flags <strong>0x00</strong>), including clips in a random mix.</li><li>For silent jaw movement, turn the prop’s <strong>physical volume knob</strong> to zero. A software volume setting is not a verified substitute.</li><li>Check the full duration of each stored clip. The default 21-second estimate suits the tested ~20-second clips; longer clips need a larger fallback or per-file estimate with padding.</li><li>Disconnect the web controller, reconnect the ESP32, then observe a complete jaw-only cycle before adding body movement, eyes or lights. Saved MP3 metadata can override eyes and colors.</li></ol><p>Mode-1 color restoration was confirmed in an isolated jaw/lighting test; eye restoration, mode 2 and wider integration remain separately unverified. <a href="../audio/jaw-personalities.md">Clips and attended setup guide ↗</a></p></details>
+          <p id="jawSetupStatus" class="selection-status" aria-live="polite"></p>
         </div>
       <div class="overlap-row"><div><strong>Finish body movements before jaw playback</strong><p>Let each body movement finish before the next mouth clip starts.</p></div><label class="switch"><input type="checkbox" id="jawProtectBody" checked><span></span><span class="sr-only">Protect head, arm and torso by delaying jaw MP3 until body movement finishes</span></label></div>
         <button class="preset" type="button" data-preset="storyteller"><span class="preset-symbol">〰</span><b>Storyteller</b><small>Spaced head and jaw · needs your clip</small></button>

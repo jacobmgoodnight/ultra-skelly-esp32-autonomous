@@ -1,5 +1,11 @@
 # Hardware verification matrix
 
+Conservative owner-tools follow-up: added scheduler status, portable profiles and
+audio guidance have software checks only. The isolated read-only wireless build
+is **Untested on hardware**, OFF in ordinary downloads/installers. Scene retention,
+recovery and physical transitions remain unconfirmed; use the explicit
+[result sheet](conservative-release-checklist.md). No new physical pass is claimed.
+
 Latest evidence: engineering handoff and October 20–23, 2026 reports on one Ultra
 Skelly v2 with an original ESP32-WROOM board. **Verified** means a reported physical
 observation, **Failed** an observed unsuccessful physical test, **Software-only**

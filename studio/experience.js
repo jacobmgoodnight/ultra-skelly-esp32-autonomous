@@ -42,7 +42,20 @@
     const names={1:'Static',2:'Strobe',3:'Pulsing'},effects=c.torsoEffect===c.headEffect?names[c.torsoEffect]:names[c.torsoEffect]+' / '+names[c.headEffect];
     return (c.lightRotation?c.lightPalettes.length+' palettes · '+c.lightInterval+' sec · ':'')+effects+' · '+Math.round(c.torsoBrightness/255*100)+'% / '+Math.round(c.headBrightness/255*100)+'%';
   }
-  const api={firstRoutine,withoutMouth,scheduleFeedback,previewItems,lightingSummary};
+  function jawSetupFeedback(c) {
+    if(!c.jawEnabled)return [];
+    const files=[c.jawFile,...String(c.jawExtras).split(',').filter(s=>s.trim()).map(Number)];
+    const estimates=new Map(String(c.jawDurations).split(',').filter(s=>s.trim()).map(s=>s.split(':').map(Number)));
+    const fallback=files.filter(n=>!estimates.has(n));
+    const messages=[];
+    if(fallback.length)messages.push('File '+fallback.map(n=>'#'+n).join(', ')+' uses the '+c.jawClipSec+'-second fallback estimate. Confirm each stored clip fits, including padding, or add a per-file estimate below.');
+    else messages.push('Each selected file has an estimate. Confirm it covers the complete stored clip plus padding.');
+    messages.push('Timing is estimated; Studio cannot read the stored files or confirm playback ends.');
+    if(!c.jawProtectBody&&(c.headEnabled||c.armEnabled||c.torsoEnabled))messages.push('Enable “Finish body movements before jaw playback” to keep an MP3 from interrupting a body action.');
+    if(c.eyesEnabled||c.lightsEnabled)messages.push('MP3s can restore saved eyes and colors. Eye correction and during-playback lighting restoration still need physical validation.');
+    return messages;
+  }
+  const api={firstRoutine,withoutMouth,scheduleFeedback,previewItems,lightingSummary,jawSetupFeedback};
   if(typeof module!=="undefined")module.exports=api;
   if(typeof window!=="undefined")window.SkellyExperience=api;
 })();

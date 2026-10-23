@@ -1,5 +1,20 @@
 # Prioritized development roadmap
 
+## October 23 conservative release decision
+
+Prioritize the existing scene reliability observations, helpful bounded status,
+guided device-specific jaw preparation and a small portable personality collection.
+The [release result sheet](conservative-release-checklist.md) records the remaining
+hardware checks without repeating confirmed USB or lighting behavior. Profiles
+reuse current formats; no scene rebuild or scheduling-policy change is introduced.
+
+PIR/Hybrid is deferred until a sensor is available, with no firmware hooks or Studio
+controls. Weighted/global scheduling, contextual sequences, direct metadata reads,
+continuous Wi-Fi and dedicated mobile apps remain deferred. The only new radio
+work is a separately generated, disabled-by-default [read-only status experiment](wireless-status-experiment.md).
+Wireless configuration requires a later reliability gate and security review.
+Older priorities below are historical context, not permission to expand this release.
+
 October 21 follow-up: guided setup/scheduling feedback, bounded original-byte USB
 capture, the fixed-profile installer build path, optional fair turns, per-file
 clip estimates, passive playback observations and USB-set weekday/time windows
