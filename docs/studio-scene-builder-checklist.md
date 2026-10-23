@@ -33,8 +33,11 @@ matching read-back. Earlier physical passes remain recorded separately.
    movement/eye/light summary and customize before saving. These opt-in examples
    start at 10 minutes, brightness 255/speed 125, mouth and clock windows OFF. They
    are software-validated combinations, not new physical integration passes.
-7. Choose 5 minutes, 15 minutes or Scene duration for the timing illustration.
-   Long intervals should appear in longer windows. Short-scene notes are advisory;
+7. Choose 5 or 15 minutes for the editor timing illustration. In Scene builder,
+   **Routine preview** shows each saved scene’s own hold and sample request tracks.
+   Unsaved edits appear there only after Update scene. Switching off dims later
+   scenes; random labels alternatives without promising an exact order or loop.
+   Long intervals should appear in longer holds. Short-scene notes are advisory;
    the preview does not arbitrate actual motion, cooldowns, clock windows or BLE
    connection delays. It changes no routine settings or firmware timing.
 8. Check phone layout, keyboard focus, dialog Escape/Cancel, and offline use from
@@ -54,3 +57,23 @@ The owner has already confirmed USB read/save and observed changed behavior, plu
 the previous USB workflow working well. No repeat of those observations is required
 solely for this refresh. Power-cycle retention/recovery and ordered/random scene
 transitions remain separate physical checks in [USB settings/scenes](usb-settings-scenes.md).
+
+## Small follow-up checks
+
+The owner reports that the focused checklist seemed to work. No per-item results
+or physical transition/retention observations were supplied with that report.
+
+- Collapse and reopen Start here with mouse and keyboard. Idle breaks is now inside
+  Advanced; its saved setting and timing fields remain available there.
+- Choose Normal: eye #1 is on and fixed. Choose Haunted: eyes 1–8 are selected,
+  random every 150–300 seconds. The summary eye thumbnail is small; its rotation
+  marker appears only for multiple enabled expressions and disappears when off.
+- Load each complete look. Check its labeled motor intervals against Body movement,
+  as well as eyes/lights. Moonlit turns the arm/torso off, Ember enables the arm,
+  Haunted enables all three plus combined actions. Save as new to retain the look.
+- Check Routine preview after Update, reorder, Delete/Undo and changing order mode.
+  Each track uses that scene’s duration. Fixed eyes/colors apply at connection and
+  have no recurring ticks. No-request samples are labeled. No port opens from previews.
+
+No firmware reinstall is needed for these interface changes. Selecting the new
+personality defaults changes only the editor until you explicitly save/upload.

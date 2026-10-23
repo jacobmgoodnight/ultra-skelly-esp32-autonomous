@@ -69,12 +69,14 @@ or clock scheduling. Their combined physical behavior is not newly verified.
 
 Lighting uses compact per-channel cards, percentage brightness (exact 0–255 values
 retained), conditional speed and an individual palette editor. The timing preview
-supports five minutes, fifteen minutes and the current scene duration. It remains
-an illustration of requests, not a movement simulator. See the
+supports five or fifteen minutes for the current editor. Scene builder has a
+separate Routine preview using each saved scene’s hold; unfinished changes are
+excluded until updated. Both illustrate requests rather than predicting movement. See the
 [short scene-builder checklist](../docs/studio-scene-builder-checklist.md).
 
 Everyday body controls are visible first; optional mouth routines stay at the bottom.
-Eye/lighting previews stay open with their feature toggles OFF; detailed choices
+Normal starts with fixed eye #1; Haunted selects eyes 1–8 every 150–300 seconds.
+Eye/lighting previews stay open; detailed choices
 expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
 Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
 brightness apply to all palettes in a scene; palettes hold torso/head colors.

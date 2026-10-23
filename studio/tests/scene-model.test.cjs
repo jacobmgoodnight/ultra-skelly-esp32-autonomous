@@ -45,3 +45,27 @@ test('extended timing windows include long-interval events without claiming phys
  const c={...g.DEFAULTS,headEnabled:true,headMin:600,headMax:600,armEnabled:false};assert.equal(g.simulateSchedule(c,1).length,0);const events=g.simulateSchedule(c,1,900);assert.equal(events.length,1);assert.equal(events[0].time,600);
  assert.equal(g.simulateSchedule({...c,headMin:32,headMax:32},1,3600).length,112);assert.throws(()=>g.simulateSchedule(c,1,3601));
 });
+
+test('Normal and Haunted explicitly replace eye choices without changing the firmware seed',()=>{
+ const normal={...g.DEFAULTS,...g.PRESETS.normal},haunted={...normal,...g.PRESETS.haunted};
+ assert.equal(normal.eyesEnabled,true);assert.deepEqual(Array.from(normal.eyeChoices),[1]);
+ assert.equal(haunted.eyesEnabled,true);assert.deepEqual(Array.from(haunted.eyeChoices),[1,2,3,4,5,6,7,8]);assert.equal(haunted.eyesMin,150);assert.equal(haunted.eyesMax,300);
+ assert.equal(g.DEFAULTS.eyesEnabled,false);
+});
+
+test('complete looks replace motors and intervals as well as appearance',()=>{
+ const moon=m.starter('moonlit',g).profile.config,haunt=m.starter('haunted',g).profile.config,ember=m.starter('ember',g).profile.config;
+ assert.equal(moon.headMin,60);assert.equal(moon.headMax,120);assert.equal(moon.armEnabled,false);assert.equal(moon.torsoEnabled,false);assert.equal(moon.compoundEnabled,false);
+ assert.equal(ember.headMin,35);assert.equal(ember.armMin,150);assert.equal(ember.armEnabled,true);assert.equal(ember.torsoEnabled,false);
+ assert.equal(haunt.armMin,60);assert.equal(haunt.torsoMin,75);assert.equal(haunt.compoundEnabled,true);assert.deepEqual(haunt.compoundMasks,[3,5,6,7]);assert.deepEqual(haunt.eyeChoices,[1,2,3,4,5,6,7,8]);assert.equal(haunt.eyesMin,150);
+});
+
+test('routine preview uses each saved hold, enabled lanes and unchanged request timing',()=>{
+ const value={rotate:true,random:false,scenes:[{...scene('Short',{headMin:60,headMax:60,armEnabled:false,eyesEnabled:true,eyeChoices:[1]}),seconds:60},scene('Long',{headMin:600,headMax:600,armEnabled:false,eyesEnabled:true,eyeChoices:[1,2],eyesMin:150,eyesMax:150})]};
+ const before=JSON.stringify(value),preview=m.routinePreview(value,g);assert.equal(JSON.stringify(value),before);
+ assert.deepEqual(preview[0].lanes.map(l=>l.kind),['head']);assert.deepEqual(preview[0].lanes[0].ticks,[]);
+ assert.equal(preview[0].position,'Starts here');assert.equal(preview[1].position,'Next in order');assert.deepEqual(preview[1].lanes.find(l=>l.kind==='eyes').ticks,[150,300,450]);assert.ok(preview.every(s=>s.lanes.every(l=>l.ticks.every(t=>t<s.seconds))));
+ value.rotate=false;assert.equal(m.routinePreview(value,g)[1].inactive,true);value.rotate=true;value.random=true;assert.equal(m.routinePreview(value,g)[1].position,'Random choice');
+ const combo={rotate:true,random:false,scenes:[scene('Combined',{...g.PRESETS.haunted,compoundAlongside:false,lightsEnabled:true,lightRotation:true})]};
+ assert.deepEqual(m.routinePreview(combo,g)[0].lanes.map(l=>l.kind),['compound','eyes','lights']);
+});

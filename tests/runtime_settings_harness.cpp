@@ -28,7 +28,10 @@ int main(){try{
   // Scene boundary waits for full cooldown, then updates all settings together.
   runtimeIdle(10000);runtimeEngine.sceneAt=fakeNow;serviceRuntime();REQUIRE(!runtimeEngine.pending);connected=true;torsoSafeAfter=fakeNow+35000;serviceRuntime();REQUIRE(runtimeEngine.pending&&runtimeEngine.scene==0);
   fakeNow=torsoSafeAfter;serviceRuntime();REQUIRE(!runtimeEngine.pending&&runtimeEngine.scene==1);REQUIRE(ARM_ENABLED&&TORSO_ENABLED&&COMPOUND_BODY_ENABLED&&COMPOUND_ALONGSIDE&&LIGHTS_ENABLED&&EYES_ENABLED);
-  REQUIRE(runtimeMaskCount==4 && runtimeFileCount==1);REQUIRE(runtimeEyeCount==1&&!EYE_ROTATION_ENABLED);REQUIRE(HEAD_ANIMATION_MS+HEAD_BUFFER_MS==32000);
+  REQUIRE(runtimeMaskCount==4 && runtimeFileCount==1);REQUIRE(runtimeEyeCount==8&&EYE_ROTATION_ENABLED);
+  REQUIRE(EYE_MIN_INTERVAL_MS==150000 && EYE_MAX_INTERVAL_MS==300000);
+  for(uint8_t i=0;i<8;++i)REQUIRE(runtimeEyes[i]==i+1);
+  REQUIRE(HEAD_ANIMATION_MS+HEAD_BUFFER_MS==32000);
   runtimeSceneConnected();REQUIRE(runtimeEngine.sceneAt-fakeNow==120000);
   REQUIRE(fakeNVSWriteCount==1); // automatic scene rotation never writes flash
   RuntimeRecord randomProgram=runtimeEngine.active;

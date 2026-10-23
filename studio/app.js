@@ -25,8 +25,8 @@
     watchful:{headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     storyteller:{headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     subtle:{headEnabled:true,headMin:60,headMax:120,jawEnabled:false,jawMin:100,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,overlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    normal:{headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
-    haunted:{headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
+    normal:{eyesEnabled:true,eyeChoices:[1],headEnabled:true,headMin:35,headMax:75,jawEnabled:false,jawMin:45,jawMax:90,torsoEnabled:false,armEnabled:true,armMin:150,armMax:240,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
+    haunted:{eyesEnabled:true,eyeChoices:[1,2,3,4,5,6,7,8],eyesMin:150,eyesMax:300,headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
   const PALETTES=Object.freeze({
@@ -487,7 +487,7 @@
   let previewSeed=0x582A;
   function render() {
     const c=readConfig(),errors=validate(c);
-    const seconds=byId('previewWindow').value==='scene'?(window.SkellyScenes?.duration?.()||600):Number(byId('previewWindow').value);
+    const seconds=Number(byId('previewWindow').value);
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
     byId('timelineTitle').textContent=seconds===300?'Five-minute timing preview':'Timing preview · '+Number((seconds/60).toFixed(2))+' min';
     byId('timelineMid').textContent=clock(Math.floor(seconds/2));byId('timelineEnd').textContent=clock(seconds);
@@ -532,6 +532,9 @@
     }
     const fixedEyes=c.eyeChoices.length===1;
     byId("eyeSummary").textContent=c.eyesEnabled?(fixedEyes?'Eye #'+c.eyeChoices[0]+' · fixed':c.eyesMin+"–"+c.eyesMax+" sec · random"):"Off · stored eyes";
+    byId('summaryEyeImage').hidden=!c.eyesEnabled;
+    byId('summaryEyeImage').src='./images/eyes/eye_icon_'+c.eyeChoices[0]+'.png';
+    byId('summaryEyeRotation').hidden=!c.eyesEnabled||fixedEyes;
     byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · selected colors"):"Off · stored colors";
     byId("lightRotationOptions").disabled=!c.lightsEnabled||!c.lightRotation;
     byId("lightRotationOptions").hidden=!c.lightRotation;
@@ -750,7 +753,7 @@
         setTimeout(()=>byId("copyCode").textContent="Copy code",1500)
       }catch(e){byId("copyCode").textContent="Copy unavailable; select code above"}
     });
-    writeConfig(DEFAULTS);
+    writeConfig({...DEFAULTS,...PRESETS.normal});
   }
   window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
