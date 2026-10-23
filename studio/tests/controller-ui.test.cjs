@@ -77,3 +77,8 @@ test('audio mode requires advertised firmware capability and reveals installatio
  await p.nodes.controllerWrite.onclick();if(audio)assert.deepEqual(p.session.operations,['write','read']);else{assert.equal(p.session.operations.length,0);assert.match(p.nodes.controllerMessage.textContent,/updated universal firmware/);assert.equal(p.nodes.controllerSetup.open,true);}}
  finally{await p.close();}}
 });
+
+test('pending USB chooser is exclusive with direct Skelly preparation before a port exists',async()=>{
+ const p=page();const original=p.session.connect.bind(p.session);let release;const chosen=new Promise(r=>release=r);p.session.connect=async()=>{await chosen;await original();};
+ const pending=p.nodes.controllerConnect.onclick();assert.equal(p.session.port,null);assert.equal(p.window.SkellyControllerPortOpen(),true);release();await pending;await p.close();assert.equal(p.window.SkellyControllerPortOpen(),false);
+});

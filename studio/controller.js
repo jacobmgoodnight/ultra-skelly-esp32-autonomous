@@ -32,7 +32,7 @@
         }
       }
     }
-    window.SkellyControllerPortOpen=()=>!!session.port;
+    window.SkellyControllerPortOpen=()=>!!session.port||state.busy;
     document.addEventListener("skelly-audio-connection",render);
     function consent(){if(!el('controllerConsent').checked)throw Error('Confirm replacing the controller’s saved routine first.');}
     el('controllerConnect').onclick=()=>state.run(async()=>{

@@ -230,7 +230,7 @@
     if(config.jawFollowupMotor===4 && !config.headEnabled)
       error.push("Enable the head switch to test Head after jaw.");
     if (![0,1,2,3].includes(config.eyeJawMode))
-      error.push("Choose a valid eye/jaw behavior (0, 1 or 2).");
+      error.push("Choose a valid eye/jaw behavior (0, 1, 2 or 3).");
     if((config.eyesEnabled && !config.eyeChoices.length) || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length)
       error.push("Select at least one valid eye design number between 1 and 18.");
     if(config.eyeJawMode===3 && (!config.jawProtectBody || config.overlap || config.jawFollowupMotor || (config.lightsEnabled&&config.lightRestoreMode!==1)))

@@ -70,7 +70,7 @@
       if(c.jawEnabled)kinds.push('jaw');
       return {name:scene.name,seconds:scene.seconds,inactive:!value.rotate&&index>0,
         position:index===0?'Starts here':!value.rotate?'Switching off':value.random?'Random choice':'Next in order',
-        lanes:kinds.map(kind=>({kind,min:kind==='lights'?c.lightInterval:c[kind+'Min'],max:kind==='lights'?c.lightInterval:c[kind+'Max'],ticks:Array.from(events.filter(e=>e.kind===kind),e=>e.time)}))};
+        lanes:kinds.map(kind=>({kind,label:kind==='jaw'&&c.eyeJawMode===3?'Audio #'+c.jawFile:undefined,min:kind==='lights'?c.lightInterval:c[kind+'Min'],max:kind==='lights'?c.lightInterval:c[kind+'Max'],ticks:Array.from(events.filter(e=>e.kind===kind),e=>e.time)}))};
     });
   }
   function starter(key,g,connection={}){

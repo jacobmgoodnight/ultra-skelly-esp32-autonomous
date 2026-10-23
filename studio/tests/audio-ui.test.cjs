@@ -37,3 +37,9 @@ test('valid clip look save preserves a manually entered estimate and reports sof
  const p=page();p.nodes.audioConnect.onclick();await p.settle();p.nodes.audioGuard.value='38';p.nodes.audioSaveLook.onclick();await p.settle();assert.equal(p.nodes.audioGuard.value,'38');assert.match(p.nodes.audioMessage.textContent,/Physical playback still needs/);
  p.nodes.audioDisconnect.onclick();assert.equal(p.nodes.audioEdit.hidden,true);assert.equal(p.nodes.audioGuard.value,'');assert.equal(p.window.SkellyAudioConnection(),false);
 });
+
+test('saved scene previews name the selected audio file instead of a generic jaw action',()=>{
+ const g=generator,model=require('../scene-model.js'),config=a.audioRoutine({...g.DEFAULTS},{serial:27},32,180,300);
+ const value={scenes:[{name:'Greeting',seconds:600,profile:JSON.parse(g.createProfile(config,{}))}],rotate:false};
+ const preview=model.routinePreview(value,g);assert.equal(preview[0].lanes.find(x=>x.kind==='jaw').label,'Audio #27');
+});
