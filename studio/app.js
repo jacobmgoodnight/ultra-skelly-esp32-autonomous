@@ -485,8 +485,16 @@
     return events.filter(e=>e.time<seconds);
   }
   let previewSeed=0x582A;
+  function renderMotionPreviews(){
+    for(const demo of document.querySelectorAll("[data-motion-for]")){
+      const enabled=byId(demo.dataset.motionFor).checked;
+      demo.classList.toggle("is-enabled",enabled);
+      demo.classList.toggle("is-animated",enabled&&byId("motionPreviews").checked);
+    }
+  }
   function render() {
     const c=readConfig(),errors=validate(c);
+    renderMotionPreviews();
     const seconds=Number(byId('previewWindow').value);
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
     byId('timelineTitle').textContent=seconds===300?'Five-minute timing preview':'Timing preview · '+Number((seconds/60).toFixed(2))+' min';
@@ -665,6 +673,8 @@
     }
     showEyePreview(1);
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
+      if(el.id==="motionPreviews"){renderMotionPreviews();return;}
+      if(el.id==="scenePreviewSelect")return;
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       if(el.closest('.eye-choice')){
         if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
@@ -753,6 +763,8 @@
         setTimeout(()=>byId("copyCode").textContent="Copy code",1500)
       }catch(e){byId("copyCode").textContent="Copy unavailable; select code above"}
     });
+    const pauseMotion=()=>byId("movement").classList.toggle("motion-paused",document.hidden);
+    document.addEventListener("visibilitychange",pauseMotion);pauseMotion();
     writeConfig({...DEFAULTS,...PRESETS.normal});
   }
   window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary};

@@ -97,3 +97,10 @@ universal installation. Advanced contains collapsed diagnostics using the same p
 Status refreshes every five seconds while identified and idle; manual operations
 cancel the background request, and hidden pages pause polling. An eight-second
 timeout marks the last snapshot stale without declaring Bluetooth disconnected.
+
+
+Body movement includes optional decorative illustrations beside the toggles. They
+respect reduced motion, pause when the page is hidden and can be stopped with
+Animate previews. They do not represent live controller activity. Saved scene
+cards keep Edit visible and fold other actions; Routine preview displays one saved
+scene selected from its dropdown without replacing editor settings.
