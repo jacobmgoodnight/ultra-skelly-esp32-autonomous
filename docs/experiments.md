@@ -501,3 +501,22 @@ Effects remain global per channel within each scene. Downloads gain local date/t
 suffixes; the summary omits jaw and the arm uses a bone icon. New attended criteria
 focus on identification, fixed eye, linked colors and random scenes; completed
 lighting checks need no repetition. No hardware port was opened during development.
+
+## October 23, 2026 — owner USB result and workflow separation
+
+The owner supplied manual HELLO/CAPS and STATUS replies, then confirmed browser
+identification and Read saved settings worked. Asked whether settings were saved
+and observed on the prop, the owner confirmed both. This supersedes the earlier
+identification failure; no exact profile, measured interval or root-cause proof
+was supplied. Power-cycle retention, interrupted-transfer recovery and ordered or
+random scene transitions remain unconfirmed on hardware.
+
+The browser workflow now groups everyday USB controls in an open Send to your
+ESP32 panel below Scene builder. First-time setup and Advanced USB diagnostics
+fold away; all controls share one serial session. Separate USB/Bluetooth indicators
+include snapshot age. Five-second idle polling uses an eight-second timeout,
+cancellation and manual-operation priority; stale replies cannot replace save
+progress. Mocked state/DOM/serial tests cover these paths and read-back/consent
+guards. This pass changes no firmware, wire commands or profile/scene formats and
+opens no physical port. The new automatic status UI remains Software-only until
+the owner checks it; the owner-confirmed read/save result is retained separately.

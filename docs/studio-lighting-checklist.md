@@ -1,8 +1,9 @@
 # Studio refresh: checks to confirm
 
-October 22, 2026. The owner now confirms **lighting effects and rotating palettes
+October 23, 2026. The owner now confirms **lighting effects and rotating palettes
 work**. The rows below remain references for untested integration, not a request
-to repeat completed observations. USB identification failed; use the focused
+to repeat completed observations. Browser USB connection, reading, saving changes
+and observing the changed routine are also owner-confirmed; use the focused
 [USB recovery, fixed-eye and scene checks](usb-settings-scenes.md#focused-follow-up-after-the-identification-correction).
 Start with mouth OFF. Use the original ESP32-WROOM, Arduino-ESP32
 3.3.12 and a 6.5-foot Ultra Skelly v2. Keep a copy of the working sketch.
@@ -12,8 +13,9 @@ movements and jaw-first responses OFF so they do not obscure the observation.
 ## October 22 follow-up status and new spot checks
 
 The owner first reported refresh checks complete except lighting and USB, then
-confirmed effects and palette rotation work. Browser USB opens the CP2102 port
-but fails identification; settings saves/reads remain untested.
+confirmed effects and palette rotation work. On October 23 the owner confirmed
+browser USB identification, reading, saving and physically observing changed behavior.
+Power-cycle retention/recovery and random scene transitions remain unconfirmed.
 Separate motor-command overlap failed (new commands stopped existing motion);
 random combined actions worked. Do not repeat completed checks unnecessarily.
 The new intervals, startup retry policy and interleaved scheduler below are

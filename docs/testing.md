@@ -22,6 +22,13 @@ that this newly changed firmware has passed its hardware regression.
 USB settings/scene software coverage and a separate future attended procedure are
 in [USB settings and scenes](usb-settings-scenes.md). Continue the current Studio
 refresh checklist first; no new physical result is implied by these checks.
+The October 23 owner report confirms browser connection/read/save and physically
+observed changed behavior; retention/recovery and scene transitions remain separate.
+Controller-state and DOM-adapter tests mock serial replies, timers and visibility
+to cover polling cancellation, late replies, stale status, disconnect cleanup,
+manual-operation exclusivity, shared-port controls, incompatible/unsupported
+recovery, replacement consent and read-back failure. These tests open no hardware
+port and establish software behavior only.
 The native runtime-offline case services the real loop across the 24.9-day signed
 timer boundary and millis wrap, verifies USB settings persist with the prop absent,
 and preserves an active 32-second head cooldown. CI uses the same complete

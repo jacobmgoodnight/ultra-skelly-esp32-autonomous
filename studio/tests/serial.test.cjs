@@ -1,5 +1,18 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {Capture,Session}=require('../serial.js');
+test('canceling a status wait removes its timer/listener and ignores a late reply',async()=>{
+ const s=new Session(null),abort=new AbortController();s.port={};s.send=async()=>{};
+ const request=s.status({timeout:1000,signal:abort.signal});await Promise.resolve();assert.equal(s.waiters.length,1);
+ abort.abort();await assert.rejects(request,{name:'AbortError'});assert.equal(s.waiters.length,0);
+ s.ingest(new TextEncoder().encode('USB STATUS v2 connected=1\n'));assert.equal(s.waiters.length,0);
+});
+test('already-canceled status sends no command; successful and timed-out requests clean up',async()=>{
+ const s=new Session(null),abort=new AbortController();s.port={};let sends=0;s.send=async()=>{sends++;};abort.abort();
+ await assert.rejects(s.status({signal:abort.signal}),{name:'AbortError'});assert.equal(sends,0);
+ const fresh=new AbortController();s.send=async()=>s.ingest(new TextEncoder().encode('USB STATUS v2 connected=1\n'));
+ assert.match((await s.status({signal:fresh.signal})).text,/connected=1/);assert.equal(s.waiters.length,0);fresh.abort();
+ s.send=async()=>{};await assert.rejects(s.status({timeout:5}),{code:'ACK_TIMEOUT'});assert.equal(s.waiters.length,0);
+});
 test('identification retries HELLO lost during a USB-triggered boot and accepts split prefixed replies',async()=>{
  const s=new Session(null);s.port={};let attempts=0;
  s.send=async line=>{assert.equal(line,'\nSKELLY HELLO\n');if(++attempts===2){s.ingest(new TextEncoder().encode('[ 1535 ms] USB READY v1 CLOCK\n[ 1540 ms] USB CA'));s.ingest(new TextEncoder().encode('PS v2 settings=1 scenes=4\n'));}};

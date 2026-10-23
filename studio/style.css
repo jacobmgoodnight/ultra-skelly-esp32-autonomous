@@ -141,7 +141,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{o
 .saved-scene{display:flex;gap:9px;flex-wrap:wrap;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .saved-scene strong{flex:1;min-width:120px;overflow-wrap:anywhere}
 .scene-editor button,.saved-scene button,.controller-panel button{background:#263249;color:var(--text);border:1px solid #52647e;border-radius:8px;padding:8px 10px}
-.controller-panel{margin:15px 0;padding:15px;border:1px solid #52647e;border-radius:12px}
+.controller-panel{scroll-margin-top:20px}
 .controller-details{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px}.controller-details dd{margin:0;text-align:right}
 .request-window{position:absolute;height:14px;background:#b28df926;border:1px dashed #b28df980;border-radius:5px;pointer-events:none}
 .request-window.continues{border-right:0;border-radius:5px 0 0 5px;text-align:right;color:#e9c6ff;line-height:11px;padding-right:2px}
@@ -162,3 +162,25 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{o
 .usb-setup{padding-left:22px;line-height:1.8}.usb-setup li{margin:9px 0}
 #lightingChoicesPanel>label{display:block;margin:12px 0}
 @media(max-width:520px){.scene-order{flex-wrap:wrap}.controller-details{grid-template-columns:1fr}.controller-details dd{text-align:left;margin-bottom:8px}}
+.controller-connections{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.controller-connections>div{display:grid;gap:7px;align-content:start;padding:15px;border:1px solid var(--line);border-radius:12px;background:#0d142080;min-width:0}
+.controller-connections span,.controller-connections small{color:var(--muted);font-size:12px}
+.controller-connections strong{font-size:17px;overflow-wrap:anywhere;color:#d2c4ed}
+.controller-connections strong[data-state=ready]{color:var(--green)}
+.controller-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0}
+.controller-actions button,.controller-secondary button,.controller-scene button,.controller-diagnostics button,#universalDownload{min-height:44px;background:#263249;border:1px solid #52647e;border-radius:9px;color:var(--text);padding:10px 12px;max-width:100%;font:inherit;font-size:13px}
+.controller-actions #controllerConnect{background:var(--purple);color:#17111e;border-color:var(--purple);font-weight:700}
+.controller-actions #controllerWrite{border-color:var(--purple)}
+.controller-panel button:disabled,.controller-diagnostics button:disabled{opacity:.4;cursor:not-allowed}
+.controller-panel button:hover:enabled,.controller-diagnostics button:hover:enabled{border-color:var(--purple)}
+.controller-secondary{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.controller-consent{display:flex;gap:9px;align-items:start;font-size:12px;color:var(--muted)}
+.controller-consent input{margin-top:4px;flex-shrink:0}
+.controller-scene{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;margin-top:14px}
+.controller-scene button{margin-left:auto;font-size:12px}
+.controller-scene>span{color:var(--muted)}
+.controller-jump{text-align:center;text-decoration:none}
+.controller-jump:hover{color:#17111e}
+.controller-diagnostics{margin-top:0;padding-top:0;border-top:0}
+.controller-diagnostics button{font-size:12px}
+@media(max-width:520px){.controller-actions button{padding:10px 6px}.controller-connections{gap:8px}.controller-connections>div{padding:12px}.controller-connections strong{font-size:15px}}
