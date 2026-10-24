@@ -40,7 +40,8 @@ test("default Studio settings generate the audio-free Normal head and arm routin
   assert.doesNotMatch(sketch, /const uint16_t JAW_FILE_POOL\[\]/);
   assert.match(sketch, /void startHead\(uint32_t now\)/);
   assert.match(sketch, /void startMouth\(uint32_t now\)/);
-  assert.match(sketch, /uint8_t frame\[11\] = \{0xAA, 0xCA, 0x01/);
+  assert.match(sketch, /uint8_t frame\[11\] = \{0xAA, 0xCA, DEVICE_PROFILE.headMask/);
+  assert.match(sketch, /DeviceProfile\{0x01,18,2,true,true,1,"skelly-config"\}/);
   assert.match(sketch, /const bool TORSO_ENABLED = false;/);
   assert.match(sketch, /const bool ARM_ENABLED = true;/);
   assert.match(sketch, /const uint32_t TORSO_MIN_INTERVAL_MS = 240000;/);

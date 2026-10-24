@@ -1,5 +1,9 @@
 # Hardware verification matrix
 
+**2026 app-controlled 12-foot Skelly: Untested on hardware.** Its opt-in profile
+has software-only evidence; none of the Ultra observations below transfer to it.
+See the [feature matrix and attended checklist](experimental-12ft.md).
+
 Latest evidence: engineering handoff and October 20–23, 2026 reports on one Ultra
 Skelly v2 with an original ESP32-WROOM board. **Verified** means a reported physical
 observation, **Failed** an observed unsuccessful physical test, **Software-only**

@@ -1,12 +1,13 @@
 # Current feature status
 
-Release **2026.10.24-preview.1** · firmware revision **5**, build **2026102401**.
+Release **2026.10.24-preview.2** · firmware revision **5**, build **2026102402**.
 This page is the current overview. Dated experiment logs and archived roadmaps
 retain their historical statements. The [hardware matrix](hardware-verification.md)
 records physical evidence; the [changelog](../CHANGELOG.md) records software releases.
 
 | Feature | Available | Evidence / remaining work |
 | --- | --- | --- |
+| 2026 app-controlled 12-foot compatibility | Advanced, explicit opt-in | Experimental — Not Hardware Tested. Head, eyes 1–20 and chest RGB only; audio/jaw, arm, torso and compound disabled. [Volunteer checklist](experimental-12ft.md). Ultra remains the default. |
 | Autonomous head, arm and torso; fixed/random eyes | Yes | Individual behaviors owner-confirmed on one 6.5-foot Ultra Skelly v2 / original ESP32-WROOM; no new endurance claim. |
 | Combined body commands | Yes, optional | Owner confirms combinations/random combined movement; newer interleaving and extended durations remain separately unconfirmed. Separate-command overlap failed and stays removed. |
 | Lighting effects, custom palettes and rotation | Yes | Owner confirms effects and palette rotation; exact channels/speeds and new audio integration are not all enumerated. |

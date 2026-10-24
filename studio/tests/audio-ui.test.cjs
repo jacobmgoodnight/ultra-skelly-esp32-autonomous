@@ -22,6 +22,14 @@ test('optional audio starts disconnected and unsupported browsers retain routine
  const p=page();assert.equal(p.connects,0);assert.equal(p.nodes.audioEdit.hidden,true);assert.equal(p.nodes.audioUpload.disabled,true);assert.equal(p.nodes.audioEdit.disabled,true);assert.equal(p.config.jawEnabled,false);
  const q=page({supported:false});assert.equal(q.nodes.audioConnect.disabled,true);assert.match(q.nodes.audioMessage.textContent,/cannot connect directly/);assert.equal(q.config.headEnabled,true);
 });
+test('experimental 12-foot selection cancels direct audio and rejects new audio operations',async()=>{
+ const p=page();p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.connects,1);
+ p.window.SkellyStudioGenerator.writeConfig(generator.adaptDevice({...p.config,bleName:'12ft Skelly'},'skelly12'));
+ assert.equal(p.session.connected,false);assert.equal(p.nodes.audioConnect.disabled,true);
+ p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.connects,1);assert.match(p.nodes.audioMessage.textContent,/Audio is disabled/);
+ assert.equal(p.config.jawEnabled,false);
+ assert.throws(()=>a.audioRoutine(p.config,{serial:27},28,180,300),/Audio is disabled/);
+});
 test('USB connection blocks direct BLE preparation without opening another controller',async()=>{const p=page({usb:true});p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.connects,0);assert.match(p.nodes.audioMessage.textContent,/Close the ESP32 USB session/);});
 test('read device identity plus explicit estimate configures editor only and audio can be turned off',async()=>{
  const p=page();p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.nodes.audioEdit.hidden,false);assert.equal(p.nodes.audioFileSelect.value,'27:45:Greeting.mp3');

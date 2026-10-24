@@ -29,8 +29,10 @@
     }
     async function confirmReplace(label){return !dirty()||await ask(label+' Discard the current unsaved editor changes? Saved scenes are unchanged.');}
     function applyEditor(scene,index=null){
+      const changedModel=(g.readConfig().deviceId??'ultra')!==(scene.profile.config.deviceId??'ultra');
       loading=true;library.editing=index;previewName=index===null?previewName:scene.name;pendingNew=index===null;el('sceneName').value=scene.name;el('sceneMinutes').value=Number((scene.seconds/60).toFixed(4));
-      g.writeLibrary(scene.profile.clips,scene.profile.audio);g.writeConfig(scene.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
+      g.writeLibrary(scene.profile.clips,scene.profile.audio);g.writeConfig({...scene.profile.config,deviceId:scene.profile.config.deviceId??'ultra'});for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
+      if(changedModel)message('Warning: loaded settings change the selected device model to '+(scene.profile.config.deviceId==='skelly12'?'2026 12-foot — Experimental / Not Hardware Tested.':'6.5-foot Ultra Skelly v2.'));
     }
     function wireKey(program){return JSON.stringify(window.SkellyRuntime.encode(program.scenes,program.rotate,g.validate,program.random));}
     function renderDevice(){
@@ -109,6 +111,7 @@
     function previewImport(value,label){
       const parsed=m.validateLibrary(value,g),dialog=el('sceneImportDialog'),preview=el('sceneImportPreview');preview.replaceChildren();
       el('sceneImportTitle').textContent=label;el('sceneImportNotice').textContent='Replace '+library.value.scenes.length+' browser scene(s) with '+parsed.scenes.length+' imported scene(s).'+(dirty()?' Current unsaved editor changes will also be replaced.':'')+' Nothing is sent to the ESP32.';
+      if(parsed.scenes.some(s=>(s.profile.config.deviceId??'ultra')!==(g.readConfig().deviceId??'ultra')))el('sceneImportNotice').textContent+=' Warning: imported scenes change the device model. 12-foot scenes are Experimental — Not Hardware Tested.';
       for(const s of parsed.scenes)preview.append(make('li',s.name+' · '+Number((s.seconds/60).toFixed(2))+' min · '+m.sceneSummary(s.profile.config).motors));
       dialog.returnValue='';dialog.showModal();return new Promise(resolve=>{const close=()=>{dialog.removeEventListener('close',close);resolve(dialog.returnValue==='replace'?parsed:null);};dialog.addEventListener('close',close);});
     }

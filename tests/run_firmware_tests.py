@@ -48,6 +48,10 @@ for name, old, new in [("AudioUnprotected", "const bool JAW_PROTECTS_ARM_TORSO =
                         ("AudioFollowup", "const uint8_t JAW_FOLLOWUP_MOTOR = 0;", "const uint8_t JAW_FOLLOWUP_MOTOR = 1;")]:
     failed |= build_and_run(ROOT / (".skelly-build/host/" + name), audio_guard_source.replace(old, new), "", name,
                             expected_error="Audio scenes require full protection")
+for flags, label in [([], "Experimental12"), (["--runtime"], "Experimental12Runtime")]:
+    source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-device-fixture.cjs"), *flags], encoding="utf-8")
+    failed |= build_and_run(ROOT / ".skelly-build/host" / label, source,
+                            (ROOT / "tests/device_profile_harness.cpp").read_text(encoding="utf-8"), label)
 fixed_eye_source = subprocess.check_output([os.environ.get("NODE", "node"), "-e", "const fs=require('fs'),vm=require('vm');const c=vm.createContext({window:{}});for(const f of ['template.js','app.js'])vm.runInContext(fs.readFileSync('studio/'+f,'utf8'),c);const g=c.window.SkellyStudioGenerator;process.stdout.write(g.generateSketch({...g.DEFAULTS,headEnabled:false,armEnabled:false,eyesEnabled:true,eyeChoices:[7]}));"], cwd=ROOT, encoding="utf-8")
 failed |= build_and_run(ROOT / ".skelly-build/host/FixedEye", fixed_eye_source,
                        (ROOT / "tests/fixed_eye_harness.cpp").read_text(encoding="utf-8"), "Fixed eye without rotation")

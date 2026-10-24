@@ -1,7 +1,7 @@
 /* Public identity for this reviewed firmware family; source is the authority. */
 (function(){
   'use strict';
-  const VERSION='2026.10.24-preview.1',REVISION=5,BUILD=2026102401;
+  const VERSION='2026.10.24-preview.2',REVISION=5,BUILD=2026102402;
   function firmwareView(data,capable=false,identified=false,stale=false){
     if(!identified)return {text:'Connect to identify installed firmware.',update:false};
     if(!capable)return {text:'Universal firmware required for USB settings.',update:true};
