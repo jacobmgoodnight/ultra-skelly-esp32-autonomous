@@ -82,8 +82,10 @@
     });
     el('universalDownload').onclick=()=>{
       try{
-        g.downloadText(g.generateRuntimeSketch([{name:'Subtle',seconds:600,config:{...g.DEFAULTS,...g.PRESETS.subtle}}]),'SkellyUniversal.ino','text/plain');
-        state.say('Open the downloaded .ino in Arduino IDE, compile/upload with ESP32 Dev Module and core 3.3.12, then close Serial Monitor and connect here.');
+        const selected=g.readConfig(),experimental=selected.deviceId==='skelly12';
+        const config=g.adaptDevice({...g.DEFAULTS,...g.PRESETS.subtle,...(experimental?{deviceId:'skelly12',bleName:selected.bleName}:{})});
+        g.downloadText(g.generateRuntimeSketch([{name:'Subtle',seconds:600,config}]),experimental?'Skelly12ExperimentalUniversal.ino':'SkellyUniversal.ino','text/plain');
+        state.say((experimental?'Experimental 12-foot — Not Hardware Tested. ':'')+'Open the downloaded .ino in Arduino IDE, compile/upload with ESP32 Dev Module and core 3.3.12, then close Serial Monitor and connect here.');
       }catch(error){state.say(error.message,'error');}
     };
     document.addEventListener('skelly-scenes-changed',render);

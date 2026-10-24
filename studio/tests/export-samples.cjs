@@ -9,8 +9,12 @@ for(const file of ["studio/template.js","studio/runtime-schema.js","studio/runti
   vm.runInContext(fs.readFileSync(path.join(root,file),"utf8"),ctx,{filename:file});
 }
 const generator = ctx.window.SkellyStudioGenerator;
+const experimental=options=>generator.adaptDevice({...generator.DEFAULTS,bleName:'12ft Skelly',...options},'skelly12');
 const base = {...generator.DEFAULTS, jawEnabled:true,headMin:32,headMax:60,armEnabled:false,armMin:360,armMax:720, eyeChoices: [...generator.DEFAULTS.eyeChoices]};
 const cases = {
+  Experimental12Head:experimental({}),
+  Experimental12EyesLights:experimental({eyesEnabled:true,eyeChoices:[19,20],lightsEnabled:true,torsoEffect:3,lightRotation:true}),
+  Experimental12Haunted:experimental(generator.PRESETS.haunted),
   FixedEye:{eyesEnabled:true,eyeChoices:[7]},
   HauntedInterleaved:{...generator.PRESETS.haunted},
   CustomPalettesAndRetry:{jawEnabled:false,lightsEnabled:true,lightRotation:true,palette0Name:"Custom",palette0Torso:"#123456",palette0Head:"#abcdef",scanRetrySec:10,startupRetrySec:5,startupWindowSec:90},
@@ -63,6 +67,7 @@ for(const [name,options] of Object.entries(cases)) {
   console.log("Generated "+name+" ("+code.length+" characters)");
 }
 for(const [name,scenes,rotate,random] of [
+  ['Experimental12Runtime',[{name:'Head',seconds:600,config:experimental({})},{name:'Eyes and chest',seconds:600,config:experimental({eyesEnabled:true,eyeChoices:[19,20],lightsEnabled:true,torsoEffect:2})}],true,true],
   ['RuntimeRandomScenes',[{name:'One',seconds:600,config:{...generator.DEFAULTS}},{name:'Two',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Three',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted}}],true,true],
   ['RuntimeSingle',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}}],false],
   ['RuntimeScenes',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Haunted',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted,eyesEnabled:true,lightsEnabled:true}}],true],

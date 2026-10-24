@@ -32,7 +32,10 @@ waiting for the prop's sensor. **Default scheduling uses fixed or randomized
 intervals.** An experimental weekday/time window can limit new routines after
 you set local time over USB; it pauses after every restart until time is set again.
 The stock sensor mode's active-window timer is a different feature. This project
-does not extend compatibility to the 12-foot app-controlled Skelly or other props.
+does not establish compatibility with other props. An unobtrusive Advanced option
+offers [experimental 2026 app-controlled 12-foot support](docs/experimental-12ft.md),
+**not hardware tested**, with head, eyes and chest lighting only. Ultra remains
+the default; older 12-foot models are excluded.
 
 ## What you can configure
 

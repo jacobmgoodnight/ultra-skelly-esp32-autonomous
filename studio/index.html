@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=e6bf501bb113">
-<script src="./template.js?v=316d2f346241" defer></script>
+<link rel="stylesheet" href="./style.css?v=b7ef13efce25">
+<script src="./template.js?v=376cdd5a70d7" defer></script>
 <script src="./experience.js?v=96b31b2f4ef4" defer></script>
 <script src="./runtime-schema.js?v=1d6fbe6d9993" defer></script>
-<script src="./runtime.js?v=1e84fc8b2dc1" defer></script>
+<script src="./runtime.js?v=78ef2ccbee0d" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=c72fdaa1cdec" defer></script>
-<script src="./scene-model.js?v=964cfed40767" defer></script>
-<script src="./scenes.js?v=dfd45f70e6e8" defer></script>
+<script src="./app.js?v=e7392a233a1b" defer></script>
+<script src="./scene-model.js?v=c6f42a6a9d6d" defer></script>
+<script src="./scenes.js?v=e5f5ac97cfdc" defer></script>
 <script src="./controller-state.js?v=1b1da043e409" defer></script>
-<script src="./controller.js?v=56df0109c215" defer></script>
+<script src="./controller.js?v=7112a54dd7b4" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -31,6 +31,7 @@
 </section>
 <p id="draftTopNotice" class="draft-top-notice" hidden><a id="draftReview" href="#scenes">Previous editor draft found · review or restore your edits →</a></p>
 <main class="layout">
+  <p id="deviceWarning" class="notice" role="status" hidden>Experimental — Not Hardware Tested. Experimental support for the 2026 app-controlled 12-foot Skelly. This model has not been physically tested with this controller. Start with head-only movement and verify each feature carefully. Audio/jaw is disabled; only chest lighting channel 0 is used.</p>
   <div class="controls">
     <details class="panel fold-panel" id="first-run" open>
       <summary><span><small>START HERE</small><strong>Your first autonomous routine</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
@@ -163,7 +164,7 @@
       <details class="instructions" id="controllerSetup"><summary>First-time setup · install universal firmware</summary>
         <ol class="usb-setup"><li>Use an original ESP32-WROOM. Download universal firmware below and open the .ino in Arduino IDE.</li><li>Choose <strong>ESP32 Dev Module</strong> with <strong>Arduino-ESP32 3.3.12</strong>, then compile and upload once.</li><li><strong>Close Arduino Serial Monitor</strong> and other USB tools. Use desktop Chrome or Edge, choose <strong>Connect ESP32</strong>, then your board’s port (often <strong>CP2102 USB to UART Bridge</strong> or CH340, with a COM number).</li><li>Wait for <strong>Ready</strong>. Read an existing controller’s settings, or confirm replacement and save your routine or scenes. Later edits use these save buttons.</li></ol>
         <button id="universalDownload" type="button">Download universal firmware (.ino)</button>
-        <p class="small-description">Prefer a reviewed prebuilt package? The <a href="./usb.html#firmware">browser installer</a> accepts its local package files. Studio does not compile source in the browser. Keep a copy of your working firmware and settings before reinstalling.</p>
+        <p class="small-description">The source download follows your selected model. Reviewed prebuilt packages in the <a href="./usb.html#firmware">browser installer</a> are for the 6.5-foot Ultra only. Studio does not compile source in the browser. Keep a copy of your working firmware and settings before reinstalling.</p>
       </details>
     </section>
     <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Idle breaks, clock, Bluetooth and logs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
@@ -184,6 +185,12 @@
       </div>
     </div></details>
       <h3>Connection &amp; diagnostics</h3>
+      <details class="instructions"><summary>Experimental device compatibility</summary>
+        <label>Choose your Skelly <select id="deviceId"><option value="ultra">6.5 ft Ultra Skelly v2 — Default / Tested</option><option value="skelly12">12 ft App-Controlled Skelly (2026) — Experimental / Untested</option></select></label>
+        <p id="deviceChangeNotice" role="status" hidden></p>
+        <p>Only the 2026 app-controlled 12-foot model with Bluetooth animation hardware is eligible. Older 12-foot models are excluded. Changing models resets eyes and lighting to OFF and removes unsupported settings.</p>
+        <p>For the experimental model, download a model-specific sketch from Scene builder. The first-time USB installer remains for the 6.5-foot Ultra.</p>
+      </details>
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>
       <fieldset><legend>Bluetooth scan retries</legend>

@@ -1,5 +1,10 @@
 # Controller architecture
 
+The optional [2026 12-foot profile](experimental-12ft.md) is Experimental — Not
+Hardware Tested. Model selection is fixed in each generated ESP32 build, with a
+central capability map, final packet guards and separate USB format/NVS namespace.
+Ultra defaults, wire layout and storage remain unchanged. No prop firmware is written.
+
 October 23 conservative owner-tools follow-up: boot marker `usb-scheduler-v4`,
 build `2026102301`, adds numeric status fields for firmware/build, primary
 activity/wait, modeled jaw time and last accepted-write age. Old numeric parsers

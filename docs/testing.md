@@ -19,6 +19,14 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
+The [experimental 12-foot profile](experimental-12ft.md) adds browser-model tests
+for legacy imports, model-specific exports, restricted presets/starters, mixed-model
+scene rejection and USB round trips. The native runner executes fixed and runtime
+12-foot sketches with mocked BLE/time to assert exact head bytes/CRC, capability
+rejection, eyes 19–20, channel-0 effects, 90-second cooldowns, format isolation and
+scan/reconnect cleanup. Four experimental builds join the existing pinned compile
+matrix. These are **Software-only** checks; the attended checklist remains pending.
+
 The [scene-builder checklist](studio-scene-builder-checklist.md) covers the latest
 browser refresh. Model/DOM tests exercise explicit CRUD and atomic validation,
 selection through reorder/delete/Undo, draft recovery and invalid/storage failure
