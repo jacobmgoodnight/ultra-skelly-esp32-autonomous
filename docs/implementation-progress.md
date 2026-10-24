@@ -1,3 +1,5 @@
+> Historical October 21 implementation record. Later USB/lighting/audio work supersedes the then-pending proposals below. See [current feature status](status.md) and [hardware evidence](hardware-verification.md).
+
 # Requested improvements: implementation and evidence
 
 The subsequent [movement-first Studio update](movement-first-studio.md) puts

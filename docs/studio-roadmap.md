@@ -1,171 +1,22 @@
-# Studio usability and next steps
+# Studio: current usability and next steps
 
-## October 23 — scene editing and compact lighting
+The current [feature/evidence overview](status.md) supersedes the dated proposals
+in the [archived Studio roadmap](archive/studio-roadmap-before-2026-10-24.md).
 
-The owner confirms the separated USB workflow works well. Browser connection,
-read/save and observed changed routines are confirmed; power-cycle retention,
-recovery and scene transitions remain separate. Later dated sections below retain
-their historical status rather than defining current evidence.
+Implemented in 2026.10.24-preview.1:
 
-Implemented: visual scene cards; explicit update/new; rename, duplicate, ordering
-and one-step library Undo; recoverable valid editor drafts; import previews and
-unsaved-change protection; separate editor/browser/verified-controller indicators;
-compact lighting channels and per-palette editing; longer optional timing windows;
-and three opt-in complete looks. Formats and firmware are unchanged. The
-[refresh checklist](studio-scene-builder-checklist.md) records browser spot checks
-and the remaining physical limits.
+- Install once versus everyday Save routine/Save scenes guidance, release-stamped
+  source downloads and installed firmware identity when reported.
+- Read-only modeled controller activity/wait, separate from USB/Bluetooth status
+  and save progress; older firmware and stale snapshots remain explicit.
+- Foldaway comparison of saved scene holds, individual/combined intervals, eyes,
+  named lighting/effects and optional audio. Editor drafts are excluded.
+- Experimental optional audio stays collapsed inside Advanced. Local audio decode,
+  trim, waveform, mono/8 kHz/32 kbps MP3 preparation and silent-until-play computer
+  preview do not connect to hardware or upload anything.
+- Friendly clip labels survive browser profiles/scenes. A refreshed file-list
+  mismatch warns and blocks known mismatched USB saves; no automatic renumbering.
 
-## USB settings and saved scenes — October 22
-
-Implemented as an opt-in universal firmware path, with physical checks pending:
-USB read/save/reset, bounded connected status, up to four saved personalities and
-optional autonomous scene rotation. Ordinary sketch downloads keep their existing
-compile-time settings path. See [implementation and later checks](usb-settings-scenes.md).
-Lights-out scheduling was explicitly deferred; the clock still gates new routines
-without switching off stored prop lighting. Existing Studio/light/USB checks remain
-in progress and are not replaced by this follow-up. Older proposals below describe
-their status at the time they were written.
-
-## October 22 follow-up
-
-Subtle now uses 60–120 seconds. Haunted uses arm 60–120 and torso 75–180,
-with all four combined masks every 240–600 seconds alongside individual routines.
-Separate-command overlap is removed after a physical failure report. Eye previews
-are bundled; four palette slots can be renamed/recolored and saved in v4 profiles.
-Bluetooth retries expose a five-second startup scan interval and thirty-second
-normal retry pause. Lighting and browser USB remain pending; previous refresh
-checks were reported complete. See the [follow-up checklist](studio-lighting-checklist.md).
-
-## Earlier October 22 Studio and lighting refresh
-
-Subtle now provides the quiet 120–240-second head-only routine; the overlapping
-Watchful button and separate head-only setup button are removed. The internal
-Watchful configuration remains for compatibility. Normal requests head every
-35–75 seconds and arm every 150–240; Haunted requests arm every 120–240 seconds.
-Main presets remain movement-focused; eyes and lighting can be added manually.
-The top shortcut bar is removed, body icons are inline purple SVGs, and preview
-lanes/legend show enabled features only. Timing explanations are optional details.
-
-Lighting supports opt-in selected-palette rotation, independently selected
-Static/Strobe/Pulsing modes and speed for torso/head. New behavior is physically
-Untested. Defaults retain Static with rotation OFF. Profiles are now v3, with
-safe v1/v2 migration. Use the [new focused checklist](studio-lighting-checklist.md).
-
-## October 21 implementation update
-
-Studio now starts without mouth playback. Normal and Haunted also leave it OFF.
-The bottom collapsed **Optional mouth routines · limited** panel holds clip setup,
-jaw-first, playback estimates, fair turns, observations and MP3 eye/light behavior.
-Its controls appear only after mouth is enabled. Switching it OFF clears active
-jaw coordination without discarding clip mappings or independent feature settings.
-Storyteller is available only inside this optional section. Imported profiles
-retain their explicit mouth setting. The canonical reference sketch is unchanged.
-
-The next pass implements guided head-only setup, Watchful/Storyteller presets,
-request-only timing feedback, local raw-byte USB capture, a USB clock protocol
-and optional weekday/overnight windows, per-file conservative playback estimates,
-opt-in fair body turns and passive AE02 observations. A fixed head-only image can
-be built as a versioned Actions artifact and installed through the separate USB
-page after package/hash validation. Custom settings still require compilation.
-New profiles use version 2; version-1 profiles import with safe defaults for added
-fields. Older Studio rejects version 2 instead of silently dropping those fields.
-See [USB tools](usb-tools.md) and [attended criteria](next-attended-tests.md).
-
-Hardware is unavailable for this pass, so new physical results remain Untested.
-Serial corruption is not fixed; actual playback-end control, USB-persistent
-configuration and additional lighting protocols remain separate work. The staged
-upload proposal below records the earlier plan; stages 1 and 2 now have software
-implementations, while stage 3 remains future work.
-
-The October 21 usability pass separates body movement and mouth routines, uses
-short everyday labels, and folds optional appearance, coordination and testing
-controls away. Firmware defaults, timing, packet formats and generator anchors
-are unchanged. Existing settings remain accessible. The five-minute timeline stays visible
-and is explicitly illustrative; it is not a firmware simulator.
-
-## Mouth routines
-
-The clip library offers **Chatter**, **Long open**, **Whisper & gasp**, and a
-**Surprise me** mix of the entered clips. Each button selects actual stored MP3
-file numbers. It cannot create jaw movement from a label, upload audio to Skelly,
-or position the jaw directly. Clips must already be uploaded, have body movement
-flags `0x00`, and fit the existing 21-second playback model. Silence is controlled
-by the prop's volume knob.
-
-New clip-library fields start blank. File numbers are device-specific; the
-original user's confirmed mapping is 12 / 13 / 14, not a universal numbering
-scheme. Saving a version-1 JSON profile keeps the settings and library together
-without an account or browser storage. Imports validate the full profile before
-applying changes. A file mix is existing generated firmware behavior, but its
-combined hardware integration still needs an attended run.
-
-## Pending hardware work, in practical order
-
-October 21 update: the jaw mix is physically observed; idle pauses and two
-reconnect recoveries have logs with tentative physical reports. Remaining checks
-are optional spot checks from the [short pack](attended-test-pack.md), not a gate
-for unrelated Studio improvements. Completed checks do not need repetition.
-
-| Priority | Test | Result criteria |
-| --- | --- | --- |
-| Next diagnosis | Repeat the lighting-OFF jaw sketch using a second serial terminal, then a BLE-connected/no-command control if needed | Save original bytes and timing; compare the same cable, baud and sketch. Serial-only idle passed once, so no UART/monitor or BLE cause is established. |
-| Before relying on a combined routine | Known jaw clip + standalone head + alternating arm/torso + mode-1 lights, adding eyes separately | Observe each motor finishing, jaw continuing during arm/torso, both colors returning, and no unexpected movement/reset. Start with a short attended run, then extend endurance. |
-| Before using eye recovery | Keep selected eyes / choose new eyes around MP3 | Visually confirm the requested expression survives start/end; serial acceptance is insufficient. |
-| Optional follow-up | Idle-break physical completion | Jaw pool is observed. Pause/resume timing is logged; check uninterrupted physical completion only if needed during use. |
-| Reliability | Several prop power cycles, reconnects, then extended runtime | No unexpected replay, stable post-connection heap, fresh usable service handles and canceled stale jobs. Cached service lifecycle remains an audit item. |
-| Optional experiment | Recurring combined body mode, separate from jaw-first | Confirm each permitted mask, full motion durations and conservative cooldowns over repeated cycles. |
-| Optional experiment | During-playback light restoration, exact head LED region | Observe channel mapping and both chosen colors during/after audio without breaking the routine. |
-
-Jaw-first HEAD already **failed** at both 2 and 10 seconds. It stays an advanced
-diagnostic rather than a routine choice. Mode-1 color recovery and individual
-compound masks are already physically verified; they do not need to be repeated
-as new discoveries. AE02 playback-end notifications and multi-week timer behavior
-are separate engineering investigations, not prerequisites for improving the UI.
-
-## Uploading without Arduino IDE
-
-Arduino IDE is optional. Arduino CLI can compile and upload the same sketch.
-Compilation is required somewhere: the ESP32 executes firmware binaries, not an
-`.ino` file. Studio currently generates source only.
-
-[Espressif's esptool-js](https://github.com/espressif/esptool-js) flashes compiled
-images from Chrome/Edge over USB using Web Serial.
-[ESP Web Tools](https://esphome.github.io/esp-web-tools/) provides an embeddable
-installer, firmware manifests and a serial console on a secure web origin. USB
-flashing requires no prop Wi-Fi or continuously connected browser. A prebuilt
-image must match the chip, flash layout and reviewed firmware revision.
-
-Recommended staged implementation:
-
-1. Add a browser serial monitor with plain-text and original-byte downloads. This
-   would also help the current log investigation; keep opening a port an explicit
-   user action and handle resets/disconnects.
-2. Publish reviewed, versioned prebuilt firmware and a browser USB installer.
-   Start with fixed tested profiles; do not imply custom source is compiled by
-   the upload button. Include chip validation and clear overwrite/recovery steps.
-3. Move validated settings into versioned persistent ESP32 configuration, written
-   over USB. Then one firmware installation can support changes from Studio
-   without recompiling. This requires firmware migration, input validation,
-   safe application between actions, and power-loss/reconnect tests.
-
-A hosted compiler would add infrastructure and privacy/availability concerns;
-it is not needed for the preferred static, account-free approach. An in-browser
-compiler would be a separate substantial toolchain project.
-
-## Further usability and fun
-
-Studio now includes Halloween, Haunted, Moonlight and Ember color palettes.
-Choosing one enables the existing RGB controls and changes only the two colors;
-brightness, MP3 restoration behavior and motor settings remain as configured.
-
-- Add named color palettes and more personality starting points using existing
-  controls; show which motors and clips each personality needs.
-- Offer downloadable jaw clips with animated waveform examples clearly labeled
-  as illustrative, followed by a short upload/number-mapping wizard.
-- Add a read-only connected status and guided hardware check after a future USB
-  protocol exists. Do not present unconfirmed writes as successful physical tests.
-- Add additional synthesized patterns such as double take, yawn and sudden gasp
-  as opt-in audio experiments. Physical response must be checked per clip.
-
-Browser flashing, a serial console, extra waveforms and persistent firmware
-configuration are proposals, not capabilities in this UI pass.
+Next decisions depend on the [attended result list](next-release-checklist.md),
+not further mandatory controls. Keep everyday routines simple. Physical scene
+transitions, new audio ownership/restoration, flashing and endurance remain pending.

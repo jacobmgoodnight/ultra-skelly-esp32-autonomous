@@ -10,6 +10,7 @@
     byId("status").textContent=(session.port?"USB connected. ":"Disconnected. ")+session.capture.size+" bytes captured; "+session.capture.dropped+" discarded. "+session.error;
     byId("output").textContent=session.capture.text.slice(-32768);
   });
+  window.SkellyUsbPortOpen=()=>Boolean(session.port||session.busy||session.operation);
   const download=(data,name,type)=>{const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   byId("connect").disabled=!navigator.serial;
   if(!navigator.serial)byId("status").textContent="Web Serial is unavailable. Use desktop Chrome/Edge on HTTPS, localhost or a supported local file, or use the Python capture tool.";

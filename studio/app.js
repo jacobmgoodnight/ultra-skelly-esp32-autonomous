@@ -65,6 +65,15 @@
     }
     return {jawEnabled:true,jawFile:files[0],jawExtras:files.slice(1).join(", ")};
   }
+  let audioReference=null;
+  function normalizeAudioReference(ref){
+    if(ref==null)return null;
+    if(typeof ref!=='object'||Array.isArray(ref)||typeof ref.name!=='string'||!ref.name||ref.name.length>128||/[\x00-\x1f\x7f]/.test(ref.name)||typeof ref.device!=='string'||!ref.device.trim()||ref.device.length>48||/[\x00-\x1f\x7f]/.test(ref.device)||!Number.isInteger(ref.serial)||ref.serial<1||ref.serial>65535||!Number.isInteger(ref.cluster)||ref.cluster<0||ref.cluster>0xffffffff)throw Error('Invalid audio file label.');
+    return {name:ref.name,device:ref.device.trim(),serial:ref.serial,cluster:ref.cluster};
+  }
+  function referenceMatches(c,ref){return c.jawEnabled&&c.eyeJawMode===3&&ref?.serial===c.jawFile&&ref.device===c.bleName.trim();}
+  function readAudioReference(c=readConfig()){return referenceMatches(c,audioReference)?{...audioReference}:null;}
+  function writeAudioReference(ref){audioReference=normalizeAudioReference(ref);}
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
     const profile=JSON.parse(text);
@@ -97,10 +106,13 @@
        config.compoundMasks.some(n=>![3,5,6,7].includes(n)) || new Set(config.compoundMasks).size!==config.compoundMasks.length)
       errors.push("Invalid combined movement settings.");
     if(errors.length)throw new Error([...new Set(errors)].join("\n"));
-    return {app:"SkellyStudio",version:4,config,clips:normalizeLibrary(profile.clips||{})};
+    const audio=normalizeAudioReference(profile.audio);
+    if(audio&&!referenceMatches(config,audio))throw Error('Audio file label does not match this routine. Reselect the file on Skelly.');
+    return {app:"SkellyStudio",version:4,config,clips:normalizeLibrary(profile.clips||{}),...(audio?{audio}:{})};
   }
-  function createProfile(config,clips) {
-    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:4,config,clips})),null,2)+"\n";
+  function createProfile(config,clips,reference=audioReference) {
+    const audio=referenceMatches(config,reference)?normalizeAudioReference(reference):null;
+    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:4,config,clips,...(audio?{audio}:{})})),null,2)+"\n";
   }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
@@ -321,6 +333,8 @@
       "const uint32_t REST_MAX_INTERVAL_MS = "+(config.restMax*1000)+";\n"+
       "const uint32_t REST_MIN_DURATION_MS = "+(config.restDurationMin*1000)+";\n"+
       "const uint32_t REST_MAX_DURATION_MS = "+(config.restDurationMax*1000)+";");
+    out=replaceOnce(out,"bool diagnosticResting(uint32_t now) { (void)now; return false; }",
+      "bool diagnosticResting(uint32_t now) { return REST_ENABLED && !reached(now,restUntil); }");
     out=replaceOnce(out,"uint32_t nextEyeAt = 0;",
       "uint32_t nextEyeAt = 0;\nuint32_t nextRestAt = 0;\nuint32_t restUntil = 0;");
     out=replaceOnce(out,
@@ -449,7 +463,7 @@
     for(const key of ["lightInterval","torsoEffect","headEffect","torsoSpeed","headSpeed"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     if(cfg.lightRotation!==undefined)byId("lightRotation").checked=cfg.lightRotation;
     if(cfg.lightPalettes)document.querySelectorAll(".light-palette-choice").forEach(el=>el.checked=cfg.lightPalettes.includes(Number(el.value)));
-    if(cfg.jawEnabled===true){byId(cfg.eyeJawMode===3?"audioScenes":"mouth").open=true;if(cfg.eyeJawMode===3)byId("mouth").open=false;}
+    if(cfg.jawEnabled===true){byId(cfg.eyeJawMode===3?"audioScenes":"mouth").open=true;if(cfg.eyeJawMode===3){byId("mouth").open=false;byId("advanced").open=true;}}
     for(const key of ["fairBodyTurns","playbackDiagnostics","clockEnabled"])if(cfg[key]!==undefined)byId(key).checked=cfg[key];
     for(const key of ["jawClipSec","jawDurations"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     for(const key of ["clockStart","clockEnd"])if(cfg[key]!==undefined)byId(key).value=String(Math.floor(cfg[key]/60)).padStart(2,"0")+":"+String(cfg[key]%60).padStart(2,"0");
@@ -629,7 +643,8 @@
     return Object.fromEntries(Object.entries(CLIP_FIELDS).map(([key,id])=>
       [key,byId(id).value===""?null:Number(byId(id).value)]));
   }
-  function writeLibrary(clips) {
+  function writeLibrary(clips,reference=null) {
+    writeAudioReference(reference);
     for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=clips[key]??"";
   }
   function sketchFilename(name,now=new Date()) {
@@ -739,7 +754,7 @@
         if(window.SkellyScenes?.loadProfile){if(!await window.SkellyScenes.loadProfile(profile))return;}
         else{
         for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=profile.clips[key]??"";
-        writeConfig(profile.config);
+        writeAudioReference(profile.audio);writeConfig(profile.config);
         }
         for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
         byId("profileStatus").textContent="Settings loaded. Clip numbers belong to the Skelly that created this profile.";
@@ -768,6 +783,6 @@
     document.addEventListener("visibilitychange",pauseMotion);pauseMotion();
     writeConfig({...DEFAULTS,...PRESETS.normal});
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary,readAudioReference,writeAudioReference,normalizeAudioReference};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

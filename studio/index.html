@@ -5,19 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=439d93055272">
-<script src="./template.js?v=40e5bf2cd1f0" defer></script>
+<link rel="stylesheet" href="./style.css?v=65f7e6846af1">
+<script src="./template.js?v=e4663c410abf" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=1e84fc8b2dc1" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=d4643ca90b0e" defer></script>
-<script src="./scene-model.js?v=198c17bdd152" defer></script>
-<script src="./scenes.js?v=14b2066cd1f4" defer></script>
-<script src="./controller-state.js?v=7aa5f787ca80" defer></script>
-<script src="./audio.js?v=a56445633074" defer></script>
-<script src="./audio-ui.js?v=841c5550259d" defer></script>
-<script src="./controller.js?v=b4432c0c6f9e" defer></script>
+<script src="./app.js?v=4f95aee09fa2" defer></script>
+<script src="./scene-model.js?v=5bb03f2e8e38" defer></script>
+<script src="./scenes.js?v=d70f1a9b6f91" defer></script>
+<script src="./release.js?v=4dc4c483dac2" defer></script>
+<script src="./controller-state.js?v=2c5160c3af59" defer></script>
+<script src="./audio.js?v=3f2189a52f37" defer></script>
+<script src="./audio-prep.js?v=460944ee3d5f" defer></script>
+<script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
+<script src="./audio-ui.js?v=465bc86682d2" defer></script>
+<script src="./controller.js?v=22ec5c6643aa" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -139,6 +142,7 @@
       <div class="scene-library-actions"><button id="sceneUndo" type="button" disabled>Undo last library change</button><span>Up to four scenes · saved in this browser</span></div>
       <label><input id="sceneRotate" type="checkbox"> Automatically switch scenes</label>
       <label class="scene-order">Scene order <select id="sceneOrder"><option value="ordered">In order</option><option value="random">Random · no immediate repeats</option></select></label>
+      <details class="scene-overview instructions"><summary>Compare saved scenes</summary><div class="scene-compare-wrap" tabindex="0" role="region" aria-label="Saved scene comparison"><table id="sceneComparison"><caption>Saved browser scenes · editor drafts are excluded</caption><thead><tr><th scope="col">Scene</th><th scope="col">Minutes</th><th scope="col">Movement</th><th scope="col">Eyes</th><th scope="col">Lighting</th><th scope="col" id="sceneAudioColumn" hidden>Audio · experimental</th></tr></thead><tbody id="sceneComparisonRows"></tbody></table></div></details>
       <section class="routine-preview" aria-labelledby="routinePreviewTitle"><h3 id="routinePreviewTitle">Routine preview</h3><p class="small-description">Saved scenes · sample requests within each hold</p><label class="scene-preview-picker" for="scenePreviewSelect">Preview scene <select id="scenePreviewSelect" disabled></select></label><div id="sceneSequence" class="scene-sequence" aria-label="Selected saved scene timing preview"></div></section><p class="small-description" id="sceneSequenceNote">Save your first scene using the controls above.</p>
       <details class="instructions"><summary>Scene timing help</summary><p>Each scene starts its hold when Bluetooth connects. Switching waits for current actions and full cooldowns, then reconnects with the next scene. Scenes do not advance while disconnected. Random starts with the first scene and avoids immediate repeats.</p></details>
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
@@ -152,18 +156,21 @@
       </div>
       <p id="controllerSkellyHelp" class="small-description">Connect USB to check Skelly.</p>
       <div class="controller-scene"><span>Active scene</span><strong id="controllerScene">—</strong><button id="controllerStatus" type="button" disabled>Refresh status</button></div>
+      <p id="controllerFirmware" class="small-description">Connect to identify installed firmware.</p><p id="controllerActivity" class="controller-activity" hidden></p>
       <p id="controllerReceived" class="small-description">No controller status received yet.</p>
       <p id="controllerMessage" role="status" aria-live="polite" data-state="info">Connect your ESP32 to read or save settings.</p>
       <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" disabled>Save routine</button><button id="controllerScenes" type="button" disabled>Save scenes</button></div>
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
       <div class="controller-secondary"><button id="controllerIdentify" type="button" hidden disabled>Retry identification</button><button id="controllerDisconnect" type="button" disabled>Disconnect</button></div>
       <details class="instructions" id="controllerSetup"><summary>First-time setup · install universal firmware</summary>
-        <ol class="usb-setup"><li>Use an original ESP32-WROOM. Download universal firmware below and open the .ino in Arduino IDE.</li><li>Choose <strong>ESP32 Dev Module</strong> with <strong>Arduino-ESP32 3.3.12</strong>, then compile and upload once.</li><li><strong>Close Arduino Serial Monitor</strong> and other USB tools. Use desktop Chrome or Edge, choose <strong>Connect ESP32</strong>, then your board’s port (often <strong>CP2102 USB to UART Bridge</strong> or CH340, with a COM number).</li><li>Wait for <strong>Ready</strong>. Read an existing controller’s settings, or confirm replacement and save your routine or scenes. Later edits use these save buttons.</li></ol>
+        <p><strong>Install firmware once. Save settings here afterward.</strong> Available release: <span id="controllerRelease">2026.10.24-preview.1</span>. <a href="../CHANGELOG.md">What changed →</a></p>
+        <ol class="usb-setup"><li><strong>Install:</strong> use an original ESP32-WROOM. Download the versioned universal sketch below, open it in Arduino IDE, select <strong>ESP32 Dev Module</strong> and <strong>Arduino-ESP32 3.3.12</strong>, then compile/upload. Preserve your working settings first.</li><li><strong>Connect:</strong> close Arduino Serial Monitor and other USB tools. In desktop Chrome or Edge choose Connect ESP32, then CP2102 / CH340 and its COM port. Wait for Ready; identification can take up to 45 seconds after a restart.</li><li><strong>Save:</strong> Read saved settings first when keeping an existing setup. Otherwise confirm replacement and choose Save routine or Save scenes. Wait for read-back verified, then unplug USB.</li></ol>
         <button id="universalDownload" type="button">Download universal firmware (.ino)</button>
-        <p class="small-description">Prefer a reviewed prebuilt package? The <a href="./usb.html#firmware">browser installer</a> accepts its local package files. Studio does not compile source in the browser. Keep a copy of your working firmware and settings before reinstalling.</p>
+        <p class="small-description">Compile/upload installs the controller software; Save routine changes its settings without compiling again. Reinstallation is needed for new firmware features, not ordinary edits. Saved USB settings take priority over the factory Subtle routine.</p>
+        <details class="instructions"><summary>Browser installation or recovery · optional preview</summary><p>The <a href="./usb.html#firmware">USB installer</a> accepts a reviewed prebuilt package. Choose both extracted package files together and check their source revision. No Arduino IDE is needed for a prebuilt image. Real browser flashing remains unconfirmed; keep the Arduino route available.</p></details>
       </details>
     </section>
-    <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Idle breaks, clock, Bluetooth and logs</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Idle breaks, clock, diagnostics and experimental audio</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <details class="instructions controller-diagnostics" id="controllerDiagnostics"><summary>USB diagnostics &amp; recovery</summary>
         <p>These are the last reported controller values. They do not confirm physical movement. Clock time is only needed when a scheduled window is enabled.</p>
         <dl id="controllerDetails" class="controller-details"></dl>
@@ -198,14 +205,25 @@
           <p>Set local time through <a href="./usb.html">USB tools</a> after every restart. Until then, no routines start. Overnight windows belong to their start day. Existing movement finishes at closing time. No Wi-Fi, automatic DST adjustment or clock retention after power loss.</p>
         </fieldset>
         <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
-</div></details>
-    <details class="panel fold-panel" id="audioScenes"><summary><span><strong>Audio scenes <span class="experimental">OPTIONAL PREVIEW</span></strong><small id="audioSceneSummary">Upload a clip, choose its look, then schedule it</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="instructions experimental-audio" id="audioScenes"><summary><span><strong>Audio scenes <span class="experimental">EXPERIMENTAL · OPTIONAL</span></strong><small id="audioSceneSummary">Upload a clip, choose its look, then schedule it</small></span></summary><div class="fold-content">
       <p>Let a stored clip take over movement, eyes and lights, then return to your regular routine. Audio plays on Skelly. This new workflow needs an attended first test.</p>
       <details class="instructions"><summary>Before connecting · direct Bluetooth setup</summary><ol><li>Unplug the ESP32’s power and disconnect phone/web controllers. Close Studio’s USB session.</li><li>Power Ultra Skelly v2 in Bluetooth mode. Connect below directly to Skelly.</li><li>Upload an MP3 or select a stored file, save its look, then choose Use clip in routine.</li><li>Disconnect Skelly here, power the ESP32 again, and save your routine over USB. Audio scenes need the updated universal firmware.</li></ol><p>Files live on Skelly, not the ESP32. Preparing audio needs no account or cloud service. Files are never deleted or overwritten here. Cancel disconnects Bluetooth; a partial upload may remain.</p></details>
       <div class="audio-connection"><span>Browser → Skelly <strong id="audioConnection">Not connected</strong></span><button type="button" id="audioConnect">Connect Skelly Bluetooth</button><button type="button" class="secondary" id="audioDisconnect" disabled>Disconnect</button></div>
       <p id="audioMessage" class="selection-status" role="status">No Bluetooth connection opens until you choose Connect.</p>
       <div class="audio-library-row"><label for="audioFileSelect">Stored audio<select id="audioFileSelect" disabled><option value="">Connect to read files</option></select></label><button type="button" id="audioRefresh" class="secondary" disabled>Refresh files</button></div>
-      <details class="instructions"><summary>Upload a new MP3</summary><p>First version: prepared <strong>8 kHz · mono · 32 kbps MP3</strong>, up to 118 seconds and 1 MiB. Conversion of other formats will come separately. Keep this tab open during transfer.</p><label class="single-field" for="audioUploadFile">Choose an MP3<input id="audioUploadFile" type="file" accept=".mp3,audio/mpeg"></label><p id="audioFileInfo" class="helper">Your file stays in this browser until you upload.</p><label class="single-field" for="audioUploadName">New filename on Skelly<input id="audioUploadName" type="text" maxlength="33" placeholder="Porch-greeting.mp3"></label><button type="button" id="audioUpload" disabled>Upload new file</button> <button type="button" id="audioCancel" class="secondary" disabled>Cancel &amp; disconnect</button><progress id="audioProgress" value="0" max="100" hidden aria-label="Audio upload progress"></progress><span id="audioPercent" class="helper" aria-hidden="true" hidden></span></details>
+      <details class="instructions" id="audioPreparation"><summary>Prepare or trim audio · on this computer</summary>
+        <p class="helper">Choose a browser-supported audio file (up to 12 MiB / 10 minutes). Trim up to 117 seconds and convert locally to Skelly's MP3 format. No account, upload or automatic playback.</p>
+        <label class="single-field" for="audioPrepSource">Audio file<input type="file" id="audioPrepSource" accept="audio/*,.wav,.mp3,.m4a,.ogg"></label>
+        <canvas id="audioWaveform" width="540" height="58" hidden role="img" aria-label="Audio waveform; selected time range is shaded"></canvas>
+        <div class="audio-trim"><label for="audioPrepStart">Start · seconds<input id="audioPrepStart" type="number" min="0" step="0.001" value="0" disabled></label><label for="audioPrepEnd">End · seconds<input id="audioPrepEnd" type="number" min="0.1" step="0.001" disabled></label></div>
+        <div class="audio-actions"><button type="button" id="audioPrepConvert" disabled>Prepare MP3</button><button type="button" id="audioPrepCancel" class="secondary" disabled>Cancel preparation</button></div>
+        <p id="audioPrepStatus" role="status" class="helper">Choose audio to prepare on this computer.</p>
+        <audio id="audioPrepPlayer" controls preload="none" hidden aria-label="Prepared MP3 preview on this computer"></audio>
+        <div class="audio-actions"><button type="button" id="audioPrepUse" disabled>Use this MP3 for upload</button><button type="button" id="audioPrepDownload" class="secondary" disabled>Download prepared MP3</button></div>
+        <p class="helper">Local encoder: <a href="https://lame.sourceforge.io/">LAME</a> / <a href="https://github.com/zhuker/lamejs">lamejs 1.2.1</a>, LGPL. <a href="./vendor/lamejs-1.2.1/NOTICE.md">Source &amp; notices</a>. Audio is not stored in profiles.</p>
+      </details>
+      <p id="audioIdentity" class="helper" role="status"></p>
+      <details class="instructions" id="audioUploadPanel"><summary>Upload a new MP3</summary><p>Prepared <strong>8 kHz · mono · 32 kbps MP3</strong>, up to 118 seconds and 1 MiB. Use Prepare or trim audio above for other supported formats. Keep this tab open during transfer.</p><label class="single-field" for="audioUploadFile">Choose an MP3<input id="audioUploadFile" type="file" accept=".mp3,audio/mpeg"></label><p id="audioFileInfo" class="helper">Your file stays in this browser until you upload.</p><label class="single-field" for="audioUploadName">New filename on Skelly<input id="audioUploadName" type="text" maxlength="33" placeholder="Porch-greeting.mp3"></label><button type="button" id="audioUpload" disabled>Upload new file</button> <button type="button" id="audioCancel" class="secondary" disabled>Cancel &amp; disconnect</button><progress id="audioProgress" value="0" max="100" hidden aria-label="Audio upload progress"></progress><span id="audioPercent" class="helper" aria-hidden="true" hidden></span></details>
       <fieldset id="audioEdit" disabled hidden><legend>Selected clip</legend>
         <div class="audio-selected"><strong id="audioSelectedName"></strong><span id="audioSelectedNumber" class="helper"></span></div>
         <details class="instructions" id="audioClipLook"><summary>Clip movements &amp; appearance</summary><p class="helper">Saved on this file only. Stored motor combinations need physical confirmation; this does not use the failed head-after-jaw command.</p><div class="audio-motors" role="group" aria-label="Movements stored with this clip"><label><input id="audioHead" type="checkbox">Head</label><label><input id="audioArm" type="checkbox">Arm</label><label><input id="audioTorso" type="checkbox">Torso</label></div>
@@ -215,6 +233,7 @@
         <p class="helper">Using a clip enables your selected regular eyes and lighting for restoration. Waits for current motion before playback. Ordinary actions resume after this estimate, a 35-second motor settling period and restoration. Intervals are requests, not exact start times.</p><button type="button" id="audioUse">Use clip in routine</button>
       </fieldset><button type="button" id="audioOff" class="secondary" hidden>Turn off audio scene</button>
     </div></details>
+</div></details>
     <details class="panel fold-panel" id="mouth"><summary><span><strong>Optional mouth routines · limited</strong><small id="mouthStatus">Off · optional</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p>Mouth movement plays stored MP3s: playback can interrupt motors and replace your eyes and colors. Protection and estimated clip timing can delay other routines; exact synchronization is unavailable.</p>
       <div class="movement-block">

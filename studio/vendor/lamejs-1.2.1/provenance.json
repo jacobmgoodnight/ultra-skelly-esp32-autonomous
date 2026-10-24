@@ -1,0 +1,12 @@
+{
+  "package": "lamejs",
+  "version": "1.2.1",
+  "tarball": "https://registry.npmjs.org/lamejs/-/lamejs-1.2.1.tgz",
+  "integrity": "sha512-s7bxvjvYthw6oPLCm5pFxvA84wUROODB8jEO2+CE1adhKgrIvVOlmMgY8zyugxGrvRaDHNJanOiS21/emty6dQ==",
+  "files": {
+    "lame.all.js": "026bd88846040f357a937cd85821a48492a362eff0812cda734f23fca55fea3b",
+    "lame.min.js": "15d285e2587b3bdbfd18a68de6ce07cc074f7480a82c3815da2dc1c348ec6df4",
+    "LICENSE": "cd144ca132e3842b01f5ed2d6f3a32141e24a1cc15e115aa5f19a2294ce0a379",
+    "package.json": "03abb3895269950562d33ba35fa8c9f62b9c35f64830596299c301e58c244c8e"
+  }
+}

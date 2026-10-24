@@ -560,3 +560,9 @@ Mock browser/BLE and native C++ tests are Software-only. No physical upload, sto
 motor combination, natural EOF, restoration integration or power-cycle observation
 is claimed. The [focused result sheet](audio-scenes.md) records every hardware item
 as Untested. This does not supersede earlier isolated jaw/light confirmations.
+
+## October 24, 2026 — careful PR #35 port and optional audio preparation
+
+The owner authorizes the full consolidation list and asks that audio stay an advanced experimental option. The implementation is based on published PR #38, not the stale PR #35 branch. Only its read-only USB status identity/wait additions are ported. The wireless server/experiment, older presets and old UI are excluded. Ordinary motor scheduling, cooldowns, saved words and commands remain unchanged. Browser-only work adds local conversion/trim/audition, saved file labels with known mismatch warnings, compact scene comparison, clearer installation and release documentation.
+
+Automated and simulated-browser results are Software-only. No physical port was opened, firmware uploaded or new hardware result inferred. Audio remains OFF in ordinary presets and collapsed inside Advanced & testing.

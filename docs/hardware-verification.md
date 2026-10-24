@@ -64,3 +64,5 @@ Optional audio-scene preview: browser uploads and stored clip metadata, exclusiv
 mode 3, settling/restoration and reconnect protection are **Software-only / Untested
 on hardware**. Existing isolated jaw/light confirmations do not verify the new
 integrated path. Follow the separate [attended result sheet](audio-scenes.md).
+
+October 24 consolidation: read-only firmware/activity status, local conversion/trim/preview, file-label mismatch guards and scene comparison have Software-only evidence. No new flash, real BLE upload, retention/recovery, physical transition or motor/eye/light observation was performed. Existing owner confirmations remain scoped as above. [Current status](status.md) and [next checks](next-release-checklist.md).

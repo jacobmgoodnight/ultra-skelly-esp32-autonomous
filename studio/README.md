@@ -106,10 +106,12 @@ cards keep Edit visible and fold other actions; Routine preview displays one sav
 scene selected from its dropdown without replacing editor settings.
 
 
-Audio scenes is a collapsed, opt-in preview. `audio.js` implements a bounded direct
+Audio scenes is an experimental, optional preview collapsed inside Advanced & testing. `audio.js` implements a bounded direct
 Web Bluetooth session, prepared MP3 inspection, fresh-file transfer and verified
 per-file appearance settings. `audio-ui.js` keeps that preparation separate from
 ordinary editing and the ESP32 USB session. Nothing connects or plays on load.
 Only prepared 8 kHz / mono / 32 kbps MP3s are accepted; no encoder or cloud service
 is loaded. Metadata read-back is software evidence, not physical playback proof.
 See [setup, limits and attended results](../docs/audio-scenes.md).
+
+October 24: local audio preparation is provided by audio-prep.js/audio-prep-ui.js and a separately licensed bundled lamejs encoder. The complete folder works without a converter CDN. Friendly file labels are optional browser/profile metadata only. See [current status](../docs/status.md), [release notes](../CHANGELOG.md) and [next checks](../docs/next-release-checklist.md).

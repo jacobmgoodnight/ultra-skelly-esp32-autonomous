@@ -30,7 +30,7 @@
     async function confirmReplace(label){return !dirty()||await ask(label+' Discard the current unsaved editor changes? Saved scenes are unchanged.');}
     function applyEditor(scene,index=null){
       loading=true;library.editing=index;previewName=index===null?previewName:scene.name;pendingNew=index===null;el('sceneName').value=scene.name;el('sceneMinutes').value=Number((scene.seconds/60).toFixed(4));
-      g.writeLibrary(scene.profile.clips);g.writeConfig(scene.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
+      g.writeLibrary(scene.profile.clips,scene.profile.audio);g.writeConfig(scene.profile.config);for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
     }
     function wireKey(program){return JSON.stringify(window.SkellyRuntime.encode(program.scenes,program.rotate,g.validate,program.random));}
     function renderDevice(){
@@ -63,7 +63,7 @@
         const row=make('article',undefined,'scene-card');row.dataset.sceneIndex=String(index);row.classList.toggle('is-editing',index===library.editing);
         const header=make('div',undefined,'scene-card-head');header.append(make('strong',s.name),make('span',Number((s.seconds/60).toFixed(2))+' min','scene-duration'));
         if(index===0)header.append(make('small','Starts here','scene-first'));row.append(header);
-        const c=s.profile.config,summary=m.sceneSummary(c),look=make('div',undefined,'scene-look');
+        const c=s.profile.config,summary=m.sceneSummary(c,s.profile.audio),look=make('div',undefined,'scene-look');
         if(c.eyesEnabled){const img=make('img');img.src='./images/eyes/eye_icon_'+c.eyeChoices[0]+'.png';img.alt=summary.eyes;img.width=28;img.height=28;look.append(img);}
         const colors=make('span',undefined,'scene-colors');if(c.lightsEnabled){const p=c.lightPalettes[0]??0;for(const part of ['torso','head']){const dot=make('i');dot.style.background=c.lightRotation?c['palette'+p+(part==='torso'?'Torso':'Head')]:c[part+'Color'];colors.append(dot);}}look.append(colors,make('span',summary.motors+' · '+summary.eyes+' · '+summary.lights));row.append(look);
         header.append(action('Edit','Edit scene '+s.name,async()=>{if(await confirmReplace('Edit '+s.name+'?')){applyEditor(s,index);message('Editing '+s.name+'. Update this scene after changing the controls above.');}}));
@@ -77,6 +77,9 @@
       });
       el('sceneRotate').checked=value.rotate;el('sceneOrder').value=value.random?'random':'ordered';el('sceneOrder').disabled=!value.rotate;
       el('sceneDownload').disabled=!value.scenes.length;el('sceneExport').disabled=!value.scenes.length;el('sceneUndo').disabled=!library.undoEntry;
+      const compare=el('sceneComparisonRows'),showAudio=value.scenes.some(s=>s.profile.config.jawEnabled);compare.replaceChildren();el('sceneAudioColumn').hidden=!showAudio;
+      for(const cells of m.comparisonRows(value)){const row=make('tr');cells.forEach((cell,i)=>{const node=make(i===0?'th':'td',cell);if(i===5)node.hidden=!showAudio;if(i===0)node.setAttribute('scope','row');row.append(node);});compare.append(row);}
+      if(!value.scenes.length){const row=make('tr'),cell=make('td','Save a scene to compare it here.');cell.colSpan=6;row.append(cell);compare.append(row);}
       const sequence=el('sceneSequence');sequence.replaceChildren();
       const labels={head:'Head',arm:'Arm',torso:'Torso',compound:'Combined',eyes:'Eyes',lights:'Lighting',jaw:'Jaw'};
       const previews=m.routinePreview(value,g),picker=el('scenePreviewSelect');picker.replaceChildren();picker.disabled=!previews.length;

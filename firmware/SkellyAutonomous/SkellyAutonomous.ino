@@ -8,6 +8,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Read-only USB identity. No scheduler or stored-format migration.
+const char *FIRMWARE_RELEASE = "2026.10.24-preview.1";
+const uint32_t FIRMWARE_REVISION = 5;
+const uint32_t FIRMWARE_BUILD = 2026102401UL;
+
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
 // ESP32 Dev Module, Arduino-ESP32 3.3.12
@@ -874,7 +879,7 @@ void recordBoot(esp_reset_reason_t reason) {
 // Format into a bounded buffer and write text once per event. No BLE payload is
 // ever sent to UART. millis() is uptime and wraps after about 49.7 days.
 void logEvent(const char *format, ...) {
-  char line[384];
+  char line[640];
   const int prefix = snprintf(line, sizeof(line), "[%10lu ms] ", (unsigned long)millis());
   if (prefix < 0 || (size_t)prefix >= sizeof(line)) return;
   va_list args;
@@ -885,11 +890,29 @@ void logEvent(const char *format, ...) {
 }
 void logLine(const char *message) { logEvent("%s\n", message); }
 
+bool reached(uint32_t now, uint32_t when);
+// Generator replaces this with the existing idle-break state. Read-only.
+bool diagnosticResting(uint32_t now) { (void)now; return false; }
+uint8_t diagnosticWait(uint32_t now) {
+  if (!connected) return 1;
+  if (audioHoldPending && !reached(now,audioHoldUntil)) return 8;
+  if (!reached(now,mouthPlayingUntil)) return 2;
+  if (lightApplyPending || lightRestorePending || mouthEndPending || jawEyeStartPending || jawEyeEndPending) return 3;
+  if (jawFollowupPending) return 7;
+  if (!reached(now,bodySafeAfter) || !reached(now,headSafeAfter) || !reached(now,armSafeAfter) || !reached(now,torsoSafeAfter)) return 4;
+  if (!routineWindowOpen()) return 6;
+  if (diagnosticResting(now)) return 5;
+  return 0;
+}
 void emitUsbStatus() {
-  logEvent("USB STATUS v2 runtime=%u connected=%u scene=%lu sequence=%lu crc=%lu pending=%u scans=%lu connects=%lu writes=%lu failures=%lu heap=%lu minHeap=%lu clock=%u window=%u\n",
+  const uint32_t now=millis();
+  logEvent("USB STATUS v2 runtime=%u connected=%u scene=%lu sequence=%lu crc=%lu pending=%u scans=%lu connects=%lu writes=%lu failures=%lu heap=%lu minHeap=%lu clock=%u window=%u firmware=%lu build=%lu wait=%u jawMs=%lu accepted=%u acceptedAge=%lu\n",
     unsigned(SKELLY_RUNTIME),unsigned(connected),(unsigned long)runtimeSceneIndex(),(unsigned long)runtimeSequence(),(unsigned long)runtimeProgramCRC(),unsigned(runtimePending()),
     (unsigned long)scanAttempts,(unsigned long)connectionAttempts,(unsigned long)writeAttempts,(unsigned long)writeFailures,
-    (unsigned long)ESP.getFreeHeap(),(unsigned long)ESP.getMinFreeHeap(),unsigned(clockValid),unsigned(routineWindowOpen()));
+    (unsigned long)ESP.getFreeHeap(),(unsigned long)ESP.getMinFreeHeap(),unsigned(clockValid),unsigned(routineWindowOpen()),
+    (unsigned long)FIRMWARE_REVISION,(unsigned long)FIRMWARE_BUILD,unsigned(diagnosticWait(now)),
+    (unsigned long)(reached(now,mouthPlayingUntil)?0:uint32_t(mouthPlayingUntil-now)),
+    unsigned(lastAcceptedTag!=0),(unsigned long)(lastAcceptedTag?uint32_t(now-lastAcceptedAt):0));
 }
 
 void acceptUsbCommand(const char *line) {
@@ -1820,7 +1843,7 @@ void setup() {
   delay(1000);
   runtimeBoot();
   recordBoot(esp_reset_reason());
-  logEvent("BOOT usb-audio-scenes-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
+  logEvent("BOOT studio-owner-v1: count=%lu resetReason=%u heap=%lu minHeap=%lu diagnostics=%s\n",
            (unsigned long)bootCount, (unsigned)esp_reset_reason(),
            (unsigned long)ESP.getFreeHeap(), (unsigned long)ESP.getMinFreeHeap(),
            DIAGNOSTICS_ENABLED ? "ON" : "OFF");

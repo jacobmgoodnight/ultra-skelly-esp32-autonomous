@@ -12,6 +12,13 @@
       text('controllerUsb',view.usb);el('controllerUsb').dataset.state=view.usbTone;
       text('controllerSkelly',view.skelly);el('controllerSkelly').dataset.state=view.skellyTone;
       text('controllerScene',view.scene);
+      const release=window.SkellyRelease,firmware=release?.firmwareView(state.data,state.capable,state.identified,state.stale);
+      text('controllerFirmware',firmware?.text??'Version not reported by this firmware.');
+      text('controllerRelease',release?.VERSION??'See changelog');
+      el('controllerFirmware').dataset.state=firmware?.update?'info':'ready';
+      const activity=window.SkellyControllerState.diagnosticView(state.data,state.stale).find(row=>/activity \/ wait/.test(row[0]));
+      text('controllerActivity',activity?.[1]??'');el('controllerActivity').hidden=!port||!activity;
+
       text('controllerMessage',state.message);el('controllerMessage').dataset.state=state.tone;
       el('controllerConnect').disabled=!navigator.serial||port||session.busy||state.busy||!!window.SkellyAudioConnection?.();
       el('controllerDisconnect').disabled=!port||state.busy;
@@ -27,7 +34,7 @@
       const dl=el('controllerDetails');dl.replaceChildren();
       if(port&&state.data){
         const d=state.data;
-        for(const [label,value] of [['Saved revision',d.sequence],['Pending settings',d.pending?'Waiting for current actions':'None'],['BLE write failures',d.failures],['Free heap',d.heap===undefined?'Unknown':d.heap+' bytes'],['Clock',d.clock===undefined?'Unknown':d.clock?'Set for this boot':'Not set for this boot']]){
+        for(const [label,value] of [...window.SkellyControllerState.diagnosticView(d,state.stale),['Saved revision',d.sequence],['Pending settings',d.pending?'Waiting for current actions':'None'],['BLE write failures',d.failures],['Free heap',d.heap===undefined?'Unknown':d.heap+' bytes'],['Clock',d.clock===undefined?'Unknown':d.clock?'Set for this boot':'Not set for this boot']]){
           const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value??'Unknown';dl.append(dt,dd);
         }
       }
@@ -50,6 +57,7 @@
     el('controllerLog').onclick=()=>g.downloadText(session.capture.text,'Skelly-USB-log.txt','text/plain');
     async function write(program,kind='routine'){
       consent();
+      window.SkellyAudioCheck?.(program.scenes);
       if(program.rotate&&program.random&&!state.randomScenes)throw Error('Random scenes need the updated universal firmware. Open First-time setup, upload it, then reconnect.');
       if(program.scenes.some(s=>s.config.eyeJawMode===3)&&!state.audioScenes){el('controllerSetup').open=true;throw Error('Audio scenes need updated universal firmware. Install it from First-time setup, then reconnect.');}
       const words=r.encode(program.scenes,program.rotate,g.validate,program.random);
@@ -61,7 +69,7 @@
       state.say('Saved to ESP32 · read-back verified. Watch Skelly to confirm your changes.','ready');
       await state.refreshStatus();
     }
-    el('controllerWrite').onclick=()=>state.run(()=>write({scenes:[{name:'My routine',seconds:600,config:g.readConfig()}],rotate:false}));
+    el('controllerWrite').onclick=()=>state.run(()=>write({scenes:[{name:'My routine',seconds:600,config:g.readConfig(),audio:g.readAudioReference?.(g.readConfig())}],rotate:false}));
     el('controllerScenes').onclick=()=>state.run(async()=>{if(await window.SkellyScenes.confirmSendScenes?.()===false){state.say('No scenes sent. Update the scene or save as new first.');return;}await write(window.SkellyScenes.program(),'scenes');});
     el('controllerRead').onclick=()=>state.run(async()=>{
       state.say('Reading saved settings…','busy');const saved=await session.readSettings();
@@ -86,7 +94,7 @@
     });
     el('universalDownload').onclick=()=>{
       try{
-        g.downloadText(g.generateRuntimeSketch([{name:'Subtle',seconds:600,config:{...g.DEFAULTS,...g.PRESETS.subtle}}]),'SkellyUniversal.ino','text/plain');
+        g.downloadText(g.generateRuntimeSketch([{name:'Subtle',seconds:600,config:{...g.DEFAULTS,...g.PRESETS.subtle}}]),'SkellyUniversal-'+(window.SkellyRelease?.VERSION??'preview')+'.ino','text/plain');
         state.say('Open the downloaded .ino in Arduino IDE, compile/upload with ESP32 Dev Module and core 3.3.12, then close Serial Monitor and connect here.');
       }catch(error){state.say(error.message,'error');}
     };

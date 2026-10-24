@@ -1,5 +1,8 @@
 # Setup guide
 
+For everyday use, install universal firmware once, then use Studio’s **Send to your ESP32** controls for subsequent read/save operations. [Current release and install/save distinction](status.md) · [next attended checks](next-release-checklist.md). Advanced experimental audio is optional; ordinary movement/eye/light routines need none.
+
+
 ## 1. Obtain hardware
 
 A standard Bluetooth-capable ESP32 development board is sufficient (the confirmed test device was an ESP32-WROOM-32 USB-C/CP2102 board). It needs a USB power supply. No wires or modifications connect the ESP32 to the Skelly prop.

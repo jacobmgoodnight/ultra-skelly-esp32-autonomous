@@ -82,3 +82,11 @@ test('pending USB chooser is exclusive with direct Skelly preparation before a p
  const p=page();const original=p.session.connect.bind(p.session);let release;const chosen=new Promise(r=>release=r);p.session.connect=async()=>{await chosen;await original();};
  const pending=p.nodes.controllerConnect.onclick();assert.equal(p.session.port,null);assert.equal(p.window.SkellyControllerPortOpen(),true);release();await pending;await p.close();assert.equal(p.window.SkellyControllerPortOpen(),false);
 });
+
+
+test('read-only identity/activity renders without replacing save progress and clears on disconnect',async()=>{
+ const p=page();try{p.session.status=async()=>({text:'USB STATUS v2 connected=1 scene=1 sequence=2 pending=1 firmware=5 build=2026102401 wait=8 jawMs=56000 accepted=1 acceptedAge=2000'});
+ await p.nodes.controllerConnect.onclick();assert.match(p.nodes.controllerActivity.textContent,/Audio scene protected/);assert.equal(p.nodes.controllerActivity.hidden,false);assert.match(p.nodes.controllerMessage.textContent,/Ready/);assert.ok(p.nodes.controllerDetails.children.some(x=>/Revision 5/.test(x.textContent)));
+ await p.nodes.controllerDisconnect.onclick();assert.equal(p.nodes.controllerActivity.hidden,true);assert.equal(p.nodes.controllerDetails.children.length,0);
+ }finally{await p.close();}
+});
