@@ -101,8 +101,12 @@ Get-ChildItem .skelly-build -Directory | ForEach-Object {
 }
 ```
 
-On Bash use the guarded loop in `.github/workflows/studio-checks.yml`. Generated
-files and native test output are ignored under `.skelly-build/`. After changing
+CI uses `python scripts/compile-validation.py` for the complete pinned matrix;
+the same command works locally on Bash or PowerShell with Arduino CLI available.
+Push checks run on every main update, including documentation-only changes, and
+relevant pull requests run the same suite. Feature-branch pushes do not repeat the
+pull-request matrix. Generated files and native test output are ignored under
+`.skelly-build/`. After changing
 canonical firmware, run `node scripts/sync-template.cjs` before checks/export.
 When changing runtime fields or factory scene defaults, run
 `node scripts/sync-runtime-schema.cjs` before syncing the template.
