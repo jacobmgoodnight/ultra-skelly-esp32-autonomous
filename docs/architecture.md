@@ -262,3 +262,25 @@ downloads. No port opens automatically. The fixed-profile installer verifies
 package metadata and SHA-256 before offering pinned ESP Web Tools; it does not
 compile custom source. See [USB tools](usb-tools.md) for lifecycle and evidence.
 
+
+## Optional audio-scene ownership
+
+`EYE_JAW_MODE == 3` is an opt-in extension in the existing bounded word layout.
+Browser validation, static guards and runtime validation require body protection,
+no delayed motor follow-up and post-playback light restoration. Ordinary legacy
+modes are unchanged. Universal HELLO adds `audioScenes=1`; the browser blocks new
+mode saves to older firmware. No Wi-Fi, new NVS layout or new wire command is added.
+
+The audio start anchors all motor locks after the BLE call returns, for the padded
+clip estimate plus the longest conservative motor cooldown. A separate transient
+hold suppresses every ordinary actuator path and survives a brief reconnect in the
+same boot. USB remains serviced; pending settings cannot bypass active locks.
+Normal appearance restoration and due requests resume afterward. This models an
+exclusive window, never natural EOF or physical movement completion.
+
+The separate browser `audio.js` BLE session handles prepared MP3 uploads and per-file
+metadata with bounded CRC/structure checks, one operation at a time and fresh file
+identity/read-back. It never starts playback, deletes files or overwrites names.
+`audio-ui.js` keeps radio preparation out of ordinary controls and prevents starting
+it with an open USB port; USB also refuses connection while direct BLE is active.
+See [audio scenes and physical verification limits](audio-scenes.md).

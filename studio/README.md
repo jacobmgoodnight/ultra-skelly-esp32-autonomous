@@ -99,8 +99,17 @@ cancel the background request, and hidden pages pause polling. An eight-second
 timeout marks the last snapshot stale without declaring Bluetooth disconnected.
 
 
-Body movement includes automatic bone-white illustrations beside enabled toggles.
+Body movement includes automatic purple illustrations in place of the left movement icons.
 They respect reduced motion and pause when the page is hidden. They do not
 represent live controller activity. Saved scene
 cards keep Edit visible and fold other actions; Routine preview displays one saved
 scene selected from its dropdown without replacing editor settings.
+
+
+Audio scenes is a collapsed, opt-in preview. `audio.js` implements a bounded direct
+Web Bluetooth session, prepared MP3 inspection, fresh-file transfer and verified
+per-file appearance settings. `audio-ui.js` keeps that preparation separate from
+ordinary editing and the ESP32 USB session. Nothing connects or plays on load.
+Only prepared 8 kHz / mono / 32 kbps MP3s are accepted; no encoder or cloud service
+is loaded. Metadata read-back is software evidence, not physical playback proof.
+See [setup, limits and attended results](../docs/audio-scenes.md).

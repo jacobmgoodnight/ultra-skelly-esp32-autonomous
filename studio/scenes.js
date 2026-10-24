@@ -87,10 +87,10 @@
         const preview=make('article',undefined,'routine-scene'+(s.inactive?' is-inactive':''));
         const title=make('div',undefined,'routine-scene-title');title.append(make('strong',s.name),make('span',Number((s.seconds/60).toFixed(2))+' min · '+s.position));preview.append(title);
         for(const lane of s.lanes){
-          const row=make('div',undefined,'routine-lane');row.append(make('span',labels[lane.kind]+' · '+lane.min+(lane.min===lane.max?'':'–'+lane.max)+' sec'));
+          const row=make('div',undefined,'routine-lane');row.append(make('span',(lane.label??labels[lane.kind])+' · '+lane.min+(lane.min===lane.max?'':'–'+lane.max)+' sec'));
           const track=make('div',undefined,'routine-track');track.setAttribute('aria-hidden','true');
           for(const time of lane.ticks){const tick=make('i',undefined,'routine-tick '+lane.kind);tick.style.left=(time/s.seconds*100)+'%';track.append(tick);}row.append(track);preview.append(row);
-          if(!lane.ticks.length)preview.append(make('small','No '+labels[lane.kind].toLowerCase()+' request in this sample.','routine-empty'));
+          if(!lane.ticks.length)preview.append(make('small','No '+(lane.label??labels[lane.kind]).toLowerCase()+' request in this sample.','routine-empty'));
         }
         if(!s.lanes.length)preview.append(make('small','No recurring requests in this scene.','routine-empty'));
         const axis=make('div',undefined,'routine-axis');axis.append(make('span','0'),make('span',Number((s.seconds/60).toFixed(2))+' min'));preview.append(axis);sequence.append(preview);

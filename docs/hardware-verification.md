@@ -59,3 +59,8 @@ interleaved combined scheduler. The later lighting/effect report above supersede
 the earlier pending status. The October 23 browser connection/read/save and
 observed changed routine report also supersedes the earlier USB failure.
 
+
+Optional audio-scene preview: browser uploads and stored clip metadata, exclusive
+mode 3, settling/restoration and reconnect protection are **Software-only / Untested
+on hardware**. Existing isolated jaw/light confirmations do not verify the new
+integrated path. Follow the separate [attended result sheet](audio-scenes.md).

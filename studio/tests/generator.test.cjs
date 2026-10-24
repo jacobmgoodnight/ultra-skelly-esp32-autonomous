@@ -325,7 +325,7 @@ test("jaw playback can restore selected eyes or coordinate a new eye", () => {
   assert.match(coordinated, /EYE_JAW_MODE == 2 \|\| lastEye == 0/);
   const mp3Controls = api.generateSketch(sample({eyesEnabled:true,eyeJawMode:0}));
   assert.match(mp3Controls, /const uint8_t EYE_JAW_MODE = 0;/);
-  assert.throws(() => api.generateSketch(sample({eyeJawMode:3})), /eye\/jaw behavior/);
+  assert.throws(() => api.generateSketch(sample({eyeJawMode:4})), /eye\/jaw behavior/);
 });
 
 test("jaw file pool uses user-configured serials in AAC6 packets", () => {

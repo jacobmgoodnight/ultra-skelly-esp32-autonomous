@@ -68,3 +68,5 @@ for(const [name,scenes,rotate,random] of [
   ['RuntimeScenes',[{name:'Subtle',seconds:300,config:{...generator.DEFAULTS,...generator.PRESETS.subtle}},{name:'Haunted',seconds:600,config:{...generator.DEFAULTS,...generator.PRESETS.haunted,eyesEnabled:true,lightsEnabled:true}}],true],
   ['RuntimeJawProtected',[{name:'Limited mouth',seconds:600,config:{...generator.DEFAULTS,jawEnabled:true,jawFile:13,jawExtras:'12,14',jawDurations:'12:30,14:45',fairBodyTurns:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true,clockEnabled:true}}],false]
 ]) {const dir=path.join(buildRoot,name);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.ino'),generator.generateRuntimeSketch(scenes,rotate,random));console.log('Generated '+name);}
+
+for(const runtime of [false,true]){const name=runtime?'RuntimeAudioScene':'AudioScene',dir=path.join(buildRoot,name);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.ino'),require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'export-audio-fixture.cjs'),...(runtime?['--runtime']:[])],{encoding:'utf8'}));}

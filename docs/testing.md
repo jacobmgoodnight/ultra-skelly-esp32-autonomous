@@ -188,3 +188,13 @@ the Arduino monitor closed. Save original received bytes if possible, together
 with the readable log and terminal/USB adapter details. A pasted replacement
 character cannot reveal the original byte value. Do not change baud, USB cable,
 firmware, and lighting settings together; change one factor per comparison.
+
+## October 23 optional audio-scene preview
+
+See [audio scenes](audio-scenes.md) for the complete preparation path, compatible
+MP3 format, capability gate and focused attended criteria. New native tests execute
+standalone and universal scheduling across blocking writes, timer wrap and a brief
+BLE reconnect. Mock BLE and DOM tests cover complete/incomplete lists, file identity,
+transfer cancellation/timeouts, late native results, no-overwrite, metadata read-back,
+USB exclusivity and old-firmware recovery. These are Software-only; physical upload,
+stored motor combinations, playback end and full restoration remain Untested.

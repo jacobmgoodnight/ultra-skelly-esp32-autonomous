@@ -85,9 +85,15 @@ not predicted physical movement.
 Choose a palette or edit your own colors, link head and torso, and optionally rotate
 palettes. Effects, speed and brightness apply per channel across that scene. Start
 here can collapse; idle breaks, clock settings and diagnostics live under Advanced.
-Small bone-white head, torso and arm illustrations animate automatically beside
-enabled movement toggles. Reduced-motion preferences keep them static, and hidden
+Small purple head, torso and arm illustrations animate automatically in place of the left movement icons. Reduced-motion preferences keep them static, and hidden
 pages pause them. These illustrations do not indicate live prop movement.
+
+**Audio scenes · optional preview** can upload prepared MP3s directly to Skelly
+over Web Bluetooth and save per-file movement, eyes, colors and effects. A clip
+can own the routine temporarily, then restore the selected regular look. This
+requires updated firmware and attended hardware verification; see the
+[audio-scene guide and result sheet](docs/audio-scenes.md). Ordinary presets keep
+audio OFF. There is no automatic audio conversion in this first version.
 
 Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
 or save scenes. First-time Arduino installation instructions fold away after setup.

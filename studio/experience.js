@@ -11,10 +11,11 @@
   }
   function withoutMouth(config) {
     return {...config,jawEnabled:false,jawFollowupMotor:0,jawFollowupRecurring:false,
-      fairBodyTurns:false,playbackDiagnostics:false};
+      fairBodyTurns:false,playbackDiagnostics:false,eyeJawMode:config.eyeJawMode===3?1:config.eyeJawMode};
   }
   function scheduleFeedback(c) {
     const messages=["Equal minimum/maximum values request a fixed interval; a range randomizes it. Starts are measured after connection or the previous start, not by clock time."];
+    if(c.jawEnabled&&c.eyeJawMode===3)messages.push("Audio scenes keep the clip’s stored actions for its padded estimate plus a full 35-second motor settling period. Ordinary eyes, lights and body movement resume afterward; this is not playback-end telemetry.");
     if(c.headEnabled||c.armEnabled||c.torsoEnabled) messages.push("Motor cooldowns stay conservative: head 32 seconds, arm 32 seconds, torso 35 seconds. A due request waits for its locks.");
     if(c.jawEnabled&&c.jawProtectBody) messages.push("Jaw playback waits for body movement to finish. Body requests wait while jaw playback is due or active; requested intervals are not guaranteed start times.");
     if(c.jawEnabled&&c.jawFollowupMotor) messages.push("Jaw-first coordination uses a separate delayed follow-up. The request illustration does not draw that follow-up; HEAD after jaw failed in physical tests.");
@@ -34,7 +35,7 @@
     if(!c.compoundEnabled||c.compoundAlongside)for(const [key,name] of [["head","Head"],["torso","Torso"],["arm","Arm"]])if(c[key+"Enabled"])items.push([key,name]);
     if(c.eyesEnabled&&c.eyeChoices.length>1)items.push(["eyes","Eyes"]);
     if(c.lightsEnabled&&c.lightRotation)items.push(["lights","Lighting"]);
-    if(c.jawEnabled)items.push(["jaw","Jaw"]);
+    if(c.jawEnabled)items.push(["jaw",c.eyeJawMode===3?"Audio scene":"Jaw"]);
     return items;
   }
   function lightingSummary(c){
