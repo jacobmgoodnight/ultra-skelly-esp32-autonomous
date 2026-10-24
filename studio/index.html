@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
-<title>Skelly Studio — ESP32 Arduino Configurator</title>
-<link rel="stylesheet" href="./style.css?v=f74658eb22ed">
+<title>Skelly Studio — ESP32 Controller</title>
+<link rel="stylesheet" href="./style.css?v=7369108b140f">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
@@ -20,7 +20,7 @@
 <script src="./audio-prep.js?v=460944ee3d5f" defer></script>
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
-<script src="./controller.js?v=51275a2110b7" defer></script>
+<script src="./controller.js?v=de68c2fe10e9" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -160,16 +160,17 @@
       <p id="controllerFirmware" class="small-description">Connect to identify installed firmware.</p><p id="controllerActivity" class="controller-activity" hidden></p>
       <p id="controllerReceived" class="small-description">No controller status received yet.</p>
       <p id="controllerMessage" role="status" aria-live="polite" data-state="info">Connect your ESP32 to read or save settings.</p>
-      <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" disabled>Save routine</button><button id="controllerScenes" type="button" disabled>Save scenes</button></div>
+      <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" disabled>Save this routine</button><button id="controllerScenes" type="button" disabled>Save scene collection</button></div>
+      <p class="small-description"><strong>Save this routine</strong> sends the settings you’re editing above. No scene is needed. <strong>Save scene collection</strong> sends the saved collection from Scene builder. Both replace the ESP32’s current program; neither installs firmware.</p>
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
       <div class="controller-secondary"><button id="controllerIdentify" type="button" hidden disabled>Retry identification</button><button id="controllerDisconnect" type="button" disabled>Disconnect</button></div>
-      <details class="instructions" id="controllerSetup"><summary>First-time setup · install universal firmware</summary>
-        <p><strong>Install firmware once. Save settings here afterward.</strong> Available release: <span id="controllerRelease">2026.10.24-preview.1</span>. <a href="../CHANGELOG.md">What changed →</a></p>
-        <ol class="usb-setup"><li><strong>Install:</strong> use an original ESP32-WROOM. Download the versioned universal sketch below, open it in Arduino IDE, select <strong>ESP32 Dev Module</strong> and <strong>Arduino-ESP32 3.3.12</strong>, then compile/upload. Preserve your working settings first.</li><li><strong>Connect:</strong> close Arduino Serial Monitor and other USB tools. In desktop Chrome or Edge choose Connect ESP32, then CP2102 / CH340 and its COM port. Wait for Ready; identification can take up to 45 seconds after a restart.</li><li><strong>Save:</strong> Read saved settings first when keeping an existing setup. Otherwise confirm replacement and choose Save routine or Save scenes. Wait for read-back verified, then unplug USB.</li></ol>
-        <button id="universalDownload" type="button">Download universal firmware (.ino)</button>
-        <p class="small-description">Compile/upload installs the controller software; Save routine changes its settings without compiling again. Reinstallation is needed for new firmware features, not ordinary edits. Saved USB settings take priority over the factory Subtle routine.</p>
-        <details class="instructions"><summary>Browser installation or recovery · optional preview</summary><p>The <a href="./usb.html#firmware">USB installer</a> accepts a reviewed prebuilt package. Choose both extracted package files together and check their source revision. No Arduino IDE is needed for a prebuilt image. Real browser flashing remains unconfirmed; keep the Arduino route available.</p></details>
-        <p>The source download follows your selected model. Prebuilt installer packages remain Ultra-only.</p>
+      <details class="instructions" id="controllerSetup" open><summary>New ESP32? Start here · install firmware once</summary>
+        <p><strong>Connect ESP32 → Install Firmware → Configure Skelly.</strong> Use the browser installer; no Arduino software, manual package download or GitHub account needed. Available release: <span id="controllerRelease">2026.10.24-preview.2</span>. <a href="../CHANGELOG.md">What changed →</a></p>
+        <p><a id="browserInstall" class="install-link" href="./install.html">Install universal firmware in your browser →</a></p>
+        <p class="small-description">Original ESP32-WROOM with 4 MB flash · desktop Chrome/Edge · USB data cable. Installation overwrites ESP32 firmware and saved settings/scenes: back up first. Browser flashing remains physically Untested.</p>
+        <ol class="usb-setup"><li><strong>Connect:</strong> plug the ESP32 into your computer; close other serial apps.</li><li><strong>Install:</strong> follow the browser installer, wait for completion, then close its dialog.</li><li><strong>Configure:</strong> return here, Connect ESP32 and wait for Ready. Choose your settings, confirm replacement, then <strong>Save this routine</strong>. Scene builder is optional. Wait for read-back verified before unplugging.</li></ol>
+        <p class="small-description">Already installed? Connect above and read saved settings before editing an existing setup. Ordinary settings changes need no firmware reinstall. Saved USB settings take priority over the factory Subtle routine.</p>
+        <details class="instructions"><summary>Advanced Arduino fallback · source download</summary><p>Download the model-specific universal source, open it in Arduino IDE, select <strong>ESP32 Dev Module</strong> and <strong>Arduino-ESP32 3.3.12</strong>, then compile/upload. Close Serial Monitor before connecting here.</p><button id="universalDownload" type="button">Download universal source (.ino)</button></details>
       </details>
     </section>
     <details class="panel fold-panel" id="advanced"><summary><span><strong>Advanced &amp; testing</strong><small>Idle breaks, clock, diagnostics and experimental audio</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
@@ -194,7 +195,7 @@
         <label>Choose your Skelly <select id="deviceId"><option value="ultra">6.5 ft Ultra Skelly v2 — Default / Tested</option><option value="skelly12">12 ft App-Controlled Skelly (2026) — Experimental / Untested</option></select></label>
         <p id="deviceChangeNotice" role="status" hidden></p>
         <p>Only the 2026 app-controlled 12-foot model with Bluetooth animation hardware is eligible. Older 12-foot models are excluded. Changing models resets eyes and lighting to OFF and removes unsupported settings.</p>
-        <p>For the experimental model, download a model-specific sketch from Scene builder. The first-time USB installer remains for the 6.5-foot Ultra.</p>
+        <p>The first-time installer and universal source download follow this selection. The experimental model uses its own restricted firmware; it cannot use Ultra USB records.</p>
       </details>
       <label class="single-field" for="bleName">Skelly's advertised Bluetooth name <input id="bleName" type="text" maxlength="48" value="Ultra Skelly v2" autocomplete="off" spellcheck="false"></label>
       <p class="small-description">No Bluetooth MAC address to enter! The ESP32 automatically discovers the address by scanning for this name. Only change it if you renamed your Skelly.</p>

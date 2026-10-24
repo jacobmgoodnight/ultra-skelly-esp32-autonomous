@@ -8,7 +8,7 @@ class Element{
  constructor(){Object.assign(this,{textContent:'',dataset:{},disabled:false,hidden:false,checked:false,open:false,children:[]});}
  replaceChildren(...nodes){this.children=nodes;}append(...nodes){this.children.push(...nodes);}
 }
-function page({supported=true,settings=true,audio=false,statusFails=false,badReadback=false,allowScenes=true,keepRead=false}={}){
+function page({supported=true,settings=true,audio=false,statusFails=false,badReadback=false,allowScenes=true,keepRead=false,search=''}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()])),events={},windowEvents={};
  let sceneLibrary=[],connects=0,config={...generator.DEFAULTS},created=0,records=[];
  class FakeSession{
@@ -22,10 +22,10 @@ function page({supported=true,settings=true,audio=false,statusFails=false,badRea
  }
  let session;
  const document={hidden:false,getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener:(name,fn)=>events[name]=fn};
- const window={SkellySerial:{Session:class extends FakeSession{constructor(){super();session=this;}}},SkellyRuntime:runtime,SkellyControllerState:stateApi,
+ const window={location:{search},SkellySerial:{Session:class extends FakeSession{constructor(){super();session=this;}}},SkellyRuntime:runtime,SkellyControllerState:stateApi,
   SkellyScenes:{snapshot:()=>({scenes:sceneLibrary}),program:()=>({scenes:sceneLibrary,rotate:false}),confirmSendScenes:async()=>allowScenes,recordController:(program,kind)=>records.push({program,kind}),loadProgram:async program=>{if(keepRead)return false;sceneLibrary=program.scenes;events['skelly-scenes-changed']?.();return true;}},
   SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>config=c,writeLibrary:()=>{},downloadText:()=>{}},addEventListener:(name,fn)=>windowEvents[name]=fn};
- const context=vm.createContext({window,document,navigator:supported?{serial:{}}:{}});vm.runInContext(source,context);events.DOMContentLoaded();
+ const context=vm.createContext({window,document,URLSearchParams,navigator:supported?{serial:{}}:{}});vm.runInContext(source,context);events.DOMContentLoaded();
  return {nodes,document,events,window,windowEvents,records,get session(){return session;},get config(){return config;},get connects(){return connects;},get created(){return created;},async close(){if(session.port)await nodes.controllerDisconnect.onclick();else windowEvents.pagehide();}};
 }
 test('one explicit USB session serves the separate everyday panel and diagnostics; USB ready is independent of Bluetooth',async()=>{
@@ -35,6 +35,15 @@ test('one explicit USB session serves the separate everyday panel and diagnostic
   await p.nodes.controllerRead.onclick();assert.equal(p.config.headMin,generator.DEFAULTS.headMin);assert.equal(p.nodes.controllerScenes.disabled,false);assert.match(p.nodes.controllerMessage.textContent,/Read 1/);
   assert.ok(p.nodes.controllerDetails.children.length);await p.nodes.controllerDisconnect.onclick();assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');assert.equal(p.nodes.controllerDetails.children.length,0);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.created,1);
  }finally{await p.close();}
+});
+
+test('browser setup follows an explicit experimental selection and return; ordinary visits remain Ultra',async()=>{
+ for(const search of ['', '?device=skelly12']){const p=page({search});try{
+  assert.equal(p.config.deviceId,search?'skelly12':'ultra');p.nodes.browserInstall.onclick();
+  assert.equal(p.nodes.browserInstall.href,'./install.html'+search);
+  if(search){assert.equal(p.config.bleName,'12ft Skelly');assert.equal(p.config.armEnabled,false);assert.ok(p.config.headMin>=90);}
+  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,false);
+ }finally{await p.close();}}
 });
 test('incompatible firmware reveals first-time setup without sending settings',async()=>{
  const p=page({settings:false});try{await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,true);assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.session.operations.length,0);}finally{await p.close();}

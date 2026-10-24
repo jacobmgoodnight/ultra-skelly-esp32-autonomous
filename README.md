@@ -8,21 +8,20 @@ flash an inexpensive ESP32-WROOM board, and let it run without a connected phone
 browser, Wi-Fi, cloud service or subscription.
 
 For Ultra Skelly v2 owners who want occasional movement without keeping a phone
-connected. Custom configurations download as Arduino source. An optional
-[universal firmware](docs/usb-settings-scenes.md) adds USB settings updates and
-up to four saved scenes: compile/install once, then change routines from Studio.
-Separate USB tools accept reviewed head-only or universal build packages.
+connected. The recommended [browser setup](docs/browser-installation.md) installs
+universal firmware directly, with no Arduino software or GitHub account. Install
+once, then change the current routine or up to four saved scenes over USB in Studio.
+Advanced self-contained Arduino source downloads remain available offline.
 The owner confirms USB connection, reading/saving settings and observed changed
 routines. Power-cycle retention, recovery and physical scene transitions remain
 separate checks.
 The software is free and MIT licensed; you supply the prop,
 an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
-computer for the initial Arduino upload. Other prop revisions and ESP32 variants
+computer for the initial USB installation. Other prop revisions and ESP32 variants
 are not covered by the current hardware evidence.
 
 Want Skelly's head to move on its own every few minutes, even when nobody walks
-past? Choose **Subtle**, which defaults to **60–120 seconds**, download
-the sketch and flash the ESP32. It requests a head animation at a random point
+past? Choose **Subtle**, which defaults to **60–120 seconds**, install universal firmware and save the routine over USB. It requests a head animation at a random point
 in that range, repeatedly, while powered and connected to the prop. You choose
 the intervals; the ESP32 handles the recurring triggers. Other enabled routines
 and safety locks may delay starts.
@@ -99,11 +98,12 @@ requires updated firmware and attended hardware verification; see the
 audio OFF. Local conversion/trimming and computer-only preview can prepare other browser-supported audio formats; no audio is sent to a server.
 
 Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
-or save scenes. First-time Arduino installation instructions fold away after setup.
+or save a scene collection. First-time browser installation folds away after USB
+identification; Arduino is an advanced fallback. A scene is not needed for one routine.
 
 Screenshots show illustrative browser settings, with no hardware connection.
 
-Current release: **2026.10.24-preview.1**. [Feature status](docs/status.md) · [Changelog](CHANGELOG.md) · [Next attended checks](docs/next-release-checklist.md).
+Current release: **2026.10.24-preview.2**. [Feature status](docs/status.md) · [Changelog](CHANGELOG.md) · [Next attended checks](docs/next-release-checklist.md).
 
 ## Current evidence — October 23–24, 2026
 
@@ -134,20 +134,21 @@ observations do not establish that this firmware revision passed on the prop.
 
 ## Quick start
 
-1. Install Arduino IDE and **esp32 by Espressif Systems 3.3.12**. Select **ESP32 Dev
-   Module** for the original ESP32-WROOM-32 board. Serial Monitor uses **115200**.
-2. Choose movement, eyes and lighting in Studio and download the self-contained
-   `.ino`. Mouth routines are OFF by default, including Normal and Haunted.
-   **These direct features need no MP3 upload or web controller.**
-3. Power Skelly in Bluetooth mode and disconnect any other controller so the
-   ESP32 can connect. If using the checked-in firmware instead of Studio, set
-   `MOUTH_ENABLED = false` for an audio-free setup; that reference sketch retains
-   its previous head-and-jaw defaults.
-4. Compile/upload. The ESP32 finds **Ultra Skelly v2** by name; no MAC entry or
-   physical wiring to the prop is needed. It scans up to five seconds, targeting five-second scan starts
-   during the first minute (until first connection), then pauses 30 seconds
-   after misses/connection failures. Studio exposes both retry settings. A board EN/RESET press can help
-   after flashing, but automatic retries are intended for regular operation.
+1. Use an **original ESP32-WROOM / 4 MB** board, USB data cable and desktop
+   Chrome/Edge. In Studio open **Send to your ESP32 → New ESP32? Start here**.
+2. Follow **Connect ESP32 → Install Firmware → Configure Skelly**. The public,
+   versioned package is checked before USB access. **Installation replaces ESP32
+   firmware and resets saved settings/scenes: export backups first.** Browser
+   flashing remains physically Untested; Arduino fallback is available.
+3. Close the completed installer, return to Studio, Connect ESP32 and wait for
+   Ready. Choose **Subtle**, confirm replacement and **Save this routine**. No
+   scene is needed. Save scene collection is only for a saved Scene builder library.
+   Wait for read-back verified, then disconnect. Ordinary edits need no reinstall.
+4. Power Skelly in Bluetooth mode and disconnect other BLE controllers. The ESP32
+   discovers **Ultra Skelly v2** by advertised name; no MAC entry or wiring to the
+   prop is needed. Visually verify a simple attended routine. Startup scans target
+   five-second intervals; after the first minute, failed attempts pause 30 seconds.
+   Optional audio is OFF and not needed for movement, eyes or lighting.
 
 [Full setup](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
 
@@ -185,12 +186,13 @@ for Ultra Skelly. Effects use direct commands without audio preparation.
 Use the [new Studio and lighting checklist](docs/studio-lighting-checklist.md)
 before combining these options with motors or mouth playback.
 
-[USB tools](studio/usb.html) capture original serial bytes and set the optional
-clock. Its installer accepts versioned, hash-checked head-only or universal build
-packages and needs internet to load its pinned installer library. Source downloads
-require Arduino compilation. Once universal firmware is installed, use Studio to
-read and save custom routines or scenes over USB without recompiling. See
-[USB setup](docs/usb-tools.md) and [settings/scenes](docs/usb-settings-scenes.md).
+[Browser installation](studio/install.html) fetches versioned universal firmware
+from free GitHub Pages, then directs you to Studio USB configuration. Internet is
+needed for the package and pinned installer library; installed firmware needs none.
+[USB tools](studio/usb.html) remain available for original-byte capture and the
+optional clock. Source downloads require Arduino compilation. See
+[installation/recovery/checklist](docs/browser-installation.md) and
+[settings/scenes](docs/usb-settings-scenes.md).
 
 ## Conservative movement scheduling
 

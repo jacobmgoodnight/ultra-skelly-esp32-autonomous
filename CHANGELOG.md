@@ -1,5 +1,14 @@
 # Changelog
 
+## Browser setup refresh · firmware unchanged
+
+Makes browser universal installation the recommended first-time path, with public
+versioned, hash-checked model-specific packages and an explicit configuration
+handoff. Clarifies Save this routine versus Save scene collection; Arduino moves
+to an advanced fallback. Installation warns that full-image flashing resets ESP32
+settings/scenes. USB schema, profiles and motor protections are unchanged.
+Browser flashing/recovery remains physically Untested.
+
 ## 2026.10.24-preview.2
 
 Firmware revision 5 · build 2026102402. Adds a collapsed, explicitly opt-in

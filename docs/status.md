@@ -14,14 +14,14 @@ records physical evidence; the [changelog](../CHANGELOG.md) records software rel
 | Studio scene editing and local draft recovery | Yes | Owner-reported focused checklist pass, with detailed failure paths covered in software. Compare saved scenes is new browser-only UI. |
 | Universal USB connection/read/save | Yes | Owner confirms connection, reads, changed settings and observed changed routine. Power-cycle retention, recovery and physical scene transitions remain unconfirmed. |
 | Firmware identity and modeled activity/wait | Yes, revision 5 | Read-only additions adapted from PR #35, tested in software. Older firmware remains usable and may report no version/activity. These values never confirm actual motion or natural audio completion. |
-| Browser firmware installer | Optional preview | Local package checks and builds pass in software. Actual flashing/recovery still needs an attended test. Arduino installation remains available. |
+| Browser firmware installer | Recommended first-time setup | Public versioned, hash-checked universal package; no manual Actions download/account. Physical flashing/recovery Untested. [Setup/checklist](browser-installation.md). Arduino is an advanced fallback. |
 | Offline clock windows | Advanced, experimental | USB-set time only; invalid after every restart, no retained clock, automatic DST or lights-off action. Physical checks pending. |
 | Audio scenes and local audio preparation | Advanced → Audio scenes, experimental and optional | OFF in ordinary presets. Local trim/mono/8 kHz/32 kbps conversion, computer preview, upload and metadata read-back have software checks only. Real uploads, stored motor masks, exclusive playback/restoration and recovery remain Untested. |
 
 ## Install versus save
 
 Install universal firmware once, then **Connect ESP32 → Read saved settings → Save
-routine / Save scenes** for ordinary changes. Reinstall only to upgrade controller
+this routine / Save scene collection** for ordinary changes. Reinstall only to upgrade controller
 software or recover it. A generated `.ino` is source and requires Arduino IDE/CLI;
 the browser installer consumes a compiled, hash-checked package. It does not
 compile a sketch. Source downloads include the release and timestamp; packages
@@ -29,7 +29,7 @@ include full source commit, source/image hashes and release identity.
 
 Core editing, generation, bundled eyes and audio conversion can work offline from
 the complete Studio folder in a compatible browser. First-time toolchain setup
-and the optional browser installer library need internet. No cloud receives audio,
+and browser firmware package/library downloads need internet. No cloud receives audio,
 profiles or USB commands. No Wi-Fi, account or ongoing browser connection is
 required for the ESP32 to run its saved routine.
 
