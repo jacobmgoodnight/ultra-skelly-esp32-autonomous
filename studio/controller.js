@@ -4,7 +4,12 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const g=window.SkellyStudioGenerator,r=window.SkellyRuntime,el=id=>document.getElementById(id);
     const session=new window.SkellySerial.Session(navigator.serial);
+    // An explicit return from the model-specific installer keeps the firmware and editor aligned.
+    if(window.location?.search&&new URLSearchParams(window.location.search).get('device')==='skelly12'){
+      g.writeConfig(g.adaptDevice({...g.DEFAULTS,...g.PRESETS.subtle,bleName:'12ft Skelly'},'skelly12'));
+    }
     const state=new window.SkellyControllerState.ControllerState(session,{onChange:render,hidden:()=>document.hidden});
+    let previousUsb='disconnected';
     const text=(id,value)=>{const node=el(id),next=String(value);if(node.textContent!==next)node.textContent=next;};
     function render(){
       const view=window.SkellyControllerState.connectionView(state),port=!!session.port;
@@ -29,6 +34,8 @@
       el('controllerScenes').disabled||=!window.SkellyScenes.snapshot().scenes.length;
       el('controllerLog').disabled=!session.capture.size;
       if(state.usb==='unsupported')el('controllerSetup').open=true;
+      else if(state.usb==='ready'&&previousUsb!=='ready')el('controllerSetup').open=false;
+      previousUsb=state.usb;
       el('controllerSkellyHelp').textContent=!port?'Connect USB to check Skelly.':state.stale?'Status may be out of date; USB remains connected.':state.data?.connected===0?'The ESP32 retries Bluetooth automatically. USB can still read and save settings.':'Bluetooth status comes from the ESP32; confirm movement on your Skelly.';
       el('controllerReceived').textContent=state.receivedAt===null?'No controller status received yet.':(state.stale?'Older status · last received ':'Status received ')+new Date(state.receivedAt).toLocaleTimeString()+'. Auto-refreshes every 5 seconds while idle.';
       const dl=el('controllerDetails');dl.replaceChildren();
@@ -40,6 +47,13 @@
       }
     }
     window.SkellyControllerPortOpen=()=>!!session.port||state.busy;
+    function updateInstallerLinks(){
+      const query=g.readConfig().deviceId==='skelly12'?'?device=skelly12':'';
+      el('browserInstall').href='./install.html'+query;
+      for(const link of document.querySelectorAll('a[data-usb-tools]'))link.href='./usb.html'+query;
+    }
+    document.addEventListener('skelly-config-changed',updateInstallerLinks);
+    updateInstallerLinks();
     document.addEventListener("skelly-audio-connection",render);
     function consent(){if(!el('controllerConsent').checked)throw Error('Confirm replacing the controller’s saved routine first.');}
     el('controllerConnect').onclick=()=>state.run(async()=>{

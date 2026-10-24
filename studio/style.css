@@ -220,3 +220,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{o
 #audioScenes>summary small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:5px}#audioScenes>summary strong{font-size:13px}#sceneComparison [hidden]{display:none}
 /* Compatibility warning appears only after deliberate experimental selection. */
 #deviceWarning{grid-column:1/-1;}
+
+/* First-time installation is separate from everyday USB settings. */
+.install-panel{max-width:860px;margin-inline:auto}.install-link{display:inline-block;background:var(--purple);color:#17111e;border-radius:9px;padding:12px 16px;font-size:14px;font-weight:700;text-decoration:none;max-width:100%;box-sizing:border-box}
+.install-steps{padding-left:24px}.install-steps>li{padding:4px 0 20px 8px;border-bottom:1px solid var(--line);margin-bottom:20px}.install-steps h2{font-size:20px;margin:8px 0}.install-panel p,.install-panel li{line-height:1.7}.install-panel button{font:inherit;min-height:44px;padding:10px 16px;border-radius:9px;border:1px solid #8063a7;background:#8c60cf;color:white;cursor:pointer}.install-panel button:disabled{opacity:.4;cursor:not-allowed}.install-panel input[type=file]{display:block;max-width:100%;margin:12px 0}#installerStatus{overflow-wrap:anywhere}#installerStatus[data-state=error]{color:#ffb4b4}#installerStatus[data-state=ready]{color:var(--green)}.install-panel [hidden]{display:none}
+@media(max-width:520px){.install-steps{padding-left:18px}.install-steps>li{padding-left:2px}.install-panel h1{font-size:26px}.install-link{font-size:13px}}

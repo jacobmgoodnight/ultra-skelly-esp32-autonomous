@@ -10,16 +10,19 @@ for this interface update.
 
 ## Install once, then change settings
 
-Use the **universal** preview package on the USB tools page, or download universal
-firmware from Studio's **Send to your ESP32 → First-time setup** and compile/upload once using
-original ESP32-WROOM, ESP32 Dev Module and Arduino-ESP32 **3.3.12**. Its factory
-routine is Subtle: head 60–120 seconds, all optional features OFF. The old fixed
-head-only installer remains separate at 120–240 seconds; it does not load USB
-settings. Neither build requires Wi-Fi, a phone, an account or a backend at runtime.
+Use **Studio → Send to your ESP32 → New ESP32? Start here** for the recommended
+[browser installer](browser-installation.md). It fetches a versioned universal
+package directly; no Arduino software or account needed. Use an original
+ESP32-WROOM/4 MB board. Back up first: installation replaces firmware and resets
+ESP32 settings/scenes. Browser flashing remains physically Untested. Advanced
+Arduino source and local packages remain available. Universal Ultra starts with
+Subtle head 60–120 seconds and optional features OFF; the explicitly selected
+experimental 12-foot package starts at 90–120 seconds. Fixed head-only firmware
+cannot accept USB settings. No Wi-Fi/backend is required at runtime.
 
 In desktop Chrome/Edge, close Arduino Serial Monitor and other port users. Connect
 with **Connect ESP32** in **Send to your ESP32**, read saved settings, then
-choose **Save routine** or **Save scenes** after checking the replacement
+choose **Save this routine** or **Save scene collection** after checking the replacement
 notice. The browser waits for chunk acknowledgments, an applied acknowledgment
 and a matching read-back checksum. That confirms configuration, not physical motion.
 While actions finish, the status reports pending settings. Disconnecting after a
@@ -68,12 +71,11 @@ not an endurance or hardware pass.
 
 ### First setup and identification recovery
 
-Download **universal firmware** in Studio → Send to your ESP32 → First-time setup. Open the timestamped
-`.ino` in Arduino IDE, choose **ESP32 Dev Module** and **Arduino-ESP32 3.3.12**,
-then compile/upload. Close Serial Monitor and all other serial tools/tabs. In
-desktop Chrome/Edge choose **Connect ESP32**, then the board's USB adapter
-(for example **CP2102 USB to UART Bridge Controller (COM3)**; the number varies).
-Wait for **Ready** under **Computer → ESP32** before read/save.
+Use Studio's **New ESP32? Start here** browser setup, close its dialog after
+completion, then Connect ESP32 in Studio. The advanced source fallback uses ESP32
+Dev Module and Arduino-ESP32 3.3.12; close Serial Monitor after upload. Select the
+board's USB adapter (CP2102/CH340; COM number varies) and wait for **Ready** under
+**Computer → ESP32** before read/save. Back up before reinstalling firmware.
 
 Opening a serial port can restart this board. The browser now retries only the
 read-only `SKELLY HELLO` request every three seconds, for at most 45 seconds;

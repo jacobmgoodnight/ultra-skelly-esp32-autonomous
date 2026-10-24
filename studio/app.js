@@ -656,6 +656,13 @@
       timeline.appendChild(element);
     }
     const experimental=deviceFor(c).experimental;
+    byId('firstRunIntro').textContent=experimental?'Start with head only, at least 90 seconds between requests. Duration is unmeasured; keep the first test attended.':'Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.';
+    byId('firstRunDevice').textContent=experimental?'2026 app-controlled 12-foot model only. Experimental — Not Hardware Tested. Use an original ESP32-WROOM.':'Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.';
+    byId('firstRunExtras').textContent=experimental?'After a visual head test passes, test optional eyes and chest lighting separately. Audio and other body motors stay disabled.':'Add arm, torso, eyes or lighting to make the routine your own.';
+    for(const node of document.querySelectorAll('.preset small, [data-scene-starter] small, [data-scene-starter] span')){
+      node.dataset.ultraDescription??=node.textContent;
+      node.textContent=experimental?(node.parentElement.dataset.sceneStarter?(node.tagName==='SPAN'?'Eyes and chest lighting · experimental':'Head only · model restrictions apply'):'Head only · 90+ sec requests'):node.dataset.ultraDescription;
+    }
     byId('deviceWarning').hidden=!experimental;
     for(const id of ['armEnabled','torsoEnabled'])byId(id).closest('.movement-block').hidden=experimental;
     byId('compoundEnabled').closest('.eye-sync-control').hidden=experimental;
@@ -770,6 +777,7 @@
         const device=DEVICE_PROFILES[el.value];
         writeConfig(adaptDevice({...readConfig(),bleName:device.bleName,headEnabled:true,
           headMin:device.experimental?90:35,headMax:device.experimental?180:75,eyesEnabled:false,lightsEnabled:false,eyeChoices:[1]}));
+        byId('deviceChangeNotice').hidden=true;
         return;
       }
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");

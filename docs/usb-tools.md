@@ -2,8 +2,9 @@
 
 The optional [universal firmware](usb-settings-scenes.md) adds persistent USB
 settings, saved scene rotation and connected status. Studio places these controls
-under **Advanced & testing**. Physical USB/scene checks remain pending; continue
-the existing Studio refresh checklist before that separate follow-up.
+in **Send to your ESP32**, with detailed tools under **Advanced & testing**.
+The owner confirms USB connection/read/save; physical flashing, retention and scene
+transitions remain separate checks.
 
 These tools are software-tested; physical USB capture/flashing and the new
 firmware options have not been exercised on the prop. They do not resolve the
@@ -66,44 +67,24 @@ can finish, and playback eye/light restoration may complete. This does not send
 a physical stop command or necessarily turn off the prop's stored lights. Opening
 a window schedules fresh intervals rather than replaying overdue requests.
 
-## Reviewed USB installer packages
+## Browser firmware installation
 
-The `Build USB installer packages` Actions workflow creates downloadable
-artifacts, not a release or deployment. It uses Arduino-ESP32 3.3.12 and the original
-ESP32 target. The fixed head-only profile requests head every 120–240 seconds; jaw/arm/torso/eyes/
-lights/clock/fairness/notification experiments OFF. The package contains a merged
-4 MiB image, `manifest.json` and `build.json` with commit/source/binary hashes.
-The universal profile instead starts with Subtle head 60–120 seconds and optional
-features OFF; previously saved USB settings take priority over that seed. Restore
-firmware defaults explicitly to replace saved settings. This package remains a
-physically Untested preview.
+Use [Studio's browser setup](../studio/install.html) for the default universal
+installation path: Connect ESP32 → Install Firmware → Configure Skelly. It fetches
+a versioned, hash-checked package directly from free GitHub Pages. No Arduino
+software or GitHub account is needed. Advanced Arduino and local-package fallback
+options remain available. Disconnect USB capture and other serial apps first.
 
-Download the artifact from your reviewed commit, extract it, and select `build.json`
-plus its matching `head-only.bin` or `universal.bin` on USB tools. The page checks profile, chip, core, length,
-image headers and SHA-256 before offering the installer. Hash matching detects a
-mixed/damaged package; it does **not** authenticate its publisher. Use a build you
-reviewed. The firmware package is read locally, not uploaded to a server.
+**Full-image installation overwrites firmware and resets all ESP32 settings/scenes.**
+Back up before installing, close the installer after it reports completion, then
+return to Studio and connect again. Save this routine sends current editor settings;
+Save scene collection sends the saved library. No scene is needed to get started.
+USB saves do not reinstall firmware.
 
-Actions artifacts are a maintainer preview channel and require GitHub sign-in to
-download. They are not an account-free public release. The source/Arduino route
-and locally compiled packages require no account. Public, durable release assets
-can be published after review; this work does not publish a firmware release.
-
-Close the capture connection. Confirm the overwrite/preview notice. Loading the
-installer fetches pinned **ESP Web Tools 10.2.1** from unpkg; this optional action
-needs internet/HTTPS or a supported secure localhost origin. The configurator and
-serial capture load no CDN scripts. ESP Web Tools selects the supported chip family
-from the manifest; only **ESP32** is offered, not C3/S3/ESP8266. Installation can
-overwrite firmware and erase ESP32 data, so keep your working source/settings.
-No account, prop Wi-Fi, backend compiler or paid service is introduced.
-
-Custom Studio settings still generate a self-contained `.ino` and need Arduino
-IDE/CLI. The installer does not compile that source or transfer its settings.
-Changing persistent settings over USB without recompilation remains future work.
-
-Primary references: [Web Serial lifecycle](https://developer.chrome.com/docs/capabilities/serial),
-[ESP Web Tools manifests and merged images](https://esphome.github.io/esp-web-tools/),
-[upstream BBC6 observation fields](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/protocol-parser.js).
+Physical browser flashing/recovery remains **Untested**. See the
+[package provenance, recovery and attended checklist](browser-installation.md).
+The successful owner USB read/save report does not verify flashing. The existing
+USB transaction/storage schema and motor protections are unchanged.
 
 ## Optional fair turns and playback estimates
 

@@ -208,3 +208,15 @@ BLE reconnect. Mock BLE and DOM tests cover complete/incomplete lists, file iden
 transfer cancellation/timeouts, late native results, no-overwrite, metadata read-back,
 USB exclusivity and old-firmware recovery. These are Software-only; physical upload,
 stored motor combinations, playback end and full restoration remain Untested.
+
+## Browser installation packaging
+
+`node --test studio/tests/installer.test.cjs studio/tests/controller-ui.test.cjs`
+covers public paths, both models, stale/mixed identities, oversized/damaged images,
+unsupported browser guidance, explicit configuration handoff and existing USB saves.
+`python tests/test_prebuilt.py` regenerates both safe universal seeds and checks
+source/image/commit/model identity, atomic catalog rejection and manifest limits.
+The package workflow compiles original-ESP32 DIO images with core 3.3.12 and assembles
+a Pages artifact on PRs. Only a successful current-main smoke run can deploy it.
+No synthetic test image is published or flashed. Actual browser installation and
+recovery require the [attended checklist](browser-installation.md).

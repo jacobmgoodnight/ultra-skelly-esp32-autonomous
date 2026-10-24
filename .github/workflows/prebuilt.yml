@@ -1,24 +1,40 @@
 name: Build USB installer packages
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ['Skelly Studio smoke tests']
+    types: [completed]
+    branches: [main]
   pull_request:
-    paths: ['firmware/**', 'studio/**', 'scripts/prepare-prebuilt.cjs', 'scripts/prepare-universal.cjs', 'scripts/sync-runtime-schema.cjs', 'scripts/package-prebuilt.py', '.github/workflows/prebuilt.yml']
+    paths: ['firmware/**', 'studio/**', 'scripts/**', 'tests/test_prebuilt.py', '.github/workflows/prebuilt.yml', '.github/workflows/studio-checks.yml']
 permissions:
   contents: read
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - profile: head-only
+            device: ultra
+            artifact: head-only-usb-preview
             sketch: HeadOnly
             script: prepare-prebuilt.cjs
           - profile: universal
+            device: ultra
+            artifact: universal-usb-preview
+            sketch: Universal
+            script: prepare-universal.cjs
+          - profile: universal
+            device: skelly12
+            artifact: experimental-12ft-usb-preview
             sketch: Universal
             script: prepare-universal.cjs
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -31,13 +47,60 @@ jobs:
         run: |
           node scripts/sync-template.cjs --check
           node scripts/sync-runtime-schema.cjs --check
-          node scripts/${{ matrix.script }}
-          arduino-cli compile --fqbn esp32:esp32:esp32 --build-path .skelly-build/prebuilt/binaries .skelly-build/prebuilt/${{ matrix.sketch }}
+          node scripts/${{ matrix.script }} .skelly-build/prebuilt/${{ matrix.sketch }} ${{ matrix.device }}
+          arduino-cli compile --fqbn esp32:esp32:esp32:FlashMode=dio --build-path .skelly-build/prebuilt/binaries .skelly-build/prebuilt/${{ matrix.sketch }}
       - name: Package version and hashes
         run: |
-          python scripts/package-prebuilt.py --source .skelly-build/prebuilt/${{ matrix.sketch }}/${{ matrix.sketch }}.ino --binary .skelly-build/prebuilt/binaries/${{ matrix.sketch }}.ino.merged.bin --output .skelly-build/prebuilt/package --revision "$(git rev-parse HEAD)" --profile ${{ matrix.profile }}
+          python scripts/package-prebuilt.py --source .skelly-build/prebuilt/${{ matrix.sketch }}/${{ matrix.sketch }}.ino --binary .skelly-build/prebuilt/binaries/${{ matrix.sketch }}.ino.merged.bin --output .skelly-build/prebuilt/package --revision "$(git rev-parse HEAD)" --profile ${{ matrix.profile }} --device ${{ matrix.device }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.profile }}-usb-preview
+          name: ${{ matrix.artifact }}
           path: .skelly-build/prebuilt/package/
           retention-days: 90
+  site:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-usb-preview'
+          path: .skelly-build/packages
+      - name: Verify packages and assemble public catalog
+        run: python scripts/assemble-installer.py --packages .skelly-build/packages --output . --revision "$(git rev-parse HEAD)"
+      - name: Build existing static site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
+    needs: site
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Refuse an obsolete main build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: test "$(gh api repos/${{ github.repository }}/commits/main --jq .sha)" = "$EXPECTED_SHA"
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment

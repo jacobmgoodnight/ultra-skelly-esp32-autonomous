@@ -7,25 +7,40 @@ For everyday use, install universal firmware once, then use Studio’s **Send to
 
 A standard Bluetooth-capable ESP32 development board is sufficient (the confirmed test device was an ESP32-WROOM-32 USB-C/CP2102 board). It needs a USB power supply. No wires or modifications connect the ESP32 to the Skelly prop.
 
-## 2. Prepare Arduino IDE
+## 2. Install universal firmware in your browser
 
-- Install [Arduino IDE](https://www.arduino.cc/en/software).
-- Add the **ESP32 Espressif package** through Boards Manager. If needed, use `https://espressif.github.io/arduino-esp32/package_esp32_index.json` in Preferences > Additional Boards Manager URLs.
-- Install `esp32 by Espressif Systems`. This project was last tested with version **3.3.12**.
-- Board: **ESP32 Dev Module**.
-- Select the USB serial port under Tools > Port; on the original Windows testing machine it was COM3, but other PCs will differ.
-- If the port is absent, install the driver for the USB-UART chipset used by your board (the tested board used CP2102).
+Open [Studio](../studio/index.html) → **Send to your ESP32 → New ESP32? Start here**.
+Follow **Connect ESP32 → Install Firmware → Configure Skelly**. Use an original
+ESP32-WROOM development board with 4 MB flash, desktop Chrome/Edge and a USB data
+cable. The installer fetches the versioned package directly; no Arduino software,
+manual Actions download or GitHub account is needed.
 
-## 3. Choose an audio-free routine
+**Installation replaces ESP32 firmware and resets saved settings/scenes.** Export
+existing settings and keep your working sketch first. Leave Skelly OFF while
+installing. Confirm the overwrite notice, prepare the package, choose its USB port
+and wait for the installer to report completion. Close the dialog to release USB.
+Browser flashing remains **physically Untested**; see the
+[installation/recovery guide and short attended checklist](browser-installation.md).
 
-Open [Studio](../studio/index.html), choose your body movements, optional eye
-rotation and static lighting, then download the sketch. Mouth routines default
-OFF. Normal, Haunted, Subtle and Watchful need no uploaded audio or web controller.
-The optional clock window also works without mouth routines; set time over USB
-after each restart if you enable it.
+## 3. Configure and save one routine
 
-If using the checked-in canonical sketch directly, set `MOUTH_ENABLED = false`
-for an audio-free routine. Its previous head-and-jaw reference defaults remain.
+Return to Studio, choose Connect ESP32, then wait for Ready (up to 45 seconds).
+Choose **Subtle** for an attended head-only first try; eyes and lights are optional.
+Check replacement confirmation and choose **Save this routine**. You do not need
+Scene builder. Wait for read-back verified before unplugging. Use **Save scene
+collection** only for a saved collection built in Scene builder. Neither button
+installs firmware; ordinary edits need no reinstall. Read saved settings first
+when keeping an existing controller's setup.
+
+### Advanced Arduino fallback
+
+Studio's First-time setup contains a collapsed **Advanced Arduino fallback** with
+model-specific universal source. Install [Arduino IDE](https://www.arduino.cc/en/software)
+and **esp32 by Espressif Systems 3.3.12**, select **ESP32 Dev Module** and your USB
+port, then compile/upload the downloaded .ino. Close Serial Monitor before using
+Studio USB settings. A custom fixed sketch can also be generated offline; it does
+not accept USB settings unless universal support is enabled. The canonical reference
+sketch retains its previous head/jaw defaults: disable mouth for audio-free use.
 
 ### Optional mouth setup · limited
 
@@ -49,11 +64,11 @@ The sketch uses `SKELLY_NAME = "Ultra Skelly v2"` to discover the prop. It reads
 
 Only mouth routines require the per-device `MOUTH_FILE_SERIAL`, the **stored MP3 file number** reported by the web controller. The original test unit used #12, but others might differ. If your prop has been renamed and advertises a different BLE name, update the Studio name or `SKELLY_NAME` as well.
 
-## 4. Flash firmware
+## 4. Check the first connection
 
-Open your Studio-generated `.ino` and compile/upload it. If using
-`firmware/SkellyAutonomous/SkellyAutonomous.ino` directly, disable mouth or configure
-its actual file serial before uploading. Open Serial Monitor at **115200**.
+After either installation method, power Skelly in Bluetooth mode and disconnect
+other BLE controllers. Confirm actual behavior visually; firmware installation,
+USB read-back and BLE write acceptance are separate from physical movement.
 
 ### After flashing: first connection
 

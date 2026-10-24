@@ -70,11 +70,10 @@ models: a single library/program must use one model and one BLE name.
 Download the ordinary sketch for fixed settings, or use Scene builder's USB
 sketch download for settings/scenes. First-time setup's universal source download
 also follows the selected model and starts with a restricted Subtle seed.
-Compile for ESP32 Dev Module with
-Arduino-ESP32 **3.3.12**, then upload to the **ESP32**, using the existing Arduino
-instructions. No prop firmware is written. The first-time prebuilt USB installer
-and existing portable presets remain Ultra-only. There is no 12-foot prebuilt
-package. Install the model-specific generated sketch before sending USB settings.
+Use First-time setup's browser installer for a model-specific universal package,
+or the advanced source fallback with ESP32 Dev Module / Arduino-ESP32 **3.3.12**.
+[Browser installation](browser-installation.md) is physically Untested and resets
+all ESP32 settings/scenes; back up first. No prop firmware is written.
 Wrong-model USB records are rejected by firmware before application or saving.
 
 `DeviceProfile` centralizes firmware head mask, eye count, light channels,
@@ -103,7 +102,7 @@ limits and record size, and the `skelly-config` NVS namespace. Experimental
 records use format word **12**, the same layout, a profile-specific 20-bit eye
 mask bound, and a separate `skelly-12ft` namespace. Each firmware accepts only
 its own format and capabilities. There is **no migration of existing NVS**.
-Rollback preserves the previous model's slots, sequence and CRC protections;
+Source-upload rollback without full erase preserves the previous model's slots, sequence and CRC protections. Browser full-image installation erases both namespaces; restore exported settings afterward.
 automatic scene changes still write no flash.
 
 ## Attended hardware checklist

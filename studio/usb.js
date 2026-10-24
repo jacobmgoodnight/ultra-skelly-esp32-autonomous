@@ -1,6 +1,8 @@
 (function(){
   "use strict";
   const byId=id=>document.getElementById(id);
+  const device=new URLSearchParams(location.search).get('device');
+  if(device)byId('firmwareSetup').href='./install.html?device='+encodeURIComponent(device);
   const session=new window.SkellySerial.Session(navigator.serial,()=>{
     byId("connect").disabled=session.busy||Boolean(session.port)||!navigator.serial;
     byId("disconnect").disabled=!session.port||session.closing;
