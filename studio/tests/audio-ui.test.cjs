@@ -30,6 +30,12 @@ test('experimental 12-foot selection cancels direct audio and rejects new audio 
  assert.equal(p.config.jawEnabled,false);
  assert.throws(()=>a.audioRoutine(p.config,{serial:27},28,180,300),/Audio is disabled/);
 });
+test('typing the known 12-foot name cannot bypass the direct audio restriction',async()=>{
+ const p=page();p.window.SkellyStudioGenerator.writeConfig({bleName:'12ft Skelly'});
+ assert.equal(p.nodes.audioConnect.disabled,true);p.nodes.audioConnect.onclick();await p.settle();
+ assert.equal(p.connects,0);assert.match(p.nodes.audioMessage.textContent,/Audio is disabled/);
+ assert.throws(()=>a.audioRoutine(p.config,{serial:27},28,180,300),/Audio is disabled/);
+});
 test('USB connection blocks direct BLE preparation without opening another controller',async()=>{const p=page({usb:true});p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.connects,0);assert.match(p.nodes.audioMessage.textContent,/Close the ESP32 USB session/);});
 test('read device identity plus explicit estimate configures editor only and audio can be turned off',async()=>{
  const p=page();p.nodes.audioConnect.onclick();await p.settle();assert.equal(p.nodes.audioEdit.hidden,false);assert.equal(p.nodes.audioFileSelect.value,'27:45:Greeting.mp3');
