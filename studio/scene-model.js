@@ -11,6 +11,7 @@
       if(!Number.isInteger(s.seconds)||s.seconds<60||s.seconds>3600)throw Error('Scene duration must be 60–3600 seconds.');names.add(s.name.trim());
       return {name:s.name.trim(),seconds:s.seconds,profile:g.parseProfile(JSON.stringify(s.profile))};
     });
+    if(new Set(scenes.map(s=>s.profile.config.deviceId)).size>1)throw Error('All scenes must use the same device model. Export this library before switching models.');
     return {app:'SkellyScenes',version:1,rotate:value.rotate,random:value.random??false,scenes};
   }
   function minutesToSeconds(minutes){if(!Number.isFinite(minutes)||minutes<1||minutes>60)throw Error('Scene duration must be 1–60 minutes.');return Math.round(minutes*60);}
@@ -85,9 +86,9 @@
   function starter(key,g,connection={}){
     const looks={moonlit:{name:'Moonlit Watcher',preset:'subtle',palette:'moonlight',eyes:[8],effect:1},haunted:{name:'Haunted Porch',preset:'haunted',palette:'haunted',eyes:[1,2,3,4,5,6,7,8],effect:3},ember:{name:'Ember Glow',preset:'normal',palette:'ember',eyes:[4],effect:3}};
     const look=looks[key];if(!look)throw Error('Choose a scene starting point.');
-    const target=Object.fromEntries(['bleName','scanRetrySec','startupRetrySec','startupWindowSec'].filter(k=>connection[k]!==undefined).map(k=>[k,connection[k]]));
+    const target=Object.fromEntries(['deviceId','bleName','scanRetrySec','startupRetrySec','startupWindowSec'].filter(k=>connection[k]!==undefined).map(k=>[k,connection[k]]));
     const config={...clone(g.DEFAULTS),...clone(g.PRESETS[look.preset]),...g.paletteSettings(look.palette),...target,eyesEnabled:true,eyeChoices:look.eyes,torsoEffect:look.effect,headEffect:look.effect,torsoBrightness:255,headBrightness:255,torsoSpeed:125,headSpeed:125,clockEnabled:false,restEnabled:false,jawEnabled:false};
-    return {name:look.name,seconds:600,profile:JSON.parse(g.createProfile(config,{}))};
+    return {name:look.name,seconds:600,profile:JSON.parse(g.createProfile(g.adaptDevice(config),{}))};
   }
   const api={SceneLibrary,validateLibrary,minutesToSeconds,editorKey,parseDraft,timingNotes,sceneSummary,comparisonRows,routinePreview,starter};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellySceneModel=api;

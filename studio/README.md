@@ -5,6 +5,10 @@ A static browser configurator for the autonomous ESP32 controller.
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
 Eye thumbnails and firmware generation work offline from the complete folder.
 
+Advanced & testing includes a collapsed experimental device option for the
+2026 app-controlled 12-foot model. It is **Not Hardware Tested**; Ultra stays
+the default. See [supported restrictions, installation and rollback](../docs/experimental-12ft.md).
+
 Choose randomized head/jaw timing, optional arm/torso, live eyes, RGB colors,
 jaw-first follow-ups, compound masks, MP3 pools and idle breaks; then download or
 copy a self-contained `.ino`. Flash with Arduino IDE or CLI, **ESP32 Dev Module**, core

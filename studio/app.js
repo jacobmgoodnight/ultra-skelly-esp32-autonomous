@@ -5,6 +5,7 @@
 (function () {
   "use strict";
   const DEFAULTS = Object.freeze({
+    deviceId:"ultra",
     headEnabled:true, headMin:35, headMax:75,
     torsoEnabled:false, torsoMin:240, torsoMax:420,
     armEnabled:true, armMin:150, armMax:240,
@@ -21,6 +22,22 @@
     palette0Name:"Halloween",palette0Torso:"#ff6000",palette0Head:"#00ff00",palette1Name:"Haunted",palette1Torso:"#8000ff",palette1Head:"#00e6cc",palette2Name:"Moonlight",palette2Torso:"#176bff",palette2Head:"#c8e8ff",palette3Name:"Ember",palette3Torso:"#ff1800",palette3Head:"#ffb000",
     lightRotation:false,lightInterval:90,lightPalettes:[0,1,2,3],torsoEffect:1,headEffect:1,torsoSpeed:125,headSpeed:125
   });
+  const DEVICE_PROFILES=Object.freeze({
+    ultra:{name:"6.5 ft Ultra Skelly v2 — Default / Tested",bleName:"Ultra Skelly v2",eyes:18,experimental:false},
+    skelly12:{name:"12 ft App-Controlled Skelly (2026) — Experimental / Untested",bleName:"12ft Skelly",eyes:20,experimental:true}
+  });
+  const deviceFor=c=>DEVICE_PROFILES[c.deviceId??"ultra"];
+  // Only deliberate model changes and presets adapt capabilities. Imports and
+  // generation reject incompatible settings instead of silently rewriting them.
+  function adaptDevice(config,deviceId=config.deviceId??"ultra") {
+    const p=DEVICE_PROFILES[deviceId];if(!p)throw Error("Unknown Skelly device profile.");
+    const c={...config,deviceId};
+    if(p.experimental)Object.assign(c,{armEnabled:false,torsoEnabled:false,compoundEnabled:false,
+      jawEnabled:false,eyeJawMode:1,jawFollowupMotor:0,jawFollowupRecurring:false,playbackDiagnostics:false,
+      headMin:Math.max(90,c.headMin),headMax:Math.max(90,c.headMax)});
+    c.eyeChoices=c.eyeChoices.filter(i=>i<=p.eyes);if(!c.eyeChoices.length)c.eyeChoices=[1];
+    return c;
+  }
   const PRESETS = {
     watchful:{eyeJawMode:1,headEnabled:true,headMin:120,headMax:240,jawEnabled:false,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
     storyteller:{eyeJawMode:1,headEnabled:true,headMin:120,headMax:240,jawEnabled:true,jawMin:90,jawMax:180,torsoEnabled:false,armEnabled:false,bodyOverlap:false,jawProtectBody:true,jawFollowupMotor:0,jawFollowupRecurring:false,compoundEnabled:false,lightsEnabled:false},
@@ -77,16 +94,17 @@
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
     const profile=JSON.parse(text);
-    if(!profile || profile.app!=="SkellyStudio" || ![1,2,3,4].includes(profile.version) ||
+    if(!profile || profile.app!=="SkellyStudio" || ![1,2,3,4,5].includes(profile.version) ||
        !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
-      throw new Error("This is not a supported Skelly Studio profile (version 1–4).");
+      throw new Error("This is not a supported Skelly Studio profile (version 1–5).");
+    if(profile.version===5&&profile.config.deviceId!=='skelly12')throw Error('Experimental profiles require an explicit 12-foot device identifier.');
     const config={};
     for(const [key,value] of Object.entries(DEFAULTS)) {
       const added=["fairBodyTurns","playbackDiagnostics","jawClipSec","jawDurations","clockEnabled","clockStart","clockEnd","clockDays"];
       const lighting=["lightRotation","lightInterval","lightPalettes","torsoEffect","headEffect","torsoSpeed","headSpeed"];
       const refresh=key.startsWith("palette")||["scanRetrySec","startupRetrySec","startupWindowSec","compoundAlongside"].includes(key);
       const migrated=(profile.version<4&&refresh)||(profile.version===1&&added.includes(key))||(profile.version<3&&lighting.includes(key));
-      const entry=migrated&&profile.config[key]===undefined?(key==="compoundAlongside"?false:value):profile.config[key];
+      const entry=key==="deviceId"&&profile.config[key]===undefined?"ultra":migrated&&profile.config[key]===undefined?(key==="compoundAlongside"?false:value):profile.config[key];
       if(Array.isArray(value)) {
         if(!Array.isArray(entry) || entry.some(n=>!Number.isSafeInteger(n)))throw new Error("Invalid profile setting: "+key);
         config[key]=entry.slice();
@@ -99,7 +117,7 @@
     config.bodyOverlap=false; // Separate writes interrupt physical animations.
     // Validate dormant settings too: they will still be emitted into C++ constants.
     const errors=validate(config);
-    errors.push(...validate({...config,headEnabled:true,torsoEnabled:true,armEnabled:true,
+    errors.push(...validate({...config,deviceId:"ultra",bleName:"Ultra Skelly v2",eyeChoices:[1],headEnabled:true,torsoEnabled:true,armEnabled:true,
       jawEnabled:true,eyesEnabled:true,lightsEnabled:true,restEnabled:true,
       compoundEnabled:false,jawFollowupMotor:0}));
     if(config.compoundMin<45 || config.compoundMax>3600 || config.compoundMin>config.compoundMax ||
@@ -108,11 +126,13 @@
     if(errors.length)throw new Error([...new Set(errors)].join("\n"));
     const audio=normalizeAudioReference(profile.audio);
     if(audio&&!referenceMatches(config,audio))throw Error('Audio file label does not match this routine. Reselect the file on Skelly.');
-    return {app:"SkellyStudio",version:4,config,clips:normalizeLibrary(profile.clips||{}),...(audio?{audio}:{})};
+    return {app:"SkellyStudio",version:config.deviceId==='skelly12'?5:4,config,clips:normalizeLibrary(profile.clips||{}),...(audio?{audio}:{})};
   }
   function createProfile(config,clips,reference=audioReference) {
     const audio=referenceMatches(config,reference)?normalizeAudioReference(reference):null;
-    return JSON.stringify(parseProfile(JSON.stringify({app:"SkellyStudio",version:4,config,clips,...(audio?{audio}:{})})),null,2)+"\n";
+    const profile=parseProfile(JSON.stringify({app:"SkellyStudio",version:4,config,clips,...(audio?{audio}:{})}));
+    if(profile.config.deviceId==='ultra')delete profile.config.deviceId;
+    return JSON.stringify(profile,null,2)+"\n";
   }
   function replaceOnce(source, original, replacement) {
     const at=source.indexOf(original);
@@ -146,10 +166,20 @@
     // and bounds too, so disabling a feature cannot bypass sketch validation.
     for(const [key,value] of Object.entries(DEFAULTS)) {
       const entry=config[key];
+      if(key==='deviceId'&&entry===undefined)continue;
       if(Array.isArray(value)?!Array.isArray(entry):typeof entry!==typeof value)
         error.push("Invalid setting type: "+key+".");
     }
     if(error.length)return error;
+    const device=deviceFor(config);
+    if(!device)return ["Unknown Skelly device profile."];
+    if(Object.values(DEVICE_PROFILES).some(p=>p!==device&&p.bleName===config.bleName.trim()))
+      error.push("The Bluetooth name belongs to the other device model. Choose the matching Skelly profile.");
+    if(device.experimental) {
+      if(config.armEnabled||config.torsoEnabled||config.compoundEnabled||config.jawEnabled||config.eyeJawMode===3||config.jawFollowupMotor||config.jawFollowupRecurring||config.playbackDiagnostics)
+        error.push("Experimental 12-foot support disables arm, torso, compound, audio/jaw and playback observations.");
+      if(config.headMin<90)error.push("Experimental head intervals must be at least 90 seconds (unmeasured 60-second animation estimate + 30-second buffer).");
+    }
     for(const [key,min,max] of [["scanRetrySec",5,300],["startupRetrySec",5,300],["startupWindowSec",0,300]])
       if(!Number.isSafeInteger(config[key])||config[key]<min||config[key]>max)error.push("Invalid Bluetooth retry timing: "+key);
     for(let i=0;i<4;i++) {
@@ -243,8 +273,8 @@
       error.push("Enable the head switch to test Head after jaw.");
     if (![0,1,2,3].includes(config.eyeJawMode))
       error.push("Choose a valid eye/jaw behavior (0, 1, 2 or 3).");
-    if((config.eyesEnabled && !config.eyeChoices.length) || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>18) || new Set(config.eyeChoices).size!==config.eyeChoices.length)
-      error.push("Select at least one valid eye design number between 1 and 18.");
+    if((config.eyesEnabled && !config.eyeChoices.length) || config.eyeChoices.some(n=>!Number.isSafeInteger(n)||n<1||n>device.eyes) || new Set(config.eyeChoices).size!==config.eyeChoices.length)
+      error.push("Select at least one valid eye design number between 1 and "+device.eyes+".");
     if(config.eyeJawMode===3 && (!config.jawProtectBody || config.overlap || config.jawFollowupMotor || (config.lightsEnabled&&config.lightRestoreMode!==1)))
       error.push("Audio scenes need full body protection, no jaw-first/overlap and restore lighting after playback.");
     return error;
@@ -256,6 +286,7 @@
     if(typeof out!=="string" || out.length<5000)throw new Error("The tested firmware template did not load. Refresh this page.");
     // These substitutions fail closed rather than emitting a partial or invalid sketch.
     const assignments=[
+      ["#define SKELLY_DEVICE_12FT 0","#define SKELLY_DEVICE_12FT "+Number(deviceFor(config).experimental)],
       ["const bool LIGHT_ROTATION_ENABLED = false;","const bool LIGHT_ROTATION_ENABLED = "+config.lightRotation+";"],
       ["const uint32_t LIGHT_ROTATION_INTERVAL_MS = 90000;","const uint32_t LIGHT_ROTATION_INTERVAL_MS = "+config.lightInterval*1000+";"],
       ["const uint8_t LIGHT_PALETTE_MASK = 15;","const uint8_t LIGHT_PALETTE_MASK = "+(config.lightPalettes.reduce((m,n)=>m|(1<<n),0)||1)+";"],
@@ -423,11 +454,12 @@
       "// Do not enable torso/arm movement in stored audio file metadata; use 0x00.",
       ""
     ].join("\n");
-    return stamp+out;
+    return (deviceFor(config).experimental ? "// 2026 12-foot Skelly: Experimental — Not Hardware Tested.\n// Only head, eyes and chest channel 0 enabled; no Ultra hardware evidence applies.\n" : stamp)+out;
   }
   function readConfig() {
     const n=id=>Number(byId(id).value);
     return {
+      deviceId:byId("deviceId")?.value??"ultra",
       headEnabled:byId("headEnabled").checked,headMin:n("headMin"),headMax:n("headMax"),
       torsoEnabled:byId("torsoEnabled").checked,torsoMin:n("torsoMin"),torsoMax:n("torsoMax"),
       armEnabled:byId("armEnabled").checked,armMin:n("armMin"),armMax:n("armMax"),
@@ -458,6 +490,13 @@
     };
   }
   function writeConfig(cfg) {
+    if(cfg.deviceId!==undefined&&byId("deviceId")){
+      if(byId('deviceId').value!==cfg.deviceId){
+        byId('deviceChangeNotice').hidden=false;
+        byId('deviceChangeNotice').textContent='Warning: loaded settings change the device model to '+DEVICE_PROFILES[cfg.deviceId].name+'. Check the selected prop before installing or saving settings.';
+      }
+      byId("deviceId").value=cfg.deviceId;
+    }
     for(const key of ["scanRetrySec","startupRetrySec","startupWindowSec",...Array.from({length:4},(_,i)=>["Name","Torso","Head"].map(p=>"palette"+i+p)).flat()])if(cfg[key]!==undefined)byId(key).value=cfg[key];
     if(cfg.compoundAlongside!==undefined)byId("compoundAlongside").checked=cfg.compoundAlongside;
     for(const key of ["lightInterval","torsoEffect","headEffect","torsoSpeed","headSpeed"])if(cfg[key]!==undefined)byId(key).value=cfg[key];
@@ -557,7 +596,7 @@
     const fixedEyes=c.eyeChoices.length===1;
     byId("eyeSummary").textContent=c.eyesEnabled?(fixedEyes?'Eye #'+c.eyeChoices[0]+' · fixed':c.eyesMin+"–"+c.eyesMax+" sec · random"):"Off · stored eyes";
     byId('summaryEyeImage').hidden=!c.eyesEnabled;
-    byId('summaryEyeImage').src='./images/eyes/eye_icon_'+c.eyeChoices[0]+'.png';
+    byId('summaryEyeImage').src=eyeImageUrl(c.eyeChoices[0]);
     byId('summaryEyeRotation').hidden=!c.eyesEnabled||fixedEyes;
     byId("lightingStatus").textContent=c.lightsEnabled?(c.lightRotation?"On · "+c.lightPalettes.length+" palettes every "+c.lightInterval+" sec":"On · selected colors"):"Off · stored colors";
     byId("lightRotationOptions").disabled=!c.lightsEnabled||!c.lightRotation;
@@ -593,7 +632,7 @@
     byId('lightPreviewTorso').style.background=c.lightRotation?c['palette'+firstPalette+'Torso']:c.torsoColor;
     byId('lightPreviewHead').style.background=c.lightRotation?c['palette'+firstPalette+'Head']:c.headColor;
     byId('lightPreviewLabel').textContent=c.lightRotation?'Starts with '+c['palette'+firstPalette+'Name']:palette?palette.name:'Custom colors';
-    byId("selectedEyeCount").textContent=fixedEyes?'Selected: eye #'+c.eyeChoices[0]+' · fixed':c.eyeChoices.length+" of 18 selected";
+    byId("selectedEyeCount").textContent=fixedEyes?'Selected: eye #'+c.eyeChoices[0]+' · fixed':c.eyeChoices.length+" of "+deviceFor(c).eyes+" selected";
     byId("restOptions").classList.toggle("muted",!c.restEnabled);
     byId("restOptions").inert=!c.restEnabled;
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
@@ -616,6 +655,28 @@
       element.title=ev.kind+" requested at "+Math.floor(ev.time/60)+":"+String(ev.time%60).padStart(2,"0")+"; actual start may be later";
       timeline.appendChild(element);
     }
+    const experimental=deviceFor(c).experimental;
+    byId('deviceWarning').hidden=!experimental;
+    for(const id of ['armEnabled','torsoEnabled'])byId(id).closest('.movement-block').hidden=experimental;
+    byId('compoundEnabled').closest('.eye-sync-control').hidden=experimental;
+    byId('mouth').hidden=experimental;
+    byId('audioScenes').hidden=experimental;
+    byId('headLightTitle').closest('section').hidden=experimental;
+    byId('lightPreviewHead').closest('span').hidden=experimental;
+    document.querySelectorAll('.palette-swatches').forEach(node=>node.lastElementChild.hidden=experimental);
+    byId('torsoLightTitle').textContent=experimental?'Chest (experimental)':'Torso';
+    byId('headEnabled').closest('.movement-block').querySelector('small').textContent=experimental?'Duration unmeasured; 60 s estimate + 30 s cooldown':'Turns for about 25 seconds';
+    byId('headMin').min=experimental?90:32;byId('headMax').min=experimental?90:32;
+    if(experimental){byId('linkLightRow').hidden=true;byId('summaryHeadColor').hidden=true;}
+    for(let i=0;i<4;i++){
+      byId('palette'+i+'Head').closest('label').hidden=experimental;
+      document.querySelector('[data-palette-link="'+i+'"]').closest('label').hidden=experimental;
+    }
+    document.querySelectorAll('.eye-choice input').forEach(input=>{
+      const i=Number(input.value),card=input.closest('.eye-card');card.hidden=i>deviceFor(c).eyes;
+      const img=card.querySelector('img');if(img){const url=eyeImageUrl(i);img.hidden=!url;img.src=url;}
+    });
+    byId('summaryEyeImage').hidden=!c.eyesEnabled||!eyeImageUrl(c.eyeChoices[0]);
     document.dispatchEvent(new CustomEvent('skelly-config-changed'));
   }
   function generateRuntimeSketch(scenes,rotate=false,random=false) {
@@ -623,7 +684,8 @@
     const words=window.SkellyRuntime.encode(scenes,rotate,validate,random);
     // Include every optional scheduling hook in the universal build; runtime
     // settings, rather than these compile-time seed values, control activation.
-    let source=generateSketch({...DEFAULTS,jawEnabled:false,jawExtras:'13',restEnabled:true,clockEnabled:true});
+    const deviceId=scenes[0].config.deviceId??"ultra";
+    let source=generateSketch(adaptDevice({...DEFAULTS,bleName:scenes[0].config.bleName,jawEnabled:false,jawExtras:'13',restEnabled:true,clockEnabled:true},deviceId));
     const match=source.match(/const uint32_t RUNTIME_SEED\[\] = \{[^}]+\};/);
     if(!match)throw Error('Runtime seed anchor missing.');
     source=replaceOnce(source,match[0],'const uint32_t RUNTIME_SEED[] = {'+words.map(n=>n+'UL').join(',')+'};');
@@ -631,11 +693,17 @@
   }
   // Bundled eye previews and attribution: images/eyes/README.md.
   function eyeImageUrl(index) {
+    if(typeof document!=="undefined" && byId("deviceId")?.value==="skelly12") {
+      // Upstream numbering differs. Two designs have no bundled Ultra image.
+      const mapping=[14,15,16,17,0,0,18,1,2,3,4,5,6,7,8,9,10,11,12,13];
+      index=mapping[index-1];if(!index)return "";
+    }
     return "./images/eyes/eye_icon_"+index+".png";
   }
   function showEyePreview(index) {
     const image=byId("eyePreviewImage");
     image.src=eyeImageUrl(index);
+    image.hidden=!image.getAttribute('src');
     image.alt="Enlarged preview of Ultra Skelly eye pattern "+index;
     byId("eyePreviewLabel").textContent="Eye pattern #"+index;
   }
@@ -689,8 +757,21 @@
       eyeGrid.append(card);
     }
     showEyePreview(1);
+    // The two additional 12-foot designs are selectable without inventing art.
+    for(let i=19;i<=20;i++){
+      const card=document.createElement('div');card.className='eye-card';card.hidden=true;
+      const label=document.createElement('label');label.className='eye-choice';
+      const input=document.createElement('input');input.type='checkbox';input.value=i;
+      label.append(input,document.createTextNode('Eye '+i));card.append(label);eyeGrid.append(card);
+    }
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       if(el.id==="scenePreviewSelect"||el.closest("#audioScenes"))return;
+      if(el.id==='deviceId'){
+        const device=DEVICE_PROFILES[el.value];
+        writeConfig(adaptDevice({...readConfig(),bleName:device.bleName,headEnabled:true,
+          headMin:device.experimental?90:35,headMax:device.experimental?180:75,eyesEnabled:false,lightsEnabled:false,eyeChoices:[1]}));
+        return;
+      }
       for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
       if(el.closest('.eye-choice')){
         if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
@@ -708,13 +789,13 @@
       else if(el.id==="lightRotation"&&el.checked)writeConfig({lightsEnabled:true});
       else render();
     });
-    byId("selectAllEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=true);render()});
+    byId("selectAllEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=deviceFor(readConfig()).eyes);render()});
     byId("selectFewEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
     byId('newExample').addEventListener('click',()=>{previewSeed=(previewSeed+1)>>>0;render();});
     for(const b of document.querySelectorAll(".preset"))b.addEventListener("click",()=>{
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
       const preset=PRESETS[b.dataset.preset];
-      writeConfig(preset.jawEnabled?preset:window.SkellyExperience.withoutMouth({...readConfig(),...preset}));
+      writeConfig(adaptDevice(preset.jawEnabled?{...readConfig(),...preset}:window.SkellyExperience.withoutMouth({...readConfig(),...preset})));
     });
     for(const button of document.querySelectorAll("[data-jaw-choice]"))button.addEventListener("click",()=>{
       try {
@@ -751,13 +832,14 @@
       try {
         if(file.size>65536)throw new Error("Choose a settings file smaller than 64 KB.");
         const profile=parseProfile(await file.text());
+        const previousDevice=readConfig().deviceId;
         if(window.SkellyScenes?.loadProfile){if(!await window.SkellyScenes.loadProfile(profile))return;}
         else{
         for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=profile.clips[key]??"";
         writeAudioReference(profile.audio);writeConfig(profile.config);
         }
         for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
-        byId("profileStatus").textContent="Settings loaded. Clip numbers belong to the Skelly that created this profile.";
+        byId("profileStatus").textContent=(previousDevice!==profile.config.deviceId?"Warning: this profile changes the selected device model. ":"")+"Settings loaded for "+deviceFor(profile.config).name+". Clip numbers belong to the Skelly that created this profile.";
       } catch(error) { byId("profileStatus").textContent="Could not load settings: "+error.message; }
       finally { event.target.value=""; }
     });
@@ -783,6 +865,6 @@
     document.addEventListener("visibilitychange",pauseMotion);pauseMotion();
     writeConfig({...DEFAULTS,...PRESETS.normal});
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary,readAudioReference,writeAudioReference,normalizeAudioReference};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,DEVICE_PROFILES,adaptDevice,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary,readAudioReference,writeAudioReference,normalizeAudioReference};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();

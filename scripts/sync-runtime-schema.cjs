@@ -8,7 +8,7 @@ let block='// BEGIN GENERATED RUNTIME SCHEMA\n';
 block+='enum RuntimeField {\n'+schema.fields.map(f=>'  RF_'+f.name+',').join('\n')+'\n  RF_COUNT\n};\n';
 block+='const uint32_t RUNTIME_LIMITS[RF_COUNT][2] = {\n'+schema.fields.map(f=>'  {'+f.min+'UL,'+f.max+'UL}, // '+f.name).join('\n')+'\n};\n';
 block+='const uint32_t RUNTIME_SEED[] = {'+seed.map(n=>n+'UL').join(',')+'};\n';
-block+='uint32_t runtimeValues[RF_COUNT] = {};\nuint8_t runtimeEyes[18], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;\nuint16_t runtimeFiles[8];\nuint8_t runtimeFileCount=0;\nuint8_t runtimePalettes[4][6];\nchar runtimeName[49];\n';
+block+='uint32_t runtimeValues[RF_COUNT] = {};\nuint8_t runtimeEyes[DEVICE_PROFILE.eyeCount], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;\nuint16_t runtimeFiles[8];\nuint8_t runtimeFileCount=0;\nuint8_t runtimePalettes[4][6];\nchar runtimeName[49];\n';
 for(const f of schema.fields)if(f.macro){block+='#undef '+f.macro+'\n#define '+f.macro+' ('+(f.expression||'v').replaceAll('v','runtimeValues[RF_'+f.name+']')+')\n';}
 for(const [prefix,name] of [['TORSO_LIGHT','torsoColor'],['HEAD_LIGHT','headColor']])for(const [i,ch] of ['R','G','B'].entries())block+='#define '+prefix+'_'+ch+' ((runtimeValues[RF_'+name+'] >> '+(16-i*8)+') & 255UL)\n';
 for(const [macro,value] of Object.entries({SKELLY_NAME:'runtimeName',COMPOUND_BODY_MASKS:'runtimeMasks',LIGHT_PALETTES:'runtimePalettes',EYE_OPTIONS:'runtimeEyes',EYE_OPTIONS_COUNT:'runtimeEyeCount',EYE_ROTATION_ENABLED:'(runtimeEyeCount > 1)',JAW_FILE_POOL:'runtimeFiles',JAW_POOL_COUNT:'runtimeFileCount'}))block+='#undef '+macro+'\n#define '+macro+' '+value+'\n';

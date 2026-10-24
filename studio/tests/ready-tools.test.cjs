@@ -28,6 +28,6 @@ test('legacy status remains supported; new wait codes and stale views are explic
  const old='USB STATUS v2 connected=1 scene=0 sequence=1 pending=0',data=status.parseStatus(old+' firmware=5 build=2026102401 wait=8 jawMs=56000 accepted=1 acceptedAge=2000');
  assert.match(status.diagnosticView(data).flat().join(' '),/Audio scene protected window/);assert.match(status.diagnosticView(data,true).flat().join(' '),/Last reported/);assert.equal(status.diagnosticView(status.parseStatus(old)).length,0);
  for(const suffix of [' wait=9',' accepted=1',' accepted=2'])assert.throws(()=>status.parseStatus(old+suffix));
- assert.match(release.firmwareView(null,true,true).text,/version not reported/);assert.equal(release.firmwareView(data,true,true).update,false);assert.equal(release.firmwareView({...data,firmware:4},true,true).update,true);
+ assert.match(release.firmwareView(null,true,true).text,/version not reported/);assert.equal(release.firmwareView({...data,build:release.BUILD},true,true).update,false);assert.equal(release.firmwareView(data,true,true).update,true);assert.equal(release.firmwareView({...data,firmware:4},true,true).update,true);
  const canonical=fs.readFileSync(path.join(root,'../firmware/SkellyAutonomous/SkellyAutonomous.ino'),'utf8');assert.match(canonical,new RegExp('FIRMWARE_REVISION = '+release.REVISION));assert.match(canonical,new RegExp('FIRMWARE_BUILD = '+release.BUILD));assert.ok(canonical.includes(release.VERSION));assert.doesNotMatch(canonical,/SKELLY_WIRELESS_STATUS|setupWirelessStatus/);
 });

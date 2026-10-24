@@ -9,9 +9,9 @@
 #include <stdlib.h>
 
 // Read-only USB identity. No scheduler or stored-format migration.
-const char *FIRMWARE_RELEASE = "2026.10.24-preview.1";
+const char *FIRMWARE_RELEASE = "2026.10.24-preview.2";
 const uint32_t FIRMWARE_REVISION = 5;
-const uint32_t FIRMWARE_BUILD = 2026102401UL;
+const uint32_t FIRMWARE_BUILD = 2026102402UL;
 
 // =============================================================
 // ULTRA SKELLY V2: RANDOM HEAD + SILENT JAW + OPTIONAL EYES
@@ -23,6 +23,19 @@ const uint32_t FIRMWARE_BUILD = 2026102401UL;
 // =============================================================
 
 #define SKELLY_NAME "Ultra Skelly v2"
+// Deliberate build selection only; never infer a model from shared UUIDs.
+#ifndef SKELLY_DEVICE_12FT
+#define SKELLY_DEVICE_12FT 0
+#endif
+struct DeviceProfile {
+  uint8_t headMask, eyeCount, lightChannels;
+  bool bodyMotors, audio;
+  uint32_t programFormat;
+  const char *storageNamespace;
+};
+constexpr DeviceProfile DEVICE_PROFILE = SKELLY_DEVICE_12FT
+  ? DeviceProfile{0x02,20,1,false,false,12,"skelly-12ft"}
+  : DeviceProfile{0x01,18,2,true,true,1,"skelly-config"};
 #define SERVICE_UUID "0000ae00-0000-1000-8000-00805f9b34fb"
 #define WRITE_UUID   "0000ae01-0000-1000-8000-00805f9b34fb"
 
@@ -38,8 +51,9 @@ const bool MOUTH_ENABLED = true;
 const bool HEAD_ENABLED = true;
 
 // Existing verified head behavior (start-to-start)
-const uint32_t HEAD_ANIMATION_MS = 25000;
-const uint32_t HEAD_BUFFER_MS = 7000;
+// 12-foot values are conservative configurable estimates, NOT measurements.
+const uint32_t HEAD_ANIMATION_MS = SKELLY_DEVICE_12FT ? 60000 : 25000;
+const uint32_t HEAD_BUFFER_MS = SKELLY_DEVICE_12FT ? 30000 : 7000;
 const uint32_t HEAD_MIN_INTERVAL_MS = 32000;
 const uint32_t HEAD_MAX_INTERVAL_MS = 60000;
 
@@ -180,6 +194,9 @@ static_assert(EYE_JAW_MODE != 3 || (JAW_PROTECTS_ARM_TORSO &&
               "Audio scenes require full protection, no follow-ups and post-playback restoration.");
 static_assert(!COMPOUND_BODY_ENABLED || JAW_FOLLOWUP_MOTOR == 0,
               "Compound and jaw-first modes must be selected separately.");
+static_assert(!SKELLY_DEVICE_12FT || (!ARM_ENABLED && !TORSO_ENABLED &&
+              !COMPOUND_BODY_ENABLED && !MOUTH_ENABLED && !JAW_FOLLOWUP_MOTOR &&
+              !PLAYBACK_DIAGNOSTICS && EYE_JAW_MODE != 3), "Unsupported experimental 12-foot feature.");
 static_assert(!COMPOUND_BODY_ENABLED || !MOUTH_ENABLED || MOUTH_FILE_SERIAL == 0 ||
               JAW_PROTECTS_ARM_TORSO,
               "Compound mode with jaw playback requires MP3 body protection.");
@@ -643,7 +660,7 @@ const uint32_t RUNTIME_LIMITS[RF_COUNT][2] = {
 };
 const uint32_t RUNTIME_SEED[] = {1UL,1UL,0UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,1UL,1UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,60UL,120UL,150UL,240UL,240UL,420UL,100UL,180UL,120UL,300UL,240UL,600UL,180UL,420UL,25UL,60UL,12UL,21UL,0UL,2UL,1UL,90UL,255UL,255UL,1UL,1UL,125UL,125UL,1UL,30UL,5UL,60UL,1080UL,1380UL,127UL,1UL,15UL,15UL,1UL,600UL,16711680UL,16736256UL,16736256UL,65280UL,8388863UL,59084UL,1534975UL,13166847UL,16717824UL,16756736UL,12UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852138323UL,3219557UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1819042120UL,1701148527UL,110UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1853186376UL,6579572UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1852796749UL,1751607660UL,116UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1700949317UL,114UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,1920232533UL,1800609889UL,2037148773UL,3307040UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL,0UL};
 uint32_t runtimeValues[RF_COUNT] = {};
-uint8_t runtimeEyes[18], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;
+uint8_t runtimeEyes[DEVICE_PROFILE.eyeCount], runtimeEyeCount=0, runtimeMasks[4], runtimeMaskCount=0;
 uint16_t runtimeFiles[8];
 uint8_t runtimeFileCount=0;
 uint8_t runtimePalettes[4][6];
@@ -920,7 +937,7 @@ void acceptUsbCommand(const char *line) {
   if (strcmp(line,"SKELLY STATUS")==0) { emitUsbStatus(); return; }
   if (strcmp(line, "SKELLY HELLO") == 0) {
     logLine("USB READY v1 CLOCK");
-    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u audioScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME),unsigned(SKELLY_RUNTIME));
+    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u audioScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME),unsigned(SKELLY_RUNTIME && DEVICE_PROFILE.audio));
     return;
   }
   const char *prefix = "SKELLY TIME ";
@@ -1095,6 +1112,15 @@ bool sendVariableFrame(uint8_t *packet, size_t length) {
     logLine("TX rejected: disconnected, missing writer, or invalid frame.");
     return false;
   }
+  // Last-line capability enforcement also protects direct diagnostic calls.
+  if (SKELLY_DEVICE_12FT &&
+      ((packet[1] == 0xCA && packet[2] != DEVICE_PROFILE.headMask) ||
+       (packet[1] == 0xF9 && (packet[2] < 1 || packet[2] > DEVICE_PROFILE.eyeCount)) ||
+       ((packet[1] == 0xF2 || packet[1] == 0xF3 || packet[1] == 0xF4 || packet[1] == 0xF6) && packet[2] >= DEVICE_PROFILE.lightChannels) ||
+       packet[1] == 0xC6)) {
+    logLine("TX rejected: unsupported experimental device command.");
+    return false;
+  }
   packet[length - 1] = skellyCRC(packet, length - 1);
   ++writeAttempts;
   lastAttemptTag = packet[1];
@@ -1136,7 +1162,7 @@ bool progressLights(uint32_t now) {
       (haveBleWrite && !reached(now, lastBleWriteAt + 250)) ||
       jawFollowupPending) return false;
   const uint8_t torsoSteps = TORSO_LIGHT_MODE == 1 ? 3 : 4;
-  const uint8_t totalSteps = torsoSteps + (HEAD_LIGHT_MODE == 1 ? 3 : 4);
+  const uint8_t totalSteps = torsoSteps + (DEVICE_PROFILE.lightChannels > 1 ? (HEAD_LIGHT_MODE == 1 ? 3 : 4) : 0);
   const uint8_t channel = lightApplyStep >= torsoSteps ? 1 : 0;
   const uint8_t mode = channel ? HEAD_LIGHT_MODE : TORSO_LIGHT_MODE;
   const uint8_t localStep = channel ? lightApplyStep - torsoSteps : lightApplyStep;
@@ -1196,6 +1222,7 @@ void serviceLightRotation(uint32_t now) {
   queueLightSequence(now, 100, "palette rotation");
 }
 void startCompoundBody(uint32_t now) {
+  if (!DEVICE_PROFILE.bodyMotors) return;
   if (!routineWindowOpen()) return;
 #if SKELLY_RUNTIME
   const size_t maskCount = runtimeMaskCount;
@@ -1469,7 +1496,7 @@ void scanAndConnect() {
 void startHead(uint32_t now) {
   if (!routineWindowOpen()) return;
   // Verified head-only frame. No arm or torso movement bits.
-  uint8_t frame[11] = {0xAA, 0xCA, 0x01, 0, 0, 0, 0, 0, 0, 0, 0};
+  uint8_t frame[11] = {0xAA, 0xCA, DEVICE_PROFILE.headMask, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
     logLine("Head send failed / disconnected.");
     resetConnection();
@@ -1495,6 +1522,7 @@ void startHead(uint32_t now) {
 
 // Only called by the shared body-motor scheduler after cooldown.
 void startTorso(uint32_t now) {
+  if (!DEVICE_PROFILE.bodyMotors) return;
   if (!routineWindowOpen()) return;
   uint8_t frame[11] = {0xAA, 0xCA, 0x04, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!sendFrame(frame)) {
@@ -1514,6 +1542,7 @@ void startTorso(uint32_t now) {
 }
 
 void startArm(uint32_t now) {
+  if (!DEVICE_PROFILE.bodyMotors) return;
   if (!routineWindowOpen()) return;
   // Physically verified arm-only action: two back-to-back moves ~22s.
   uint8_t frame[11] = {0xAA, 0xCA, 0x02, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -1557,6 +1586,7 @@ uint8_t chooseJawFollowupMotor(uint32_t now) {
 }
 
 void startMouth(uint32_t now) {
+  if (!DEVICE_PROFILE.audio) return;
   if (!routineWindowOpen()) return;
   // AAC6 payload: 2-byte big-endian file serial, 01 = play,
   // remaining 5 bytes zero, CRC8 calculated automatically.
@@ -1696,11 +1726,13 @@ class RuntimeEngine {
     return !remaining&&visible;
   }
   static bool valid(const RuntimeRecord &r) {
-    if(r.magic!=0x534b5231 || r.count<3 || r.count>RUNTIME_WORDS || r.words[0]!=1 ||
+    if(r.magic!=0x534b5231 || r.count<3 || r.count>RUNTIME_WORDS || r.words[0]!=DEVICE_PROFILE.programFormat ||
        r.words[1]<1 || r.words[1]>4 || r.words[2]>2 || r.count!=3+r.words[1]*RF_COUNT || checksum(r)!=r.crc)return false;
     for(uint32_t n=0;n<r.words[1];++n){
       const uint32_t *v=r.words+3+n*RF_COUNT;
-      for(size_t i=0;i<RF_COUNT;++i)if(v[i]<RUNTIME_LIMITS[i][0]||v[i]>RUNTIME_LIMITS[i][1])return false;
+      for(size_t i=0;i<RF_COUNT;++i)if(v[i]<RUNTIME_LIMITS[i][0]||v[i]>(i==RF_eyeMask ? ((1UL<<DEVICE_PROFILE.eyeCount)-1) : RUNTIME_LIMITS[i][1]))return false;
+      if(SKELLY_DEVICE_12FT && (v[RF_headMin]<90 || v[RF_armEnabled] || v[RF_torsoEnabled] || v[RF_compoundEnabled] ||
+         v[RF_jawEnabled] || v[RF_eyeJawMode]==3 || v[RF_jawFollowupMotor] || v[RF_jawFollowupRecurring] || v[RF_playbackDiagnostics]))return false;
       if(!validText(v+RF_sceneLabel0,32,32)||!validText(v+RF_name0,12,48))return false;
       for(uint8_t p=0;p<4;++p)if(!validText(v+RF_paletteLabel0_0+p*24,24,24))return false;
       for(uint32_t prior=0;prior<n;++prior)if(memcmp(v+RF_sceneLabel0,r.words+3+prior*RF_COUNT+RF_sceneLabel0,32*4)==0)return false;
@@ -1737,7 +1769,7 @@ class RuntimeEngine {
     scene=next;
     memcpy(runtimeValues,active.words+3+scene*RF_COUNT,sizeof(runtimeValues));
     runtimeEyeCount=runtimeMaskCount=0;
-    for(uint8_t i=0;i<18;++i)if(runtimeValues[RF_eyeMask]&(1UL<<i))runtimeEyes[runtimeEyeCount++]=i+1;
+    for(uint8_t i=0;i<DEVICE_PROFILE.eyeCount;++i)if(runtimeValues[RF_eyeMask]&(1UL<<i))runtimeEyes[runtimeEyeCount++]=i+1;
     const uint8_t masks[]={3,5,6,7};for(uint8_t i=0;i<4;++i)if(runtimeValues[RF_comboMask]&(1<<i))runtimeMasks[runtimeMaskCount++]=masks[i];
     runtimeFileCount=runtimeValues[RF_fileCount];for(uint8_t i=0;i<8;++i)runtimeFiles[i]=runtimeValues[RF_file0+i*2];
     for(uint8_t i=0;i<4;++i)for(uint8_t p=0;p<2;++p)for(uint8_t ch=0;ch<3;++ch)runtimePalettes[i][p*3+ch]=(runtimeValues[RF_palette0Torso+i*2+p]>>(16-8*ch))&255;
@@ -1747,7 +1779,7 @@ class RuntimeEngine {
   void boot() {
     clockValid=false;clockCivilMillis=0;clockLastTick=millis();
     active={};active.magic=0x534b5231;active.count=sizeof(RUNTIME_SEED)/4;memcpy(active.words,RUNTIME_SEED,sizeof(RUNTIME_SEED));active.crc=checksum(active);
-    storage=prefs.begin("skelly-config",false);
+    storage=prefs.begin(DEVICE_PROFILE.storageNamespace,false);
     RuntimeRecord candidate{};bool haveStored=false;
     if(storage)for(uint8_t i=0;i<2;++i){const char *key=i?"slot1":"slot0";
       if(prefs.getBytesLength(key)==sizeof(candidate)&&prefs.getBytes(key,&candidate,sizeof(candidate))==sizeof(candidate)&&storedValid(candidate)&&

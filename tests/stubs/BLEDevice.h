@@ -14,10 +14,11 @@ inline unsigned fakeDiscoveryCount = 0;
 inline bool fakeScanFindsDevice = false;
 inline bool fakeScanInProgress = false;
 inline uint32_t fakeScanDuration = 0;
+inline const char *fakeAdvertisedName = "Ultra Skelly v2";
 class BLEAdvertisedDevice {
  public:
   bool haveName() { return true; }
-  String getName() { return "Ultra Skelly v2"; }
+  String getName() { return fakeAdvertisedName; }
   BLEAdvertisedDevice getAddress() { return {}; }
   String toString() { return "test address"; }
 };
