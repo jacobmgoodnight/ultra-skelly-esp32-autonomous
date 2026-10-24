@@ -2,6 +2,8 @@ name: Skelly Studio smoke tests
 on:
   push:
     # Pages publication follows a successful main run, including docs/root-only updates.
+    # Feature branches use pull_request checks instead of running the same matrix twice.
+    branches: [main]
   pull_request:
     paths:
       - "studio/**"

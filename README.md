@@ -58,10 +58,12 @@ your own setup. The table below separates physical observations from other evide
 
 ## Build a complete routine
 
-Start with a personality or a complete look. **Moonlit Watcher** requests a head
-turn every 60–120 seconds; **Ember Glow** adds an arm request every 150–240 seconds;
+For Ultra Skelly v2, start with a personality or a complete look. **Moonlit Watcher**
+requests a head turn every 60–120 seconds; **Ember Glow** adds an arm request every 150–240 seconds;
 **Haunted Porch** adds torso and combined movements. Every complete look loads
-movement, eyes and lighting. Customize it, name it and save it in Scene builder.
+movement, eyes and lighting. Customize it, then use **Send to your ESP32 → Save
+this routine**. Scene builder is optional: save named scenes there when you want
+a collection, then use **Save scene collection** to send that saved library.
 
 Normal selects fixed eye #1. Haunted randomly switches eyes #1–8 every 150–300
 seconds. The summary shows a small eye preview and a rotation marker when needed.
@@ -90,8 +92,9 @@ here can collapse; idle breaks, clock settings and diagnostics live under Advanc
 Small purple head, torso and arm illustrations animate automatically in place of the left movement icons. Reduced-motion preferences keep them static, and hidden
 pages pause them. These illustrations do not indicate live prop movement.
 
-**Advanced → Audio scenes · experimental and optional** can upload prepared MP3s directly to Skelly
-over Web Bluetooth and save per-file movement, eyes, colors and effects. A clip
+For Ultra Skelly v2, **Advanced & testing → Audio scenes · experimental and optional**
+can upload prepared MP3s directly to Skelly over Web Bluetooth and save per-file
+movement, eyes, colors and effects. A clip
 can own the routine temporarily, then restore the selected regular look. This
 requires updated firmware and attended hardware verification; see the
 [audio-scene guide and result sheet](docs/audio-scenes.md). Ordinary presets keep
@@ -118,6 +121,7 @@ Current release: **2026.10.24-preview.2**. [Feature status](docs/status.md) · [
 | Live torso/head RGB initialization | Both chosen colors physically appeared |
 | Lighting effects / palette rotation | Owner confirms both work; exact channel/speed and integration coverage not enumerated |
 | Browser USB connection / read / save | Owner confirms success and physically observed changed behavior |
+| Browser firmware installation / recovery | Software-only; physical flashing remains Untested. The owner used Arduino for the confirmed installation |
 | Saved-settings retention / recovery / scene transitions | Software coverage; physical confirmation still pending |
 | MP3 lighting override | **Observed:** file #13 restored its saved colors |
 | Post-MP3 lighting restoration (mode 1) | **Physically confirmed:** red body and green head return after MP3 #13; isolated jaw/lighting setup |
@@ -155,8 +159,11 @@ observations do not establish that this firmware revision passed on the prop.
 For a first try, select **Subtle** in Studio. It enables
 occasional head movement and disables jaw, arm and torso. To use Studio offline,
 download the repository ZIP, extract it, and open `studio/index.html`; keep
-all files in the `studio` folder together, including `experience.js`. Initial toolchain installation
-is a separate setup step. MP3 preparation is only needed for optional mouth routines.
+all files in the `studio` folder together. Editing, JSON backups, eye previews and
+sketch generation work offline. First-time browser installation needs internet;
+compiling source instead requires the Arduino toolchain. USB and direct BLE
+features also require a browser that supports their respective device APIs.
+MP3 preparation is only needed for optional mouth routines.
 
 ### Optional mouth routines · limited
 
@@ -196,9 +203,15 @@ optional clock. Source downloads require Arduino compilation. See
 
 ## Conservative movement scheduling
 
-The checked-in sketch enables head and jaw, with torso, arm, eyes, compound mode,
-live lighting and verbose diagnostics OFF. Start intervals are start-to-start
-requests; motor locks or playback may postpone them. Cooldowns remain head **25+7 s**,
+The recommended **universal installer package** starts with Subtle: head-only
+requests every 60–120 seconds on Ultra, with jaw, arm, torso, eyes and lighting OFF.
+Read saved settings before editing an existing controller; its saved program takes
+priority over that factory seed. Experimental 12-foot builds use 90–120 seconds
+and separate restrictions; those timings are unmeasured.
+
+The **checked-in developer sketch** instead enables head and jaw, with torso,
+arm, eyes, compound mode, live lighting and verbose diagnostics OFF. Start intervals
+are start-to-start requests; motor locks or playback may postpone them. Cooldowns remain head **25+7 s**,
 arm **22+10 s**, torso **25+10 s**. Conservative presets reduce motor activity.
 
 MP3 protection defaults ON and includes **head, arm and torso**. It prevents an
