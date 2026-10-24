@@ -6,7 +6,7 @@ on:
     types: [completed]
     branches: [main]
   pull_request:
-    paths: ['firmware/**', 'studio/**', 'scripts/**', 'tests/test_prebuilt.py', '.github/workflows/prebuilt.yml']
+    paths: ['firmware/**', 'studio/**', 'scripts/**', 'tests/test_prebuilt.py', '.github/workflows/prebuilt.yml', '.github/workflows/studio-checks.yml']
 permissions:
   contents: read
 jobs:

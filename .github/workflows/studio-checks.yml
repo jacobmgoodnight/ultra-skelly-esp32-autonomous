@@ -1,13 +1,7 @@
 name: Skelly Studio smoke tests
 on:
   push:
-    paths:
-      - "studio/**"
-      - "firmware/**"
-      - "tests/**"
-      - "scripts/**"
-      - "experiments/**"
-      - ".github/workflows/studio-checks.yml"
+    # Pages publication follows a successful main run, including docs/root-only updates.
   pull_request:
     paths:
       - "studio/**"
