@@ -7,7 +7,7 @@ int main(){
  CHECK(diagnosticWait(fakeNow)==0);
  headSafeAfter=fakeNow+32000;CHECK(diagnosticWait(fakeNow)==4);const auto saved=headSafeAfter;
  mouthPlayingUntil=fakeNow+21000;CHECK(diagnosticWait(fakeNow)==2);
- Serial.output.clear();emitUsbStatus();CHECK(Serial.output.find("firmware=5 build=2026102401 wait=2 jawMs=21000 accepted=0")!=std::string::npos);
+ Serial.output.clear();emitUsbStatus();CHECK(Serial.output.find("firmware=5 build=2026102402 wait=2 jawMs=21000 accepted=0")!=std::string::npos);
  CHECK(Serial.output.back()=='\n');CHECK(headSafeAfter==saved);CHECK(fakeWrites.empty());
  audioHoldPending=true;audioHoldUntil=fakeNow+56000;CHECK(diagnosticWait(fakeNow)==8);audioHoldPending=false;
  mouthPlayingUntil=headSafeAfter=fakeNow;lightRestorePending=true;CHECK(diagnosticWait(fakeNow)==3);lightRestorePending=false;

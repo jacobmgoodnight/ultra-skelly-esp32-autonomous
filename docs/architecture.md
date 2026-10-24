@@ -1,5 +1,10 @@
 # Controller architecture
 
+The optional [2026 12-foot profile](experimental-12ft.md) is Experimental — Not
+Hardware Tested. Model selection is fixed in each generated ESP32 build, with a
+central capability map, final packet guards and separate USB format/NVS namespace.
+Ultra defaults, wire layout and storage remain unchanged. No prop firmware is written.
+
 The canonical Arduino sketch runs one cooperative loop on an original ESP32-WROOM
 using Arduino-ESP32 3.3.12's BLE library. Studio is a static HTML/CSS/JavaScript
 application that embeds this sketch and replaces validated constants plus several

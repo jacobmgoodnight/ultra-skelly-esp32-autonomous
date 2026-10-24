@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026.10.24-preview.2
+
+Firmware revision 5 · build 2026102402. Adds a collapsed, explicitly opt-in
+2026 app-controlled 12-foot profile: **Experimental — Not Hardware Tested**.
+Head, eyes 1–20 and chest lighting use upstream protocol mappings. Unsupported
+body/audio controls are disabled, including the newer direct audio workflow.
+Ultra defaults, audio features and stored settings remain compatible. Separate
+experimental USB/NVS formats preserve rollback. See the
+[protocol assessment and attended checklist](docs/experimental-12ft.md).
+
 ## 2026.10.24-preview.1
 
 Firmware revision 5 · build 2026102401 · Arduino-ESP32 3.3.12.

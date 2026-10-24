@@ -16,10 +16,12 @@
     function clipSettings(){return {action:(el('audioHead').checked?1:0)|(el('audioArm').checked?2:0)|(el('audioTorso').checked?4:0),eye:Number(el('audioEye').value),lights:['Torso','Head'].map(channel=>({color:el('audio'+channel+'Color').value,cycle:el('audio'+channel+'Cycle').checked,brightness:Number(el('audio'+channel+'Brightness').value),mode:Number(el('audio'+channel+'Effect').value),speed:Number(el('audio'+channel+'Speed').value)}))};}
     function current(){return session.files.find(f=>key(f)===selected);}
     function render(){
+      const config=g.readConfig(),experimental=config.deviceId==='skelly12'||config.bleName.trim()==='12ft Skelly';
+      if(experimental&&(session.connected||session.busy)&&!session.controller?.signal.aborted){session.cancel();return;}
       const connected=session.connected,busy=session.busy;
       if(lastConnected&&!connected){guards.clear();selected='';el('audioGuard').value='';}lastConnected=connected;
       el('audioConnection').textContent=connected?'Connected · '+session.name:busy?'Connecting…':'Not connected';
-      el('audioConnect').disabled=!navigator.bluetooth||connected||busy;
+      el('audioConnect').disabled=experimental||!navigator.bluetooth||connected||busy;
       el('audioDisconnect').disabled=!connected||busy;el('audioRefresh').disabled=!connected||busy;
       el('audioUpload').disabled=!connected||busy||!prepared;el('audioCancel').disabled=!busy;
       const picker=el('audioFileSelect'),previous=selected;picker.replaceChildren();
@@ -43,7 +45,7 @@
       for(const [i,channel] of ['Torso','Head'].entries()){const l=file.lights[i];el('audio'+channel+'Cycle').checked=!!l.cycle;el('audio'+channel+'Color').value=l.color;el('audio'+channel+'Brightness').value=l.brightness;el('audio'+channel+'Effect').value=[1,2,3].includes(l.mode)?l.mode:1;el('audio'+channel+'Speed').value=l.speed===255?254:254-l.speed;}
       el('audioGuard').value=guards.get(selected)??(preserveGuard?el('audioGuard').value:'');render();
     }
-    async function perform(operation,success){try{const value=await operation();if(success)say(typeof success==='function'?success(value):success);return value;}catch(error){say(error.message,true);}finally{render();}}
+    async function perform(operation,success){try{const c=g.readConfig();if(c.deviceId==='skelly12'||c.bleName.trim()==='12ft Skelly')throw Error('Audio is disabled for experimental 12-foot Skelly.');const value=await operation();if(success)say(typeof success==='function'?success(value):success);return value;}catch(error){say(error.message,true);}finally{render();}}
     el('audioConnect').onclick=()=>{
       if(window.SkellyControllerPortOpen?.()){say('Close the ESP32 USB session and unplug ESP32 power before connecting directly to Skelly.',true);return;}
       say('Choose Ultra Skelly. Keep the ESP32 powered off and other controllers disconnected.');

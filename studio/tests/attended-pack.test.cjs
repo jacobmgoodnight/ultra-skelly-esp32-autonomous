@@ -46,7 +46,8 @@ test("short pack skips completed checks and preserves motor cooldowns and clip d
     assert.equal(c.jawProtectBody,true);assert.equal(c.bodyOverlap,false);
     const source=fs.readFileSync(path.join(root,".skelly-build/quick-pack-test",item.name,item.name+".ino"),"utf8");
     assert.match(source,/const uint32_t MOUTH_CLIP_MS = 21000;/);
-    assert.match(source,/const uint32_t HEAD_BUFFER_MS = 7000;/);
+    assert.match(source,/const uint32_t HEAD_BUFFER_MS = SKELLY_DEVICE_12FT \? 30000 : 7000;/);
+    assert.match(source,/#define SKELLY_DEVICE_12FT 0/);
     assert.match(source,/const uint32_t ARM_BUFFER_MS = 10000;/);
     assert.match(source,/const uint32_t TORSO_BUFFER_MS = 10000;/);
     if(c.jawEnabled)assert.ok(c.jawMin>=30);
