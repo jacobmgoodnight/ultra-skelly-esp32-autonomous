@@ -35,7 +35,7 @@
     }
     remove(index){const next=this.snapshot();if(!next.scenes[index])throw Error('Choose a saved scene.');next.scenes.splice(index,1);this.commit(next,this.editing===index?null:this.editing!==null&&this.editing>index?this.editing-1:this.editing,'Delete scene');}
     undo(){if(!this.undoEntry)return false;const saved=this.undoEntry;this.value=saved.value;this.editing=saved.editing;this.undoEntry=null;return true;}
-    program(){return {scenes:this.value.scenes.map(s=>({name:s.name,seconds:s.seconds,config:clone(s.profile.config)})),rotate:this.value.rotate,random:this.value.random};}
+    program(){return {scenes:this.value.scenes.map(s=>({name:s.name,seconds:s.seconds,config:clone(s.profile.config),...(s.profile.audio?{audio:clone(s.profile.audio)}:{})})),rotate:this.value.rotate,random:this.value.random};}
   }
   function editorKey(value){return JSON.stringify(value);}
   function parseDraft(text,g){
@@ -56,9 +56,18 @@
     for(const part of parts)if(c[part+'Enabled']&&c[part+'Max']>=seconds)notes.push((part==='compound'?'Combined':part[0].toUpperCase()+part.slice(1))+' may not run before this scene ends.');
     return notes;
   }
-  function sceneSummary(c){
+  function sceneSummary(c,audio=null){
     const motors=['head','arm','torso'].filter(k=>c[k+'Enabled']).map(k=>k[0].toUpperCase()+k.slice(1));
-    return {motors:(motors.join(' + ')||'No body movement')+(c.jawEnabled&&c.eyeJawMode===3?' · Audio #'+c.jawFile:''),eyes:c.eyesEnabled?(c.eyeChoices.length===1?'Fixed eye #'+c.eyeChoices[0]:c.eyeChoices.length+' random eyes'):'Stored eyes',lights:c.lightsEnabled?(c.lightRotation?c.lightPalettes.length+' rotating palettes':'Selected colors'):'Stored lights'};
+    return {motors:(motors.join(' + ')||'No body movement')+(c.jawEnabled&&c.eyeJawMode===3?' · Audio '+(audio?.name??'#'+c.jawFile):''),eyes:c.eyesEnabled?(c.eyeChoices.length===1?'Fixed eye #'+c.eyeChoices[0]:c.eyeChoices.length+' random eyes'):'Stored eyes',lights:c.lightsEnabled?(c.lightRotation?c.lightPalettes.length+' rotating palettes':'Selected colors'):'Stored lights'};
+  }
+  function comparisonRows(value){
+    return value.scenes.map(s=>{
+      const c=s.profile.config,summary=sceneSummary(c,s.profile.audio),times=['head','arm','torso'].filter(k=>c[k+'Enabled']).map(k=>k[0].toUpperCase()+k.slice(1)+' '+c[k+'Min']+'–'+c[k+'Max']+'s');
+      if(c.compoundEnabled)times.push('Combined '+c.compoundMin+'–'+c.compoundMax+'s');
+      const match=[0,1,2,3].find(i=>c['palette'+i+'Torso']===c.torsoColor&&c['palette'+i+'Head']===c.headColor),effects={1:'Static',2:'Strobe',3:'Pulsing'};
+      const palettes=!c.lightsEnabled?'Stored lights':(c.lightRotation?c.lightPalettes.map(i=>c['palette'+i+'Name']).join(', '):match===undefined?'Custom colors':c['palette'+match+'Name'])+' · '+(c.torsoEffect===c.headEffect?effects[c.torsoEffect]:effects[c.torsoEffect]+' / '+effects[c.headEffect]);
+      return [s.name,Number((s.seconds/60).toFixed(2))+' min',times.join(' · ')||'Off',summary.eyes,palettes,c.jawEnabled?(c.eyeJawMode===3?(s.profile.audio?.name??'File #'+c.jawFile)+' · '+c.jawMin+'–'+c.jawMax+'s':'Limited mouth routine'):'Off'];
+    });
   }
   function routinePreview(value,g){
     return value.scenes.map((scene,index)=>{
@@ -80,6 +89,6 @@
     const config={...clone(g.DEFAULTS),...clone(g.PRESETS[look.preset]),...g.paletteSettings(look.palette),...target,eyesEnabled:true,eyeChoices:look.eyes,torsoEffect:look.effect,headEffect:look.effect,torsoBrightness:255,headBrightness:255,torsoSpeed:125,headSpeed:125,clockEnabled:false,restEnabled:false,jawEnabled:false};
     return {name:look.name,seconds:600,profile:JSON.parse(g.createProfile(config,{}))};
   }
-  const api={SceneLibrary,validateLibrary,minutesToSeconds,editorKey,parseDraft,timingNotes,sceneSummary,routinePreview,starter};
+  const api={SceneLibrary,validateLibrary,minutesToSeconds,editorKey,parseDraft,timingNotes,sceneSummary,comparisonRows,routinePreview,starter};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellySceneModel=api;
 })();

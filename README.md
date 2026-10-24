@@ -88,19 +88,21 @@ here can collapse; idle breaks, clock settings and diagnostics live under Advanc
 Small purple head, torso and arm illustrations animate automatically in place of the left movement icons. Reduced-motion preferences keep them static, and hidden
 pages pause them. These illustrations do not indicate live prop movement.
 
-**Audio scenes · optional preview** can upload prepared MP3s directly to Skelly
+**Advanced → Audio scenes · experimental and optional** can upload prepared MP3s directly to Skelly
 over Web Bluetooth and save per-file movement, eyes, colors and effects. A clip
 can own the routine temporarily, then restore the selected regular look. This
 requires updated firmware and attended hardware verification; see the
 [audio-scene guide and result sheet](docs/audio-scenes.md). Ordinary presets keep
-audio OFF. There is no automatic audio conversion in this first version.
+audio OFF. Local conversion/trimming and computer-only preview can prepare other browser-supported audio formats; no audio is sent to a server.
 
 Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
 or save scenes. First-time Arduino installation instructions fold away after setup.
 
 Screenshots show illustrative browser settings, with no hardware connection.
 
-## Current evidence — October 23, 2026
+Current release: **2026.10.24-preview.1**. [Feature status](docs/status.md) · [Changelog](CHANGELOG.md) · [Next attended checks](docs/next-release-checklist.md).
+
+## Current evidence — October 23–24, 2026
 
 | Feature | Latest result |
 | --- | --- |
@@ -271,3 +273,5 @@ by martinecker enabled file upload, saved-settings experiments and protocol
 research. This is a separately written, unofficial hobby controller, not affiliated
 with Home Depot or the manufacturer. Original code, documentation and synthesized
 audio use the [MIT License](LICENSE); upstream assets retain their own terms.
+
+The optional local MP3 encoder is [lamejs 1.2.1 / LAME](studio/vendor/lamejs-1.2.1/NOTICE.md), distributed separately under LGPL-3.0 with unmodified readable source and notices. Studio code remains MIT.

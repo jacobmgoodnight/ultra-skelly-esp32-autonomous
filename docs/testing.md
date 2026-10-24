@@ -1,3 +1,5 @@
+October 24 consolidation: use [Current feature status](status.md) and the [next attended list](next-release-checklist.md) for current evidence. New read-only status tests include all wait reasons, audio hold, timer wrap, line bounds and unchanged actuator writes. Browser tests execute the bundled encoder and cover conversion cancellation/late results, silent explicit handoff, profile labels and known numbering mismatches. No hardware result is inferred.
+
 # Reproducible testing and the next on-device test
 
 For the October 22 UI/palette/effects changes, start with the shorter

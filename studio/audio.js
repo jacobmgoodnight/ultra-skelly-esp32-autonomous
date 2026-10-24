@@ -166,6 +166,10 @@
       });
     }
   }
-  const api={Session,frame,crc,filename,inspectMp3,packet,fileInfo,settings,sameSettings,audioRoutine};
+  function identityChanged(ref,files,device){
+    if(!ref||ref.device!==device)return false;
+    return !files.some(f=>f.name===ref.name&&f.serial===ref.serial&&f.cluster===ref.cluster);
+  }
+  const api={identityChanged,Session,frame,crc,filename,inspectMp3,packet,fileInfo,settings,sameSettings,audioRoutine};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellyAudio=api;
 })();

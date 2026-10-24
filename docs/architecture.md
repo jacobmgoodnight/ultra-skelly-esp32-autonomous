@@ -284,3 +284,9 @@ identity/read-back. It never starts playback, deletes files or overwrites names.
 `audio-ui.js` keeps radio preparation out of ordinary controls and prevents starting
 it with an open USB port; USB also refuses connection while direct BLE is active.
 See [audio scenes and physical verification limits](audio-scenes.md).
+
+## October 24 read-only status and Studio preparation
+
+Release 2026.10.24-preview.1 ports only PR #35's USB diagnostics. Firmware/build, modeled wait, remaining protection and last accepted-write age are numeric STATUS additions. A 640-byte bounded text buffer retains the full worst-case line. The idle-break helper reads existing state; no timers, actions, locks, scene behavior or NVS layout change. Audio hold has its own estimated reason. No wireless-status server is included. Older numeric parsers accept additional fields.
+
+Audio preparation decodes/resamples locally and lazily loads the pinned local encoder. Computer preview requires Play. Optional descriptive audio metadata survives browser profile/scene validation but never enters runtime encoding. Fresh known file mismatches block saves without automatically remapping serials. The scene comparison reads saved scenes only.

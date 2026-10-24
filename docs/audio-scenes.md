@@ -9,12 +9,12 @@ Existing isolated jaw and lighting confirmations retain their previous scope.
 1. Export your current Studio settings. Leave ordinary presets audio-free.
 2. Unplug ESP32 power, close Studio's USB session and disconnect phone/web
    controllers. Power Ultra Skelly v2 in Bluetooth mode.
-3. Open **Audio scenes · optional preview** and connect directly to the advertised
+3. Open **Advanced & testing → Audio scenes · experimental and optional** and connect directly to the advertised
    Skelly name. This is browser → Skelly BLE, not browser → ESP32 USB.
 4. Select a stored file or upload a newly named, prepared **8 kHz, mono, 32 kbps
    MP3**, up to 118 seconds and 1 MiB. Studio checks complete MPEG-2.5 Layer III
    frames and derives a minimum 21-second padded estimate. Other formats require
-   prior conversion; automatic conversion is not included. One local example is
+   conversion in Prepare or trim audio: choose a browser-supported file up to 12 MiB / 10 minutes, select 0.1–117 seconds, then prepare locally. A waveform helps choose the range. Preview is silent until you press Play and plays on the computer only. Use this MP3 for upload sends nothing until Upload new file is pressed. The actual encoded frames determine the padded estimate. One local example is
    `audio/Jaw_Idle_Random_20s_v2.mp3` (silent jaw, not a spoken greeting).
 5. Edit the selected clip's stored head/arm/torso flags, fixed eye, both channel
    colors, brightness, effects, speed and color cycling. Save its look and require
@@ -100,3 +100,9 @@ accessible. Start with its saved body flags OFF. Preserve your working firmware.
 Stop for unexpected movement, interrupted playback, wrong restoration or a timing
 estimate shorter than observed activity. Record physical observations separately
 from logs. Existing unrelated refresh checks do not need repetition.
+
+## Friendly labels and local conversion
+
+New profiles/scenes can keep an optional `audio` label (name, serial, cluster and advertised name). It is browser metadata, never an MP3 or firmware word. Existing profile v4 / scene v1 remains valid; older Studio may discard the label safely. USB reads cannot recover filenames from the ESP32 and do not prove the label matches a prop. A known mismatch in a freshly read file list blocks USB saving until the user explicitly reselects the clip and updates the scene. Matching names/serials/clusters are metadata checks, not content hashes; never assume different props with the same advertised name share files.
+
+The converter uses the browser decoder and offline resampler, plus separately bundled unmodified lamejs 1.2.1 (LGPL). Decode support varies by browser. Conversion is bounded and cancellable; changing trim invalidates the prepared result. Original audio and MP3 bytes are never stored in profiles/localStorage or uploaded to a cloud. Save the prepared MP3 yourself if needed. Generated sketches still run independently.

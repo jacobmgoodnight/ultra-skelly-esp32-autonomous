@@ -21,3 +21,9 @@ test('installer rejects wrong board, truncated images and mismatched hashes',asy
   await assert.rejects(verifyPackage(metadata,bytes.slice(1)));
   bytes[100000]=1;await assert.rejects(verifyPackage(metadata,bytes),/hash mismatch/);
 });
+
+
+test('release metadata is optional for older packages and strictly bounded when present',async()=>{
+ const bytes=new Uint8Array(4194304);bytes[4096]=bytes[65536]=0xe9;const metadata={profile:'universal',chipFamily:'ESP32',core:'3.3.12',sourceCommit:'a'.repeat(40),sourceSHA256:'b'.repeat(64),physicalStatus:'Untested',binarySHA256:crypto.createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length,releaseVersion:'2026.10.24-preview.1',firmwareRevision:5,firmwareBuild:2026102401};
+ assert.equal((await verifyPackage(metadata,bytes)).releaseVersion,metadata.releaseVersion);await assert.rejects(verifyPackage({...metadata,releaseVersion:'unbounded unexpected label'},bytes));await assert.rejects(verifyPackage({...metadata,firmwareBuild:-1},bytes));
+});

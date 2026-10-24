@@ -52,6 +52,8 @@ fixed_eye_source = subprocess.check_output([os.environ.get("NODE", "node"), "-e"
 failed |= build_and_run(ROOT / ".skelly-build/host/FixedEye", fixed_eye_source,
                        (ROOT / "tests/fixed_eye_harness.cpp").read_text(encoding="utf-8"), "Fixed eye without rotation")
 runtime_source = subprocess.check_output([os.environ.get("NODE", "node"), str(ROOT / "studio/tests/export-runtime-fixture.cjs")], encoding="utf-8")
+failed |= build_and_run(ROOT / ".skelly-build/host/ReadOnlyDiagnostics", runtime_source,
+                       (ROOT / "tests/diagnostics_harness.cpp").read_text(encoding="utf-8"), "Read-only USB identity and modeled activity")
 failed |= build_and_run(ROOT / ".skelly-build/host/RuntimeSettings", runtime_source,
                        (ROOT / "tests/runtime_settings_harness.cpp").read_text(encoding="utf-8"), "Runtime USB settings and scenes")
 failed |= build_and_run(ROOT / ".skelly-build/host/RuntimeOffline", runtime_source,

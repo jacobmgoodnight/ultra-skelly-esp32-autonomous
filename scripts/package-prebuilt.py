@@ -31,6 +31,11 @@ def package(source, binary, output, revision, profile='head-only'):
     metadata={'profile':profile,'binaryFile':filename,'chipFamily':'ESP32','core':'3.3.12','sourceCommit':revision,
       'sourceSHA256':hashlib.sha256(source.read_bytes()).hexdigest(),'binarySHA256':hashlib.sha256(data).hexdigest(),
       'bytes':len(data),'physicalStatus':'Untested','description':description}
+    identity={}
+    for key,pattern in [('firmwareRevision',r'const uint32_t FIRMWARE_REVISION = (\d+);'),('firmwareBuild',r'const uint32_t FIRMWARE_BUILD = (\d+)UL;'),('releaseVersion',r'const char \*FIRMWARE_RELEASE = "([^"]+)";')]:
+        match=re.search(pattern,code)
+        if match:identity[key]=match.group(1) if key=='releaseVersion' else int(match.group(1))
+    metadata.update(identity)
     (output/'build.json').write_text(json.dumps(metadata,indent=2)+'\n')
     manifest={'name':'Ultra Skelly '+profile+' preview','version':revision[:12],
       'new_install_prompt_erase':True,'new_install_improv_wait_time':0,

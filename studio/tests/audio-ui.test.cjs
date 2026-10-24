@@ -16,7 +16,7 @@ function page({supported=true,usb=false,saveError=false}={}){
  }
  const window={SkellyAudio:{...a,Session:FakeSession},SkellyStudioGenerator:{...generator,readConfig:()=>config,writeConfig:c=>{config={...config,...c};document.dispatchEvent({type:'skelly-config-changed'});}},SkellyExperience:experience,SkellyControllerPortOpen:()=>usb,addEventListener:()=>{}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'audio-ui.js'),'utf8'),{document,window,navigator:{bluetooth:supported?{}:undefined},CustomEvent:class{constructor(type){this.type=type;}},Uint8Array,Date});events.DOMContentLoaded[0]();
- return {nodes,window,session,get chosen(){return chosen;},get config(){return config;},get connects(){return connects;},get saves(){return saves;},async settle(){await new Promise(r=>setImmediate(r));}};
+ return {nodes,document,window,session,get chosen(){return chosen;},get config(){return config;},get connects(){return connects;},get saves(){return saves;},async settle(){await new Promise(r=>setImmediate(r));}};
 }
 test('optional audio starts disconnected and unsupported browsers retain routine editing',()=>{
  const p=page();assert.equal(p.connects,0);assert.equal(p.nodes.audioEdit.hidden,true);assert.equal(p.nodes.audioUpload.disabled,true);assert.equal(p.nodes.audioEdit.disabled,true);assert.equal(p.config.jawEnabled,false);
@@ -54,4 +54,19 @@ test('unsaved clip edits cannot schedule the device’s previous movement flags'
  const p=page();p.nodes.audioConnect.onclick();await p.settle();p.nodes.audioGuard.value='32';p.nodes.audioHead.checked=false;p.nodes.audioUse.onclick();
  assert.equal(p.config.jawEnabled,false);assert.equal(p.chosen,true);assert.match(p.nodes.audioMessage.textContent,/Save clip look to Skelly/);assert.equal(p.saves,0);assert.equal(p.nodes.audioClipLook.open,true);
  p.nodes.audioSaveLook.onclick();await p.settle();p.nodes.audioUse.onclick();assert.equal(p.config.eyeJawMode,3);assert.equal(p.config.jawEnabled,true);
+});
+
+
+test('a refreshed renumbered clip warns and blocks known mismatched saves without remapping the routine',async()=>{
+ const p=page();p.nodes.audioConnect.onclick();await p.settle();p.nodes.audioGuard.value='32';p.nodes.audioUse.onclick();const ref=p.window.SkellyStudioGenerator.readAudioReference(p.config);
+ assert.equal(ref.name,'Greeting.mp3');assert.equal(p.config.jawFile,27);
+ p.session.files=[{...p.session.files[0],serial:28}];p.nodes.audioRefresh.onclick();await p.settle();
+ assert.equal(p.config.jawFile,27);assert.equal(p.nodes.audioGuard.value,'');assert.match(p.nodes.audioIdentity.textContent,/File list changed/);
+ assert.throws(()=>p.window.SkellyAudioCheck([{config:p.config,audio:ref}]),/numbers changed/);
+ p.nodes.audioGuard.value='32';p.nodes.audioUse.onclick();assert.equal(p.config.jawFile,28);assert.doesNotThrow(()=>p.window.SkellyAudioCheck([{config:p.config,audio:p.window.SkellyStudioGenerator.readAudioReference(p.config)}]));
+});
+test('local preparation handoff opens upload choices but cannot upload or enable audio by itself',()=>{
+ const p=page(),bytes=new Uint8Array(fs.readFileSync(path.join(root,'../audio/Jaw_Idle_Random_20s_v2.mp3')));
+ p.document.dispatchEvent({type:'skelly-audio-prepared',detail:{bytes,name:'Local greeting.wav'}});
+ assert.equal(p.nodes.audioUploadPanel.open,true);assert.equal(p.nodes.audioUpload.disabled,true);assert.equal(p.config.jawEnabled,false);assert.equal(p.connects,0);assert.match(p.nodes.audioUploadName.value,/Local-greeting_/);
 });
