@@ -937,7 +937,7 @@ void acceptUsbCommand(const char *line) {
   if (strcmp(line,"SKELLY STATUS")==0) { emitUsbStatus(); return; }
   if (strcmp(line, "SKELLY HELLO") == 0) {
     logLine("USB READY v1 CLOCK");
-    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u audioScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME),unsigned(SKELLY_RUNTIME));
+    logEvent("USB CAPS v2 settings=%u scenes=%u randomScenes=%u audioScenes=%u\n",unsigned(SKELLY_RUNTIME),SKELLY_RUNTIME?4u:0u,unsigned(SKELLY_RUNTIME),unsigned(SKELLY_RUNTIME && DEVICE_PROFILE.audio));
     return;
   }
   const char *prefix = "SKELLY TIME ";

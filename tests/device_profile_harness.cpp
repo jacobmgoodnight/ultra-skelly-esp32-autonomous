@@ -5,7 +5,9 @@ int main(){try{
   static_assert(!DEVICE_PROFILE.audio && !DEVICE_PROFILE.bodyMotors,"Unsupported operations");
   REQUIRE(HEAD_ANIMATION_MS==60000 && HEAD_BUFFER_MS==30000);
   REQUIRE(strcmp(DEVICE_PROFILE.storageNamespace,"skelly-12ft")==0);
-  setup();fakeScanFindsDevice=true;
+  setup();Serial.output.clear();acceptUsbCommand("SKELLY HELLO");
+  REQUIRE(Serial.output.find("audioScenes=0")!=std::string::npos);
+  fakeScanFindsDevice=true;
   // A shared service or another advertised model must not match this build.
   fakeAdvertisedName="Ultra Skelly v2";scanAndConnect();REQUIRE(!connected);
   fakeAdvertisedName="12ft Skelly";scanAndConnect();REQUIRE(connected);
