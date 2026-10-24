@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=7369108b140f">
+<link rel="stylesheet" href="./style.css?v=cad6a8c15164">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=7307a7a8195d" defer></script>
+<script src="./app.js?v=4d60e620dacf" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=d38e9df6b3fb" defer></script>
 <script src="./release.js?v=6bc92f3558fc" defer></script>
@@ -20,7 +20,7 @@
 <script src="./audio-prep.js?v=460944ee3d5f" defer></script>
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
-<script src="./controller.js?v=de68c2fe10e9" defer></script>
+<script src="./controller.js?v=3e295f9b93ed" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -40,8 +40,8 @@
   <div class="controls">
     <details class="panel fold-panel" id="first-run" open>
       <summary><span><small>START HERE</small><strong>Your first autonomous routine</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <p>Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.</p>
-      <ol><li>Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Open <a href="#controllerPanel">Send to your ESP32</a>, install universal firmware once, then save your routine over USB.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li>Add arm, torso, eyes or lighting to make the routine your own.</li></ol>
+      <p id="firstRunIntro">Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.</p>
+      <ol><li id="firstRunDevice">Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Open <a href="#controllerPanel">Send to your ESP32</a>, install universal firmware once, then save your routine over USB.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li id="firstRunExtras">Add arm, torso, eyes or lighting to make the routine your own.</li></ol>
     </div></details>
     <section class="panel">
       <div class="section-head"><div><span class="step">01</span><h2>Choose a personality</h2></div><span class="tiny">Starting points; customize below</span></div>
@@ -180,7 +180,7 @@
         <div class="profile-actions"><button id="controllerLog" type="button" disabled>Download USB log</button><button id="controllerReset" type="button" disabled>Restore firmware defaults</button></div>
         <p>Restoring defaults uses the replacement confirmation in <a href="#controllerPanel">Send to your ESP32</a>.</p>
         <p>If identification stalls, close other serial apps/tabs and use Retry identification above. If needed, press EN/Reset once and retry. To diagnose separately, disconnect Studio, open Arduino Serial Monitor at <strong>115200 / Newline</strong>, then send <strong>SKELLY HELLO</strong> and <strong>SKELLY STATUS</strong>. Close Serial Monitor before reconnecting Studio.</p>
-        <p><a href="./usb.html">USB tools: clock, raw capture &amp; package installer →</a></p>
+        <p><a data-usb-tools href="./usb.html">USB tools: clock, raw capture &amp; package installer →</a></p>
       </details>
     <details class="instructions fold-panel" id="breaks"><summary><span><strong>Idle breaks</strong><small id="breaksStatus">Off · pauses between routines</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <div class="section-head"><div><h2>Idle breaks</h2></div><label class="switch"><input type="checkbox" id="restEnabled"><span></span><span class="sr-only">Enable occasional idle breaks</span></label></div>
@@ -211,7 +211,7 @@
           <label for="clockStart">Start</label><input id="clockStart" type="time" value="18:00">
           <label for="clockEnd">End</label><input id="clockEnd" type="time" value="23:00">
           <div role="group" aria-label="Days on which the window starts"><label><input class="clock-day" type="checkbox" value="1" checked>Sun</label><label><input class="clock-day" type="checkbox" value="2" checked>Mon</label><label><input class="clock-day" type="checkbox" value="4" checked>Tue</label><label><input class="clock-day" type="checkbox" value="8" checked>Wed</label><label><input class="clock-day" type="checkbox" value="16" checked>Thu</label><label><input class="clock-day" type="checkbox" value="32" checked>Fri</label><label><input class="clock-day" type="checkbox" value="64" checked>Sat</label></div>
-          <p>Set local time through <a href="./usb.html">USB tools</a> after every restart. Until then, no routines start. Overnight windows belong to their start day. Existing movement finishes at closing time. No Wi-Fi, automatic DST adjustment or clock retention after power loss.</p>
+          <p>Set local time through <a data-usb-tools href="./usb.html">USB tools</a> after every restart. Until then, no routines start. Overnight windows belong to their start day. Existing movement finishes at closing time. No Wi-Fi, automatic DST adjustment or clock retention after power loss.</p>
         </fieldset>
         <p>At 115200 baud, records BLE write results, heap, connection attempts and lighting progress. Boot/reset information and event timestamps are always logged. <a href="../docs/testing.md">Lighting test and log instructions ↗</a></p>
     <details class="instructions experimental-audio" id="audioScenes"><summary><span><strong>Audio scenes <span class="experimental">EXPERIMENTAL · OPTIONAL</span></strong><small id="audioSceneSummary">Upload a clip, choose its look, then schedule it</small></span></summary><div class="fold-content">

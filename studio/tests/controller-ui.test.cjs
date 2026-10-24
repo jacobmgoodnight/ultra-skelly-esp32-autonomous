@@ -39,11 +39,19 @@ test('one explicit USB session serves the separate everyday panel and diagnostic
 
 test('browser setup follows an explicit experimental selection and return; ordinary visits remain Ultra',async()=>{
  for(const search of ['', '?device=skelly12']){const p=page({search});try{
-  assert.equal(p.config.deviceId,search?'skelly12':'ultra');p.nodes.browserInstall.onclick();
+  assert.equal(p.config.deviceId,search?'skelly12':'ultra');
   assert.equal(p.nodes.browserInstall.href,'./install.html'+search);
-  if(search){assert.equal(p.config.bleName,'12ft Skelly');assert.equal(p.config.armEnabled,false);assert.ok(p.config.headMin>=90);}
+  if(search){assert.equal(p.config.bleName,'12ft Skelly');assert.equal(p.config.armEnabled,false);assert.equal(p.config.eyesEnabled,false);assert.equal(p.config.lightsEnabled,false);assert.equal(p.config.headMin,90);assert.equal(p.config.headMax,120);}
   await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,false);
  }finally{await p.close();}}
+});
+
+test('model-specific installer URLs update before ordinary click, new-tab or copy-link navigation',async()=>{
+ const p=page();try{
+  p.window.SkellyStudioGenerator.writeConfig(generator.adaptDevice({...p.config,bleName:'12ft Skelly'},'skelly12'));
+  p.events['skelly-config-changed']();assert.equal(p.nodes.browserInstall.href,'./install.html?device=skelly12');
+  p.window.SkellyStudioGenerator.writeConfig({...generator.DEFAULTS});p.events['skelly-config-changed']();assert.equal(p.nodes.browserInstall.href,'./install.html');
+ }finally{await p.close();}
 });
 test('incompatible firmware reveals first-time setup without sending settings',async()=>{
  const p=page({settings:false});try{await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerSetup.open,true);assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerRead.disabled,true);assert.equal(p.session.operations.length,0);}finally{await p.close();}

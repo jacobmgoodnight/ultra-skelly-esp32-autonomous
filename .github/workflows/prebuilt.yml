@@ -71,13 +71,13 @@ jobs:
         with:
           pattern: '*-usb-preview'
           path: .skelly-build/packages
+      - name: Verify packages and assemble public catalog
+        run: python scripts/assemble-installer.py --packages .skelly-build/packages --output . --revision "$(git rev-parse HEAD)"
       - name: Build existing static site
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-      - name: Verify packages and assemble public catalog
-        run: python scripts/assemble-installer.py --packages .skelly-build/packages --output _site --revision "$(git rev-parse HEAD)"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

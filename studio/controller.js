@@ -6,7 +6,7 @@
     const session=new window.SkellySerial.Session(navigator.serial);
     // An explicit return from the model-specific installer keeps the firmware and editor aligned.
     if(window.location?.search&&new URLSearchParams(window.location.search).get('device')==='skelly12'){
-      g.writeConfig(g.adaptDevice({...g.readConfig(),bleName:'12ft Skelly'},'skelly12'));
+      g.writeConfig(g.adaptDevice({...g.DEFAULTS,...g.PRESETS.subtle,bleName:'12ft Skelly'},'skelly12'));
     }
     const state=new window.SkellyControllerState.ControllerState(session,{onChange:render,hidden:()=>document.hidden});
     let previousUsb='disconnected';
@@ -47,7 +47,13 @@
       }
     }
     window.SkellyControllerPortOpen=()=>!!session.port||state.busy;
-    el('browserInstall').onclick=()=>{el('browserInstall').href='./install.html'+(g.readConfig().deviceId==='skelly12'?'?device=skelly12':'');};
+    function updateInstallerLinks(){
+      const query=g.readConfig().deviceId==='skelly12'?'?device=skelly12':'';
+      el('browserInstall').href='./install.html'+query;
+      for(const link of document.querySelectorAll('a[data-usb-tools]'))link.href='./usb.html'+query;
+    }
+    document.addEventListener('skelly-config-changed',updateInstallerLinks);
+    updateInstallerLinks();
     document.addEventListener("skelly-audio-connection",render);
     function consent(){if(!el('controllerConsent').checked)throw Error('Confirm replacing the controller’s saved routine first.');}
     el('controllerConnect').onclick=()=>state.run(async()=>{
