@@ -551,9 +551,9 @@
     const c=readConfig(),errors=validate(c);
     for(const button of document.querySelectorAll('.preset'))button.setAttribute('aria-pressed',String(button.classList.contains('chosen')));
     renderMotionPreviews();
-    const seconds=Number(byId('previewWindow').value);
+    const seconds=900;
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
-    byId('timelineTitle').textContent=seconds===300?'Five-minute timing preview':'Timing preview · '+Number((seconds/60).toFixed(2))+' min';
+    byId('timelineTitle').textContent='15-minute timing preview';
     byId('timelineMid').textContent=clock(Math.floor(seconds/2));byId('timelineEnd').textContent=clock(seconds);
     byId('timeline').setAttribute('aria-label','Example requested intervals over '+seconds+' seconds, not actual movement times');
     const previewItems=window.SkellyExperience.previewItems(c);
@@ -775,7 +775,6 @@
     }
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       if(el.id==="scenePreviewSelect"||el.id==='controllerConsent'||el.closest("#audioScenes"))return;
-      if(el.id==='previewWindow'){render();return;}
       if(el.id==='deviceId'){
         const device=DEVICE_PROFILES[el.value];
         writeConfig(adaptDevice({...readConfig(),bleName:device.bleName,headEnabled:true,

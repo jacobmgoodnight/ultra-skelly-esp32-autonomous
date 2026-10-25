@@ -53,7 +53,7 @@ Software-only until checked on the prop.
 2. Select Subtle: head only, 60–120 seconds. Select Normal: head 35–75 seconds,
    arm 150–240 seconds. Select Haunted: arm 60–120 seconds; torso
    75–180 seconds, plus optional combined actions every 240–600 seconds. All three keep mouth OFF.
-3. Watch the five-minute preview: Normal shows Head and Arm only; Subtle shows
+3. Watch the 15-minute preview: Normal shows Head and Arm only; Subtle shows
    Head only. Multiple selected eyes add Eyes; a fixed eye is shown in the summary
    without periodic events. Enabling lighting rotation adds Lighting.
    Combined adds a lane in interleaved mode; combined-only mode replaces body lanes;
