@@ -215,6 +215,41 @@ stored motor combinations, playback end and full restoration remain Untested.
 
 ## Browser installation packaging
 
+### Studio browser workflows (no physical device)
+
+`node scripts/test-studio-browser.cjs` exercises the actual static pages and serial
+transaction code in headless Playwright. It starts its own loopback server and
+replaces Web Serial with an in-browser fixture before loading the page; it never
+requests a real port. No frontend dependency or hosted service is added. The browser
+runner is an optional separate command, not part of the dependency-free Node suite.
+
+Use an environment that provides Playwright on Node's module path. For a local
+Windows installation with Edge, test tooling can live entirely in ignored output:
+
+```powershell
+npm install --prefix .skelly-build/browser-tools --no-save --package-lock=false playwright
+$env:NODE_PATH = Join-Path (Get-Location) '.skelly-build/browser-tools/node_modules'
+$env:SKELLY_BROWSER_CHANNEL = 'msedge'
+node scripts/test-studio-browser.cjs
+```
+
+Without `SKELLY_BROWSER_CHANNEL`, install Playwright's Chromium with
+`node .skelly-build/browser-tools/node_modules/playwright/cli.js install chromium`.
+On Bash, set `NODE_PATH="$PWD/.skelly-build/browser-tools/node_modules"` for the run.
+The October 25 local run used the supplied Playwright 1.62.1 and desktop Edge.
+
+Coverage: beginner installation discovery and guarded handoff (no flashing),
+read/edit/save, personality/eyes/lighting, two-scene edit/reorder/random collection
+round trips, offline source download without USB support, chooser/open/save/read-back
+failures, model-specific links, keyboard/skip focus, touch navigation, reduced motion,
+and 1440/768/390/320 px layouts with disclosures open. Results and screenshots are
+under `.skelly-build/browser-results/`. These are **Software-only** checks, including
+simulated controller read-back. They do not verify physical flashing, retention,
+Bluetooth delivery, motors, eyes, lights or scene transitions. See the
+[audit](studio-ux-audit.md) for findings and remaining usability limitations.
+
+### Package checks
+
 `node --test studio/tests/installer.test.cjs studio/tests/controller-ui.test.cjs`
 covers public paths, both models, stale/mixed identities, oversized/damaged images,
 unsupported browser guidance, explicit configuration handoff and existing USB saves.

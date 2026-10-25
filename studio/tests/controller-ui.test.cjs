@@ -69,6 +69,28 @@ test('unplug during a manual status refresh keeps the disconnected message and c
 test('unsupported browsers retain editing/download guidance and do not open a port',()=>{
  const p=page({supported:false});assert.equal(p.nodes.controllerConnect.disabled,true);assert.match(p.nodes.controllerMessage.textContent,/Chrome or Edge/);assert.equal(p.connects,0);p.windowEvents.pagehide();
 });
+
+test('connecting folds first-time guidance; invalid routine edits do not disable a valid saved collection',async()=>{
+ const p=page();try{
+  p.nodes['first-run'].open=true;await p.nodes.controllerConnect.onclick();assert.equal(p.nodes['first-run'].open,false);
+  await p.nodes.controllerRead.onclick();
+  p.window.SkellyStudioGenerator.writeConfig({...p.config,headMin:1});p.events['skelly-config-changed']();
+  assert.equal(p.nodes.controllerWrite.disabled,true);assert.equal(p.nodes.controllerScenes.disabled,false);
+  p.nodes.controllerConsent.checked=true;await p.nodes.controllerScenes.onclick();
+  assert.deepEqual(p.session.operations,['read','write','read']);assert.match(p.nodes.controllerMessage.textContent,/read-back verified/);
+  p.window.SkellyStudioGenerator.writeConfig({...p.config,headMin:40});p.events['skelly-config-changed']();assert.equal(p.nodes.controllerWrite.disabled,false);
+ }finally{await p.close();}
+});
+
+test('USB cancellation, blocked permission and failed opens offer recovery without retrying or writing',async()=>{
+ for(const [name,expected] of [['NotFoundError',/No USB port selected.*data cable/],['SecurityError',/Chrome or Edge over HTTPS/],['NetworkError',/Close Arduino Serial Monitor.*data cable/]]){
+  const p=page();let attempts=0;try{
+   p.session.connect=async()=>{attempts++;throw Object.assign(Error('mock open failure'),{name});};
+   await p.nodes.controllerConnect.onclick();assert.equal(attempts,1);assert.equal(p.nodes.controllerConnect.disabled,false);
+   assert.match(p.nodes.controllerMessage.textContent,expected);assert.equal(p.nodes.controllerWrite.disabled,true);assert.deepEqual(p.session.operations,[]);
+  }finally{await p.close();}
+ }
+});
 test('replacement confirmation gates actual saves and successful read-back is shown even if status is unavailable',async()=>{
  const p=page({statusFails:true});try{
   await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerUsb.textContent,'Ready');assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');
@@ -77,7 +99,7 @@ test('replacement confirmation gates actual saves and successful read-back is sh
  }finally{await p.close();}
 });
 test('checksum mismatch is never labeled saved and never auto-retries a mutation',async()=>{
- const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/did not match/);assert.equal(p.nodes.controllerMessage.dataset.state,'error');assert.deepEqual(p.session.operations,['write','read']);assert.equal(p.records.length,0);}finally{await p.close();}
+ const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/did not match/);assert.match(p.nodes.controllerMessage.textContent,/Save was not verified.*Read saved settings/);assert.equal(p.nodes.controllerMessage.dataset.state,'error');assert.deepEqual(p.session.operations,['write','read']);assert.equal(p.records.length,1);assert.equal(p.records[0].program,null);}finally{await p.close();}
 });
 
 test('canceling the asynchronous unsaved-scenes confirmation sends no settings',async()=>{

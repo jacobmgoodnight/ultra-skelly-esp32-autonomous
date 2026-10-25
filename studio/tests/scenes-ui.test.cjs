@@ -51,6 +51,15 @@ test('verified controller status compares only the acknowledged snapshot and dis
  p.change({headMin:40});assert.match(p.nodes.deviceSaveStatus.textContent,/editor changes are not in it/);p.answer=false;assert.equal(await p.api.confirmSendScenes(),false);
  p.nodes.sceneUpdate.onclick();assert.match(p.nodes.deviceSaveStatus.textContent,/not been sent/);p.api.usbState(null);assert.match(p.nodes.deviceSaveStatus.textContent,/connect and read/);
 });
+
+test('USB and preview comparisons share one verified baseline and never imply an unobserved save',()=>{
+ const p=page();assert.match(p.nodes.routineSaveStatus.textContent,/connect and read/);assert.equal(p.nodes.routineSaveStatus.dataset.state,'info');
+ p.api.usbState({});const config={...p.config};p.api.recordController({scenes:[{name:'Routine',seconds:600,config}],rotate:false},'routine');
+ assert.equal(p.nodes.routineSaveStatus.dataset.state,'ready');assert.equal(p.nodes.routineSaveStatus.textContent,p.nodes.deviceSaveStatus.textContent);
+ p.change({headMin:40});assert.equal(p.nodes.routineSaveStatus.dataset.state,'changed');assert.match(p.nodes.routineSaveStatus.textContent,/not been sent/);
+ p.change({headMin:config.headMin});assert.equal(p.nodes.routineSaveStatus.dataset.state,'ready');
+ p.api.usbState(null);assert.equal(p.nodes.routineSaveStatus.dataset.state,'info');assert.match(p.nodes.routineSaveStatus.textContent,/connect and read/);
+});
 test('unavailable browser storage is visible and never claims a durable library or draft',()=>{
  const p=page({blocked:true});p.nodes.sceneSave.onclick();assert.match(p.nodes.browserSaveStatus.textContent,/session only/);assert.match(p.nodes.sceneMessage.textContent,/session only/);assert.equal(p.beforeUnload(),true);
  p.change({headMin:40});p.flush();assert.match(p.nodes.draftStatus.textContent,/needs valid settings and browser storage/);

@@ -63,6 +63,15 @@ representative generated sketches and the compound diagnostic with core 3.3.12.
 
 ## Studio usability
 
+The section shortcuts keep Personality, Movement, Eyes, Lighting, Scenes, Preview
+and Connect & save in reach on phones and desktop. First-time setup links directly
+to the model-specific browser installer; connecting an identified controller folds
+the introductory guidance. Everyday saves still require explicit replacement consent.
+USB and Preview share the same verified-settings comparison. Invalid editor settings
+disable only Save this routine; saved scene collections can still be sent. A failed
+save/read-back clears the comparison and asks for a fresh read before retrying.
+See the [usability audit and before/after screenshots](../docs/studio-ux-audit.md).
+
 Scene builder uses visual cards with explicit Update/Save as new, Duplicate,
 Rename, keyboard-accessible ordering and one-step library Undo. Saved libraries
 keep their existing version-1 format and storage key. A separate recoverable draft

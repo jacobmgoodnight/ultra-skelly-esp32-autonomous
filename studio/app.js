@@ -549,6 +549,7 @@
   }
   function render() {
     const c=readConfig(),errors=validate(c);
+    for(const button of document.querySelectorAll('.preset'))button.setAttribute('aria-pressed',String(button.classList.contains('chosen')));
     renderMotionPreviews();
     const seconds=Number(byId('previewWindow').value);
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
@@ -636,6 +637,7 @@
     byId("restOptions").classList.toggle("muted",!c.restEnabled);
     byId("restOptions").inert=!c.restEnabled;
     const e=byId("error");e.hidden=!errors.length;e.textContent=errors.join("\n");
+    byId('validationJump').hidden=!errors.length;
     byId("download").disabled=errors.length>0;byId("preview").disabled=errors.length>0;
     const timeline=byId("timeline");timeline.replaceChildren();
     timeline.style.height=Math.max(38,previewItems.length*24+10)+"px";
@@ -772,7 +774,8 @@
       label.append(input,document.createTextNode('Eye '+i));card.append(label);eyeGrid.append(card);
     }
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
-      if(el.id==="scenePreviewSelect"||el.closest("#audioScenes"))return;
+      if(el.id==="scenePreviewSelect"||el.id==='controllerConsent'||el.closest("#audioScenes"))return;
+      if(el.id==='previewWindow'){render();return;}
       if(el.id==='deviceId'){
         const device=DEVICE_PROFILES[el.value];
         writeConfig(adaptDevice({...readConfig(),bleName:device.bleName,headEnabled:true,
@@ -780,7 +783,7 @@
         byId('deviceChangeNotice').hidden=true;
         return;
       }
-      for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+      for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
       if(el.closest('.eye-choice')){
         if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
         else if(!document.querySelector('.eye-choice input:checked'))el.checked=true;
@@ -808,14 +811,14 @@
     for(const button of document.querySelectorAll("[data-jaw-choice]"))button.addEventListener("click",()=>{
       try {
         writeConfig({...jawSelection(button.dataset.jawChoice,readLibrary()),eyeJawMode:1});
-        for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+        for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
       }
       catch(error) { byId("jawChoiceStatus").textContent=error.message; }
     });
     for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
       const c=readConfig(),i=Object.keys(PALETTES).indexOf(button.dataset.palette);
       writeConfig({torsoColor:c["palette"+i+"Torso"],headColor:byId('linkLightColors').checked?c["palette"+i+"Torso"]:c["palette"+i+"Head"],lightRotation:false});
-      for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+      for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
     });
     for(const button of document.querySelectorAll('[data-edit-palette]'))button.addEventListener('click',()=>{
       const index=Number(button.dataset.editPalette),c=readConfig();editingPalette={index,follow:!c.lightRotation&&c.torsoColor===c['palette'+index+'Torso']&&c.headColor===c['palette'+index+'Head']};document.querySelectorAll('[data-palette-editor]').forEach(node=>node.hidden=Number(node.dataset.paletteEditor)!==index);
@@ -823,10 +826,20 @@
     });
     for(const id of ['paletteDialogClose','paletteDialogDone'])byId(id).onclick=()=>byId('paletteDialog').close();
     byId('paletteDialog').addEventListener('close',()=>editingPalette=null);
-    for(const link of document.querySelectorAll('.studio-nav a[href^="#"]'))link.addEventListener("click",()=>{
-      const target=byId(link.getAttribute("href").slice(1));
-      if(target && target.tagName==="DETAILS")target.open=true;
+    // Reveal nested disclosures before native anchor scrolling, including deep links.
+    function revealSection(hash){
+      const target=byId(hash.slice(1));if(!target)return null;
+      for(let node=target;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+      const focus=target.tagName==='DETAILS'?target.querySelector('summary'):target;
+      if(focus){if(!focus.hasAttribute('tabindex'))focus.setAttribute('tabindex','-1');focus.focus({preventScroll:true});}
+      return target;
+    }
+    for(const link of document.querySelectorAll('a[href^="#"]'))link.addEventListener('click',event=>{
+      if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey)revealSection(link.getAttribute('href'));
     });
+    const revealHash=()=>{if(window.location.hash)revealSection(window.location.hash)?.scrollIntoView({block:'start'});};
+    window.addEventListener('hashchange',revealHash);
+    revealHash();
     byId("saveProfile").addEventListener("click",()=>{
       try {
         downloadText(createProfile(readConfig(),readLibrary()),"SkellyStudio-settings.json","application/json");
@@ -846,7 +859,7 @@
         for(const [key,id] of Object.entries(CLIP_FIELDS))byId(id).value=profile.clips[key]??"";
         writeAudioReference(profile.audio);writeConfig(profile.config);
         }
-        for(const b of document.querySelectorAll(".preset"))b.classList.remove("chosen");
+        for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
         byId("profileStatus").textContent=(previousDevice!==profile.config.deviceId?"Warning: this profile changes the selected device model. ":"")+"Settings loaded for "+deviceFor(profile.config).name+". Clip numbers belong to the Skelly that created this profile.";
       } catch(error) { byId("profileStatus").textContent="Could not load settings: "+error.message; }
       finally { event.target.value=""; }

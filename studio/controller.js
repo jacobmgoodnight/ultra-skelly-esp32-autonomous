@@ -31,10 +31,12 @@
       el('controllerIdentify').hidden=!port||state.identified||state.usb!=='unidentified';
       el('controllerIdentify').disabled=state.busy;
       for(const id of ['controllerRead','controllerWrite','controllerScenes','controllerReset'])el(id).disabled=!port||!state.capable||state.busy;
+      // Invalid editor drafts must not block sending a valid saved scene collection.
+      el('controllerWrite').disabled||=g.validate(g.readConfig()).length>0;
       el('controllerScenes').disabled||=!window.SkellyScenes.snapshot().scenes.length;
       el('controllerLog').disabled=!session.capture.size;
       if(state.usb==='unsupported')el('controllerSetup').open=true;
-      else if(state.usb==='ready'&&previousUsb!=='ready')el('controllerSetup').open=false;
+      else if(state.usb==='ready'&&previousUsb!=='ready'){el('controllerSetup').open=false;el('first-run').open=false;}
       previousUsb=state.usb;
       el('controllerSkellyHelp').textContent=!port?'Connect USB to check Skelly.':state.stale?'Status may be out of date; USB remains connected.':state.data?.connected===0?'The ESP32 retries Bluetooth automatically. USB can still read and save settings.':'Bluetooth status comes from the ESP32; confirm movement on your Skelly.';
       el('controllerReceived').textContent=state.receivedAt===null?'No controller status received yet.':(state.stale?'Older status · last received ':'Status received ')+new Date(state.receivedAt).toLocaleTimeString()+'. Auto-refreshes every 5 seconds while idle.';
@@ -50,16 +52,22 @@
     function updateInstallerLinks(){
       const query=g.readConfig().deviceId==='skelly12'?'?device=skelly12':'';
       el('browserInstall').href='./install.html'+query;
+      for(const link of document.querySelectorAll('a[data-browser-install]'))link.href='./install.html'+query;
       for(const link of document.querySelectorAll('a[data-usb-tools]'))link.href='./usb.html'+query;
     }
-    document.addEventListener('skelly-config-changed',updateInstallerLinks);
+    document.addEventListener('skelly-config-changed',()=>{updateInstallerLinks();render();});
     updateInstallerLinks();
     document.addEventListener("skelly-audio-connection",render);
     function consent(){if(!el('controllerConsent').checked)throw Error('Confirm replacing the controller’s saved routine first.');}
     el('controllerConnect').onclick=()=>state.run(async()=>{
       if(window.SkellyAudioConnection?.())throw Error('Disconnect direct Skelly audio Bluetooth before connecting the ESP32.');
       state.usb='choosing';state.say('Choose your ESP32 USB port, often CP2102 or CH340.','busy');
-      try{await session.connect();}catch(error){state.usb='disconnected';throw error;}
+      try{await session.connect();}catch(error){
+        state.usb='disconnected';
+        if(error.name==='NotFoundError')throw Error('No USB port selected. Choose Connect ESP32 when ready. If your board is missing, check the USB data cable and try another socket.');
+        if(error.name==='SecurityError')throw Error('USB access was blocked. Use desktop Chrome or Edge over HTTPS and allow USB access, then try Connect ESP32 again.');
+        throw Error('Could not open ESP32 USB. Close Arduino Serial Monitor and other USB tabs, check your USB data cable, then try Connect ESP32 again. Details: '+error.message);
+      }
       await state.identify();
     });
     el('controllerIdentify').onclick=()=>state.run(()=>state.identify());
@@ -75,11 +83,16 @@
       if(program.rotate&&program.random&&!state.randomScenes)throw Error('Random scenes need the updated universal firmware. Open First-time setup, upload it, then reconnect.');
       if(program.scenes.some(s=>s.config.eyeJawMode===3)&&!state.audioScenes){el('controllerSetup').open=true;throw Error('Audio scenes need updated universal firmware. Install it from First-time setup, then reconnect.');}
       const words=r.encode(program.scenes,program.rotate,g.validate,program.random);
-      await session.writeSettings(words,r.crc(words),p=>state.say(p==='waiting'?'Received. Waiting for current actions and full cooldowns to finish…':'Sending settings · '+p+'%','busy'));
-      state.say('Saved. Checking the controller’s read-back…','busy');
-      const saved=await session.readSettings();
-      if(r.crc(saved.words)!==saved.crc||saved.crc!==r.crc(words))throw Error('Read-back did not match. Read saved settings before trying again.');
-      window.SkellyScenes.recordController?.(r.decode(saved.words,g.DEFAULTS),kind);
+      // A write may be applied even when its acknowledgment/read-back is lost.
+      // Retire the previous comparison until a new read-back is verified.
+      window.SkellyScenes.recordController?.(null);
+      try{
+        await session.writeSettings(words,r.crc(words),p=>state.say(p==='waiting'?'Received. Waiting for current actions and full cooldowns to finish…':'Sending settings · '+p+'%','busy'));
+        state.say('Received. Checking the controller’s read-back…','busy');
+        const saved=await session.readSettings();
+        if(r.crc(saved.words)!==saved.crc||saved.crc!==r.crc(words))throw Error('Read-back did not match. Read saved settings before trying again.');
+        window.SkellyScenes.recordController?.(r.decode(saved.words,g.DEFAULTS),kind);
+      }catch(error){throw Error('Save was not verified. Read saved settings before trying again. Details: '+error.message);}
       state.say('Saved to ESP32 · read-back verified. Watch Skelly to confirm your changes.','ready');
       await state.refreshStatus();
     }
@@ -94,7 +107,7 @@
       window.SkellyScenes.recordController?.(program,'scenes');
       if(loaded===false){state.say('Settings read and verified. Your browser library and editor were kept.');await state.refreshStatus();return;}
       g.writeLibrary({});g.writeConfig(program.scenes[0].config);
-      for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');
+      for(const b of document.querySelectorAll('.preset')){b.classList.remove('chosen');b.setAttribute('aria-pressed','false');}
       state.say('Read '+program.scenes.length+' saved scene(s). The first is loaded in Studio.');await state.refreshStatus();
     });
     el('controllerReset').onclick=()=>state.run(async()=>{

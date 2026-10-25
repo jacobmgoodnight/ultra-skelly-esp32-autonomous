@@ -31,20 +31,25 @@
     function applyEditor(scene,index=null){
       const changedModel=(g.readConfig().deviceId??'ultra')!==(scene.profile.config.deviceId??'ultra');
       loading=true;library.editing=index;previewName=index===null?previewName:scene.name;pendingNew=index===null;el('sceneName').value=scene.name;el('sceneMinutes').value=Number((scene.seconds/60).toFixed(4));
-      g.writeLibrary(scene.profile.clips,scene.profile.audio);g.writeConfig({...scene.profile.config,deviceId:scene.profile.config.deviceId??'ultra'});for(const b of document.querySelectorAll('.preset'))b.classList.remove('chosen');loading=false;checkpoint();renderLibrary();el('sceneName').focus();
+      g.writeLibrary(scene.profile.clips,scene.profile.audio);g.writeConfig({...scene.profile.config,deviceId:scene.profile.config.deviceId??'ultra'});for(const b of document.querySelectorAll('.preset')){b.classList.remove('chosen');b.setAttribute('aria-pressed','false');}loading=false;checkpoint();renderLibrary();el('sceneName').focus();
       if(changedModel)message('Warning: loaded settings change the selected device model to '+(scene.profile.config.deviceId==='skelly12'?'2026 12-foot — Experimental / Not Hardware Tested.':'6.5-foot Ultra Skelly v2.'));
     }
     function wireKey(program){return JSON.stringify(window.SkellyRuntime.encode(program.scenes,program.rotate,g.validate,program.random));}
     function renderDevice(){
       let text=!usbPort?'ESP32 · connect and read to compare':'ESP32 · read saved settings to compare';
+      let tone='info';
       if(verified){
         try{
           const matches=verified.kind==='routine'?wireKey({...verified.program,scenes:[{...verified.program.scenes[0],config:g.readConfig()}]})===verified.key:wireKey(library.program())===verified.key;
           text=matches?(verified.kind==='routine'?'ESP32 · current routine matches verified settings':'ESP32 · scene library matches verified settings'):'ESP32 · changes have not been sent';
           if(matches&&verified.kind!=='routine'&&dirty())text='ESP32 · library verified; editor changes are not in it';
-        }catch(_){text='ESP32 · editor changes have not been sent';}
+          tone=matches&&(verified.kind==='routine'||!dirty())?'ready':'changed';
+        }catch(_){text='ESP32 · editor changes have not been sent';tone='changed';}
       }
-      el('deviceSaveStatus').textContent=text;
+      for(const id of ['deviceSaveStatus','routineSaveStatus']){
+        const node=el(id);if(node.textContent!==text)node.textContent=text;node.dataset.state=tone;
+      }
+      if(!verified&&el('sceneMessage').textContent==='ESP32 settings read-back verified. See the comparison above.')message('ESP32 comparison cleared. Read or save settings to verify again.');
     }
     function renderEditor(){
       if(loading||!baseline)return;const changed=dirty(),index=library.editing;
