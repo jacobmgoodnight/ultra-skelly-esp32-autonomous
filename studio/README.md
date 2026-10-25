@@ -82,7 +82,7 @@ or clock scheduling. Their combined physical behavior is not newly verified.
 
 Lighting uses compact per-channel cards, percentage brightness (exact 0–255 values
 retained), conditional speed and an individual palette editor. The timing preview
-supports five or fifteen minutes for the current editor. Scene builder has a
+shows a fixed fifteen minutes for the current editor. Scene builder has a
 separate Routine preview using each saved scene’s hold; unfinished changes are
 excluded until updated. Both illustrate requests rather than predicting movement. See the
 [short scene-builder checklist](../docs/studio-scene-builder-checklist.md).

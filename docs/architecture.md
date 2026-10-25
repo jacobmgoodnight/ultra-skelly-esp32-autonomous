@@ -68,8 +68,8 @@ missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye
 sets, and the independent head/jaw overlap option are generator extensions; their
 substitution architecture is still a maintenance risk and is covered by the
 generated compile matrix. The 15-minute UI timeline shows example requested
-intervals, without pretending to arbitrate actual starts. Contextual feedback
-explains locks, jaw-first follow-ups, restoration, rest and optional clock windows.
+intervals, without pretending to arbitrate actual starts. Coordination and timing guidance stays beside the relevant settings; the preview
+keeps its compact sample-request note.
 
 ## Connection lifecycle
 
@@ -172,7 +172,8 @@ does not send a lights-off command. Existing sequences/restoration may finish.
 Studio now exports v4 profiles. v1/v2/v3 imports supply defaults for new palette
 and retry fields, retain combined-only scheduling, and force failed separate
 overlap OFF. Other explicit prior settings remain. The timing preview compacts lanes
-and its legend to enabled features; longer explanations are collapsed by default.
+and its legend to enabled features; coordination and timing detail disclosures
+are omitted from the preview.
 
 Eyes use AAF9, an optional independent random schedule and delayed start/end
 corrections around the modeled MP3. Corrections are separate from motor commands.
