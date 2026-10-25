@@ -563,22 +563,12 @@
       dot.className="dot "+kind;item.append(dot,document.createTextNode(" "+label));legend.append(item);
     }
     byId("timelineEmpty").hidden=simulateSchedule(c,previewSeed,seconds).length>0;
-    const feedback=byId("scheduleFeedback");
-    feedback.replaceChildren();
-    for(const text of window.SkellyExperience.scheduleFeedback(c)) {
-      const item=document.createElement("li");item.textContent=text;feedback.append(item);
-    }
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
-    byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
-    byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
     byId('lightSummary').textContent=window.SkellyExperience.lightingSummary(c);
     const summaryPalette=c.lightPalettes[0]??0;
     for(const part of ['torso','head']){const dot=byId(part==='torso'?'summaryTorsoColor':'summaryHeadColor');dot.hidden=!c.lightsEnabled;dot.style.background=c.lightRotation?c['palette'+summaryPalette+(part==='torso'?'Torso':'Head')]:c[part+'Color'];}
-    byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
-    const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
-    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     const files=[c.jawFile,...extraFileNumbers(c)];
     const clips=readLibrary();
     const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
@@ -627,7 +617,6 @@
     byId("mouthOptions").disabled=!c.jawEnabled;
     byId("mouthOptions").hidden=!c.jawEnabled;
     byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
-    byId("overlapSummary").textContent=!c.jawEnabled?"Not needed":(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     const firstPalette=c.lightPalettes[0]??0;
     byId('lightPreviewTorso').style.background=c.lightRotation?c['palette'+firstPalette+'Torso']:c.torsoColor;

@@ -11,7 +11,7 @@
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=8bdb60755a5c" defer></script>
+<script src="./app.js?v=00388482b8c9" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=1c62e5a5662b" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
@@ -327,15 +327,13 @@
     <div class="panel output-panel">
       <span class="eyebrow">YOUR SKELLY</span><h2 class="purple-title">Make it yours.</h2>
       <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><i id="summaryTorsoColor"></i><i id="summaryHeadColor"></i><span id="lightSummary">Off</span></strong></div></div>
-      <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
       <div class="preview-title"><strong id="timelineTitle">15-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
       <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
       <p class="small-description preview-key">Bands: first request range · ticks: sample requests</p>
-      <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over five minutes, not actual movement times"></div>
+      <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over fifteen minutes, not actual movement times"></div>
       <div class="timeline-axis"><span>0:00</span><span id="timelineMid">7:30</span><span id="timelineEnd">15:00</span></div>
       <p id="timelineBeyond" class="small-description" hidden></p>
       <p id="timelineEmpty" class="small-description" hidden>No scheduled events in this window.</p>
-      <details class="instructions"><summary>Timing details</summary><ul id="scheduleFeedback" class="small-description"></ul></details>
       <p id="routineSaveStatus" class="save-comparison">ESP32 · connect and read to compare</p>
       <p id="validationJump" class="validation-jump" hidden><a href="#error">Review settings before saving →</a></p>
       <a class="download controller-jump" href="#controllerPanel">Send to your ESP32 ↓</a>

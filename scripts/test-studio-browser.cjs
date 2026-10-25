@@ -121,7 +121,7 @@ async function main(){
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
       await page.locator('#configureSkelly').click();await nav(page,'#personality');await page.locator('[data-preset="subtle"]').click();
       assert.equal(await page.locator('#headMin').inputValue(),'60');assert.equal(await page.locator('#jawEnabled').isChecked(),false);
-      await nav(page,'#finish');assert.equal(await page.locator('#previewWindow').count(),0);assert.equal(await page.locator('#timelineTitle').textContent(),'15-minute timing preview');assert.equal(await page.locator('#timelineMid').textContent(),'7:30');assert.equal(await page.locator('#timelineEnd').textContent(),'15:00');await page.locator('#newExample').click();assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
+      await nav(page,'#finish');assert.equal(await page.locator('#previewWindow').count(),0);assert.equal(await page.getByText('Coordination details',{exact:true}).count(),0);assert.equal(await page.getByText('Timing details',{exact:true}).count(),0);assert.equal(await page.locator('#timelineTitle').textContent(),'15-minute timing preview');assert.equal(await page.locator('#timelineMid').textContent(),'7:30');assert.equal(await page.locator('#timelineEnd').textContent(),'15:00');await page.locator('#newExample').click();assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
       await connect(page);await save(page);assert.equal(await page.evaluate(()=>mockUsb.writes),1);
       assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
       assert.match(await page.locator('#routineSaveStatus').textContent(),/matches verified/);
