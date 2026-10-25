@@ -46,9 +46,7 @@
           tone=matches&&(verified.kind==='routine'||!dirty())?'ready':'changed';
         }catch(_){text='ESP32 · editor changes have not been sent';tone='changed';}
       }
-      for(const id of ['deviceSaveStatus','routineSaveStatus']){
-        const node=el(id);if(node.textContent!==text)node.textContent=text;node.dataset.state=tone;
-      }
+      const node=el('deviceSaveStatus');if(node.textContent!==text)node.textContent=text;node.dataset.state=tone;
       if(!verified&&el('sceneMessage').textContent==='ESP32 settings read-back verified. See the comparison above.')message('ESP32 comparison cleared. Read or save settings to verify again.');
     }
     function renderEditor(){

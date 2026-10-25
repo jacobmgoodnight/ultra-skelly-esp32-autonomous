@@ -121,10 +121,10 @@ async function main(){
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
       await page.locator('#configureSkelly').click();await nav(page,'#personality');await page.locator('[data-preset="subtle"]').click();
       assert.equal(await page.locator('#headMin').inputValue(),'60');assert.equal(await page.locator('#jawEnabled').isChecked(),false);
-      await nav(page,'#finish');assert.equal(await page.locator('#previewWindow').count(),0);assert.equal(await page.getByText('Coordination details',{exact:true}).count(),0);assert.equal(await page.getByText('Timing details',{exact:true}).count(),0);assert.equal(await page.locator('#timelineTitle').textContent(),'15-minute timing preview');assert.equal(await page.locator('#timelineMid').textContent(),'7:30');assert.equal(await page.locator('#timelineEnd').textContent(),'15:00');await page.locator('#newExample').click();assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
+      await nav(page,'#finish');assert.equal(await page.locator('#previewWindow').count(),0);assert.equal(await page.locator('#finish .save-comparison').count(),0);assert.equal(await page.getByText('Coordination details',{exact:true}).count(),0);assert.equal(await page.getByText('Timing details',{exact:true}).count(),0);assert.equal(await page.locator('#timelineTitle').textContent(),'15-minute timing preview');assert.equal(await page.locator('#timelineMid').textContent(),'7:30');assert.equal(await page.locator('#timelineEnd').textContent(),'15:00');await page.locator('#newExample').click();assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
       await connect(page);await save(page);assert.equal(await page.evaluate(()=>mockUsb.writes),1);
       assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
-      assert.match(await page.locator('#routineSaveStatus').textContent(),/matches verified/);
+      assert.match(await page.locator('#deviceSaveStatus').textContent(),/matches verified/);
       assert.equal(await page.locator('#controllerSkelly').textContent(),'Not connected yet');
     },{width:390,height:844});
 
@@ -141,10 +141,10 @@ async function main(){
       assert.equal(await page.locator('#validationJump').isVisible(),true);
       await nav(page,'#controllerPanel');assert.match(await page.locator('#error').textContent(),/Head/);assert.equal(await page.locator('#controllerScenes').isEnabled(),true);
       await nav(page,'#movement');await page.locator('#headMin').fill('120');await page.locator('#headMax').fill('180');
-      assert.match(await page.locator('#routineSaveStatus').textContent(),/editor changes are not in it/);
+      assert.match(await page.locator('#deviceSaveStatus').textContent(),/editor changes are not in it/);
       await nav(page,'#controllerPanel');await save(page);
       assert.equal(await page.evaluate(()=>SkellyRuntime.decode(mockUsb.words,SkellyStudioGenerator.DEFAULTS).scenes[0].config.headMin),120);
-      await page.locator('#controllerDisconnect').click();assert.match(await page.locator('#routineSaveStatus').textContent(),/connect and read/);
+      await page.locator('#controllerDisconnect').click();assert.match(await page.locator('#deviceSaveStatus').textContent(),/connect and read/);
     });
 
     await run('personality · customize eyes and lights, preview and save',async page=>{
@@ -187,9 +187,9 @@ async function main(){
       await page.evaluate(()=>{delete mockUsb.options.chooser;mockUsb.options.openError='NetworkError';});await page.locator('#controllerConnect').click();await message(page,/Close Arduino Serial Monitor/);
       await page.evaluate(()=>delete mockUsb.options.openError);await connect(page);await page.locator('#controllerConsent').check();
       await page.evaluate(()=>mockUsb.options.rejectSave=true);await page.locator('#controllerWrite').click();await message(page,/Save was not verified.*Read saved settings/);assert.equal(await page.evaluate(()=>mockUsb.writes),0);
-      await page.evaluate(()=>delete mockUsb.options.rejectSave);await save(page);assert.equal(await page.locator('#routineSaveStatus').getAttribute('data-state'),'ready');
+      await page.evaluate(()=>delete mockUsb.options.rejectSave);await save(page);assert.equal(await page.locator('#deviceSaveStatus').getAttribute('data-state'),'ready');
       await page.evaluate(()=>mockUsb.options.badReadback=true);await page.locator('#controllerWrite').click();await message(page,/Read-back did not match/);
-      assert.equal(await page.locator('#routineSaveStatus').getAttribute('data-state'),'info');assert.equal(await page.locator('#controllerMessage').getAttribute('data-state'),'error');
+      assert.equal(await page.locator('#deviceSaveStatus').getAttribute('data-state'),'info');assert.equal(await page.locator('#controllerMessage').getAttribute('data-state'),'error');
       assert.equal(await page.evaluate(()=>mockUsb.commands.filter(c=>c.startsWith('SKELLY CFG COMMIT')).length),3);
     });
 
