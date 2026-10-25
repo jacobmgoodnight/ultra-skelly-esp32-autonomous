@@ -80,6 +80,34 @@ also avoids two readers contending for the same USB port.
 
 ## Recovery and advanced fallback
 
+### Updating an existing controller
+
+Ordinary routine changes need only **Save this routine** or **Save scene
+collection**. For a firmware update, use the existing export/import workflow:
+
+1. Export any browser scenes and current editor profile you want to keep **before
+   reading the ESP32**. Browser scenes and controller settings may differ. A read
+   offers to replace the browser library; accepting replaces it and loads the
+   first controller scene. Declining keeps the browser library, so exporting it
+   afterward would not back up the controller program.
+2. Connect, choose **Read saved settings**, and accept the replacement preview
+   after preserving your browser work. In Scene builder choose **Export scenes**.
+   Keep this controller backup distinct from your browser backup. USB reads
+   recover runtime settings, not browser-only labels or the actual audio files.
+3. Disconnect USB, install the reviewed package, close the installer dialog, and
+   reconnect. Compare both reported firmware revision and build with the package.
+   An unknown version is not proof that an update is needed; a different/newer
+   revision must not be labeled current solely because its build number matches.
+4. Choose **Import scenes**, review the preview and accept it. Use **Save scene
+   collection** to restore the complete exported program, including its switching
+   policy. **Save this routine** would send only the editor's current scene.
+   Require read-back verification, then restart and read again to check retention.
+   Observe physical behavior separately, with Skelly attended.
+
+Keep the known-working sketch/package with the exports for rollback. An older
+firmware may reject newer capabilities; do not force incompatible settings or
+assume full-image flashing preserves NVS. There is no automatic backup/restore.
+
 No port: use a data cable, another USB socket and the board's CP2102/CH340 driver.
 Port busy: close serial monitors/apps/tabs. Failed initialization: hold BOOT while
 connecting and release after detection; retry with EN/Reset if needed. Wrong chip:

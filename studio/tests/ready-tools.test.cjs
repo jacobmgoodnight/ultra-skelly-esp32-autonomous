@@ -1,6 +1,25 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..'),prep=require('../audio-prep.js'),audio=require('../audio.js'),status=require('../controller-state.js'),release=require('../release.js'),model=require('../scene-model.js');
 const c=vm.createContext({window:{}});for(const file of ['template.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),c);const g=c.window.SkellyStudioGenerator;
+test('firmware identity requires both revision and build and never guesses a missing build',()=>{
+ for(const [firmware,build,label,update] of [
+  [release.REVISION,release.BUILD,'current Studio release',false],
+  [release.REVISION+1,release.BUILD,'different release',false],
+  [release.REVISION,release.BUILD+1,'different release',false],
+  [release.REVISION,release.BUILD-1,'update available',true],
+  [release.REVISION-1,release.BUILD+1,'update available',true],
+  [release.REVISION,undefined,'release not identified',false],
+  [release.REVISION-1,undefined,'update available',true],
+  [release.REVISION+1,undefined,'release not identified',false]
+ ])for(const stale of [false,true]){
+  const view=release.firmwareView({firmware,build},true,true,stale);
+  assert.ok(view.text.endsWith(label),view.text);assert.equal(view.update,update);
+  assert.equal(view.text.startsWith('Last reported: '),stale);
+ }
+ assert.equal(release.firmwareView(null,true,true).update,false);
+ assert.match(release.firmwareView(null,true,true).text,/version not reported/);
+ assert.match(release.firmwareView(null,false,false).text,/Connect to identify/);
+});
 test('local encoder produces actual Skelly-format MP3 frames and padded estimate',async()=>{
  const v=vm.createContext({console,Int16Array,Int32Array,Float32Array,Float64Array,Uint8Array,ArrayBuffer});vm.runInContext(fs.readFileSync(path.join(root,'vendor/lamejs-1.2.1/lame.min.js'),'utf8'),v);
  const samples=Float32Array.from({length:24000},(_,i)=>Math.sin(2*Math.PI*220*i/8000)*.25),bytes=await prep.encode(samples,v.lamejs.Mp3Encoder,{pause:async()=>{}}),info=audio.inspectMp3(bytes);
