@@ -8,9 +8,10 @@ favorites/nicknames, scoped quick looks and copying eyes/lights between scenes.
 The saved-scene strip shows starting scene, holds and selection policy. Palette
 edits use explicit Apply/Cancel and palette selection preserves rotation.
 
-Opt-in pulsing/strobe samples animate preview and color-picker swatches using
-channel brightness and an illustrative speed curve. Browser strobe is limited to
-two flashes per second and requires Play after selection. Pause, tab visibility
+Pulsing/strobe samples animate only Look preview swatches using
+channel brightness and an illustrative speed curve. Samples run by default, with
+a subtle Pause/Resume control; native color pickers remain unobstructed. Browser
+strobe is limited to two flashes per second. Pause, tab visibility
 and reduced-motion preferences gate animation. These samples do not measure prop
 timing. Firmware, USB/profile formats and motor protections are unchanged; no new
 physical result is claimed.

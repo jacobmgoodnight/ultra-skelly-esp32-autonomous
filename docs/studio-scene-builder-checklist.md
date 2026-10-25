@@ -22,10 +22,11 @@ are illustrations; no measured prop speed or physical integration pass is added.
    preserves the original colors/name and editor draft. Apply commits valid
    values. Loading different settings discards an open palette draft. In rotation
    mode, palette buttons toggle inclusion and retain at least two choices.
-5. Select Pulsing and Play effect preview. Both its combined-preview swatch and
-   color-picker swatch pulse; brightness and speed affect the sample. Pause
-   freezes the selected color, without changing its stored RGB. Choosing Strobe
-   pauses until Play, and the browser sample is capped at two flashes/second.
+5. Select Pulsing or Strobe. The corresponding Torso/Head swatches animate by
+   default inside Look preview; native color pickers stay clear and static.
+   Brightness and speed affect each channel independently. The subtle Pause/Resume
+   button changes only the sample, without changing stored RGB. Manual Pause
+   persists when changing effects; browser strobe is capped at two flashes/second.
    Reduced motion keeps samples still; hiding the tab pauses animation.
 6. Test phone/keyboard flow and offline editing. Preview, favorites, nicknames
    and palette drafts open no USB/Bluetooth port. Connect and explicitly save a

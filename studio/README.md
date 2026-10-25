@@ -12,10 +12,10 @@ are separate for each device model. Quick looks default to eyes and lights only;
 Complete routine deliberately starts a new scene. Saved scenes can supply just
 eyes, lights or both to the current editor.
 
-Play effect preview animates the selected swatches and native color-picker
-samples using each channel's brightness and speed. Timing is illustrative, with
-browser strobe capped at two flashes per second. Choosing strobe pauses the
-sample until Play; Pause, hidden tabs and reduced motion stop animation. Palette
+Effect samples run by default inside Look preview using each channel's brightness
+and speed. Native color pickers stay static and unobstructed. Timing is illustrative,
+with browser strobe capped at two flashes per second. A subtle Pause/Resume button,
+hidden tabs and reduced motion control animation. Palette
 edits are staged until Apply; Cancel/Escape discards them. No preview opens USB
 or Bluetooth. Update/save a scene, then explicitly send the collection to keep
 controller settings in sync.

@@ -194,18 +194,25 @@ async function main(){
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
     });
 
-    await run('look editor · effects animate swatches, respect speed, pause and reduced motion',async page=>{
-      await page.emulateMedia({reducedMotion:'no-preference'});await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('1');
-      const sample=page.locator('#lookWorkspace .color-picker-preview [data-look-swatch="torso"]>i');
-      assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'none');await page.locator('#effectPreviewToggle').click();
-      assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
-      const slow=await sample.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));await page.locator('#torsoSpeed').fill('254');const fast=await sample.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));assert.ok(fast<slow);
-      const stable=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));await page.locator('#effectPreviewToggle').click();assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),stable);
-      await page.locator('#effectPreviewToggle').click();await page.locator('#torsoEffect').selectOption('2');assert.equal(await page.locator('#effectPreviewToggle').getAttribute('aria-pressed'),'false','Entering strobe requires an explicit Play');
-      await page.locator('#effectPreviewToggle').click();assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'look-strobe');assert.ok(await sample.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration))>=.5);
-      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('#effectPreviewToggle').disabled);assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'none');
-      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>!document.querySelector('#effectPreviewToggle').disabled);await page.locator('#effectPreviewToggle').click();
-      await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});assert.equal(await sample.evaluate(el=>getComputedStyle(el).animationName),'none');
+    await run('look editor · default effects stay in Look preview, with independent channels and clear color pickers',async page=>{
+      await page.emulateMedia({reducedMotion:'no-preference'});await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('2');
+      const torso=page.locator('#lookPreview [data-look-swatch="torso"]>i'),head=page.locator('#lookPreview [data-look-swatch="head"]>i');
+      assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-strobe');
+      await page.locator('#headSpeed').fill('254');const flashes=await head.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(flashes>1,'Head strobe opacity actually changes over time');
+      assert.equal(await page.locator('#effectPreviewToggle').getAttribute('aria-pressed'),'true','Preview starts enabled without pressing Play');
+      assert.equal(await page.locator('#lighting .effect-swatch').count(),0,'No animated overlay in color controls');
+      for(const id of ['torsoColor','headColor']){
+        await page.locator('#'+id).scrollIntoViewIfNeeded();assert.equal(await page.locator('#'+id).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===el;}),true,id+' remains directly accessible');
+      }
+      await page.locator('#torsoBrightness').fill('64');assert.ok(Math.abs(await torso.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness')))-64/255)<.001);assert.equal(await head.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness'))),1);
+      const slow=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));await page.locator('#torsoSpeed').fill('254');const fast=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));assert.ok(fast<slow);assert.ok(await head.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration))>=.5);
+      const stable=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));await page.locator('#effectPreviewToggle').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),stable);
+      await page.locator('#headEffect').selectOption('3');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none','Changing effects retains manual Pause');
+      await page.locator('#effectPreviewToggle').click();assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      const changes=await torso.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(changes>1,'Pulse opacity actually changes over time');
+      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
+      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>!document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
     },{width:390,height:844});
 

@@ -38,7 +38,7 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const g=window.SkellyStudioGenerator,el=id=>document.getElementById(id);
     if(!el('lookWorkspace'))return;
-    let prefs=preferences(null),playing=false,lastEffects='',previewEye=1;
+    let prefs=preferences(null),playing=true,previewEye=1;
     const preferenceKey='SkellyStudio-eye-preferences-v1',reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
     try{prefs=preferences(JSON.parse(localStorage.getItem(preferenceKey)));}catch(_){}
     function savePreferences(){try{localStorage.setItem(preferenceKey,JSON.stringify(prefs));el('eyePreferencesStatus').textContent='Names and favorites saved in this browser.';}catch(_){el('eyePreferencesStatus').textContent='Names and favorites are session only; browser storage is unavailable.';}}
@@ -71,17 +71,16 @@
       if(value)prefs[c.deviceId??'ultra'].names[previewEye]=value;else delete prefs[c.deviceId??'ultra'].names[previewEye];savePreferences();renderGallery(c);
     };
     function render(){
-      const c=g.readConfig(),experimental=c.deviceId==='skelly12',effects=[c.torsoEffect,experimental?1:c.headEffect].join(',');
-      if(effects!==lastEffects&&effects.split(',').includes('2'))playing=false;lastEffects=effects;
+      const c=g.readConfig(),experimental=c.deviceId==='skelly12';
       const moving=c.lightsEnabled&&(c.torsoEffect!==1||(!experimental&&c.headEffect!==1));
       const active=playing&&!document.hidden&&!reduced.matches&&moving;
-      el('effectPreviewToggle').disabled=!moving||reduced.matches;
-      el('effectPreviewToggle').textContent=active?'Pause effect preview':'Play effect preview';
-      el('effectPreviewToggle').setAttribute('aria-pressed',String(active));
+      el('effectPreviewToggle').disabled=reduced.matches;
+      el('effectPreviewToggle').textContent=playing?'Pause effect preview':'Resume effect preview';
+      el('effectPreviewToggle').setAttribute('aria-pressed',String(playing&&!reduced.matches));
       el('effectPreviewStatus').textContent=reduced.matches?'Still preview · reduced motion':!moving?'Static preview':document.hidden?'Preview paused while this tab is hidden':active?'Playing an illustrative effect sample':'Effect preview paused';
       el('effectPreviewHint').textContent=[c.torsoEffect,c.headEffect].includes(2)?'Strobe preview is limited to 2 flashes/sec. Prop speed may differ.':'Effect timing and LED appearance are illustrative; higher speed makes the preview faster.';
       const first=c.lightPalettes[0]??0;
-      for(const part of ['torso','head'])for(const swatch of document.querySelectorAll('[data-look-swatch="'+part+'"]')){
+      for(const part of ['torso','head'])for(const swatch of el('lookPreview').querySelectorAll('[data-look-swatch="'+part+'"]')){
         const color=c.lightRotation?c['palette'+first+(part==='torso'?'Torso':'Head')]:c[part+'Color'];
         swatch.style.setProperty('--swatch-color',color);swatch.style.setProperty('--swatch-brightness',c[part+'Brightness']/255);
         swatch.style.setProperty('--effect-period',previewPeriod(c[part+'Effect'],c[part+'Speed'])+'s');
@@ -97,7 +96,7 @@
       renderGallery(c);
     }
     el('effectPreviewToggle').onclick=()=>{playing=!playing;render();};
-    document.addEventListener('visibilitychange',render);reduced.addEventListener('change',()=>{if(reduced.matches)playing=false;render();});
+    document.addEventListener('visibilitychange',render);reduced.addEventListener('change',render);
     function renderSources(){
       const selected=el('appearanceCopySource').value;el('appearanceCopySource').replaceChildren();
       for(const [index,scene] of (window.SkellyScenes.snapshot?.().scenes??[]).entries()){

@@ -324,11 +324,9 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 .effect-swatch.is-animating[data-effect="2"]>i{animation:look-strobe var(--effect-period,1s) steps(1,end) infinite}
 @keyframes look-pulse{0%,100%{opacity:calc(var(--swatch-brightness,1)*.08)}50%{opacity:var(--swatch-brightness,1)}}
 @keyframes look-strobe{0%,49%{opacity:var(--swatch-brightness,1)}50%,100%{opacity:0}}
-.color-picker-preview{position:relative;display:inline-block;width:60px;height:40px}
-.color-picker-preview input[type=color]{width:100%;height:100%}
-.color-picker-preview>.effect-swatch{position:absolute;inset:6px;width:auto;height:auto;pointer-events:none;border-radius:3px}
-.effect-preview-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
-.effect-preview-controls button{min-height:44px;padding:8px 12px;border:1px solid #675185;background:#263249;color:var(--text);border-radius:8px;font:inherit;font-size:12px}
+.effect-preview-controls{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%}
+.look-preview .effect-preview-controls button{min-height:44px;padding:6px 8px;border:1px solid transparent;background:transparent;color:var(--purple);border-radius:7px;font:inherit;font-size:12px}
+.look-preview .effect-preview-controls button:hover{border-color:var(--line);background:#b28df90b}
 .effect-preview-controls button:disabled{opacity:.5;cursor:not-allowed}
 .effect-preview-controls p{font-size:12px;color:var(--muted);margin:0}
 .scene-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0}
@@ -342,7 +340,7 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 .palette-draft-preview span{display:flex;align-items:center;gap:8px}
 .palette-draft-preview i{display:inline-block;width:38px;height:24px;border-radius:6px}
 #paletteDialogError{padding:0 18px;color:var(--red);font-size:12px}
-@media(max-width:1100px){.look-editor-layout{grid-template-columns:1fr}.look-preview{position:static;grid-template-columns:80px 1fr;text-align:left}.look-preview h3{grid-column:1/-1}.look-preview>img{width:74px;grid-row:span 3}.look-preview>p,.look-preview>.look-light,.look-preview>button{width:100%}.look-preview #effectPreviewHint,.look-preview .look-movement{grid-column:1/-1}.look-workspace .light-channel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.look-editor-layout{grid-template-columns:1fr}.look-preview{position:static;grid-template-columns:80px 1fr;text-align:left}.look-preview h3{grid-column:1/-1}.look-preview>img{width:74px;grid-row:span 3}.look-preview>p,.look-preview>.look-light{width:100%}.look-preview #effectPreviewHint,.look-preview .effect-preview-controls,.look-preview .look-movement{grid-column:1/-1}.look-workspace .light-channel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.look-savebar{position:static;padding:12px}.look-heading .scene-starters{grid-template-columns:1fr}.look-heading .scene-starters button{display:grid;grid-template-columns:46px 1fr;align-items:center}.look-heading .scene-starters img{grid-row:span 3}.look-heading .scene-starters b,.look-heading .scene-starters small,.look-heading .scene-starters span{grid-column:2}.look-workspace .eye-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.look-workspace .eye-card{grid-template-columns:minmax(0,1fr) 44px}.look-workspace .eye-zoom{font-size:11px}.look-editors>.panel{padding:14px}.look-workspace .light-channel-grid{grid-template-columns:1fr}.eye-mode select{width:100%}.look-heading .scene-editor{display:grid;grid-template-columns:minmax(0,1fr)}.look-savebar .scene-editor-actions{width:100%}.look-savebar .scene-editor-actions button{flex:1}.look-preview #lookLightLabel,.look-preview #lookEyeLabel{grid-column:2}}
 @media(prefers-reduced-motion:reduce){.effect-swatch.is-animating>i{animation:none!important}}
 @media(max-width:600px){.look-heading .scene-editor{grid-template-columns:minmax(0,1fr) 85px;gap:8px}.look-preview{grid-row:1}.look-preview>p{grid-column:2}.look-preview .look-movement{grid-column:1/-1}}

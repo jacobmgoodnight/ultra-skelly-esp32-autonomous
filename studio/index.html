@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=7e38d36a07bb">
+<link rel="stylesheet" href="./style.css?v=e0045e1f006f">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
@@ -14,7 +14,7 @@
 <script src="./app.js?v=f46ffda57f6e" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=77ee2c326c6b" defer></script>
-<script src="./looks.js?v=df5b0f0035c5" defer></script>
+<script src="./looks.js?v=852f3d1bbce3" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=2c5160c3af59" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
@@ -135,30 +135,31 @@
           <div class="rotation-choices"><label><input class="light-palette-choice" type="checkbox" value="0" checked> Halloween</label><label><input class="light-palette-choice" type="checkbox" value="1" checked> Haunted</label><label><input class="light-palette-choice" type="checkbox" value="2" checked> Moonlight</label><label><input class="light-palette-choice" type="checkbox" value="3" checked> Ember</label></div><small>Choose two or more. Each change picks a different palette.</small></fieldset>
         <div class="light-channel-grid">
         <section class="light-channel" aria-labelledby="torsoLightTitle"><h3 id="torsoLightTitle">Torso</h3>
-          <label class="light-custom-color">Color <span class="color-picker-preview"><input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"><span class="effect-swatch" data-look-swatch="torso" aria-hidden="true"><i></i></span></span></label>
+          <label class="light-custom-color">Color <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
           <label>Brightness <output id="torsoBrightnessValue" for="torsoBrightness">100%</output><input type="range" id="torsoBrightness" min="0" max="255" value="255" aria-label="Torso brightness"></label>
           <label>Effect <select id="torsoEffect" aria-label="Torso effect"><option value="1">Static</option><option value="3">Pulsing</option><option value="2">Strobe</option></select></label>
           <label id="torsoSpeedRow" hidden>Speed <span class="range-ends">Slow <span>Fast</span></span><input id="torsoSpeed" type="range" value="125" min="0" max="254" aria-label="Torso effect speed"></label>
         </section>
         <section class="light-channel" aria-labelledby="headLightTitle"><h3 id="headLightTitle">Head</h3>
-          <label class="light-custom-color">Color <span class="color-picker-preview"><input type="color" id="headColor" value="#ff6000" aria-label="Head light color"><span class="effect-swatch" data-look-swatch="head" aria-hidden="true"><i></i></span></span></label>
+          <label class="light-custom-color">Color <input type="color" id="headColor" value="#ff6000" aria-label="Head light color"></label>
           <label>Brightness <output id="headBrightnessValue" for="headBrightness">100%</output><input type="range" id="headBrightness" min="0" max="255" value="255" aria-label="Head brightness"></label>
           <label>Effect <select id="headEffect" aria-label="Head effect"><option value="1">Static</option><option value="3">Pulsing</option><option value="2">Strobe</option></select></label>
           <label id="headSpeedRow" hidden>Speed <span class="range-ends">Slow <span>Fast</span></span><input id="headSpeed" type="range" value="125" min="0" max="254" aria-label="Head effect speed"></label>
         </section>
-        </div><div class="effect-preview-controls"><button type="button" id="effectPreviewToggle" aria-pressed="false" disabled>Play effect preview</button><p id="effectPreviewStatus" role="status">Static preview</p></div><p id="effectPreviewHint" class="small-description">Effect timing and LED appearance are illustrative.</p><p class="small-description">Effects and brightness apply to all palettes in this scene.</p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
+        </div><p class="small-description">Effects and brightness apply to all palettes in this scene. <a href="#lookPreview">See Look preview ↑</a></p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
         <p id="paletteStatus" class="selection-status" role="status">Lighting is off.</p>
         <details class="instructions light-help"><summary>Lighting help</summary><p>In One palette mode, choose one look. In Rotate palettes mode, buttons select the palettes to include without stopping rotation. Edit a palette to change its saved colors or link Head to Torso. Rotation uses those saved colors; effect and brightness controls apply across the scene. When lighting is off, Skelly keeps its stored lighting.</p></details>
       </details>
     </div></details>
       </div>
-      <aside class="panel look-preview" aria-labelledby="lookPreviewTitle">
+      <aside class="panel look-preview" id="lookPreview" aria-labelledby="lookPreviewTitle">
         <h3 id="lookPreviewTitle">Look preview</h3>
         <img id="lookEyeImage" src="./images/eyes/eye_icon_1.png" width="112" height="112" alt="Selected expression" hidden>
         <p id="lookEyeLabel">Use Skelly’s stored eyes</p>
         <div class="look-light"><span id="lookTorsoLabel">Torso</span><span class="effect-swatch" data-look-swatch="torso"><i></i></span></div>
         <div class="look-light" id="lookHeadRow"><span>Head</span><span class="effect-swatch" data-look-swatch="head"><i></i></span></div>
         <p id="lookLightLabel">Use Skelly’s stored lighting</p>
+        <div class="effect-preview-controls"><button type="button" id="effectPreviewToggle" aria-pressed="true">Pause effect preview</button><p id="effectPreviewStatus" role="status">Static preview</p></div><p id="effectPreviewHint">Effect timing and LED appearance are illustrative.</p>
         <p id="lookMovement" class="look-movement"></p>
       </aside>
       </div>

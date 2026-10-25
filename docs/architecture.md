@@ -71,11 +71,12 @@ Escape or loading another config discards it. The saved-sequence strip reads onl
 the saved library. Nearby controller comparison still requires acknowledged
 read-back and clears on disconnect.
 
-Effect previews animate swatch opacity without mutating RGB/config values or
-sending commands. Channel brightness and increasing UI speed affect an explicitly
+Effect previews animate only the Look preview swatch opacity, without covering
+color inputs, mutating RGB/config values or sending commands. They run by default
+with a subtle Pause/Resume control. Channel brightness and increasing UI speed affect an explicitly
 illustrative sample; no physical effect-period mapping is established. Browser
-strobe is capped at two flashes per second and entering strobe pauses playback
-until Play. Hidden tabs and reduced-motion preferences gate all sample animation.
+strobe is capped at two flashes per second. Manual Pause persists across effect
+changes. Hidden tabs and reduced-motion preferences gate all sample animation.
 
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
