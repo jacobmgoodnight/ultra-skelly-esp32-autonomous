@@ -148,18 +148,89 @@ async function main(){
     });
 
     await run('personality · customize eyes and lights, preview and save',async page=>{
-      await page.locator('[data-preset="haunted"]').click();await nav(page,'#expressions');await page.locator('#eyeChoicesPanel>summary').click();
+      await page.locator('[data-preset="haunted"]').click();await nav(page,'#expressions');if(!await page.locator('#eyeChoicesPanel').evaluate(el=>el.open))await page.locator('#eyeChoicesPanel>summary').click();
       assert.equal(await page.locator('[data-preset="haunted"]').getAttribute('aria-pressed'),'true');
       await page.locator('#eyeBehavior').selectOption('fixed');await page.locator('.eye-choice:has(input[value="8"])').click();
       assert.equal(await page.locator('.preset[aria-pressed="true"]').count(),0);
       await nav(page,'#lighting');await toggle(page,'lightsEnabled',true);await page.locator('[data-palette="haunted"]').click();
-      await page.locator('#lightingChoicesPanel>summary').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('3');
+      if(!await page.locator('#lightingChoicesPanel').evaluate(el=>el.open))await page.locator('#lightingChoicesPanel>summary').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('3');
       await nav(page,'#finish');assert.match(await page.locator('#lightSummary').textContent(),/Pulsing/);assert.match(await page.locator('#summaryEyeImage').getAttribute('src'),/eye_icon_8/);
       assert.match(await page.locator('#timeline').getAttribute('aria-label'),/not actual movement/);
       await connect(page);await save(page);
       const saved=await page.evaluate(()=>SkellyRuntime.decode(mockUsb.words,SkellyStudioGenerator.DEFAULTS).scenes[0].config);
       assert.equal(saved.eyesEnabled,true);assert.deepEqual(saved.eyeChoices,[8]);assert.equal(saved.torsoEffect,3);assert.equal(saved.lightsEnabled,true);
     },{width:390,height:844});
+
+    await run('look editor · favorites and names are local, recover after reload and follow the selected model',async page=>{
+      await nav(page,'#expressions');const before=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
+      await page.getByRole('button',{name:'Favorite Orange reptile · eye 8',exact:true}).click();
+      await page.getByRole('button',{name:'Show larger preview of eye pattern 8',exact:true}).click();
+      await page.locator('#eyeNickname').fill('Porch watcher');await page.locator('#eyeFilter').selectOption('favorites');
+      assert.equal(await page.locator('.eye-card:visible').count(),1);assert.match(await page.locator('#eyePreviewLabel').textContent(),/Porch watcher/);
+      assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),before,'Presentation choices do not change the routine');
+      await page.reload();await nav(page,'#expressions');await page.locator('#eyeFilter').selectOption('favorites');assert.equal(await page.locator('.eye-card:visible').count(),1);
+      assert.match(await page.locator('.eye-card:visible .eye-tile-number').textContent(),/Porch watcher/);
+      await page.locator('#eyeFilter').selectOption('all');await page.locator('.eye-choice:has(input[value="8"])').click();assert.equal(await page.locator('#eyeBehavior').inputValue(),'fixed');assert.equal(await page.locator('#eyesEnabled').isChecked(),true);
+      await page.locator('#eyeBehavior').selectOption('random');await page.locator('.eye-choice:has(input[value="4"])').click();assert.deepEqual(await page.evaluate(()=>SkellyStudioGenerator.readConfig().eyeChoices),[4,8]);
+      await page.locator('#eyeBehavior').selectOption('stored');assert.equal(await page.locator('#eyesEnabled').isChecked(),false);
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.readConfig(),bleName:'12ft Skelly',eyesEnabled:true,eyeChoices:[19]},'skelly12')));
+      assert.match(await page.locator('.eye-card:has(input[value="19"]) img').getAttribute('src'),/eye_icon_12/);
+      await page.locator('#eyeFilter').selectOption('favorites');assert.equal(await page.locator('.eye-card:visible').count(),0);assert.equal(await page.locator('#eyeFavoritesEmpty').isVisible(),true);
+      assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+    },{width:390,height:844});
+
+    await run('look editor · palette staging, cancel, Apply and rotation selection',async page=>{
+      await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();
+      const original=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
+      await page.locator('[data-edit-palette="0"]').click();await page.locator('#palette0Name').fill('Test palette');await page.locator('#palette0Torso').fill('#123456');
+      assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),original,'Unapplied palette changes stay out of settings and drafts');
+      await page.keyboard.press('Escape');assert.equal(await page.locator('#palette0Name').inputValue(),'Halloween');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),original);
+      await page.locator('[data-edit-palette="0"]').click();await page.locator('#palette0Name').fill('Porch');await page.locator('#palette0Torso').fill('#123456');await page.locator('#paletteDialogDone').click();
+      assert.equal(await page.locator('#torsoColor').inputValue(),'#123456');assert.match(await page.locator('[data-palette="halloween"]').textContent(),/Porch/);
+      await page.locator('#lightingMode').selectOption('rotate');await page.locator('[data-palette="haunted"]').click();
+      assert.equal(await page.locator('#lightingMode').inputValue(),'rotate');assert.equal(await page.locator('[data-palette="haunted"]').getAttribute('aria-pressed'),'false');
+      await page.locator('[data-palette="ember"]').click();await page.locator('[data-palette="moonlight"]').click();
+      assert.equal(await page.locator('#lightingMode').inputValue(),'rotate');assert.match(await page.locator('#paletteStatus').textContent(),/at least two/);assert.equal(await page.locator('[data-palette][aria-pressed="true"]').count(),2);
+      assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+    });
+
+    await run('look editor · default effects stay in Look preview, with independent channels and clear color pickers',async page=>{
+      await page.emulateMedia({reducedMotion:'no-preference'});await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('2');
+      const torso=page.locator('#lookPreview [data-look-swatch="torso"]>i'),head=page.locator('#lookPreview [data-look-swatch="head"]>i');
+      assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-strobe');
+      await page.locator('#headSpeed').fill('254');const flashes=await head.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(flashes>1,'Head strobe opacity actually changes over time');
+      assert.equal(await page.locator('#effectPreviewToggle').getAttribute('aria-pressed'),'true','Preview starts enabled without pressing Play');
+      assert.equal(await page.locator('#lighting .effect-swatch').count(),0,'No animated overlay in color controls');
+      for(const id of ['torsoColor','headColor']){
+        await page.locator('#'+id).scrollIntoViewIfNeeded();assert.equal(await page.locator('#'+id).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===el;}),true,id+' remains directly accessible');
+      }
+      await page.locator('#torsoBrightness').fill('64');assert.ok(Math.abs(await torso.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness')))-64/255)<.001);assert.equal(await head.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness'))),1);
+      const slow=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));await page.locator('#torsoSpeed').fill('254');const fast=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));assert.ok(fast<slow);assert.ok(await head.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration))>=.5);
+      const stable=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));await page.locator('#effectPreviewToggle').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),stable);
+      await page.locator('#headEffect').selectOption('3');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none','Changing effects retains manual Pause');
+      await page.locator('#effectPreviewToggle').click();assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      const changes=await torso.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(changes>1,'Pulse opacity actually changes over time');
+      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
+      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>!document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
+      assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+    },{width:390,height:844});
+
+    await run('look editor · scoped quick looks, copy between scenes and saved sequence',async page=>{
+      await page.locator('#sceneName').fill('Porch');await page.locator('#sceneSave').click();
+      const movement=await page.evaluate(()=>{const c=SkellyStudioGenerator.readConfig();return [c.headMin,c.headMax,c.armEnabled,c.jawEnabled,c.eyeJawMode];});
+      await page.getByText('Choose a quick look',{exact:true}).click();await page.locator('[data-scene-starter="moonlit"]').click();
+      assert.equal(await page.locator('#sceneName').inputValue(),'Porch');assert.deepEqual(await page.evaluate(()=>{const c=SkellyStudioGenerator.readConfig();return [c.headMin,c.headMax,c.armEnabled,c.jawEnabled,c.eyeJawMode];}),movement);
+      await page.locator('#sceneUpdate').click();await page.locator('#sceneName').fill('Late night');await page.locator('#sceneSave').click();
+      await nav(page,'#expressions');await page.locator('#eyeBehavior').selectOption('stored');await nav(page,'#lighting');await toggle(page,'lightsEnabled',false);
+      await nav(page,'#scenes');await page.getByText('Copy appearance from a saved scene',{exact:true}).click();await page.locator('#appearanceCopySource').selectOption('0');await page.locator('#appearanceCopyScope').selectOption('lights');await page.locator('#appearanceCopyApply').click();
+      assert.equal(await page.locator('#eyesEnabled').isChecked(),false);assert.equal(await page.locator('#lightsEnabled').isChecked(),true);assert.match(await page.locator('#editorStatus').textContent(),/Unsaved/);
+      await page.locator('#sceneMinutes').fill('15');await page.locator('#sceneUpdate').click();await page.locator('#sceneRotate').check();
+      assert.equal(await page.locator('.scene-strip-item').count(),2);assert.match(await page.locator('#sceneStripNote').textContent(),/25 minutes/);
+      await page.locator('#sceneOrder').selectOption('random');assert.match(await page.locator('#sceneStripNote').textContent(),/Random/);assert.doesNotMatch(await page.locator('#sceneStripNote').textContent(),/25 minutes/);
+      await page.locator('#lookWorkspace').screenshot({path:path.join(artifacts,'look-workspace-desktop.png')});
+      await connect(page);await page.locator('#controllerConsent').check();await page.locator('#controllerScenes').click();await message(page,/read-back verified/);assert.equal(await page.locator('#lookDeviceStatus').getAttribute('data-state'),'ready');
+    });
 
     for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844]])await run('advanced scenes · create, edit, reorder and save · '+name,async page=>{
       await nav(page,'#scenes');await page.locator('#sceneName').fill('Porch');await page.locator('#sceneSave').click();

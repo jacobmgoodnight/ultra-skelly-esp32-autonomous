@@ -5,6 +5,21 @@ A static browser configurator for the autonomous ESP32 controller.
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
 Eye thumbnails and firmware generation work offline from the complete folder.
 
+The scene look workspace keeps the edited scene's name, duration, save state,
+eyes, lighting and combined preview together. Choose stored eyes, one expression
+or a selected rotation. Stars and optional nicknames stay in this browser and
+are separate for each device model. Quick looks default to eyes and lights only;
+Complete routine deliberately starts a new scene. Saved scenes can supply just
+eyes, lights or both to the current editor.
+
+Effect samples run by default inside Look preview using each channel's brightness
+and speed. Native color pickers stay static and unobstructed. Timing is illustrative,
+with browser strobe capped at two flashes per second. A subtle Pause/Resume button,
+hidden tabs and reduced motion control animation. Palette
+edits are staged until Apply; Cancel/Escape discards them. No preview opens USB
+or Bluetooth. Update/save a scene, then explicitly send the collection to keep
+controller settings in sync.
+
 Advanced & testing includes a collapsed experimental device option for the
 2026 app-controlled 12-foot model. It is **Not Hardware Tested**; Ultra stays
 the default. See [supported restrictions, installation and rollback](../docs/experimental-12ft.md).
@@ -89,8 +104,9 @@ excluded until updated. Both illustrate requests rather than predicting movement
 
 Everyday body controls are visible first; optional mouth routines stay at the bottom.
 Normal starts with fixed eye #1; Haunted selects eyes 1–8 every 150–300 seconds.
-Eye/lighting previews stay open; detailed choices
-expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
+Eye/lighting previews, the expression gallery and lighting adjustments start open;
+fold the choices when you want a compact view. One selected eye stays fixed;
+multiple eyes switch randomly.
 Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
 brightness apply to all palettes in a scene; palettes hold torso/head colors.
 Colors can be linked for the current look or individually per palette.

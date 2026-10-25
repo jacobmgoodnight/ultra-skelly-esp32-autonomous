@@ -63,6 +63,7 @@ From the repository root with Node, Python and a C++17 compiler:
 
 ```sh
 node --check studio/app.js
+node --check studio/looks.js
 node --check studio/template.js
 node scripts/sync-runtime-schema.cjs --check
 node scripts/sync-template.cjs --check

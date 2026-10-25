@@ -62,6 +62,22 @@ hold, enabled lanes and the existing deterministic schedule illustration. It nev
 uses an unfinished editor draft or predicts arbitration/physical starts. Ordered,
 random and switching-off labels describe selection policy rather than clock time.
 
+`looks.js` owns browser-only eye names/favorites and appearance preview. Scoped
+look/copy operations use a fixed field allowlist, preserve the current model and
+movement/mouth/clock/restoration configuration, and validate before writing the
+editor. Names/favorites never enter profiles or USB records. Palette editing
+stages a draft outside `readConfig`; Apply validates and commits, while Cancel,
+Escape or loading another config discards it. The saved-sequence strip reads only
+the saved library. Nearby controller comparison still requires acknowledged
+read-back and clears on disconnect.
+
+Effect previews animate only the Look preview swatch opacity, without covering
+color inputs, mutating RGB/config values or sending commands. They run by default
+with a subtle Pause/Resume control. Channel brightness and increasing UI speed affect an explicitly
+illustrative sample; no physical effect-period mapping is established. Browser
+strobe is capped at two flashes per second. Manual Pause persists across effect
+changes. Hidden tabs and reduced-motion preferences gate all sample animation.
+
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye

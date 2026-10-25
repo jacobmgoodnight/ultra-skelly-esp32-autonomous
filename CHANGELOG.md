@@ -1,5 +1,21 @@
 # Changelog
 
+## Scene look workspace · browser changes
+
+Brings scene naming, saving, eye selection, lighting and a combined appearance
+preview into one workspace. Adds descriptive eye names, per-model browser-only
+favorites/nicknames, scoped quick looks and copying eyes/lights between scenes.
+The saved-scene strip shows starting scene, holds and selection policy. Palette
+edits use explicit Apply/Cancel and palette selection preserves rotation.
+
+Pulsing/strobe samples animate only Look preview swatches using
+channel brightness and an illustrative speed curve. Samples run by default, with
+a subtle Pause/Resume control; native color pickers remain unobstructed. Browser
+strobe is limited to two flashes per second. Pause, tab visibility
+and reduced-motion preferences gate animation. These samples do not measure prop
+timing. Firmware, USB/profile formats and motor protections are unchanged; no new
+physical result is claimed.
+
 ## Browser setup refresh · firmware unchanged
 
 Makes browser universal installation the recommended first-time path, with public

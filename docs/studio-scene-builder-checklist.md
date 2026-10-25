@@ -1,5 +1,46 @@
 # Scene builder and compact lighting refresh
 
+## Scene look workspace and effect samples · October 25
+
+This follow-up changes browser editing only. Existing firmware, offline sketches,
+profile/USB formats and hardware evidence retain their scope. Browser samples
+are illustrations; no measured prop speed or physical integration pass is added.
+
+1. Use the workspace name/duration and nearby Update/Save actions. Edit a saved
+   scene and confirm its preview follows the draft while the sequence strip keeps
+   the saved duration/colors until Update. Ordered mode totals holds plus action
+   completion/reconnect time; random mode promises no exact loop duration.
+2. Choose stored eyes, fixed or rotation. Select an entire thumbnail, star a
+   favorite, filter Favorites and give an enlarged expression a nickname. Reload
+   and check names/favorites remain local. Switching models keeps separate
+   favorites and correct numbering; missing 12-foot artwork stays unavailable.
+3. Apply a quick look with Eyes and lights only. Preserve the scene name/hold,
+   movement, mouth and protection settings. Complete routine starts a new scene
+   and asks before discarding edits. Copy just lights or eyes from a saved scene;
+   verify the other fields and original saved scene stay intact until Update.
+4. Edit a palette. Typing changes only its draft sample. Cancel, close or Escape
+   preserves the original colors/name and editor draft. Apply commits valid
+   values. Loading different settings discards an open palette draft. In rotation
+   mode, palette buttons toggle inclusion and retain at least two choices.
+5. Select Pulsing or Strobe. The corresponding Torso/Head swatches animate by
+   default inside Look preview; native color pickers stay clear and static.
+   Brightness and speed affect each channel independently. The subtle Pause/Resume
+   button changes only the sample, without changing stored RGB. Manual Pause
+   persists when changing effects; browser strobe is capped at two flashes/second.
+   Reduced motion keeps samples still; hiding the tab pauses animation.
+6. Test phone/keyboard flow and offline editing. Preview, favorites, nicknames
+   and palette drafts open no USB/Bluetooth port. Connect and explicitly save a
+   routine/collection to update the ESP32. Read-back confirms configuration,
+   while physical response still requires observation.
+
+Exact effect-speed matching needs optional attended measurements: motors, eyes,
+mouth, clock and idle breaks OFF; rotation OFF; one channel Pulsing and the other
+Static. Compare slow and faster settings (for example 32 and 96) for 20 seconds
+each, then swap channels. Record visible cycle counts and exact settings. Existing
+effect reports do not establish a seconds-per-cycle curve. Strobe observations
+remain optional and brief where flashing is suitable. No firmware change is
+needed for these browser samples, and no physical calibration has been recorded.
+
 October 23, 2026. Browser changes only: firmware, USB commands, version-4 profiles
 and version-1 scene libraries remain compatible. No new firmware upload is needed.
 Existing libraries remain under the same browser storage key. No hardware port is
@@ -27,9 +68,9 @@ matching read-back. Earlier physical passes remain recorded separately.
    controls. Static hides speed. Brightness shows percent while retaining the exact
    stored 0–255 value. Edit opens only one palette, with an optional color link.
    Rotation uses saved palette colors; effects and brightness apply to all palettes
-   within that scene. A palette editor's Done retains current editor changes; save
-   the scene to keep them in the library.
-6. Select a complete look: Moonlit Watcher, Haunted Porch or Ember Glow. Check the
+   within that scene. Apply palette commits staged editor changes; Cancel/Escape
+   discards them. Update/save the scene to keep applied changes in the library.
+6. Choose Complete routine in the quick look scope, then Moonlit Watcher, Haunted Porch or Ember Glow. Check the
    movement/eye/light summary and customize before saving. These opt-in examples
    start at 10 minutes, brightness 255/speed 125, mouth and clock windows OFF. They
    are software-validated combinations, not new physical integration passes.
