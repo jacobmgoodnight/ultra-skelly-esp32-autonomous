@@ -67,7 +67,7 @@ normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rej
 missing/duplicate substitution anchors. Idle breaks, file pools, permitted eye
 sets, and the independent head/jaw overlap option are generator extensions; their
 substitution architecture is still a maintenance risk and is covered by the
-generated compile matrix. The five-minute UI timeline shows example requested
+generated compile matrix. The 15-minute UI timeline shows example requested
 intervals, without pretending to arbitrate actual starts. Contextual feedback
 explains locks, jaw-first follow-ups, restoration, rest and optional clock windows.
 

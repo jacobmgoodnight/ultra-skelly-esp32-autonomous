@@ -18,7 +18,7 @@ to four saved scenes and optional rotation. The separate USB page accepts review
 head-only or universal packages. The owner confirms browser USB connection,
 read/save and observing changed behavior; power-cycle recovery and scene transitions
 remain physically Untested.
-The five-minute preview
+The 15-minute preview
 is illustrative and does not model all arbitration. Save/load settings keeps your
 configuration and named jaw clip mappings in a portable JSON file.
 
