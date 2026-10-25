@@ -26,7 +26,3 @@ test('eye labels follow model numbering and never fabricate missing previews',()
  assert.equal(looks.eyeName(1),'Blue iris');assert.equal(looks.eyeName(8),'Orange reptile');assert.equal(looks.eyeName(12),'Skull and crossbones');
  assert.equal(looks.eyeName(1,'skelly12'),'American flag');assert.equal(looks.eyeName(19,'skelly12'),'Skull and crossbones');assert.match(looks.eyeName(5,'skelly12'),/unavailable/);
 });
-test('browser preferences reject malformed names, isolate models and retain only bounded expression IDs',()=>{
- const p=looks.preferences({version:1,ultra:{favorites:[1,1,18,19,'2',0],names:{1:'Watcher',2:'bad\nname',3:'x'.repeat(25),99:'Unknown'}},skelly12:{favorites:[19,20],names:{19:'Pirate'}}});
- assert.deepEqual(p.ultra.favorites,[1,18]);assert.deepEqual(p.ultra.names,{1:'Watcher'});assert.deepEqual(p.skelly12.favorites,[19,20]);assert.equal(p.skelly12.names[19],'Pirate');assert.deepEqual(looks.preferences({version:99}),looks.preferences(null));
-});

@@ -55,11 +55,10 @@ The controller also sends its first live eye selection **about two seconds after
 
 ## Preview what eye IDs 1–18 look like
 
-The scene workspace now labels designs descriptively while retaining their exact
+The eye gallery labels designs descriptively while retaining their exact
 IDs. Choose stored eyes, one expression or a selected rotation. Clicking a tile
-selects/enables it; Preview only enlarges it. Stars and optional nicknames are
-local browser preferences, isolated by device model, and do not enter firmware,
-portable profiles or USB records. The experimental 12-foot model uses its own
+selects/enables it; Preview only enlarges it. All expressions are shown without
+favorites, filters or nicknames. Unselected thumbnails retain their full color. The experimental 12-foot model uses its own
 number mapping and clearly marks designs without bundled artwork.
 
 [Skelly Studio](../studio/) now shows an actual thumbnail for each numbered eye design. Select the patterns you want in your ESP32's random rotation and use **Preview** to enlarge any image. All 18 previews are bundled locally with [source attribution](../studio/images/eyes/README.md). Thumbnails, enlarged previews and sketch generation work offline from the complete Studio folder.

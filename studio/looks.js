@@ -22,63 +22,34 @@
     // Browser strobe samples never exceed two flashes per second.
     return effect===2?1.6-1.1*fraction:4.5-3.7*fraction;
   }
-  function preferences(value){
-    if(!value||value.version!==1)return {version:1,ultra:{favorites:[],names:{}},skelly12:{favorites:[],names:{}}};
-    const result=preferences(null);
-    for(const device of ['ultra','skelly12']){
-      const input=value[device],limit=device==='ultra'?18:20;if(!input)continue;
-      if(Array.isArray(input.favorites))result[device].favorites=[...new Set(input.favorites.filter(n=>Number.isInteger(n)&&n>=1&&n<=limit))];
-      if(input.names&&typeof input.names==='object')for(const [key,name] of Object.entries(input.names))if(/^\d+$/.test(key)&&Number(key)>=1&&Number(key)<=limit&&typeof name==='string'&&name.trim().length<=24&&!/[\x00-\x1f]/.test(name))result[device].names[key]=name.trim();
-    }
-    return result;
-  }
-  const api={appearance,eyeName,previewPeriod,preferences,EYE_KEYS,LIGHT_KEYS};
+  const api={appearance,eyeName,previewPeriod,EYE_KEYS,LIGHT_KEYS};
   if(typeof module!=='undefined')module.exports=api;
   if(typeof window==='undefined')return;window.SkellyLooks=api;
   document.addEventListener('DOMContentLoaded',()=>{
     const g=window.SkellyStudioGenerator,el=id=>document.getElementById(id);
-    if(!el('lookWorkspace'))return;
-    let prefs=preferences(null),playing=true,previewEye=1;
-    const preferenceKey='SkellyStudio-eye-preferences-v1',reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
-    try{prefs=preferences(JSON.parse(localStorage.getItem(preferenceKey)));}catch(_){}
-    function savePreferences(){try{localStorage.setItem(preferenceKey,JSON.stringify(prefs));el('eyePreferencesStatus').textContent='Names and favorites saved in this browser.';}catch(_){el('eyePreferencesStatus').textContent='Names and favorites are session only; browser storage is unavailable.';}}
-    function name(id,c){return prefs[c.deviceId??'ultra'].names[id]||eyeName(id,c.deviceId);}
+    if(!el('expressions'))return;
+    let previewEye=1;
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const name=(id,c)=>eyeName(id,c.deviceId);
     function renderGallery(c){
       const device=c.deviceId??'ultra',limit=g.DEVICE_PROFILES[device].eyes;
       for(const card of document.querySelectorAll('.eye-card')){
-        const input=card.querySelector('input'),id=Number(input.value),favorite=prefs[device].favorites.includes(id);
-        card.hidden=id>limit||(el('eyeFilter').value==='favorites'&&!favorite);
+        const input=card.querySelector('input'),id=Number(input.value);
+        card.hidden=id>limit;
         const label=card.querySelector('.eye-tile-number');if(label)label.textContent=name(id,c)+' · #'+id;
         input.setAttribute('aria-label','Choose '+name(id,c)+' · eye '+id);
-        const star=card.querySelector('.eye-favorite');if(star){star.setAttribute('aria-pressed',String(favorite));star.setAttribute('aria-label',(favorite?'Unfavorite ':'Favorite ')+name(id,c)+' · eye '+id);star.textContent=favorite?'★':'☆';}
       }
-      el('eyeFavoritesEmpty').hidden=el('eyeFilter').value!=='favorites'||prefs[device].favorites.length>0;
       el('eyePreviewLabel').textContent=name(previewEye,c)+' · eye #'+previewEye;
-      if(document.activeElement!==el('eyeNickname'))el('eyeNickname').value=prefs[device].names[previewEye]??'';
     }
     for(const card of document.querySelectorAll('.eye-card')){
-      const input=card.querySelector('input'),id=Number(input.value),star=document.createElement('button');
-      star.type='button';star.className='eye-favorite';star.textContent='☆';
-      star.onclick=()=>{const c=g.readConfig(),p=prefs[c.deviceId??'ultra'];p.favorites=p.favorites.includes(id)?p.favorites.filter(n=>n!==id):[...p.favorites,id];savePreferences();renderGallery(c);};
-      card.append(star);
+      const input=card.querySelector('input'),id=Number(input.value);
       input.addEventListener('input',()=>{previewEye=id;renderGallery(g.readConfig());});
       card.querySelector('.eye-zoom')?.addEventListener('click',()=>{previewEye=id;renderGallery(g.readConfig());});
     }
-    el('eyeFilter').onchange=()=>renderGallery(g.readConfig());
-    el('eyeNickname').oninput=()=>{
-      const c=g.readConfig(),value=el('eyeNickname').value.trim();
-      if(value.length>24||/[\x00-\x1f]/.test(value))return;
-      if(value)prefs[c.deviceId??'ultra'].names[previewEye]=value;else delete prefs[c.deviceId??'ultra'].names[previewEye];savePreferences();renderGallery(c);
-    };
     function render(){
       const c=g.readConfig(),experimental=c.deviceId==='skelly12';
       const moving=c.lightsEnabled&&(c.torsoEffect!==1||(!experimental&&c.headEffect!==1));
-      const active=playing&&!document.hidden&&!reduced.matches&&moving;
-      el('effectPreviewToggle').disabled=reduced.matches;
-      el('effectPreviewToggle').textContent=playing?'Pause effect preview':'Resume effect preview';
-      el('effectPreviewToggle').setAttribute('aria-pressed',String(playing&&!reduced.matches));
-      el('effectPreviewStatus').textContent=reduced.matches?'Still preview · reduced motion':!moving?'Static preview':document.hidden?'Preview paused while this tab is hidden':active?'Playing an illustrative effect sample':'Effect preview paused';
-      el('effectPreviewHint').textContent=[c.torsoEffect,c.headEffect].includes(2)?'Strobe preview is limited to 2 flashes/sec. Prop speed may differ.':'Effect timing and LED appearance are illustrative; higher speed makes the preview faster.';
+      const active=!document.hidden&&!reduced.matches&&moving;
       const first=c.lightPalettes[0]??0;
       for(const part of ['torso','head'])for(const swatch of el('lookPreview').querySelectorAll('[data-look-swatch="'+part+'"]')){
         const color=c.lightRotation?c['palette'+first+(part==='torso'?'Torso':'Head')]:c[part+'Color'];
@@ -92,10 +63,8 @@
       el('lookEyeLabel').textContent=!c.eyesEnabled?'Use Skelly’s stored eyes':c.eyeChoices.length>1?c.eyeChoices.length+' selected expressions · sample #'+id:name(id,c)+' · fixed';
       el('lookTorsoLabel').textContent=experimental?'Chest':'Torso';el('lookHeadRow').hidden=experimental;
       el('lookLightLabel').textContent=!c.lightsEnabled?'Use Skelly’s stored lighting':c.lightRotation?'Starts with '+c['palette'+first+'Name']:'Selected colors';
-      el('lookMovement').textContent=window.SkellySceneModel.sceneSummary(c).motors;
       renderGallery(c);
     }
-    el('effectPreviewToggle').onclick=()=>{playing=!playing;render();};
     document.addEventListener('visibilitychange',render);reduced.addEventListener('change',render);
     function renderSources(){
       const selected=el('appearanceCopySource').value;el('appearanceCopySource').replaceChildren();

@@ -1,5 +1,14 @@
 # Changelog
 
+## Simpler eyes and lighting · browser changes
+
+Removes the separate scene-look heading and puts naming/saving back inside Scene
+builder. The eye gallery keeps descriptive labels and direct selection, removing
+favorites, filtering and optional nicknames. Unselected artwork keeps its full
+color so expressions are easy to compare. Look preview stays compact and
+automatic, without Pause/Resume, status/help text or a movement footer. Hidden-tab
+and reduced-motion handling remain. Firmware and saved formats are unchanged.
+
 ## Scene look workspace · browser changes
 
 Brings scene naming, saving, eye selection, lighting and a combined appearance
