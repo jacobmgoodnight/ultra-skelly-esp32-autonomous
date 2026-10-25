@@ -5,24 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=cad6a8c15164">
+<link rel="stylesheet" href="./style.css?v=4aeb9c84b0fb">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=4d60e620dacf" defer></script>
+<script src="./app.js?v=573ced2800c7" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
-<script src="./scenes.js?v=d38e9df6b3fb" defer></script>
+<script src="./scenes.js?v=1c62e5a5662b" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=2c5160c3af59" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
 <script src="./audio-prep.js?v=460944ee3d5f" defer></script>
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
-<script src="./controller.js?v=3e295f9b93ed" defer></script>
+<script src="./controller.js?v=bfe8caa2c592" defer></script>
 </head>
 <body>
+<a class="skip-link" href="#personality">Skip to routine controls</a>
 <div class="shell">
 <header class="mast">
   <div><a class="brand" href="../"><span class="brand-skull" aria-hidden="true">💀</span> <strong>Skelly Studio</strong></a><div class="eyebrow">ULTRA SKELLY V2 · ESP32 BLE</div></div>
@@ -31,9 +32,12 @@
 <section class="hero">
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
   <h1>Make your Skelly<br><em>come alive.</em></h1>
-  <p>Pick a personality, choose his moves, and make the night a little stranger. Your ESP32 takes it from there.</p>
+  <p>Choose movements, eyes and lights for your Skelly. Save them to an ESP32 over USB, then let it run the routine on its own.</p>
   <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Custom movement, eyes &amp; lights</span></div>
 </section>
+<nav class="studio-nav" aria-label="Studio sections">
+  <a href="#personality">Personality</a><a href="#movement">Movement</a><a href="#expressions">Eyes</a><a href="#lighting">Lighting</a><a href="#scenes">Scenes</a><a href="#finish">Preview</a><a class="nav-save" href="#controllerPanel">Connect &amp; save</a>
+</nav>
 <p id="draftTopNotice" class="draft-top-notice" hidden><a id="draftReview" href="#scenes">Previous editor draft found · review or restore your edits →</a></p>
 <main class="layout">
   <p id="deviceWarning" class="notice" role="status" hidden>Experimental — Not Hardware Tested. Experimental support for the 2026 app-controlled 12-foot Skelly. This model has not been physically tested with this controller. Start with head-only movement and verify each feature carefully. Audio/jaw is disabled; only chest lighting channel 0 is used.</p>
@@ -41,9 +45,13 @@
     <details class="panel fold-panel" id="first-run" open>
       <summary><span><small>START HERE</small><strong>Your first autonomous routine</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p id="firstRunIntro">Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.</p>
-      <ol><li id="firstRunDevice">Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</li><li>Open <a href="#controllerPanel">Send to your ESP32</a>, install universal firmware once, then save your routine over USB.</li><li>Power Skelly in Bluetooth mode and disconnect other controllers. Watch a complete head animation.</li><li id="firstRunExtras">Add arm, torso, eyes or lighting to make the routine your own.</li></ol>
+      <p id="firstRunDevice" class="small-description">Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</p>
+      <p><a data-browser-install class="install-link" href="./install.html">First time? Install firmware →</a></p>
+      <p class="small-description">Install once using desktop Chrome or Edge and a USB data cable. Already set up? <a href="#controllerPanel">Connect and read your saved settings</a> before editing.</p>
+      <p id="firstRunExtras" class="small-description">Add arm, torso, eyes or lighting to make the routine your own.</p>
+      <p class="small-description">Power Skelly in Bluetooth mode and disconnect other controllers. After saving, watch a complete animation to confirm the result.</p>
     </div></details>
-    <section class="panel">
+    <section class="panel" id="personality" tabindex="-1">
       <div class="section-head"><div><span class="step">01</span><h2>Choose a personality</h2></div><span class="tiny">Starting points; customize below</span></div>
       <div class="presets" role="group" aria-label="Movement presets">
         <button class="preset" type="button" data-preset="subtle"><span class="preset-symbol">☾</span><b>Subtle</b><small>Head only · every 1–2 min</small></button>
@@ -133,7 +141,8 @@
       </details>
     </div></details>
     <details class="panel fold-panel" id="scenes"><summary><span><strong>Scene builder</strong><small>Save a complete look, or rotate a few throughout the evening</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <div class="save-locations"><p id="editorStatus" role="status">Editing a new scene</p><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p><p id="deviceSaveStatus">ESP32 · connect and read to compare</p></div>
+      <p class="small-description">Optional: keep up to four complete looks in this browser, then use Save scene collection to send them to your ESP32.</p>
+      <div class="save-locations"><p id="editorStatus" role="status">Editing a new scene</p><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>
       <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
       <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label>Stay for <input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> minutes</label></div>
@@ -160,9 +169,11 @@
       <p id="controllerFirmware" class="small-description">Connect to identify installed firmware.</p><p id="controllerActivity" class="controller-activity" hidden></p>
       <p id="controllerReceived" class="small-description">No controller status received yet.</p>
       <p id="controllerMessage" role="status" aria-live="polite" data-state="info">Connect your ESP32 to read or save settings.</p>
-      <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" disabled>Save this routine</button><button id="controllerScenes" type="button" disabled>Save scene collection</button></div>
-      <p class="small-description"><strong>Save this routine</strong> sends the settings you’re editing above. No scene is needed. <strong>Save scene collection</strong> sends the saved collection from Scene builder. Both replace the ESP32’s current program; neither installs firmware.</p>
+      <p id="deviceSaveStatus" class="save-comparison" role="status">ESP32 · connect and read to compare</p>
+      <div class="error" id="error" role="alert" tabindex="-1" hidden></div>
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
+      <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" aria-describedby="deviceSaveStatus error" disabled>Save this routine</button><button id="controllerScenes" type="button" disabled>Save scene collection</button></div>
+      <p class="small-description"><strong>Save this routine</strong> sends the settings you’re editing above. No scene is needed. <strong>Save scene collection</strong> sends the saved collection from Scene builder. Both replace the ESP32’s current program; neither installs firmware.</p>
       <div class="controller-secondary"><button id="controllerIdentify" type="button" hidden disabled>Retry identification</button><button id="controllerDisconnect" type="button" disabled>Disconnect</button></div>
       <details class="instructions" id="controllerSetup" open><summary>New ESP32? Start here · install firmware once</summary>
         <p><strong>Connect ESP32 → Install Firmware → Configure Skelly.</strong> Use the browser installer; no Arduino software, manual package download or GitHub account needed. Available release: <span id="controllerRelease">2026.10.24-preview.2</span>. <a href="../CHANGELOG.md">What changed →</a></p>
@@ -192,7 +203,7 @@
     </div></details>
       <h3>Connection &amp; diagnostics</h3>
       <details class="instructions"><summary>Experimental device compatibility</summary>
-        <label>Choose your Skelly <select id="deviceId"><option value="ultra">6.5 ft Ultra Skelly v2 — Default / Tested</option><option value="skelly12">12 ft App-Controlled Skelly (2026) — Experimental / Untested</option></select></label>
+        <label class="single-field" for="deviceId">Choose your Skelly <select id="deviceId"><option value="ultra">6.5 ft Ultra Skelly v2 — Default / Tested</option><option value="skelly12">12 ft App-Controlled Skelly (2026) — Experimental / Untested</option></select></label>
         <p id="deviceChangeNotice" role="status" hidden></p>
         <p>Only the 2026 app-controlled 12-foot model with Bluetooth animation hardware is eligible. Older 12-foot models are excluded. Changing models resets eyes and lighting to OFF and removes unsupported settings.</p>
         <p>The first-time installer and universal source download follow this selection. The experimental model uses its own restricted firmware; it cannot use Ultra USB records.</p>
@@ -326,11 +337,12 @@
       <p id="timelineBeyond" class="small-description" hidden></p>
       <p id="timelineEmpty" class="small-description" hidden>No scheduled events in this window.</p>
       <details class="instructions"><summary>Timing details</summary><ul id="scheduleFeedback" class="small-description"></ul></details>
-      <div class="error" id="error" role="alert" hidden></div>
+      <p id="routineSaveStatus" class="save-comparison">ESP32 · connect and read to compare</p>
+      <p id="validationJump" class="validation-jump" hidden><a href="#error">Review settings before saving →</a></p>
       <a class="download controller-jump" href="#controllerPanel">Send to your ESP32 ↓</a>
       <button id="download" class="secondary" type="button">Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
-      <p class="small-description">Generates locally in your browser. Save a profile to keep your settings.</p>
+      <p class="small-description">Arduino downloads are an alternative installation method. Everyday changes use Connect &amp; save.</p>
       <div class="profile-actions"><button id="saveProfile" class="secondary" type="button">Save settings (.json)</button><button id="loadProfile" class="secondary" type="button">Load settings</button><input id="profileFile" class="sr-only" type="file" accept=".json,application/json" aria-label="Choose saved Studio settings"></div>
       <p id="profileStatus" class="small-description" role="status">Save a profile to keep your settings.</p>
       <details class="instructions"><summary>Other installation options</summary><p>Use <a href="#controllerPanel">Send to your ESP32</a> for universal setup and USB settings. A downloaded custom sketch can instead be compiled/uploaded with Arduino IDE or CLI using ESP32 Dev Module and core 3.3.12. Once installed, it runs without the browser or computer.</p><p><a href="../docs/setup.md">Setup guide →</a></p></details>
