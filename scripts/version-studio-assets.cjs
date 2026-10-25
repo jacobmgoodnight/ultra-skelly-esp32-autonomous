@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const studio = path.resolve(__dirname, "../studio");
-for(const [page,files] of Object.entries({"index.html":["style.css", "template.js", "experience.js", "runtime-schema.js","runtime.js","serial.js","app.js","scene-model.js","scenes.js","controller-state.js","controller.js","audio.js","audio-ui.js","audio-prep.js","audio-prep-ui.js","release.js"],"usb.html":["style.css","serial.js","usb.js"],"install.html":["style.css","release.js","installer.js"]})) {
+for(const [page,files] of Object.entries({"index.html":["style.css", "template.js", "experience.js", "runtime-schema.js","runtime.js","serial.js","app.js","scene-model.js","scenes.js","looks.js","controller-state.js","controller.js","audio.js","audio-ui.js","audio-prep.js","audio-prep-ui.js","release.js"],"usb.html":["style.css","serial.js","usb.js"],"install.html":["style.css","release.js","installer.js"]})) {
 const target = path.join(studio, page);
 const original = fs.readFileSync(target, "utf8").replace(/\r\n/g, "\n");
 let expected = original;

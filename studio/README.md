@@ -5,6 +5,21 @@ A static browser configurator for the autonomous ESP32 controller.
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
 Eye thumbnails and firmware generation work offline from the complete folder.
 
+The scene look workspace keeps the edited scene's name, duration, save state,
+eyes, lighting and combined preview together. Choose stored eyes, one expression
+or a selected rotation. Stars and optional nicknames stay in this browser and
+are separate for each device model. Quick looks default to eyes and lights only;
+Complete routine deliberately starts a new scene. Saved scenes can supply just
+eyes, lights or both to the current editor.
+
+Play effect preview animates the selected swatches and native color-picker
+samples using each channel's brightness and speed. Timing is illustrative, with
+browser strobe capped at two flashes per second. Choosing strobe pauses the
+sample until Play; Pause, hidden tabs and reduced motion stop animation. Palette
+edits are staged until Apply; Cancel/Escape discards them. No preview opens USB
+or Bluetooth. Update/save a scene, then explicitly send the collection to keep
+controller settings in sync.
+
 Advanced & testing includes a collapsed experimental device option for the
 2026 app-controlled 12-foot model. It is **Not Hardware Tested**; Ultra stays
 the default. See [supported restrictions, installation and rollback](../docs/experimental-12ft.md).
@@ -18,7 +33,7 @@ to four saved scenes and optional rotation. The separate USB page accepts review
 head-only or universal packages. The owner confirms browser USB connection,
 read/save and observing changed behavior; power-cycle recovery and scene transitions
 remain physically Untested.
-The five-minute preview
+The 15-minute preview
 is illustrative and does not model all arbitration. Save/load settings keeps your
 configuration and named jaw clip mappings in a portable JSON file.
 
@@ -67,7 +82,7 @@ The section shortcuts keep Personality, Movement, Eyes, Lighting, Scenes, Previe
 and Connect & save in reach on phones and desktop. First-time setup links directly
 to the model-specific browser installer; connecting an identified controller folds
 the introductory guidance. Everyday saves still require explicit replacement consent.
-USB and Preview share the same verified-settings comparison. Invalid editor settings
+Connect & save shows the verified-settings comparison beside its controls. Invalid editor settings
 disable only Save this routine; saved scene collections can still be sent. A failed
 save/read-back clears the comparison and asks for a fresh read before retrying.
 See the [usability audit and before/after screenshots](../docs/studio-ux-audit.md).
@@ -82,15 +97,16 @@ or clock scheduling. Their combined physical behavior is not newly verified.
 
 Lighting uses compact per-channel cards, percentage brightness (exact 0–255 values
 retained), conditional speed and an individual palette editor. The timing preview
-supports five or fifteen minutes for the current editor. Scene builder has a
+shows a fixed fifteen minutes for the current editor. Scene builder has a
 separate Routine preview using each saved scene’s hold; unfinished changes are
 excluded until updated. Both illustrate requests rather than predicting movement. See the
 [short scene-builder checklist](../docs/studio-scene-builder-checklist.md).
 
 Everyday body controls are visible first; optional mouth routines stay at the bottom.
 Normal starts with fixed eye #1; Haunted selects eyes 1–8 every 150–300 seconds.
-Eye/lighting previews stay open; detailed choices
-expand on demand. One selected eye stays fixed; multiple eyes switch randomly.
+Eye/lighting previews, the expression gallery and lighting adjustments start open;
+fold the choices when you want a compact view. One selected eye stays fixed;
+multiple eyes switch randomly.
 Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
 brightness apply to all palettes in a scene; palettes hold torso/head colors.
 Colors can be linked for the current look or individually per palette.

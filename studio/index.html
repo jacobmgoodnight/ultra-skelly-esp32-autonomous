@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=4aeb9c84b0fb">
+<link rel="stylesheet" href="./style.css?v=7e38d36a07bb">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=573ced2800c7" defer></script>
+<script src="./app.js?v=f46ffda57f6e" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
-<script src="./scenes.js?v=1c62e5a5662b" defer></script>
+<script src="./scenes.js?v=77ee2c326c6b" defer></script>
+<script src="./looks.js?v=df5b0f0035c5" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=2c5160c3af59" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
@@ -90,20 +91,30 @@
         </details>
       </div>
     </section>
+    <section class="look-workspace" id="lookWorkspace" aria-labelledby="lookWorkspaceTitle">
+      <div class="look-savebar"><div><p id="editorStatus" role="status">Editing a new scene</p><p id="lookDeviceStatus" class="small-description">ESP32 · connect and read to compare</p></div><div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><a href="#controllerPanel">Connect &amp; send ↓</a></div>
+      <div class="panel look-heading"><h2 id="lookWorkspaceTitle">Build a scene’s look</h2>
+
+      <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
+      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label class="look-duration"><span>Stay for</span><span><input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> min</span></label></div>
+<p id="sceneMessage" role="status">No custom scenes saved.</p>
+      <div class="save-locations"><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>      <details class="instructions"><summary>Choose a quick look</summary><label class="look-scope" data-look-ui>Apply to <select id="sceneStarterScope"><option value="appearance">Eyes and lights only</option><option value="complete">Complete routine</option></select></label><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><img src="./images/eyes/eye_icon_8.png" width="46" height="46" alt=""><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><img src="./images/eyes/eye_icon_1.png" width="46" height="46" alt=""><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><img src="./images/eyes/eye_icon_4.png" width="46" height="46" alt=""><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Eyes and lights only preserves your movement, mouth, timing and scene name. Complete routine starts a new 10-minute scene with mouth off. Update or save the scene to keep your changes.</p></details>
+      </div>
+      <div class="look-editor-layout"><div class="look-editors">
     <details class="panel fold-panel" id="expressions" open><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · preview your chosen expression</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
-      <div class="section-head"><strong>Use selected eye expression</strong><label class="switch"><input type="checkbox" id="eyesEnabled"><span></span><span class="sr-only">Enable selected eye expression</span></label></div>
+      <input type="checkbox" id="eyesEnabled" hidden><label class="eye-mode">Eye behavior <select id="eyeBehavior"><option value="stored">Use Skelly’s stored eyes</option><option value="fixed">Keep one expression</option><option value="random">Rotate selected expressions</option></select></label>
       <p class="small-description">Keep one expression, or switch randomly between selected designs. When off, Skelly keeps its stored eyes.</p>
       <div id="eyeOptions" class="eye-advanced">
         <div class="eye-spotlight" aria-live="polite">
           <img id="eyePreviewImage" src="./images/eyes/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">
-          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Open the options below to choose an expression or build a random rotation. Preview buttons enlarge designs without changing your selection.</p><span id="selectedEyeCount">Selected: eye #1 · fixed</span></div>
+          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Select a thumbnail to use it. Preview enlarges a design; the star adds it to Favorites.</p><span id="selectedEyeCount">Selected: eye #1 · fixed</span></div>
         </div>
-        <details class="instructions" id="eyeChoicesPanel"><summary>Choose expressions &amp; switching</summary>
-        <label>Eye behavior <select id="eyeBehavior"><option value="fixed">Keep one expression</option><option value="random">Switch randomly between selected expressions</option></select></label>
+        <details class="instructions" id="eyeChoicesPanel" open><summary>Choose expressions &amp; switching</summary><label class="eye-nickname" data-look-ui>Nickname for the enlarged expression <input id="eyeNickname" maxlength="24" placeholder="Optional nickname"></label><p id="eyePreferencesStatus" class="small-description">Names and favorites stay in this browser.</p>
+        <label class="eye-filter" data-look-ui>Show <select id="eyeFilter"><option value="all">All expressions</option><option value="favorites">Favorites</option></select></label>
         <label class="freq-inline" id="eyeTiming">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
         <p>Choose at least one design. In fixed mode, selecting another replaces the current choice.</p>
         <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
-        <p class="eye-credit">Eye previews are included for offline use. Source attribution is included with the project.</p>
+        <p id="eyeFavoritesEmpty" class="small-description" hidden>Star an expression in All expressions to add a favorite.</p><p class="eye-credit">Eye previews are included for offline use. Source attribution is included with the project.</p>
         <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button></div></details>
       </div>
 
@@ -117,38 +128,44 @@
         <div class="palette-item"><button type="button" data-palette="ember" aria-pressed="false"><span class="palette-swatches" aria-hidden="true"><i></i><i></i></span>Ember</button><button type="button" class="palette-edit" data-edit-palette="3" aria-label="Edit palette 4">Edit</button></div>
       </div>
       <div class="light-preview" aria-label="Selected lighting colors"><span><i id="lightPreviewTorso"></i>Torso</span><span><i id="lightPreviewHead"></i>Head</span><strong id="lightPreviewLabel">Custom colors</strong></div>
-      <details class="instructions" id="lightingChoicesPanel"><summary>Adjust colors &amp; effects</summary>
+      <details class="instructions" id="lightingChoicesPanel" open><summary>Adjust colors &amp; effects</summary>
         <div class="light-mode-row"><label>Palette mode <select id="lightingMode"><option value="single">One palette</option><option value="rotate">Rotate palettes</option></select></label><input id="lightRotation" type="checkbox" hidden>
         <label id="linkLightRow"><input id="linkLightColors" type="checkbox"> Link colors</label></div>
         <fieldset id="lightRotationOptions" hidden disabled><legend>Rotate palettes</legend><label>Change every <input id="lightInterval" type="number" value="90" min="15" max="3600" aria-label="Lighting palette interval seconds"> seconds</label>
           <div class="rotation-choices"><label><input class="light-palette-choice" type="checkbox" value="0" checked> Halloween</label><label><input class="light-palette-choice" type="checkbox" value="1" checked> Haunted</label><label><input class="light-palette-choice" type="checkbox" value="2" checked> Moonlight</label><label><input class="light-palette-choice" type="checkbox" value="3" checked> Ember</label></div><small>Choose two or more. Each change picks a different palette.</small></fieldset>
         <div class="light-channel-grid">
         <section class="light-channel" aria-labelledby="torsoLightTitle"><h3 id="torsoLightTitle">Torso</h3>
-          <label class="light-custom-color">Color <input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"></label>
+          <label class="light-custom-color">Color <span class="color-picker-preview"><input type="color" id="torsoColor" value="#ff0000" aria-label="Torso light color"><span class="effect-swatch" data-look-swatch="torso" aria-hidden="true"><i></i></span></span></label>
           <label>Brightness <output id="torsoBrightnessValue" for="torsoBrightness">100%</output><input type="range" id="torsoBrightness" min="0" max="255" value="255" aria-label="Torso brightness"></label>
           <label>Effect <select id="torsoEffect" aria-label="Torso effect"><option value="1">Static</option><option value="3">Pulsing</option><option value="2">Strobe</option></select></label>
           <label id="torsoSpeedRow" hidden>Speed <span class="range-ends">Slow <span>Fast</span></span><input id="torsoSpeed" type="range" value="125" min="0" max="254" aria-label="Torso effect speed"></label>
         </section>
         <section class="light-channel" aria-labelledby="headLightTitle"><h3 id="headLightTitle">Head</h3>
-          <label class="light-custom-color">Color <input type="color" id="headColor" value="#ff6000" aria-label="Head light color"></label>
+          <label class="light-custom-color">Color <span class="color-picker-preview"><input type="color" id="headColor" value="#ff6000" aria-label="Head light color"><span class="effect-swatch" data-look-swatch="head" aria-hidden="true"><i></i></span></span></label>
           <label>Brightness <output id="headBrightnessValue" for="headBrightness">100%</output><input type="range" id="headBrightness" min="0" max="255" value="255" aria-label="Head brightness"></label>
           <label>Effect <select id="headEffect" aria-label="Head effect"><option value="1">Static</option><option value="3">Pulsing</option><option value="2">Strobe</option></select></label>
           <label id="headSpeedRow" hidden>Speed <span class="range-ends">Slow <span>Fast</span></span><input id="headSpeed" type="range" value="125" min="0" max="254" aria-label="Head effect speed"></label>
         </section>
-        </div><p class="small-description">Effects and brightness apply to all palettes in this scene.</p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
+        </div><div class="effect-preview-controls"><button type="button" id="effectPreviewToggle" aria-pressed="false" disabled>Play effect preview</button><p id="effectPreviewStatus" role="status">Static preview</p></div><p id="effectPreviewHint" class="small-description">Effect timing and LED appearance are illustrative.</p><p class="small-description">Effects and brightness apply to all palettes in this scene.</p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
         <p id="paletteStatus" class="selection-status" role="status">Lighting is off.</p>
-        <details class="instructions light-help"><summary>Lighting help</summary><p>Palette buttons choose one look and stop rotation. Edit a palette to change its saved colors or link Head to Torso. Rotation uses those saved colors; effect and brightness controls apply across the scene. When lighting is off, Skelly keeps its stored lighting.</p></details>
+        <details class="instructions light-help"><summary>Lighting help</summary><p>In One palette mode, choose one look. In Rotate palettes mode, buttons select the palettes to include without stopping rotation. Edit a palette to change its saved colors or link Head to Torso. Rotation uses those saved colors; effect and brightness controls apply across the scene. When lighting is off, Skelly keeps its stored lighting.</p></details>
       </details>
     </div></details>
+      </div>
+      <aside class="panel look-preview" aria-labelledby="lookPreviewTitle">
+        <h3 id="lookPreviewTitle">Look preview</h3>
+        <img id="lookEyeImage" src="./images/eyes/eye_icon_1.png" width="112" height="112" alt="Selected expression" hidden>
+        <p id="lookEyeLabel">Use Skelly’s stored eyes</p>
+        <div class="look-light"><span id="lookTorsoLabel">Torso</span><span class="effect-swatch" data-look-swatch="torso"><i></i></span></div>
+        <div class="look-light" id="lookHeadRow"><span>Head</span><span class="effect-swatch" data-look-swatch="head"><i></i></span></div>
+        <p id="lookLightLabel">Use Skelly’s stored lighting</p>
+        <p id="lookMovement" class="look-movement"></p>
+      </aside>
+      </div>
     <details class="panel fold-panel" id="scenes"><summary><span><strong>Scene builder</strong><small>Save a complete look, or rotate a few throughout the evening</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p class="small-description">Optional: keep up to four complete looks in this browser, then use Save scene collection to send them to your ESP32.</p>
-      <div class="save-locations"><p id="editorStatus" role="status">Editing a new scene</p><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>
-      <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
-      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label>Stay for <input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> minutes</label></div>
-      <div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><p id="sceneMessage" role="status">No custom scenes saved.</p>
-      <details class="instructions"><summary>Start with a complete look</summary><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Each look replaces movement intervals, eyes and lighting. Customize above, then save. All start at 10 minutes with mouth off.</p></details>
-      <div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>
+      <h3 class="scene-strip-title">Scene sequence</h3><div id="sceneStrip" class="scene-strip" aria-label="Saved scene sequence"></div><p id="sceneStripNote" class="small-description"></p><details class="instructions"><summary>Copy appearance from a saved scene</summary><div class="appearance-copy" data-look-ui><label>From <select id="appearanceCopySource"></select></label><label>Copy <select id="appearanceCopyScope"><option value="appearance">Eyes and lights</option><option value="eyes">Eyes only</option><option value="lights">Lights only</option></select></label><button type="button" id="appearanceCopyApply" disabled>Copy to current editor</button></div><p id="appearanceCopyStatus" class="small-description" role="status">Copy appearance, then update the scene you are editing.</p></details><div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>
       <div class="scene-library-actions"><button id="sceneUndo" type="button" disabled>Undo last library change</button><span>Up to four scenes · saved in this browser</span></div>
       <label><input id="sceneRotate" type="checkbox"> Automatically switch scenes</label>
       <label class="scene-order">Scene order <select id="sceneOrder"><option value="ordered">In order</option><option value="random">Random · no immediate repeats</option></select></label>
@@ -157,6 +174,7 @@
       <details class="instructions"><summary>Scene timing help</summary><p>Each scene starts its hold when Bluetooth connects. Switching waits for current actions and full cooldowns, then reconnects with the next scene. Scenes do not advance while disconnected. Random starts with the first scene and avoids immediate repeats.</p></details>
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
     </div></details>
+    </section>
     <section class="panel controller-panel" id="controllerPanel" aria-labelledby="controllerTitle" tabindex="-1">
       <div class="section-head"><div><span class="step">USB</span><h2 id="controllerTitle">Send to your ESP32</h2></div></div>
       <p class="small-description">Install universal firmware once, then read and save settings here. Your routine runs on its own after USB disconnects.</p>
@@ -327,17 +345,13 @@
     <div class="panel output-panel">
       <span class="eyebrow">YOUR SKELLY</span><h2 class="purple-title">Make it yours.</h2>
       <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><i id="summaryTorsoColor"></i><i id="summaryHeadColor"></i><span id="lightSummary">Off</span></strong></div></div>
-      <details class="instructions"><summary>Coordination details</summary><div class="stat-list"><div><span>HEAD + JAW</span><strong id="overlapSummary">Allowed</strong></div><div><span>BODY MOTORS</span><strong id="bodyOverlapSummary">Serialized · default</strong></div><div><span>COMBINED ACTIONS</span><strong id="compoundSummary">Off</strong></div><div><span>MP3 PRIORITY</span><strong id="jawProtectionSummary">Protect arm / torso</strong></div><div><span>JAW-FIRST RESPONSE</span><strong id="jawFollowupSummary">Off</strong></div></div></details>
-      <div class="preview-title"><strong id="timelineTitle">Five-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
-      <label class="preview-window">Window <select id="previewWindow"><option value="300">5 minutes</option><option value="900">15 minutes</option></select></label>
+      <div class="preview-title"><strong id="timelineTitle">15-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
       <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
       <p class="small-description preview-key">Bands: first request range · ticks: sample requests</p>
-      <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over five minutes, not actual movement times"></div>
-      <div class="timeline-axis"><span>0:00</span><span id="timelineMid">2:30</span><span id="timelineEnd">5:00</span></div>
+      <div id="timeline" class="timeline" role="img" aria-label="Example requested intervals over fifteen minutes, not actual movement times"></div>
+      <div class="timeline-axis"><span>0:00</span><span id="timelineMid">7:30</span><span id="timelineEnd">15:00</span></div>
       <p id="timelineBeyond" class="small-description" hidden></p>
       <p id="timelineEmpty" class="small-description" hidden>No scheduled events in this window.</p>
-      <details class="instructions"><summary>Timing details</summary><ul id="scheduleFeedback" class="small-description"></ul></details>
-      <p id="routineSaveStatus" class="save-comparison">ESP32 · connect and read to compare</p>
       <p id="validationJump" class="validation-jump" hidden><a href="#error">Review settings before saving →</a></p>
       <a class="download controller-jump" href="#controllerPanel">Send to your ESP32 ↓</a>
       <button id="download" class="secondary" type="button">Download Arduino sketch (.ino)</button>
@@ -354,7 +368,7 @@
 <dialog id="paletteDialog" class="small-dialog" aria-labelledby="paletteDialogTitle"><div class="dialog-head"><strong id="paletteDialogTitle">Edit palette</strong><button type="button" id="paletteDialogClose" aria-label="Close palette editor">✕</button></div><div class="dialog-body"><fieldset data-palette-editor="0" hidden><legend>Palette 1</legend><label>Name <input id="palette0Name" maxlength="24" value="Halloween"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette0Torso" value="#ff6000"></label><label>Head <input type="color" id="palette0Head" value="#00ff00"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="0"> Link torso &amp; head colors</label></fieldset>
 <fieldset data-palette-editor="1" hidden><legend>Palette 2</legend><label>Name <input id="palette1Name" maxlength="24" value="Haunted"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette1Torso" value="#8000ff"></label><label>Head <input type="color" id="palette1Head" value="#00e6cc"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="1"> Link torso &amp; head colors</label></fieldset>
 <fieldset data-palette-editor="2" hidden><legend>Palette 3</legend><label>Name <input id="palette2Name" maxlength="24" value="Moonlight"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette2Torso" value="#176bff"></label><label>Head <input type="color" id="palette2Head" value="#c8e8ff"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="2"> Link torso &amp; head colors</label></fieldset>
-<fieldset data-palette-editor="3" hidden><legend>Palette 4</legend><label>Name <input id="palette3Name" maxlength="24" value="Ember"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette3Torso" value="#ff1800"></label><label>Head <input type="color" id="palette3Head" value="#ffb000"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="3"> Link torso &amp; head colors</label></fieldset><p class="small-description">Edits update the current Studio settings. Save your scene to keep them in its library.</p></div><div class="dialog-actions"><button type="button" id="paletteDialogDone">Done</button></div></dialog>
+<fieldset data-palette-editor="3" hidden><legend>Palette 4</legend><label>Name <input id="palette3Name" maxlength="24" value="Ember"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette3Torso" value="#ff1800"></label><label>Head <input type="color" id="palette3Head" value="#ffb000"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="3"> Link torso &amp; head colors</label></fieldset><p class="small-description">Preview edits here, then Apply palette. Cancel or Escape keeps the previous palette. Save your scene to keep applied changes in its library.</p></div><div class="palette-draft-preview"><span><i id="paletteDraftTorso"></i>Torso</span><span><i id="paletteDraftHead"></i>Head</span></div><p id="paletteDialogError" role="alert"></p><div class="dialog-actions"><button type="button" id="paletteDialogCancel">Cancel</button><button type="button" id="paletteDialogDone">Apply palette</button></div></dialog>
 <dialog id="sceneRenameDialog" class="small-dialog" aria-labelledby="sceneRenameTitle"><form id="sceneRenameForm"><div class="dialog-head"><strong id="sceneRenameTitle">Rename scene</strong></div><div class="dialog-body"><label>Scene name <input id="sceneRenameInput" maxlength="32" required></label><p id="sceneRenameError" role="alert"></p></div><div class="dialog-actions"><button type="button" id="sceneRenameCancel">Cancel</button><button type="submit">Rename</button></div></form></dialog>
 <dialog id="sceneImportDialog" class="small-dialog" aria-labelledby="sceneImportTitle"><form method="dialog"><div class="dialog-head"><strong id="sceneImportTitle">Import scenes</strong></div><div class="dialog-body"><p id="sceneImportNotice"></p><ul id="sceneImportPreview"></ul></div><div class="dialog-actions"><button value="cancel">Cancel</button><button value="replace">Replace browser library</button></div></form></dialog>
 <dialog id="sceneConfirmDialog" class="small-dialog" aria-labelledby="sceneConfirmTitle"><form method="dialog"><div class="dialog-head"><strong id="sceneConfirmTitle">Keep your current edits?</strong></div><div class="dialog-body"><p id="sceneConfirmText"></p></div><div class="dialog-actions"><button value="cancel">Keep editing</button><button value="continue">Continue</button></div></form></dialog>

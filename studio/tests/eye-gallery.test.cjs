@@ -19,7 +19,8 @@ test("gallery offers 18 real eye icons with enlarged previews and source credit"
   assert.match(html, /id="eyePreviewLabel"/);
   assert.match(html, /id="eyeGrid"/);
   assert.match(html, /id="selectedEyeCount"/);
-  assert.match(js, /for\(let i=1;i<=18;i\+\+\)/);
+  assert.match(js, /for\(let i=1;i<=20;i\+\+\)/);
+  assert.match(js, /card.hidden=i>18/);
   assert.match(js, /\.\/images\/eyes\/eye_icon_/);
   for(let i=1;i<=18;i++) {
     const bytes=fs.readFileSync(path.join(root,'studio/images/eyes',`eye_icon_${i}.png`));

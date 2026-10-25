@@ -77,3 +77,9 @@ have software coverage only. **Physical browser flashing remains Untested**; the
 owner used Arduino for the reported installation. Follow the
 [short attended checklist](browser-installation.md#short-attended-hardware-checklist).
 No new USB retention, scene transition or prop behavior pass is recorded.
+
+October 25 scene look workspace: descriptive eye names, per-model browser-only
+favorites/nicknames, scoped look application/copying, staged palette edits, saved
+scene strip and animated swatch samples have **Software-only** evidence. Browser
+effect speed is illustrative and strobe is capped at two flashes per second; no
+physical effect calibration or new eye/light/scene observation was performed.

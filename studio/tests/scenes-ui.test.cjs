@@ -14,7 +14,8 @@ function page({storage=new Map(),blocked=false}={}){
  const document={getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},createElement:tag=>new Element(tag),querySelectorAll:s=>s==='[data-scene-starter]'?starters:s==='[data-scene-index]'?nodes.sceneList.children:[],addEventListener:(name,fn)=>(events[name]??=[]).push(fn),dispatchEvent:event=>{for(const fn of events[event.type]||[])fn(event);}};
  const g={...generator,readConfig:()=>config,readLibrary:()=>clips,writeLibrary:v=>clips=v,writeConfig:c=>{config={...config,...c};document.dispatchEvent({type:'skelly-config-changed'});},downloadText:()=>{}};
  nodes.sceneConfirmDialog.showModal=function(){this.open=true;confirmed++;Promise.resolve().then(()=>this.close(answer?'continue':'cancel'));};
- const window={SkellySceneModel:model,SkellyStudioGenerator:g,SkellyRuntime:runtime,confirm:()=>{throw Error('Use the Studio confirmation dialog.');},addEventListener:(name,fn)=>windowEvents[name]=fn};
+ nodes.sceneStarterScope.value='complete';
+ const window={SkellySceneModel:model,SkellyLooks:require('../looks.js'),SkellyStudioGenerator:g,SkellyRuntime:runtime,confirm:()=>{throw Error('Use the Studio confirmation dialog.');},addEventListener:(name,fn)=>windowEvents[name]=fn};
  const localStorage={getItem:key=>{if(blocked)throw Error('blocked');return storage.get(key)||null;},setItem:(key,value)=>{if(blocked)throw Error('blocked');storage.set(key,value);},removeItem:key=>{if(blocked)throw Error('blocked');storage.delete(key);}};
  const context=vm.createContext({window,document,localStorage,CustomEvent:class{constructor(type){this.type=type;}},setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id)});
  vm.runInContext(fs.readFileSync(path.join(root,'scenes.js'),'utf8'),context);document.dispatchEvent({type:'DOMContentLoaded'});
@@ -31,6 +32,22 @@ test('new complete looks are recoverable drafts even before their first edit and
  const p=page();p.nodes.sceneSave.onclick();await p.starters[0].onclick();p.flush();assert.ok(p.storage.has('SkellyStudio-draft-v1'));assert.match(p.nodes.editorStatus.textContent,/Unsaved/);
  p.answer=false;await p.click('Edit scene My spooky Skelly');assert.equal(p.config.lightsEnabled,true);assert.equal(p.confirmed,1);
  p.answer=true;await p.click('Edit scene My spooky Skelly');assert.equal(p.config.lightsEnabled,false);assert.match(p.nodes.editorStatus.textContent,/No unsaved/);
+});
+test('appearance-only starters preserve the edited scene, timing, mouth and movement',async()=>{
+ const p=page();p.nodes.sceneSave.onclick();p.nodes.sceneStarterScope.value='appearance';p.nodes.sceneMinutes.value='17';
+ const before={...p.config};await p.starters[1].onclick();
+ assert.equal(p.nodes.sceneName.value,'My spooky Skelly');assert.equal(p.nodes.sceneMinutes.value,'17');
+ for(const key of ['headMin','headMax','armEnabled','torsoEnabled','compoundEnabled','jawEnabled','eyeJawMode','jawProtectBody','clockEnabled','restEnabled'])assert.equal(p.config[key],before[key],key);
+ assert.equal(p.config.lightsEnabled,true);assert.equal(p.config.eyesEnabled,true);assert.equal(p.confirmed,0);
+ assert.match(p.nodes.editorStatus.textContent,/Unsaved/);assert.equal(p.api.snapshot().scenes[0].profile.config.lightsEnabled,false);
+ p.nodes.sceneUpdate.onclick();assert.equal(p.api.snapshot().scenes[0].seconds,1020);assert.equal(p.api.snapshot().scenes[0].profile.config.lightsEnabled,true);
+});
+test('sequence strip follows saved duration, order and starting scene without including drafts',()=>{
+ const p=page();p.nodes.sceneSave.onclick();p.name('Late');p.nodes.sceneMinutes.value='12';p.nodes.sceneSave.onclick();
+ assert.equal(p.nodes.sceneStrip.children.length,2);assert.match(p.nodes.sceneStrip.children[0].children[0].textContent,/Starts here/);assert.match(p.nodes.sceneStrip.children[1].children[0].textContent,/12 min/);
+ p.nodes.sceneMinutes.value='20';p.change({headMin:40});assert.match(p.nodes.sceneStrip.children[1].children[0].textContent,/12 min/);
+ p.nodes.sceneRotate.checked=true;p.nodes.sceneRotate.onchange();assert.match(p.nodes.sceneStripNote.textContent,/22 minutes/);
+ p.nodes.sceneOrder.value='random';p.nodes.sceneOrder.onchange();assert.match(p.nodes.sceneStrip.children[1].children[0].textContent,/Random choice/);assert.doesNotMatch(p.nodes.sceneStripNote.textContent,/22 minutes/);
 });
 test('draft restore retains the saved scene baseline and invalid edits never replace a valid recovery snapshot',async()=>{
  const storage=new Map(),p=page({storage});p.nodes.sceneSave.onclick();p.change({headMin:40});p.flush();const valid=storage.get('SkellyStudio-draft-v1');p.change({headMin:1});p.flush();assert.equal(storage.get('SkellyStudio-draft-v1'),valid);assert.equal(p.beforeUnload(),true);
@@ -52,13 +69,13 @@ test('verified controller status compares only the acknowledged snapshot and dis
  p.nodes.sceneUpdate.onclick();assert.match(p.nodes.deviceSaveStatus.textContent,/not been sent/);p.api.usbState(null);assert.match(p.nodes.deviceSaveStatus.textContent,/connect and read/);
 });
 
-test('USB and preview comparisons share one verified baseline and never imply an unobserved save',()=>{
- const p=page();assert.match(p.nodes.routineSaveStatus.textContent,/connect and read/);assert.equal(p.nodes.routineSaveStatus.dataset.state,'info');
+test('USB comparison stays beside save controls and never implies an unobserved save',()=>{
+ const p=page();assert.match(p.nodes.deviceSaveStatus.textContent,/connect and read/);assert.equal(p.nodes.deviceSaveStatus.dataset.state,'info');
  p.api.usbState({});const config={...p.config};p.api.recordController({scenes:[{name:'Routine',seconds:600,config}],rotate:false},'routine');
- assert.equal(p.nodes.routineSaveStatus.dataset.state,'ready');assert.equal(p.nodes.routineSaveStatus.textContent,p.nodes.deviceSaveStatus.textContent);
- p.change({headMin:40});assert.equal(p.nodes.routineSaveStatus.dataset.state,'changed');assert.match(p.nodes.routineSaveStatus.textContent,/not been sent/);
- p.change({headMin:config.headMin});assert.equal(p.nodes.routineSaveStatus.dataset.state,'ready');
- p.api.usbState(null);assert.equal(p.nodes.routineSaveStatus.dataset.state,'info');assert.match(p.nodes.routineSaveStatus.textContent,/connect and read/);
+ assert.equal(p.nodes.deviceSaveStatus.dataset.state,'ready');assert.equal(p.nodes.routineSaveStatus,undefined);
+ p.change({headMin:40});assert.equal(p.nodes.deviceSaveStatus.dataset.state,'changed');assert.match(p.nodes.deviceSaveStatus.textContent,/not been sent/);
+ p.change({headMin:config.headMin});assert.equal(p.nodes.deviceSaveStatus.dataset.state,'ready');
+ p.api.usbState(null);assert.equal(p.nodes.deviceSaveStatus.dataset.state,'info');assert.match(p.nodes.deviceSaveStatus.textContent,/connect and read/);
 });
 test('unavailable browser storage is visible and never claims a durable library or draft',()=>{
  const p=page({blocked:true});p.nodes.sceneSave.onclick();assert.match(p.nodes.browserSaveStatus.textContent,/session only/);assert.match(p.nodes.sceneMessage.textContent,/session only/);assert.equal(p.beforeUnload(),true);

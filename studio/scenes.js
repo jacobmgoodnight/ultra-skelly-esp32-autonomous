@@ -46,9 +46,7 @@
           tone=matches&&(verified.kind==='routine'||!dirty())?'ready':'changed';
         }catch(_){text='ESP32 · editor changes have not been sent';tone='changed';}
       }
-      for(const id of ['deviceSaveStatus','routineSaveStatus']){
-        const node=el(id);if(node.textContent!==text)node.textContent=text;node.dataset.state=tone;
-      }
+      for(const id of ['deviceSaveStatus','lookDeviceStatus']){const node=el(id);if(node.textContent!==text)node.textContent=text;node.dataset.state=tone;}
       if(!verified&&el('sceneMessage').textContent==='ESP32 settings read-back verified. See the comparison above.')message('ESP32 comparison cleared. Read or save settings to verify again.');
     }
     function renderEditor(){
@@ -82,6 +80,13 @@
           action('↑','Move scene '+s.name+' up',()=>move(index,-1),index===0),action('↓','Move scene '+s.name+' down',()=>move(index,1),index===value.scenes.length-1),
           action('Delete','Delete scene '+s.name,()=>{const wasEditing=library.editing===index;library.remove(index);if(wasEditing)pendingNew=true;persist();renderLibrary();el('sceneUndo').focus();message('Deleted '+s.name+'. Use Undo to restore it.');}));more.append(buttons);row.append(more);list.append(row);
       });
+      const strip=el('sceneStrip');strip.replaceChildren();
+      value.scenes.forEach((s,index)=>{
+        const c=s.profile.config,button=action(s.name,'Open scene '+s.name+' from sequence',async()=>{if(await confirmReplace('Edit '+s.name+'?')){applyEditor(s,index);message('Editing '+s.name+'. Update this scene after changing its look.');}});
+        button.className='scene-strip-item';button.dataset.sceneIndex=String(index);button.setAttribute('aria-pressed',String(index===library.editing));
+        button.append(make('small',Number((s.seconds/60).toFixed(2))+' min · '+(index===0?'Starts here':!value.rotate?'Switching off':value.random?'Random choice':'Next in order')));
+        const colors=make('span',undefined,'scene-colors');if(c.lightsEnabled)for(const part of ['Torso','Head']){if(c.deviceId==='skelly12'&&part==='Head')continue;const dot=make('i');dot.style.background=c.lightRotation?c['palette'+(c.lightPalettes[0]??0)+part]:c[part.toLowerCase()+'Color'];colors.append(dot);}button.append(colors);strip.append(button);
+      });
       el('sceneRotate').checked=value.rotate;el('sceneOrder').value=value.random?'random':'ordered';el('sceneOrder').disabled=!value.rotate;
       el('sceneDownload').disabled=!value.scenes.length;el('sceneExport').disabled=!value.scenes.length;el('sceneUndo').disabled=!library.undoEntry;
       const compare=el('sceneComparisonRows'),showAudio=value.scenes.some(s=>s.profile.config.jawEnabled);compare.replaceChildren();el('sceneAudioColumn').hidden=!showAudio;
@@ -106,6 +111,7 @@
         const axis=make('div',undefined,'routine-axis');axis.append(make('span','0'),make('span',Number((s.seconds/60).toFixed(2))+' min'));preview.append(axis);sequence.append(preview);
       }
       el('sceneSequenceNote').textContent=!value.scenes.length?'Save your first scene using the controls above.':!value.rotate?'Switching off · only the first scene runs.':value.scenes.length===1?'One saved scene · add another to switch scenes.':value.random?'Random · starts with the first scene, then chooses another without immediate repeats.':Number((value.scenes.reduce((n,s)=>n+s.seconds,0)/60).toFixed(2))+' minutes of scene holds per loop, plus completion and reconnect time.';
+      el('sceneStripNote').textContent=el('sceneSequenceNote').textContent;
       renderEditor();document.dispatchEvent(new CustomEvent('skelly-scenes-changed'));
     }
     function move(index,delta){if(library.move(index,delta)){persist();renderLibrary();el('sceneList').querySelectorAll('.scene-card')[index+delta].querySelector('button').focus();}}
@@ -143,7 +149,17 @@
     el('sceneUpdate').onclick=()=>{try{library.update(entry());previewName=library.value.scenes[library.editing].name;const saved=persist();pendingNew=false;checkpoint();renderLibrary();message(saved?'Scene updated in this browser. It has not been sent to the ESP32.':'Scene updated for this session only. Export a copy before closing.');}catch(e){message(e.message);}};
     el('sceneRevert').onclick=async()=>{if(await confirmReplace('Revert editor changes?')){const pending=pendingNew;applyEditor(baseline,library.editing);pendingNew=pending;renderEditor();}};
     el('sceneUndo').onclick=()=>{if(library.undo()){pendingNew=library.editing===null;if(library.editing!==null)baseline=library.value.scenes[library.editing];persist();renderLibrary();message('Last library change undone. The ESP32 is unchanged.');}};
-    for(const button of document.querySelectorAll('[data-scene-starter]'))button.onclick=async()=>{if(await confirmReplace('Start a new '+m.starter(button.dataset.sceneStarter,g).name+' scene?')){try{applyEditor(m.starter(button.dataset.sceneStarter,g,g.readConfig()));message('Starting point loaded. Customize above, then Save as new.');}catch(e){message(e.message);}}};
+    for(const button of document.querySelectorAll('[data-scene-starter]'))button.onclick=async()=>{
+      try{
+        const starting=m.starter(button.dataset.sceneStarter,g,g.readConfig());
+        if(el('sceneStarterScope').value==='complete'){
+          if(await confirmReplace('Start a new '+starting.name+' scene?')){applyEditor(starting);message('Starting point loaded. Customize above, then Save as new.');}
+        }else{
+          const config=window.SkellyLooks.appearance(g.readConfig(),starting.profile.config),errors=g.validate(config);
+          if(errors.length)throw Error(errors.join(' '));g.writeConfig(config);message(starting.name+' eyes and lights applied to the current editor. Update or save the scene to keep them.');
+        }
+      }catch(e){message(e.message);}
+    };
     el('sceneRotate').onchange=()=>{const next=library.snapshot();next.rotate=el('sceneRotate').checked;library.commit(next);persist();renderLibrary();};
     el('scenePreviewSelect').onchange=()=>{previewName=el('scenePreviewSelect').value;renderLibrary();};
     el('sceneOrder').onchange=()=>{const next=library.snapshot();next.random=el('sceneOrder').value==='random';library.commit(next);persist();renderLibrary();};

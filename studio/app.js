@@ -46,6 +46,20 @@
     haunted:{eyeJawMode:1,eyesEnabled:true,eyeChoices:[1,2,3,4,5,6,7,8],eyesMin:150,eyesMax:300,headEnabled:true,headMin:32,headMax:45,jawEnabled:false,jawMin:30,jawMax:60,torsoEnabled:true,torsoMin:75,torsoMax:180,armEnabled:true,armMin:60,armMax:120,bodyOverlap:false,overlap:true,jawProtectBody:true,jawFollowupMotor:0,jawFollowupDelaySec:2,jawFollowupRecurring:false,compoundEnabled:true,compoundAlongside:true,compoundMin:240,compoundMax:600,compoundMasks:[3,5,6,7],lightsEnabled:false}
   };
   const byId = id => document.getElementById(id);
+  let paletteDraft=null;
+  function restorePaletteDraft(){
+    if(!paletteDraft)return;
+    const {index,baseline,linked}=paletteDraft;paletteDraft=null;
+    for(const part of ['Name','Torso','Head'])byId('palette'+index+part).value=baseline['palette'+index+part];
+    document.querySelector('[data-palette-link="'+index+'"]').checked=linked;
+  }
+  function renderPaletteDraft(){
+    if(!paletteDraft)return;
+    const i=paletteDraft.index,linked=document.querySelector('[data-palette-link="'+i+'"]').checked;
+    if(linked)byId('palette'+i+'Head').value=byId('palette'+i+'Torso').value;
+    byId('palette'+i+'Head').disabled=linked;
+    for(const part of ['Torso','Head'])byId('paletteDraft'+part).style.background=byId('palette'+i+part).value;
+  }
   const PALETTES=Object.freeze({
     halloween:{name:"Halloween",torsoColor:"#ff6000",headColor:"#00ff00"},
     haunted:{name:"Haunted",torsoColor:"#8000ff",headColor:"#00e6cc"},
@@ -466,7 +480,7 @@
       bodyOverlap:false,jawProtectBody:byId("jawProtectBody").checked,
       compoundEnabled:byId("compoundEnabled").checked,compoundAlongside:byId("compoundAlongside").checked,
       scanRetrySec:n("scanRetrySec"),startupRetrySec:n("startupRetrySec"),startupWindowSec:n("startupWindowSec"),
-      ...Object.fromEntries(Array.from({length:4},(_,i)=>["Name","Torso","Head"].map(part=>{const key="palette"+i+part;return [key,byId(key).value]})).flat()),compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
+      ...Object.fromEntries(Array.from({length:4},(_,i)=>["Name","Torso","Head"].map(part=>{const key="palette"+i+part;return [key,paletteDraft?.baseline[key]??byId(key).value]})).flat()),compoundMin:n("compoundMin"),compoundMax:n("compoundMax"),
       compoundMasks:Array.from(document.querySelectorAll(".compound-choice:checked")).map(el=>Number(el.value)),
       lightRotation:byId("lightRotation").checked,lightInterval:n("lightInterval"),
       lightPalettes:Array.from(document.querySelectorAll(".light-palette-choice:checked")).map(el=>Number(el.value)),
@@ -490,6 +504,7 @@
     };
   }
   function writeConfig(cfg) {
+    if(paletteDraft){restorePaletteDraft();byId('paletteDialog').close();}
     if(cfg.deviceId!==undefined&&byId("deviceId")){
       if(byId('deviceId').value!==cfg.deviceId){
         byId('deviceChangeNotice').hidden=false;
@@ -551,9 +566,9 @@
     const c=readConfig(),errors=validate(c);
     for(const button of document.querySelectorAll('.preset'))button.setAttribute('aria-pressed',String(button.classList.contains('chosen')));
     renderMotionPreviews();
-    const seconds=Number(byId('previewWindow').value);
+    const seconds=900;
     const clock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
-    byId('timelineTitle').textContent=seconds===300?'Five-minute timing preview':'Timing preview · '+Number((seconds/60).toFixed(2))+' min';
+    byId('timelineTitle').textContent='15-minute timing preview';
     byId('timelineMid').textContent=clock(Math.floor(seconds/2));byId('timelineEnd').textContent=clock(seconds);
     byId('timeline').setAttribute('aria-label','Example requested intervals over '+seconds+' seconds, not actual movement times');
     const previewItems=window.SkellyExperience.previewItems(c);
@@ -563,22 +578,12 @@
       dot.className="dot "+kind;item.append(dot,document.createTextNode(" "+label));legend.append(item);
     }
     byId("timelineEmpty").hidden=simulateSchedule(c,previewSeed,seconds).length>0;
-    const feedback=byId("scheduleFeedback");
-    feedback.replaceChildren();
-    for(const text of window.SkellyExperience.scheduleFeedback(c)) {
-      const item=document.createElement("li");item.textContent=text;feedback.append(item);
-    }
     byId("headSummary").textContent=c.headEnabled?c.headMin+"–"+c.headMax+" sec":"Off";
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
-    byId("bodyOverlapSummary").textContent=c.compoundEnabled?(c.compoundAlongside?"Serialized + combined actions":"Combined actions only"):"Serialized";
-    byId("compoundSummary").textContent=c.compoundEnabled?c.compoundMasks.map(m=>"0x"+m.toString(16).padStart(2,"0")).join(", ")+" · "+c.compoundMin+"–"+c.compoundMax+" sec":"Off";
     byId('lightSummary').textContent=window.SkellyExperience.lightingSummary(c);
     const summaryPalette=c.lightPalettes[0]??0;
     for(const part of ['torso','head']){const dot=byId(part==='torso'?'summaryTorsoColor':'summaryHeadColor');dot.hidden=!c.lightsEnabled;dot.style.background=c.lightRotation?c['palette'+summaryPalette+(part==='torso'?'Torso':'Head')]:c[part+'Color'];}
-    byId("jawProtectionSummary").textContent=c.jawEnabled?(c.jawProtectBody?"Protect all body motors":"MP3 can interrupt motion"):"Not needed";
-    const motorLabel=["Off","Arm","Torso","Arm or torso","Head (2s & 10s failed)"][c.jawFollowupMotor] || "Unknown";
-    byId("jawFollowupSummary").textContent=c.jawFollowupMotor===0?"Off":motorLabel+" after "+c.jawFollowupDelaySec+"s · "+(c.jawFollowupRecurring?"Recurring":"One-shot");
     const files=[c.jawFile,...extraFileNumbers(c)];
     const clips=readLibrary();
     const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
@@ -609,8 +614,10 @@
     for(const part of ["torso","head"]){byId(part+"Speed").disabled=!c.lightsEnabled||c[part+"Effect"]===1;byId(part+'SpeedRow').hidden=c[part+'Effect']===1;const brightness=Math.round(c[part+'Brightness']/255*100)+'%';byId(part+'BrightnessValue').textContent=brightness;byId(part+'Brightness').setAttribute('aria-valuetext',brightness);}
     byId('strobeNotice').hidden=!c.lightsEnabled||![c.torsoEffect,c.headEffect].includes(2);
     byId("eyesStatus").textContent=c.eyesEnabled?(fixedEyes?'On · eye #'+c.eyeChoices[0]+' · stays the same':"On · "+c.eyeChoices.length+" expressions in random rotation"):"Off · preview your chosen expression";
-    byId('eyeTiming').hidden=byId('eyeBehavior').value==='fixed';
-    for(const id of ['eyesMin','eyesMax'])byId(id).disabled=byId('eyeBehavior').value==='fixed';
+    if(!c.eyesEnabled)byId('eyeBehavior').value='stored';
+    else if(byId('eyeBehavior').value==='stored')byId('eyeBehavior').value=fixedEyes?'fixed':'random';
+    byId('eyeTiming').hidden=byId('eyeBehavior').value!=='random';
+    for(const id of ['eyesMin','eyesMax'])byId(id).disabled=byId('eyeBehavior').value!=='random';
     byId("breaksStatus").textContent=c.restEnabled?"On · "+c.restDurationMin+"–"+c.restDurationMax+" second pauses":"Off · pauses between routines";
     const palette=Array.from({length:4},(_,i)=>({name:c["palette"+i+"Name"],torsoColor:c["palette"+i+"Torso"],headColor:c["palette"+i+"Head"]})).find(p=>p.torsoColor===c.torsoColor && p.headColor===c.headColor);
     byId("paletteStatus").textContent=!c.lightsEnabled?"Lighting is off.":c.lightRotation?"Rotating selected palettes; custom color fields are used when rotation is off.":palette?palette.name+" colors selected.":"Custom colors selected.";
@@ -621,13 +628,12 @@
       const swatches=button.querySelectorAll("i");swatches[0].style.background=p.torsoColor;swatches[1].style.background=p.headColor;
       document.querySelector('[data-edit-palette="'+i+'"]').setAttribute('aria-label','Edit '+p.name+' palette');
       document.querySelector('.light-palette-choice[value="'+i+'"]').nextSibling.textContent=" "+p.name;
-      button.setAttribute("aria-pressed",String(!c.lightRotation && p.torsoColor===c.torsoColor && p.headColor===c.headColor));
+      button.setAttribute("aria-pressed",String(c.lightRotation?c.lightPalettes.includes(i):p.torsoColor===c.torsoColor && p.headColor===c.headColor));
     }
     byId("mouthStatus").textContent=c.jawEnabled?(c.eyeJawMode===3?"Audio scene active · advanced playback controls":"On · limited coordination; audio required"):"Off · optional";
     byId("mouthOptions").disabled=!c.jawEnabled;
     byId("mouthOptions").hidden=!c.jawEnabled;
     byId("mouthOptions").classList.toggle("muted",!c.jawEnabled);
-    byId("overlapSummary").textContent=!c.jawEnabled?"Not needed":(c.jawEnabled&&c.jawProtectBody)?"Blocked by MP3 protection":c.overlap?"Allowed (experimental)":"Avoided";
     for(const id of ["headEnabled","torsoEnabled","armEnabled","jawEnabled"])document.querySelector('[data-for="'+id+'"]').classList.toggle("muted",!byId(id).checked);
     const firstPalette=c.lightPalettes[0]??0;
     byId('lightPreviewTorso').style.background=c.lightRotation?c['palette'+firstPalette+'Torso']:c.torsoColor;
@@ -683,7 +689,7 @@
     }
     document.querySelectorAll('.eye-choice input').forEach(input=>{
       const i=Number(input.value),card=input.closest('.eye-card');card.hidden=i>deviceFor(c).eyes;
-      const img=card.querySelector('img');if(img){const url=eyeImageUrl(i);img.hidden=!url;img.src=url;}
+      const img=card.querySelector('img');if(img){const url=i<=deviceFor(c).eyes?eyeImageUrl(i):'';img.hidden=!url;if(url)img.src=url;else img.removeAttribute('src');}
     });
     byId('summaryEyeImage').hidden=!c.eyesEnabled||!eyeImageUrl(c.eyeChoices[0]);
     document.dispatchEvent(new CustomEvent('skelly-config-changed'));
@@ -711,9 +717,9 @@
   }
   function showEyePreview(index) {
     const image=byId("eyePreviewImage");
-    image.src=eyeImageUrl(index);
-    image.hidden=!image.getAttribute('src');
-    image.alt="Enlarged preview of Ultra Skelly eye pattern "+index;
+    const url=eyeImageUrl(index);if(url)image.src=url;else image.removeAttribute('src');
+    image.hidden=!url;
+    image.alt="Enlarged preview of Skelly eye pattern "+index;
     byId("eyePreviewLabel").textContent="Eye pattern #"+index;
   }
   function readLibrary() {
@@ -734,11 +740,10 @@
     document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1000);
   }
   function init(){
-    let editingPalette=null;
     const eyeGrid=byId("eyeGrid");
-    for(let i=1;i<=18;i++){
+    for(let i=1;i<=20;i++){
       const card=document.createElement("div");
-      card.className="eye-card";
+      card.className="eye-card";card.hidden=i>18;
       const label=document.createElement("label");
       label.className="eye-choice";
       label.title="Choose eye pattern "+i;
@@ -748,7 +753,7 @@
       const content=document.createElement("span");
       content.className="eye-tile";
       const image=document.createElement("img");
-      image.src=eyeImageUrl(i);
+      if(i<=18)image.src=eyeImageUrl(i);
       image.alt="Eye pattern "+i;
       image.width=100;image.height=100;
       image.loading="lazy";image.decoding="async";
@@ -766,16 +771,10 @@
       eyeGrid.append(card);
     }
     showEyePreview(1);
-    // The two additional 12-foot designs are selectable without inventing art.
-    for(let i=19;i<=20;i++){
-      const card=document.createElement('div');card.className='eye-card';card.hidden=true;
-      const label=document.createElement('label');label.className='eye-choice';
-      const input=document.createElement('input');input.type='checkbox';input.value=i;
-      label.append(input,document.createTextNode('Eye '+i));card.append(label);eyeGrid.append(card);
-    }
     for(const el of document.querySelectorAll("input, select"))el.addEventListener("input",()=>{
       if(el.id==="scenePreviewSelect"||el.id==='controllerConsent'||el.closest("#audioScenes"))return;
-      if(el.id==='previewWindow'){render();return;}
+      if(el.closest('[data-look-ui]'))return;
+      if(el.closest('#paletteDialog')){renderPaletteDraft();return;}
       if(el.id==='deviceId'){
         const device=DEVICE_PROFILES[el.value];
         writeConfig(adaptDevice({...readConfig(),bleName:device.bleName,headEnabled:true,
@@ -785,23 +784,22 @@
       }
       for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
       if(el.closest('.eye-choice')){
-        if(byId('eyeBehavior').value==='fixed')document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);
+        if(byId('eyeBehavior').value!=='random'){document.querySelectorAll('.eye-choice input').forEach(other=>other.checked=other===el);byId('eyeBehavior').value='fixed';}
         else if(!document.querySelector('.eye-choice input:checked'))el.checked=true;
+        byId('eyesEnabled').checked=true;
         if(el.checked)showEyePreview(Number(el.value));
       }
+      if(el.id==='eyeBehavior')byId('eyesEnabled').checked=el.value!=='stored';
       if(el.id==='eyeBehavior'&&el.value==='fixed')writeConfig({eyeChoices:readConfig().eyeChoices.slice(0,1)});
       if(el.id==='linkLightColors'||el.id==='torsoColor')if(byId('linkLightColors').checked)byId('headColor').value=byId('torsoColor').value;
       for(let i=0;i<4;i++)if(el.id==='palette'+i+'Torso'||el.dataset.paletteLink===String(i))if(document.querySelector('[data-palette-link="'+i+'"]').checked)byId('palette'+i+'Head').value=byId('palette'+i+'Torso').value;
-      if(editingPalette?.follow&&(el.id.startsWith('palette'+editingPalette.index)||el.dataset.paletteLink===String(editingPalette.index))){
-        byId('torsoColor').value=byId('palette'+editingPalette.index+'Torso').value;byId('headColor').value=byId('palette'+editingPalette.index+'Head').value;byId('linkLightColors').checked=byId('torsoColor').value===byId('headColor').value;
-      }
       if(el.id==='lightingMode')writeConfig({lightRotation:el.value==='rotate',lightsEnabled:true});
       else if(el.id==="jawEnabled"&&!el.checked)writeConfig(window.SkellyExperience.withoutMouth(readConfig()));
       else if(el.id==="lightRotation"&&el.checked)writeConfig({lightsEnabled:true});
       else render();
     });
-    byId("selectAllEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=deviceFor(readConfig()).eyes);render()});
-    byId("selectFewEyes").addEventListener("click",()=>{byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
+    byId("selectAllEyes").addEventListener("click",()=>{byId('eyesEnabled').checked=true;byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=deviceFor(readConfig()).eyes);render()});
+    byId("selectFewEyes").addEventListener("click",()=>{byId('eyesEnabled').checked=true;byId('eyeBehavior').value='random';document.querySelectorAll(".eye-choice input").forEach(el=>el.checked=Number(el.value)<=6);render()});
     byId('newExample').addEventListener('click',()=>{previewSeed=(previewSeed+1)>>>0;render();});
     for(const b of document.querySelectorAll(".preset"))b.addEventListener("click",()=>{
       for(const p of document.querySelectorAll(".preset"))p.classList.toggle("chosen",p===b);
@@ -817,15 +815,28 @@
     });
     for(const button of document.querySelectorAll("[data-palette]"))button.addEventListener("click",()=>{
       const c=readConfig(),i=Object.keys(PALETTES).indexOf(button.dataset.palette);
-      writeConfig({torsoColor:c["palette"+i+"Torso"],headColor:byId('linkLightColors').checked?c["palette"+i+"Torso"]:c["palette"+i+"Head"],lightRotation:false});
+      if(c.lightRotation){
+        const selected=c.lightPalettes.includes(i);
+        if(selected&&c.lightPalettes.length<=2){byId('paletteStatus').textContent='Keep at least two palettes selected for rotation.';return;}
+        writeConfig({lightsEnabled:true,lightPalettes:selected?c.lightPalettes.filter(n=>n!==i):[...c.lightPalettes,i]});
+      }else writeConfig({lightsEnabled:true,torsoColor:c["palette"+i+"Torso"],headColor:byId('linkLightColors').checked?c["palette"+i+"Torso"]:c["palette"+i+"Head"]});
       for(const b of document.querySelectorAll(".preset")){b.classList.remove("chosen");b.setAttribute('aria-pressed','false');}
     });
     for(const button of document.querySelectorAll('[data-edit-palette]'))button.addEventListener('click',()=>{
-      const index=Number(button.dataset.editPalette),c=readConfig();editingPalette={index,follow:!c.lightRotation&&c.torsoColor===c['palette'+index+'Torso']&&c.headColor===c['palette'+index+'Head']};document.querySelectorAll('[data-palette-editor]').forEach(node=>node.hidden=Number(node.dataset.paletteEditor)!==index);
-      byId('paletteDialogTitle').textContent='Edit '+byId('palette'+index+'Name').value;byId('paletteDialog').showModal();byId('palette'+index+'Name').focus();
+      const index=Number(button.dataset.editPalette),c=readConfig();paletteDraft={index,baseline:c,linked:document.querySelector('[data-palette-link="'+index+'"]').checked,follow:!c.lightRotation&&c.torsoColor===c['palette'+index+'Torso']&&c.headColor===c['palette'+index+'Head']};document.querySelectorAll('[data-palette-editor]').forEach(node=>node.hidden=Number(node.dataset.paletteEditor)!==index);
+      byId('paletteDialogError').textContent='';renderPaletteDraft();byId('paletteDialogTitle').textContent='Edit '+byId('palette'+index+'Name').value;byId('paletteDialog').showModal();byId('palette'+index+'Name').focus();
     });
-    for(const id of ['paletteDialogClose','paletteDialogDone'])byId(id).onclick=()=>byId('paletteDialog').close();
-    byId('paletteDialog').addEventListener('close',()=>editingPalette=null);
+    const cancelPalette=()=>{if(paletteDraft){restorePaletteDraft();render();}};
+    for(const id of ['paletteDialogClose','paletteDialogCancel'])byId(id).onclick=()=>{cancelPalette();byId('paletteDialog').close();};
+    byId('paletteDialog').addEventListener('cancel',cancelPalette);
+    byId('paletteDialogDone').onclick=()=>{
+      if(!paletteDraft)return;const {index,follow}=paletteDraft,c=readConfig();
+      for(const part of ['Name','Torso','Head'])c['palette'+index+part]=byId('palette'+index+part).value;
+      if(follow){c.torsoColor=c['palette'+index+'Torso'];c.headColor=c['palette'+index+'Head'];}
+      const errors=validate(c);if(errors.length){byId('paletteDialogError').textContent=errors.join(' ');return;}
+      paletteDraft=null;writeConfig(c);byId('paletteDialog').close();
+    };
+    byId('paletteDialog').addEventListener('close',cancelPalette);
     // Reveal nested disclosures before native anchor scrolling, including deep links.
     function revealSection(hash){
       const target=byId(hash.slice(1));if(!target)return null;
@@ -835,7 +846,11 @@
       return target;
     }
     for(const link of document.querySelectorAll('a[href^="#"]'))link.addEventListener('click',event=>{
-      if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey)revealSection(link.getAttribute('href'));
+      if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){
+        const hash=link.getAttribute('href'),target=revealSection(hash);
+        // Repeated navigation to the current fragment must retain section focus.
+        if(window.location.hash===hash){event.preventDefault();target?.scrollIntoView({block:'start'});}
+      }
     });
     const revealHash=()=>{if(window.location.hash)revealSection(window.location.hash)?.scrollIntoView({block:'start'});};
     window.addEventListener('hashchange',revealHash);
@@ -886,6 +901,6 @@
     document.addEventListener("visibilitychange",pauseMotion);pauseMotion();
     writeConfig({...DEFAULTS,...PRESETS.normal});
   }
-  window.SkellyStudioGenerator={DEFAULTS,PRESETS,DEVICE_PROFILES,adaptDevice,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary,readAudioReference,writeAudioReference,normalizeAudioReference};
+  window.SkellyStudioGenerator={DEFAULTS,PRESETS,DEVICE_PROFILES,adaptDevice,validate,generateSketch,generateRuntimeSketch,simulateSchedule,jawSelection,createProfile,parseProfile,PALETTES,paletteSettings,readConfig,writeConfig,downloadText,sketchFilename,readLibrary,writeLibrary,readAudioReference,writeAudioReference,normalizeAudioReference,eyeImageUrl};
   if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",init);
 })();
