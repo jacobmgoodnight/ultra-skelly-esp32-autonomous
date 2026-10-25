@@ -148,7 +148,7 @@ async function main(){
     });
 
     await run('personality · customize eyes and lights, preview and save',async page=>{
-      await page.locator('[data-preset="haunted"]').click();await nav(page,'#expressions');if(!await page.locator('#eyeChoicesPanel').evaluate(el=>el.open))await page.locator('#eyeChoicesPanel>summary').click();
+      await page.locator('[data-preset="haunted"]').click();await nav(page,'#expressions');
       assert.equal(await page.locator('[data-preset="haunted"]').getAttribute('aria-pressed'),'true');
       await page.locator('#eyeBehavior').selectOption('fixed');await page.locator('.eye-choice:has(input[value="8"])').click();
       assert.equal(await page.locator('.preset[aria-pressed="true"]').count(),0);
@@ -161,22 +161,27 @@ async function main(){
       assert.equal(saved.eyesEnabled,true);assert.deepEqual(saved.eyeChoices,[8]);assert.equal(saved.torsoEffect,3);assert.equal(saved.lightsEnabled,true);
     },{width:390,height:844});
 
-    await run('look editor · favorites and names are local, recover after reload and follow the selected model',async page=>{
-      await nav(page,'#expressions');const before=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
-      await page.getByRole('button',{name:'Favorite Orange reptile · eye 8',exact:true}).click();
+    await run('eyes · direct selection, descriptive labels and model numbering without favorites or nicknames',async page=>{
+      await page.evaluate(()=>localStorage.setItem('SkellyStudio-eye-preferences-v1',JSON.stringify({version:1,ultra:{favorites:[8],names:{8:'Old nickname'}}})));
+      await page.reload();await nav(page,'#expressions');
+      assert.equal(await page.locator('#eyeNickname, #eyeFilter, .eye-favorite').count(),0);
+      assert.equal(await page.locator('#lookWorkspaceTitle').count(),0);
+      assert.equal(await page.locator('#sceneName').evaluate(el=>el.closest('details').id),'scenes');
+      const unselected=page.locator('.eye-choice:has(input:not(:checked)) img').first();assert.equal(await unselected.evaluate(el=>getComputedStyle(el).opacity),'1');assert.equal(await unselected.evaluate(el=>getComputedStyle(el).filter),'none');
+      const before=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
       await page.getByRole('button',{name:'Show larger preview of eye pattern 8',exact:true}).click();
-      await page.locator('#eyeNickname').fill('Porch watcher');await page.locator('#eyeFilter').selectOption('favorites');
-      assert.equal(await page.locator('.eye-card:visible').count(),1);assert.match(await page.locator('#eyePreviewLabel').textContent(),/Porch watcher/);
-      assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),before,'Presentation choices do not change the routine');
-      await page.reload();await nav(page,'#expressions');await page.locator('#eyeFilter').selectOption('favorites');assert.equal(await page.locator('.eye-card:visible').count(),1);
-      assert.match(await page.locator('.eye-card:visible .eye-tile-number').textContent(),/Porch watcher/);
-      await page.locator('#eyeFilter').selectOption('all');await page.locator('.eye-choice:has(input[value="8"])').click();assert.equal(await page.locator('#eyeBehavior').inputValue(),'fixed');assert.equal(await page.locator('#eyesEnabled').isChecked(),true);
+      assert.match(await page.locator('#eyePreviewLabel').textContent(),/Orange reptile/);
+      assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),before,'Enlarging an expression does not change the routine');
+      await page.locator('.eye-choice:has(input[value="8"])').click();assert.equal(await page.locator('#eyeBehavior').inputValue(),'fixed');assert.equal(await page.locator('#eyesEnabled').isChecked(),true);
+      assert.match(await page.locator('#lookEyeLabel').textContent(),/Orange reptile/);
       await page.locator('#eyeBehavior').selectOption('random');await page.locator('.eye-choice:has(input[value="4"])').click();assert.deepEqual(await page.evaluate(()=>SkellyStudioGenerator.readConfig().eyeChoices),[4,8]);
       await page.locator('#eyeBehavior').selectOption('stored');assert.equal(await page.locator('#eyesEnabled').isChecked(),false);
       await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.readConfig(),bleName:'12ft Skelly',eyesEnabled:true,eyeChoices:[19]},'skelly12')));
       assert.match(await page.locator('.eye-card:has(input[value="19"]) img').getAttribute('src'),/eye_icon_12/);
-      await page.locator('#eyeFilter').selectOption('favorites');assert.equal(await page.locator('.eye-card:visible').count(),0);assert.equal(await page.locator('#eyeFavoritesEmpty').isVisible(),true);
+      assert.match(await page.locator('#lookEyeLabel').textContent(),/Skull and crossbones/);
+      assert.equal(await page.locator('.eye-card:visible').count(),20);
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+      await page.locator('#expressions').screenshot({path:path.join(artifacts,'simplified-eyes-mobile.png')});
     },{width:390,height:844});
 
     await run('look editor · palette staging, cancel, Apply and rotation selection',async page=>{
@@ -199,25 +204,24 @@ async function main(){
       const torso=page.locator('#lookPreview [data-look-swatch="torso"]>i'),head=page.locator('#lookPreview [data-look-swatch="head"]>i');
       assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-strobe');
       await page.locator('#headSpeed').fill('254');const flashes=await head.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(flashes>1,'Head strobe opacity actually changes over time');
-      assert.equal(await page.locator('#effectPreviewToggle').getAttribute('aria-pressed'),'true','Preview starts enabled without pressing Play');
+      assert.equal(await page.locator('#effectPreviewToggle, #effectPreviewStatus, #effectPreviewHint, #lookMovement').count(),0,'Compact preview has no controls or explanatory footer');
       assert.equal(await page.locator('#lighting .effect-swatch').count(),0,'No animated overlay in color controls');
       for(const id of ['torsoColor','headColor']){
         await page.locator('#'+id).scrollIntoViewIfNeeded();assert.equal(await page.locator('#'+id).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===el;}),true,id+' remains directly accessible');
       }
       await page.locator('#torsoBrightness').fill('64');assert.ok(Math.abs(await torso.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness')))-64/255)<.001);assert.equal(await head.evaluate(el=>parseFloat(el.parentElement.style.getPropertyValue('--swatch-brightness'))),1);
       const slow=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));await page.locator('#torsoSpeed').fill('254');const fast=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));assert.ok(fast<slow);assert.ok(await head.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration))>=.5);
-      const stable=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));await page.locator('#effectPreviewToggle').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),stable);
-      await page.locator('#headEffect').selectOption('3');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none','Changing effects retains manual Pause');
-      await page.locator('#effectPreviewToggle').click();assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      await page.locator('#headEffect').selectOption('3');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
       const changes=await torso.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(changes>1,'Pulse opacity actually changes over time');
-      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
-      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>!document.querySelector('#effectPreviewToggle').disabled);assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!document.querySelector('#lookPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
+      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>document.querySelector('#lookPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      await page.locator('#lookPreview').screenshot({path:path.join(artifacts,'simplified-look-preview-mobile.png')});
       await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
     },{width:390,height:844});
 
     await run('look editor · scoped quick looks, copy between scenes and saved sequence',async page=>{
-      await page.locator('#sceneName').fill('Porch');await page.locator('#sceneSave').click();
+      await nav(page,'#scenes');await page.locator('#sceneName').fill('Porch');await page.locator('#sceneSave').click();
       const movement=await page.evaluate(()=>{const c=SkellyStudioGenerator.readConfig();return [c.headMin,c.headMax,c.armEnabled,c.jawEnabled,c.eyeJawMode];});
       await page.getByText('Choose a quick look',{exact:true}).click();await page.locator('[data-scene-starter="moonlit"]').click();
       assert.equal(await page.locator('#sceneName').inputValue(),'Porch');assert.deepEqual(await page.evaluate(()=>{const c=SkellyStudioGenerator.readConfig();return [c.headMin,c.headMax,c.armEnabled,c.jawEnabled,c.eyeJawMode];}),movement);

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=e0045e1f006f">
+<link rel="stylesheet" href="./style.css?v=e9c5e9f0b294">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
@@ -14,7 +14,7 @@
 <script src="./app.js?v=f46ffda57f6e" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=77ee2c326c6b" defer></script>
-<script src="./looks.js?v=852f3d1bbce3" defer></script>
+<script src="./looks.js?v=6bf11d14ec99" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=2c5160c3af59" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
@@ -91,31 +91,21 @@
         </details>
       </div>
     </section>
-    <section class="look-workspace" id="lookWorkspace" aria-labelledby="lookWorkspaceTitle">
-      <div class="look-savebar"><div><p id="editorStatus" role="status">Editing a new scene</p><p id="lookDeviceStatus" class="small-description">ESP32 · connect and read to compare</p></div><div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><a href="#controllerPanel">Connect &amp; send ↓</a></div>
-      <div class="panel look-heading"><h2 id="lookWorkspaceTitle">Build a scene’s look</h2>
-
-      <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
-      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label class="look-duration"><span>Stay for</span><span><input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> min</span></label></div>
-<p id="sceneMessage" role="status">No custom scenes saved.</p>
-      <div class="save-locations"><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>      <details class="instructions"><summary>Choose a quick look</summary><label class="look-scope" data-look-ui>Apply to <select id="sceneStarterScope"><option value="appearance">Eyes and lights only</option><option value="complete">Complete routine</option></select></label><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><img src="./images/eyes/eye_icon_8.png" width="46" height="46" alt=""><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><img src="./images/eyes/eye_icon_1.png" width="46" height="46" alt=""><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><img src="./images/eyes/eye_icon_4.png" width="46" height="46" alt=""><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Eyes and lights only preserves your movement, mouth, timing and scene name. Complete routine starts a new 10-minute scene with mouth off. Update or save the scene to keep your changes.</p></details>
-      </div>
-      <div class="look-editor-layout"><div class="look-editors">
+      <div class="appearance-editor-layout" id="lookWorkspace"><div class="appearance-editors">
     <details class="panel fold-panel" id="expressions" open><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · preview your chosen expression</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <input type="checkbox" id="eyesEnabled" hidden><label class="eye-mode">Eye behavior <select id="eyeBehavior"><option value="stored">Use Skelly’s stored eyes</option><option value="fixed">Keep one expression</option><option value="random">Rotate selected expressions</option></select></label>
       <p class="small-description">Keep one expression, or switch randomly between selected designs. When off, Skelly keeps its stored eyes.</p>
       <div id="eyeOptions" class="eye-advanced">
         <div class="eye-spotlight" aria-live="polite">
           <img id="eyePreviewImage" src="./images/eyes/eye_icon_1.png" alt="Eye pattern 1 enlarged preview" width="114" height="114" loading="eager">
-          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Select a thumbnail to use it. Preview enlarges a design; the star adds it to Favorites.</p><span id="selectedEyeCount">Selected: eye #1 · fixed</span></div>
+          <div><strong id="eyePreviewLabel">Eye pattern #1</strong><p>Select an expression to use it. Preview shows it larger.</p><span id="selectedEyeCount">Selected: eye #1 · fixed</span></div>
         </div>
-        <details class="instructions" id="eyeChoicesPanel" open><summary>Choose expressions &amp; switching</summary><label class="eye-nickname" data-look-ui>Nickname for the enlarged expression <input id="eyeNickname" maxlength="24" placeholder="Optional nickname"></label><p id="eyePreferencesStatus" class="small-description">Names and favorites stay in this browser.</p>
-        <label class="eye-filter" data-look-ui>Show <select id="eyeFilter"><option value="all">All expressions</option><option value="favorites">Favorites</option></select></label>
+        <div id="eyeChoicesPanel">
         <label class="freq-inline" id="eyeTiming">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
         <p>Choose at least one design. In fixed mode, selecting another replaces the current choice.</p>
         <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
-        <p id="eyeFavoritesEmpty" class="small-description" hidden>Star an expression in All expressions to add a favorite.</p><p class="eye-credit">Eye previews are included for offline use. Source attribution is included with the project.</p>
-        <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button></div></details>
+        <p class="eye-credit">Eye previews are included for offline use. Source attribution is included with the project.</p>
+        <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button></div></div>
       </div>
 
     </div></details>
@@ -159,12 +149,18 @@
         <div class="look-light"><span id="lookTorsoLabel">Torso</span><span class="effect-swatch" data-look-swatch="torso"><i></i></span></div>
         <div class="look-light" id="lookHeadRow"><span>Head</span><span class="effect-swatch" data-look-swatch="head"><i></i></span></div>
         <p id="lookLightLabel">Use Skelly’s stored lighting</p>
-        <div class="effect-preview-controls"><button type="button" id="effectPreviewToggle" aria-pressed="true">Pause effect preview</button><p id="effectPreviewStatus" role="status">Static preview</p></div><p id="effectPreviewHint">Effect timing and LED appearance are illustrative.</p>
-        <p id="lookMovement" class="look-movement"></p>
       </aside>
       </div>
     <details class="panel fold-panel" id="scenes"><summary><span><strong>Scene builder</strong><small>Save a complete look, or rotate a few throughout the evening</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p class="small-description">Optional: keep up to four complete looks in this browser, then use Save scene collection to send them to your ESP32.</p>
+      <div class="scene-savebar"><div><p id="editorStatus" role="status">Editing a new scene</p><p id="lookDeviceStatus" class="small-description">ESP32 · connect and read to compare</p></div><div class="scene-editor-actions"><button id="sceneUpdate" type="button" disabled>Update scene</button><button id="sceneSave" type="button">Save as new</button><button id="sceneRevert" type="button" disabled>Revert edits</button></div><a href="#controllerPanel">Connect &amp; send ↓</a></div>
+      <div class="scene-editor-header">
+
+      <p id="draftStatus" class="small-description">Edits stay here until saved as a scene or sent to the ESP32.</p>
+      <div class="scene-editor"><label>Scene name <input id="sceneName" maxlength="32" value="My spooky Skelly"></label><label class="look-duration"><span>Stay for</span><span><input id="sceneMinutes" type="number" min="1" max="60" step="any" value="10"> min</span></label></div>
+<p id="sceneMessage" role="status">No custom scenes saved.</p>
+      <div class="save-locations"><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>      <details class="instructions"><summary>Choose a quick look</summary><label class="look-scope" data-look-ui>Apply to <select id="sceneStarterScope"><option value="appearance">Eyes and lights only</option><option value="complete">Complete routine</option></select></label><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><img src="./images/eyes/eye_icon_8.png" width="46" height="46" alt=""><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><img src="./images/eyes/eye_icon_1.png" width="46" height="46" alt=""><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><img src="./images/eyes/eye_icon_4.png" width="46" height="46" alt=""><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Eyes and lights only preserves your movement, mouth, timing and scene name. Complete routine starts a new 10-minute scene with mouth off. Update or save the scene to keep your changes.</p></details>
+      </div>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
       <h3 class="scene-strip-title">Scene sequence</h3><div id="sceneStrip" class="scene-strip" aria-label="Saved scene sequence"></div><p id="sceneStripNote" class="small-description"></p><details class="instructions"><summary>Copy appearance from a saved scene</summary><div class="appearance-copy" data-look-ui><label>From <select id="appearanceCopySource"></select></label><label>Copy <select id="appearanceCopyScope"><option value="appearance">Eyes and lights</option><option value="eyes">Eyes only</option><option value="lights">Lights only</option></select></label><button type="button" id="appearanceCopyApply" disabled>Copy to current editor</button></div><p id="appearanceCopyStatus" class="small-description" role="status">Copy appearance, then update the scene you are editing.</p></details><div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>
       <div class="scene-library-actions"><button id="sceneUndo" type="button" disabled>Undo last library change</button><span>Up to four scenes · saved in this browser</span></div>
@@ -175,7 +171,6 @@
       <details class="instructions"><summary>Scene timing help</summary><p>Each scene starts its hold when Bluetooth connects. Switching waits for current actions and full cooldowns, then reconnects with the next scene. Scenes do not advance while disconnected. Random starts with the first scene and avoids immediate repeats.</p></details>
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
     </div></details>
-    </section>
     <section class="panel controller-panel" id="controllerPanel" aria-labelledby="controllerTitle" tabindex="-1">
       <div class="section-head"><div><span class="step">USB</span><h2 id="controllerTitle">Send to your ESP32</h2></div></div>
       <p class="small-description">Install universal firmware once, then read and save settings here. Your routine runs on its own after USB disconnects.</p>
