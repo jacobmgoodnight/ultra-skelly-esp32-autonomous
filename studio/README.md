@@ -67,7 +67,7 @@ The section shortcuts keep Personality, Movement, Eyes, Lighting, Scenes, Previe
 and Connect & save in reach on phones and desktop. First-time setup links directly
 to the model-specific browser installer; connecting an identified controller folds
 the introductory guidance. Everyday saves still require explicit replacement consent.
-USB and Preview share the same verified-settings comparison. Invalid editor settings
+Connect & save shows the verified-settings comparison beside its controls. Invalid editor settings
 disable only Save this routine; saved scene collections can still be sent. A failed
 save/read-back clears the comparison and asks for a fresh read before retrying.
 See the [usability audit and before/after screenshots](../docs/studio-ux-audit.md).
