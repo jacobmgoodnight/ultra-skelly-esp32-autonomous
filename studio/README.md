@@ -5,6 +5,10 @@ A static browser configurator for the autonomous ESP32 controller.
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
 Eye thumbnails and firmware generation work offline from the complete folder.
 
+The separate [experimental repeat-back lab](talkback.html) records a short phrase
+and plays it only when requested. Start with computer speakers; Skelly live audio
+and jaw response remain Untested. See the [isolated setup and test criteria](../docs/experimental-talkback.md).
+
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly
 summarizes the current eyes and lighting without a second Look panel.
