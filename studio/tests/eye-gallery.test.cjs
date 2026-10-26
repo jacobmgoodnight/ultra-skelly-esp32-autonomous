@@ -30,8 +30,15 @@ test("compact gallery keeps 18 real icons, enlarged previews and repository attr
   }
   assert.match(js, /image\.src=eyeImageUrl\(i\)/);
   assert.match(js, /zoom\.addEventListener\("click",\(\)=>showEyePreview\(i\)\)/);
-  assert.match(css, /\.eye-grid\{grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,82px\),1fr\)\)/);
+  assert.match(css, /@container\(min-width:540px\)\{\.eye-grid\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
   assert.doesNotMatch(html, /Eye previews are included for offline use/);
   assert.match(fs.readFileSync(path.join(root,'studio/images/eyes/README.md'),'utf8'), /Martin Ecker/);
   assert.doesNotMatch(html, /View eye designs/);
+});
+
+test('Studio has the requested simple footer and no visible lighting timing caption',()=>{
+  assert.match(html, /<footer>Community-made ESP32 controller for Ultra Skelly by Jacob Goodnight\.<\/footer>/);
+  assert.doesNotMatch(html, /lightingPreviewNote|Illustration · hardware timing varies/);
+  assert.match(fs.readFileSync(path.join(root,'README.md'),'utf8'), /martinecker\/SkellyUltraWebController/);
+  assert.ok(fs.existsSync(path.join(root,'docs/hardware-verification.md')));
 });

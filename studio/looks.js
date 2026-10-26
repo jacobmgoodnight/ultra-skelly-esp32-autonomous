@@ -60,8 +60,7 @@
         swatch.setAttribute('aria-label',(part==='torso'&&experimental?'Chest':part==='torso'?'Torso':'Head')+' '+color+' · '+({1:'Static',2:'Strobe',3:'Pulsing'}[c[part+'Effect']])+' · '+Math.round(c[part+'Brightness']/255*100)+'% brightness');
       }
       el('previewTorsoLabel').textContent=experimental?'Chest':'Torso';el('previewHeadRow').hidden=experimental;
-      el('lightingPreviewNote').textContent=(c.lightRotation?'Starts with '+c['palette'+first+'Name']+' · ':'')+'Illustration · hardware timing varies';
-      el('lightingPreviewPause').hidden=!moving||reduced.matches;
+      el('lightingPreviewControls').hidden=!moving||reduced.matches;
       el('lightingPreviewPause').textContent=paused?'Resume':'Pause';
       el('lightingPreviewPause').setAttribute('aria-label',(paused?'Resume':'Pause')+' lighting preview');
       el('lightingPreviewPause').setAttribute('aria-pressed',String(paused));

@@ -116,7 +116,8 @@ async function main(){
     for(const width of [1440,390])await run('compact gallery and guided save · '+width,async page=>{
       await nav(page,'#expressions');
       const cards=await page.locator('.eye-card:visible').evaluateAll(nodes=>nodes.map(n=>({top:n.getBoundingClientRect().top,width:n.getBoundingClientRect().width})));
-      assert.equal(cards.length,18);assert.ok(cards.filter(c=>Math.abs(c.top-cards[0].top)<1).length>=(width===1440?6:3),'Responsive gallery fits more expressions per row');
+      assert.equal(cards.length,18);const columns=width===1440?6:3;
+      const rows=Map.groupBy(cards,c=>Math.round(c.top));assert.deepEqual([...rows.values()].map(row=>row.length),Array(18/columns).fill(columns),'All 18 expressions fill balanced rows');
       assert.ok(cards.every(c=>c.width>=80));assert.equal(await page.getByText('Eye previews are included for offline use.',{exact:false}).count(),0);
       await page.locator('.eye-choice input[value="8"]').focus();await page.keyboard.press('Space');
       assert.equal(await page.locator('#eyesEnabled').isChecked(),true);assert.equal(await page.locator('.eye-choice input[value="8"]').isChecked(),true);
@@ -232,7 +233,10 @@ async function main(){
       await page.locator('#headSpeed').fill('254');const flashes=await head.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(flashes>1,'Head strobe opacity actually changes over time');
       assert.equal(await page.locator('#lookPreview, #lookEyeImage, [href="#lookPreview"]').count(),0,'Redundant panel and its links are removed');
       assert.equal(await page.locator('#lightingPreview').evaluate(el=>el.closest('aside').id),'finish');
-      assert.match(await page.locator('#lightingPreviewNote').textContent(),/Illustration.*timing varies/);
+      assert.equal(await page.locator('#lightingPreviewNote').count(),0);
+      assert.equal(await page.getByText('Illustration · hardware timing varies',{exact:true}).count(),0);
+      assert.equal(await page.locator('footer').textContent(),'Community-made ESP32 controller for Ultra Skelly by Jacob Goodnight.');
+      assert.equal(await page.locator('footer a').count(),0);
       const beforePause=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
       await page.locator('#lightingPreviewPause').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none');
       await page.locator('#torsoBrightness').fill('80');assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none','Edits preserve pause');

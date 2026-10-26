@@ -9,7 +9,9 @@
 .eye-spotlight strong{font-size:17px}
 .eye-spotlight p{font-size:12px;line-height:1.5;color:var(--muted);margin:7px 0}
 .eye-spotlight #selectedEyeCount{display:inline-block;color:var(--green);font-size:11px;font-weight:700}
-.eye-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,82px),1fr));gap:8px}
+.eye-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@container(min-width:540px){.eye-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@container(max-width:259px){.eye-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .eye-card{background:#101827;border:1px solid #3b465e;border-radius:9px;padding:3px;min-width:0;display:flex;flex-direction:column;align-items:stretch}
 .eye-card:hover{border-color:#a88cf4}
 .eye-choice{display:block;border:0;border-radius:8px;overflow:hidden;width:100%;background:transparent}
@@ -287,7 +289,7 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 .look-scope select,.eye-mode select,.appearance-copy select{max-width:100%;min-width:0;background:#0d1420;border:1px solid #52647e;border-radius:8px;padding:8px;color:var(--text);font:inherit;min-height:44px}
 .eye-mode{justify-content:space-between}
 
-.appearance-editors{display:grid;gap:14px;min-width:0}
+.appearance-editors{display:grid;gap:14px;min-width:0;container-type:inline-size}
 .appearance-editors .eye-spotlight{gap:12px;padding:12px;margin-bottom:12px}
 .appearance-editors .eye-spotlight img{width:80px;height:80px}
 .appearance-editors .eye-spotlight strong{font-size:15px}
@@ -317,9 +319,8 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 .lighting-preview-channels{display:flex;flex-wrap:wrap;gap:10px 20px}
 .lighting-preview-channel{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .lighting-preview .effect-swatch{width:64px;height:18px;border:1px solid #ffffff33}
-.lighting-preview-note{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
-.lighting-preview-note small{font-size:11px;line-height:1.5;color:var(--muted)}
-.lighting-preview-note button{margin:0;padding:4px 8px;font-size:12px}
+.lighting-preview-controls{display:flex;align-items:center;justify-content:flex-end;min-height:44px}
+.lighting-preview-controls button{margin:0;padding:4px 8px;font-size:12px}
 .controller-progress{display:flex;list-style:none;padding:0;margin:18px 0 12px;gap:4px}
 .controller-progress li{flex:1;padding:8px 2px;border-bottom:2px solid var(--line);color:var(--muted);font-size:12px;text-align:center}
 .controller-progress li[data-state=complete]{border-color:var(--green)}

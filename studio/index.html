@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=75065fc0c661">
+<link rel="stylesheet" href="./style.css?v=4417f12effa8">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
@@ -14,7 +14,7 @@
 <script src="./app.js?v=0788af8bc59b" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=77ee2c326c6b" defer></script>
-<script src="./looks.js?v=9f4b9526d10e" defer></script>
+<script src="./looks.js?v=9e77bde59edd" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=5cecd4485eb0" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
@@ -350,7 +350,7 @@
       <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><span id="lightSummary">Off</span></strong></div></div>
       <div id="lightingPreview" class="lighting-preview" role="group" aria-label="Illustrative lighting preview" hidden>
         <div class="lighting-preview-channels"><div class="lighting-preview-channel"><span id="previewTorsoLabel">Torso</span><span class="effect-swatch" data-light-swatch="torso" role="img"><i></i></span></div><div class="lighting-preview-channel" id="previewHeadRow"><span>Head</span><span class="effect-swatch" data-light-swatch="head" role="img"><i></i></span></div></div>
-        <div class="lighting-preview-note"><small id="lightingPreviewNote">Illustration · hardware timing varies</small><button id="lightingPreviewPause" class="text-button" type="button" aria-label="Pause lighting preview" aria-pressed="false">Pause</button></div>
+        <div id="lightingPreviewControls" class="lighting-preview-controls" hidden><button id="lightingPreviewPause" class="text-button" type="button" aria-label="Pause lighting preview" aria-pressed="false">Pause</button></div>
       </div>
       <div class="preview-title"><strong id="timelineTitle">15-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
       <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
@@ -370,7 +370,7 @@
     </div>
   </aside>
 </main>
-<footer>Community-made ESP32 controller · <a href="https://github.com/martinecker/SkellyUltraWebController">Web controller protocol credits</a> · <a href="../docs/hardware-verification.md">Hardware test status</a></footer>
+<footer>Community-made ESP32 controller for Ultra Skelly by Jacob Goodnight.</footer>
 </div>
 <dialog id="paletteDialog" class="small-dialog" aria-labelledby="paletteDialogTitle"><div class="dialog-head"><strong id="paletteDialogTitle">Edit palette</strong><button type="button" id="paletteDialogClose" aria-label="Close palette editor">✕</button></div><div class="dialog-body"><fieldset data-palette-editor="0" hidden><legend>Palette 1</legend><label>Name <input id="palette0Name" maxlength="24" value="Halloween"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette0Torso" value="#ff6000"></label><label>Head <input type="color" id="palette0Head" value="#00ff00"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="0"> Link torso &amp; head colors</label></fieldset>
 <fieldset data-palette-editor="1" hidden><legend>Palette 2</legend><label>Name <input id="palette1Name" maxlength="24" value="Haunted"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette1Torso" value="#8000ff"></label><label>Head <input type="color" id="palette1Head" value="#00e6cc"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="1"> Link torso &amp; head colors</label></fieldset>
