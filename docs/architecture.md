@@ -36,7 +36,7 @@ Saved local scene libraries are separate from controller storage. Status counter
 describe transport/model state, never physical completion. See the
 [protocol and attended criteria](usb-settings-scenes.md) for limits and recovery.
 
-Studio's open Send to your ESP32 panel and collapsed Advanced USB diagnostics share
+Studio's open Connect & save panel and collapsed Advanced USB diagnostics share
 one `SkellySerial.Session`. `controller-state.js` manages status snapshots separately
 from operation progress. Identified, idle, visible sessions poll every five seconds;
 each background request has an eight-second timeout and AbortSignal cleanup.
@@ -62,7 +62,7 @@ hold, enabled lanes and the existing deterministic schedule illustration. It nev
 uses an unfinished editor draft or predicts arbitration/physical starts. Ordered,
 random and switching-off labels describe selection policy rather than clock time.
 
-`looks.js` owns descriptive eye labels and the compact appearance preview.
+`looks.js` owns descriptive eye labels and the compact lighting preview in Your Skelly.
 Eyes and Lighting follow Movement directly; scene naming and save controls live
 inside the optional Scene builder. Scoped
 look/copy operations use a fixed field allowlist, preserve the current model and
@@ -73,12 +73,20 @@ Escape or loading another config discards it. The saved-sequence strip reads onl
 the saved library. Nearby controller comparison still requires acknowledged
 read-back and clears on disconnect.
 
-Effect previews animate only the Look preview swatch opacity, without covering
+Effect previews animate only the Your Skelly lighting swatch opacity, without covering
 color inputs, mutating RGB/config values or sending commands. They run by default
-without extra preview controls or a footer. Channel brightness and increasing UI speed affect an explicitly
+with a local Pause/Resume control. Channel brightness and increasing UI speed affect an explicitly
 illustrative sample; no physical effect-period mapping is established. Browser
 strobe is capped at two flashes per second. Hidden tabs and reduced-motion
-preferences gate all sample animation.
+preferences gate all sample animation. The gallery keeps selection and enlarged
+preview independent. The removed Look panel has no remaining DOM dependencies.
+
+Connect & save groups everyday connection, explicit read and save. A small workflow
+view recommends the next action without adding a mandatory read or confirmation.
+The Verified milestone requires matching read-back after an explicit save; editing
+that program or changing USB ports clears its applicability. The existing scene
+comparison remains beside Save. Explicit operation results scroll into view below
+sticky navigation; background polling never scrolls or replaces those messages.
 
 `scripts/sync-template.cjs` generates `studio/template.js` from the canonical sketch,
 normalizing line endings. CI rejects drift. `replaceOnce` in `studio/app.js` rejects

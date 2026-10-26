@@ -14,7 +14,7 @@ test("homepage redirects to the Skelly Studio folder", () => {
   assert.match(home, /<a href="\.\/studio\/">Open Skelly Studio<\/a>/);
 });
 
-test("gallery offers 18 real eye icons with enlarged previews and source credit", () => {
+test("compact gallery keeps 18 real icons, enlarged previews and repository attribution", () => {
   assert.match(html, /id="eyePreviewImage"/);
   assert.match(html, /id="eyePreviewLabel"/);
   assert.match(html, /id="eyeGrid"/);
@@ -30,7 +30,8 @@ test("gallery offers 18 real eye icons with enlarged previews and source credit"
   }
   assert.match(js, /image\.src=eyeImageUrl\(i\)/);
   assert.match(js, /zoom\.addEventListener\("click",\(\)=>showEyePreview\(i\)\)/);
-  assert.match(css, /\.eye-grid\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
-  assert.match(html, /included for offline use/);
+  assert.match(css, /\.eye-grid\{grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,82px\),1fr\)\)/);
+  assert.doesNotMatch(html, /Eye previews are included for offline use/);
+  assert.match(fs.readFileSync(path.join(root,'studio/images/eyes/README.md'),'utf8'), /Martin Ecker/);
   assert.doesNotMatch(html, /View eye designs/);
 });

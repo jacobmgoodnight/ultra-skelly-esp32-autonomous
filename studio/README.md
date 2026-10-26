@@ -5,14 +5,14 @@ A static browser configurator for the autonomous ESP32 controller.
 or open `index.html` from a local ZIP. No backend, account or build step is needed.
 Eye thumbnails and firmware generation work offline from the complete folder.
 
-The scene look workspace keeps the edited scene's name, duration, save state,
-eyes, lighting and combined preview together. Choose stored eyes, one expression
-or a selected rotation. Stars and optional nicknames stay in this browser and
-are separate for each device model. Quick looks default to eyes and lights only;
+Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
+names, fixed or multiple selection, and a separate enlarged preview. Your Skelly
+summarizes the current eyes and lighting without a second Look panel.
+Quick looks default to eyes and lights only;
 Complete routine deliberately starts a new scene. Saved scenes can supply just
 eyes, lights or both to the current editor.
 
-Effect samples run by default inside Look preview using each channel's brightness
+Effect samples run below Lighting in Your Skelly using each channel's brightness
 and speed. Native color pickers stay static and unobstructed. Timing is illustrative,
 with browser strobe capped at two flashes per second. A subtle Pause/Resume button,
 hidden tabs and reduced motion control animation. Palette
@@ -110,7 +110,7 @@ multiple eyes switch randomly.
 Lighting brightness defaults to 255 and effect speed to 125. Effects/speed and
 brightness apply to all palettes in a scene; palettes hold torso/head colors.
 Colors can be linked for the current look or individually per palette.
-Scene builder sits above Send to your ESP32 and Advanced, uses minutes (10 by default), and supports
+Scene builder sits above Connect & save and Advanced, uses minutes (10 by default), and supports
 ordered or random switching after full old-action cooldowns. Sketch downloads
 include a local date/time suffix. The clip library maps readable
 names to the user's actual uploaded MP3 serials. Settings and clip mappings can
@@ -120,8 +120,10 @@ firmware defaults remain unchanged.
 See [Studio next steps](../docs/studio-roadmap.md) for pending hardware checks,
 browser USB uploading, and ideas for future improvements. Studio currently
 generates `.ino` source; it does not compile firmware. USB tools provide the separate
-package installer. **Send to your ESP32** groups connect/read/save with separate
-USB and Skelly Bluetooth indicators. **First-time setup** folds away the one-time
+package installer. **Connect & save** highlights the next action through connect,
+explicit read, save and verified read-back. Save this routine uses the editor;
+the optional scene-collection disclosure sends the saved browser library instead.
+USB and Skelly Bluetooth indicators stay separate. **First-time setup** folds away the one-time
 universal installation. Advanced contains collapsed diagnostics using the same port.
 Status refreshes every five seconds while identified and idle; manual operations
 cancel the background request, and hidden pages pause polling. An eight-second

@@ -1,5 +1,9 @@
 # Skelly Studio usability audit · October 25, 2026
 
+The later [appearance and Connect & save refinement](studio-ui-refinements.md)
+updates the gallery, summary lighting sample and everyday save workflow. The
+screenshots below document the earlier audit pass.
+
 Scope: the existing static Studio, installer and recovery flows at commit
 `07ebc34`. This is an expert review and automated browser evaluation, not a study
 with recruited users. All new validation is **Software-only**. No physical USB or

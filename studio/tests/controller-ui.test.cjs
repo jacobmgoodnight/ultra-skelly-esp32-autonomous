@@ -7,6 +7,8 @@ const generator=generatorContext.window.SkellyStudioGenerator;
 class Element{
  constructor(){Object.assign(this,{textContent:'',dataset:{},disabled:false,hidden:false,checked:false,open:false,children:[]});}
  replaceChildren(...nodes){this.children=nodes;}append(...nodes){this.children.push(...nodes);}
+ setAttribute(name,value){this[name]=value;}removeAttribute(name){delete this[name];}addEventListener(name,fn){this['on'+name]=fn;}
+ scrollIntoView(){this.scrolled=true;}
 }
 function page({supported=true,settings=true,audio=false,statusFails=false,badReadback=false,allowScenes=true,keepRead=false,search=''}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()])),events={},windowEvents={};
@@ -128,4 +130,37 @@ test('read-only identity/activity renders without replacing save progress and cl
  await p.nodes.controllerConnect.onclick();assert.match(p.nodes.controllerActivity.textContent,/Audio scene protected/);assert.equal(p.nodes.controllerActivity.hidden,false);assert.match(p.nodes.controllerMessage.textContent,/Ready/);assert.ok(p.nodes.controllerDetails.children.some(x=>/Revision 5/.test(x.textContent)));
  await p.nodes.controllerDisconnect.onclick();assert.equal(p.nodes.controllerActivity.hidden,true);assert.equal(p.nodes.controllerDetails.children.length,0);
  }finally{await p.close();}
+});
+
+test('recommended workflow follows connect, explicit read, save and verified read-back, then notices edits',async()=>{
+ const p=page();try{
+  assert.equal(p.nodes.controllerConnect.dataset.recommended,'true');
+  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerRead.dataset.recommended,'true');assert.deepEqual(p.session.operations,[],'Connecting never reads or writes settings automatically');
+  await p.nodes.controllerRead.onclick();assert.equal(p.nodes.controllerStepSave['aria-current'],'step');assert.match(p.nodes.controllerNext.textContent,/replacement consent/);
+  p.nodes.controllerConsent.checked=true;p.nodes.controllerConsent.onchange();assert.equal(p.nodes.controllerWrite.dataset.recommended,'true');
+  await p.nodes.controllerWrite.onclick();assert.equal(p.nodes.controllerStepDone['aria-current'],'step');assert.match(p.nodes.controllerNext.textContent,/disconnect USB/);
+  p.window.SkellyStudioGenerator.writeConfig({...p.config,headMin:40});p.events['skelly-config-changed']();assert.equal(p.nodes.controllerStepSave['aria-current'],'step');assert.match(p.nodes.controllerNext.textContent,/Next: Save this routine/);
+  await p.nodes.controllerDisconnect.onclick();assert.equal(p.nodes.controllerStepConnect['aria-current'],'step');
+  await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=false;p.nodes.controllerConsent.onchange();assert.equal(p.nodes.controllerStepRead['aria-current'],'step','A new USB session needs its own read');
+ }finally{await p.close();}
+});
+
+test('unverified saves recommend a read and never show the verified milestone',async()=>{
+ const p=page({badReadback:true});try{await p.nodes.controllerConnect.onclick();p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.equal(p.nodes.controllerStepRead['aria-current'],'step');assert.equal(p.nodes.controllerRead.dataset.recommended,'true');assert.match(p.nodes.controllerNext.textContent,/before saving again/);assert.notEqual(p.nodes.controllerStepDone['aria-current'],'step');}finally{await p.close();}
+});
+
+test('everyday workflow is grouped; optional collections and technical details stay in disclosures',()=>{
+ assert.match(html, /id="controllerTitle">Connect &amp; save/);
+ assert.match(html, /<details[^>]*controller-optional[\s\S]*?id="controllerScenes"/);
+ assert.match(html, /<details[^>]*controller-info[\s\S]*?id="controllerFirmware"/);
+ assert.doesNotMatch(html, /id="controllerSetup" open/);
+ assert.match(html, /Edits above stay in this browser until you save to the ESP32/);
+});
+
+test('recovery guidance takes precedence over an older verified save',()=>{
+ const state={port:{},identified:true,capable:true,tone:'error',message:'Save was not verified. Read saved settings before trying again.'};
+ assert.equal(stateApi.workflowView(state,{verified:true,reviewed:true}).action,'controllerRead');
+ assert.equal(stateApi.workflowView({...state,message:'Audio scenes need updated universal firmware.'},{verified:true}).step,'Connect');
+ assert.equal(stateApi.workflowView({...state,tone:'ready',message:'Firmware defaults restored. Read saved settings to load them in Studio.'},{reviewed:true,consent:true}).action,'controllerRead');
+ assert.equal(stateApi.workflowView({...state,message:'Confirm replacing the controller’s saved routine first.'},{verified:true,reviewed:true}).step,'Save');
 });

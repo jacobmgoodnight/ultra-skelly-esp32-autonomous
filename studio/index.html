@@ -5,23 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=e9c5e9f0b294">
+<link rel="stylesheet" href="./style.css?v=75065fc0c661">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=543beed19e3e" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=f46ffda57f6e" defer></script>
+<script src="./app.js?v=0788af8bc59b" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=77ee2c326c6b" defer></script>
-<script src="./looks.js?v=6bf11d14ec99" defer></script>
+<script src="./looks.js?v=9f4b9526d10e" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
-<script src="./controller-state.js?v=2c5160c3af59" defer></script>
+<script src="./controller-state.js?v=5cecd4485eb0" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
 <script src="./audio-prep.js?v=460944ee3d5f" defer></script>
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
-<script src="./controller.js?v=bfe8caa2c592" defer></script>
+<script src="./controller.js?v=c1eec92ad883" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#personality">Skip to routine controls</a>
@@ -91,7 +91,7 @@
         </details>
       </div>
     </section>
-      <div class="appearance-editor-layout" id="lookWorkspace"><div class="appearance-editors">
+      <div class="appearance-editors" id="lookWorkspace">
     <details class="panel fold-panel" id="expressions" open><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · preview your chosen expression</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <input type="checkbox" id="eyesEnabled" hidden><label class="eye-mode">Eye behavior <select id="eyeBehavior"><option value="stored">Use Skelly’s stored eyes</option><option value="fixed">Keep one expression</option><option value="random">Rotate selected expressions</option></select></label>
       <p class="small-description">Keep one expression, or switch randomly between selected designs. When off, Skelly keeps its stored eyes.</p>
@@ -104,7 +104,6 @@
         <label class="freq-inline" id="eyeTiming">Switch expressions every <input type="number" id="eyesMin" value="120" min="15" max="3600" inputmode="numeric" aria-label="Eye minimum seconds"> to <input type="number" id="eyesMax" value="300" min="15" max="3600" inputmode="numeric" aria-label="Eye maximum seconds"> seconds</label>
         <p>Choose at least one design. In fixed mode, selecting another replaces the current choice.</p>
         <div id="eyeGrid" class="eye-grid" role="group" aria-label="Select eye patterns with real previews"></div>
-        <p class="eye-credit">Eye previews are included for offline use. Source attribution is included with the project.</p>
         <div class="eye-actions"><button id="selectAllEyes" type="button" class="text-button">Select all</button><button id="selectFewEyes" type="button" class="text-button">Use 1–6</button></div></div>
       </div>
 
@@ -136,20 +135,11 @@
           <label>Effect <select id="headEffect" aria-label="Head effect"><option value="1">Static</option><option value="3">Pulsing</option><option value="2">Strobe</option></select></label>
           <label id="headSpeedRow" hidden>Speed <span class="range-ends">Slow <span>Fast</span></span><input id="headSpeed" type="range" value="125" min="0" max="254" aria-label="Head effect speed"></label>
         </section>
-        </div><p class="small-description">Effects and brightness apply to all palettes in this scene. <a href="#lookPreview">See Look preview ↑</a></p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
+        </div><p class="small-description">Effects and brightness apply to all palettes in this scene. <a href="#finish">See lighting in Your Skelly →</a></p><p id="strobeNotice" class="small-description" hidden>Strobe flashes; choose Static or Pulsing where flashing lights are unsuitable.</p>
         <p id="paletteStatus" class="selection-status" role="status">Lighting is off.</p>
         <details class="instructions light-help"><summary>Lighting help</summary><p>In One palette mode, choose one look. In Rotate palettes mode, buttons select the palettes to include without stopping rotation. Edit a palette to change its saved colors or link Head to Torso. Rotation uses those saved colors; effect and brightness controls apply across the scene. When lighting is off, Skelly keeps its stored lighting.</p></details>
       </details>
     </div></details>
-      </div>
-      <aside class="panel look-preview" id="lookPreview" aria-labelledby="lookPreviewTitle">
-        <h3 id="lookPreviewTitle">Look preview</h3>
-        <img id="lookEyeImage" src="./images/eyes/eye_icon_1.png" width="112" height="112" alt="Selected expression" hidden>
-        <p id="lookEyeLabel">Use Skelly’s stored eyes</p>
-        <div class="look-light"><span id="lookTorsoLabel">Torso</span><span class="effect-swatch" data-look-swatch="torso"><i></i></span></div>
-        <div class="look-light" id="lookHeadRow"><span>Head</span><span class="effect-swatch" data-look-swatch="head"><i></i></span></div>
-        <p id="lookLightLabel">Use Skelly’s stored lighting</p>
-      </aside>
       </div>
     <details class="panel fold-panel" id="scenes"><summary><span><strong>Scene builder</strong><small>Save a complete look, or rotate a few throughout the evening</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p class="small-description">Optional: keep up to four complete looks in this browser, then use Save scene collection to send them to your ESP32.</p>
@@ -172,29 +162,46 @@
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
     </div></details>
     <section class="panel controller-panel" id="controllerPanel" aria-labelledby="controllerTitle" tabindex="-1">
-      <div class="section-head"><div><span class="step">USB</span><h2 id="controllerTitle">Send to your ESP32</h2></div></div>
-      <p class="small-description">Install universal firmware once, then read and save settings here. Your routine runs on its own after USB disconnects.</p>
-      <div class="controller-connections" aria-live="polite">
-        <div><span>Computer → ESP32</span><strong id="controllerUsb" data-state="info">Not connected</strong><small>USB connection</small></div>
-        <div><span>ESP32 → Skelly</span><strong id="controllerSkelly" data-state="info">Unknown</strong><small>Bluetooth connection</small></div>
-      </div>
-      <p id="controllerSkellyHelp" class="small-description">Connect USB to check Skelly.</p>
-      <div class="controller-scene"><span>Active scene</span><strong id="controllerScene">—</strong><button id="controllerStatus" type="button" disabled>Refresh status</button></div>
-      <p id="controllerFirmware" class="small-description">Connect to identify installed firmware.</p><p id="controllerActivity" class="controller-activity" hidden></p>
-      <p id="controllerReceived" class="small-description">No controller status received yet.</p>
+      <div class="section-head"><div><span class="step">USB</span><h2 id="controllerTitle">Connect &amp; save</h2></div></div>
+      <p class="small-description">Edits above stay in this browser until you save to the ESP32. Once saved, your routine runs without the computer.</p>
+      <ol class="controller-progress" aria-label="Save workflow"><li id="controllerStepConnect" aria-current="step">Connect</li><li id="controllerStepRead">Read</li><li id="controllerStepSave">Save</li><li id="controllerStepDone">Verified</li></ol>
       <p id="controllerMessage" role="status" aria-live="polite" data-state="info">Connect your ESP32 to read or save settings.</p>
+      <p id="controllerNext" class="controller-next">Next: connect your ESP32 with a USB data cable.</p>
+      <div class="controller-before-save">
+      <section class="controller-step" aria-labelledby="connectHeading"><h3 id="connectHeading">1 · Connect your ESP32</h3>
+        <div class="controller-connect-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerIdentify" type="button" hidden disabled>Retry identification</button><button id="controllerDisconnect" type="button" disabled>Disconnect</button></div>
+        <div class="controller-connections" aria-live="polite">
+          <div><span>USB · computer → ESP32</span><strong id="controllerUsb" data-state="info">Not connected</strong></div>
+          <div><span>Bluetooth · ESP32 → Skelly</span><strong id="controllerSkelly" data-state="info">Unknown</strong></div>
+        </div>
+        <p id="controllerSkellyHelp" class="small-description">Connect USB to check Skelly.</p>
+        <details class="instructions controller-info"><summary>Connection details &amp; troubleshooting</summary>
+          <p id="controllerFirmware" class="small-description">Connect to identify installed firmware.</p><p id="controllerActivity" class="controller-activity" hidden></p>
+          <div class="controller-scene"><span>Active scene</span><strong id="controllerScene">—</strong><button id="controllerStatus" type="button" disabled>Refresh status</button></div>
+          <p id="controllerReceived" class="small-description">No controller status received yet.</p>
+          <p>USB missing? Use desktop Chrome or Edge, check your data cable, and close Serial Monitor or other USB tabs. Bluetooth missing? Power Skelly in Bluetooth mode and disconnect other controllers; the ESP32 retries automatically. <a href="#controllerDiagnostics">Advanced USB diagnostics →</a></p>
+        </details>
+      </section>
+      <section class="controller-step" aria-labelledby="readHeading"><h3 id="readHeading">2 · Read existing settings</h3>
+        <p class="small-description">Load the ESP32’s saved setup before editing. If you have browser edits or scenes, you can review replacement or keep them.</p>
+        <button id="controllerRead" type="button" disabled>Read saved settings</button>
+      </section>
+      </div>
+      <section class="controller-step" aria-labelledby="saveHeading"><h3 id="saveHeading">3 · Save your changes</h3>
+      <p class="small-description" id="controllerRoutineHelp">Save this routine sends the settings in the editor above. You don’t need to create a scene.</p>
       <p id="deviceSaveStatus" class="save-comparison" role="status">ESP32 · connect and read to compare</p>
       <div class="error" id="error" role="alert" tabindex="-1" hidden></div>
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
-      <div class="controller-actions"><button id="controllerConnect" type="button">Connect ESP32</button><button id="controllerRead" type="button" disabled>Read saved settings</button><button id="controllerWrite" type="button" aria-describedby="deviceSaveStatus error" disabled>Save this routine</button><button id="controllerScenes" type="button" disabled>Save scene collection</button></div>
-      <p class="small-description"><strong>Save this routine</strong> sends the settings you’re editing above. No scene is needed. <strong>Save scene collection</strong> sends the saved collection from Scene builder. Both replace the ESP32’s current program; neither installs firmware.</p>
-      <div class="controller-secondary"><button id="controllerIdentify" type="button" hidden disabled>Retry identification</button><button id="controllerDisconnect" type="button" disabled>Disconnect</button></div>
-      <details class="instructions" id="controllerSetup" open><summary>New ESP32? Start here · install firmware once</summary>
-        <p><strong>Connect ESP32 → Install Firmware → Configure Skelly.</strong> Use the browser installer; no Arduino software, manual package download or GitHub account needed. Available release: <span id="controllerRelease">2026.10.24-preview.2</span>. <a href="../CHANGELOG.md">What changed →</a></p>
+      <button id="controllerWrite" class="controller-save" type="button" aria-describedby="controllerRoutineHelp deviceSaveStatus error" disabled>Save this routine</button>
+      <p class="small-description">Wait for <strong>read-back verified</strong> before unplugging.</p>
+      <details class="instructions controller-optional"><summary>Optional · save a scene collection</summary><p>Scenes saved in Scene builder stay in this browser. Use this action to replace the ESP32’s program with that saved collection, including its scene order. Unfinished editor changes are excluded.</p><button id="controllerScenes" type="button" disabled>Save scene collection</button></details>
+      </section>
+      <details class="instructions" id="controllerSetup"><summary>First-time setup · install firmware once</summary>
+        <p>New ESP32, or firmware update needed? Install universal firmware, then return here to connect and save. Everyday settings changes do not need another installation. Available release: <span id="controllerRelease">2026.10.24-preview.2</span>. <a href="../CHANGELOG.md">What changed →</a></p>
         <p><a id="browserInstall" class="install-link" href="./install.html">Install universal firmware in your browser →</a></p>
         <p class="small-description">Original ESP32-WROOM with 4 MB flash · desktop Chrome/Edge · USB data cable. Installation overwrites ESP32 firmware and saved settings/scenes: back up first. Browser flashing remains physically Untested.</p>
         <ol class="usb-setup"><li><strong>Connect:</strong> plug the ESP32 into your computer; close other serial apps.</li><li><strong>Install:</strong> follow the browser installer, wait for completion, then close its dialog.</li><li><strong>Configure:</strong> return here, Connect ESP32 and wait for Ready. Choose your settings, confirm replacement, then <strong>Save this routine</strong>. Scene builder is optional. Wait for read-back verified before unplugging.</li></ol>
-        <p class="small-description">Already installed? Connect above and read saved settings before editing an existing setup. Ordinary settings changes need no firmware reinstall. Saved USB settings take priority over the factory Subtle routine.</p>
+        <p class="small-description">Saved USB settings take priority over the factory Subtle routine.</p>
         <details class="instructions"><summary>Advanced Arduino fallback · source download</summary><p>Download the model-specific universal source, open it in Arduino IDE, select <strong>ESP32 Dev Module</strong> and <strong>Arduino-ESP32 3.3.12</strong>, then compile/upload. Close Serial Monitor before connecting here.</p><button id="universalDownload" type="button">Download universal source (.ino)</button></details>
       </details>
     </section>
@@ -203,7 +210,7 @@
         <p>These are the last reported controller values. They do not confirm physical movement. Clock time is only needed when a scheduled window is enabled.</p>
         <dl id="controllerDetails" class="controller-details"></dl>
         <div class="profile-actions"><button id="controllerLog" type="button" disabled>Download USB log</button><button id="controllerReset" type="button" disabled>Restore firmware defaults</button></div>
-        <p>Restoring defaults uses the replacement confirmation in <a href="#controllerPanel">Send to your ESP32</a>.</p>
+        <p>Restoring defaults uses the replacement confirmation in <a href="#controllerPanel">Connect &amp; save</a>.</p>
         <p>If identification stalls, close other serial apps/tabs and use Retry identification above. If needed, press EN/Reset once and retry. To diagnose separately, disconnect Studio, open Arduino Serial Monitor at <strong>115200 / Newline</strong>, then send <strong>SKELLY HELLO</strong> and <strong>SKELLY STATUS</strong>. Close Serial Monitor before reconnecting Studio.</p>
         <p><a data-usb-tools href="./usb.html">USB tools: clock, raw capture &amp; package installer →</a></p>
       </details>
@@ -340,7 +347,11 @@
   <aside class="output" id="finish">
     <div class="panel output-panel">
       <span class="eyebrow">YOUR SKELLY</span><h2 class="purple-title">Make it yours.</h2>
-      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><i id="summaryTorsoColor"></i><i id="summaryHeadColor"></i><span id="lightSummary">Off</span></strong></div></div>
+      <div class="stat-list"><div><span>HEAD</span><strong id="headSummary">35–75 sec</strong></div><div><span>TORSO</span><strong id="torsoSummary">Off</strong></div><div><span>ARM</span><strong id="armSummary">150–240 sec</strong></div><div class="eyes-summary"><span>EYES</span><strong><img id="summaryEyeImage" src="./images/eyes/eye_icon_1.png" alt="" width="30" height="30" hidden><span id="summaryEyeRotation" class="eye-rotation" role="img" aria-label="Random expression rotation" hidden>↻</span><span id="eyeSummary">Off · optional</span></strong></div><div class="lighting-summary"><span>LIGHTING</span><strong><span id="lightSummary">Off</span></strong></div></div>
+      <div id="lightingPreview" class="lighting-preview" role="group" aria-label="Illustrative lighting preview" hidden>
+        <div class="lighting-preview-channels"><div class="lighting-preview-channel"><span id="previewTorsoLabel">Torso</span><span class="effect-swatch" data-light-swatch="torso" role="img"><i></i></span></div><div class="lighting-preview-channel" id="previewHeadRow"><span>Head</span><span class="effect-swatch" data-light-swatch="head" role="img"><i></i></span></div></div>
+        <div class="lighting-preview-note"><small id="lightingPreviewNote">Illustration · hardware timing varies</small><button id="lightingPreviewPause" class="text-button" type="button" aria-label="Pause lighting preview" aria-pressed="false">Pause</button></div>
+      </div>
       <div class="preview-title"><strong id="timelineTitle">15-minute timing preview</strong><button type="button" id="newExample" class="text-button">New example ↻</button></div>
       <div id="timelineLegend" class="legend" aria-label="Enabled preview items"></div>
       <p class="small-description preview-key">Bands: first request range · ticks: sample requests</p>
@@ -349,13 +360,13 @@
       <p id="timelineBeyond" class="small-description" hidden></p>
       <p id="timelineEmpty" class="small-description" hidden>No scheduled events in this window.</p>
       <p id="validationJump" class="validation-jump" hidden><a href="#error">Review settings before saving →</a></p>
-      <a class="download controller-jump" href="#controllerPanel">Send to your ESP32 ↓</a>
+      <a class="download controller-jump" href="#controllerPanel">Connect &amp; save ↓</a>
       <button id="download" class="secondary" type="button">Download Arduino sketch (.ino)</button>
       <button id="preview" class="secondary" type="button">Preview generated code</button>
       <p class="small-description">Arduino downloads are an alternative installation method. Everyday changes use Connect &amp; save.</p>
       <div class="profile-actions"><button id="saveProfile" class="secondary" type="button">Save settings (.json)</button><button id="loadProfile" class="secondary" type="button">Load settings</button><input id="profileFile" class="sr-only" type="file" accept=".json,application/json" aria-label="Choose saved Studio settings"></div>
       <p id="profileStatus" class="small-description" role="status">Save a profile to keep your settings.</p>
-      <details class="instructions"><summary>Other installation options</summary><p>Use <a href="#controllerPanel">Send to your ESP32</a> for universal setup and USB settings. A downloaded custom sketch can instead be compiled/uploaded with Arduino IDE or CLI using ESP32 Dev Module and core 3.3.12. Once installed, it runs without the browser or computer.</p><p><a href="../docs/setup.md">Setup guide →</a></p></details>
+      <details class="instructions"><summary>Other installation options</summary><p>Use <a href="#controllerPanel">Connect &amp; save</a> for universal setup and USB settings. A downloaded custom sketch can instead be compiled/uploaded with Arduino IDE or CLI using ESP32 Dev Module and core 3.3.12. Once installed, it runs without the browser or computer.</p><p><a href="../docs/setup.md">Setup guide →</a></p></details>
     </div>
   </aside>
 </main>

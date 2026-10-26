@@ -113,6 +113,27 @@ async function main(){
       },{width,height});
     }
 
+    for(const width of [1440,390])await run('compact gallery and guided save · '+width,async page=>{
+      await nav(page,'#expressions');
+      const cards=await page.locator('.eye-card:visible').evaluateAll(nodes=>nodes.map(n=>({top:n.getBoundingClientRect().top,width:n.getBoundingClientRect().width})));
+      assert.equal(cards.length,18);assert.ok(cards.filter(c=>Math.abs(c.top-cards[0].top)<1).length>=(width===1440?6:3),'Responsive gallery fits more expressions per row');
+      assert.ok(cards.every(c=>c.width>=80));assert.equal(await page.getByText('Eye previews are included for offline use.',{exact:false}).count(),0);
+      await page.locator('.eye-choice input[value="8"]').focus();await page.keyboard.press('Space');
+      assert.equal(await page.locator('#eyesEnabled').isChecked(),true);assert.equal(await page.locator('.eye-choice input[value="8"]').isChecked(),true);
+      await page.keyboard.press('Tab');assert.match(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),/larger preview/);
+      await page.keyboard.press('Enter');assert.match(await page.locator('#eyePreviewLabel').textContent(),/Orange reptile/);
+      await page.locator('#expressions').screenshot({path:path.join(artifacts,'compact-eyes-'+width+'.png'),style:'.studio-nav{visibility:hidden!important}'});
+      await nav(page,'#controllerPanel');assert.equal(await page.locator('#controllerSetup').evaluate(el=>el.open),false);
+      assert.equal(await page.locator('#controllerConnect').getAttribute('data-recommended'),'true');assert.equal(await page.locator('#controllerScenes').isVisible(),false);
+      await page.locator('#controllerPanel').screenshot({path:path.join(artifacts,'connect-save-'+width+'.png'),style:'.studio-nav{visibility:hidden!important}'});
+      await connect(page);assert.equal(await page.locator('#controllerRead').getAttribute('data-recommended'),'true');assert.equal(await page.evaluate(()=>mockUsb.commands.some(c=>c.includes(' CFG GET '))),false);
+      await page.locator('#controllerRead').click();await page.locator('#sceneImportDialog button[value="replace"]').click();await message(page,/Read 1 saved/);assert.match(await page.locator('#controllerNext').textContent(),/replacement consent/);
+      await save(page);await page.waitForFunction(()=>document.querySelector('#controllerStepDone').getAttribute('aria-current')==='step');await page.waitForFunction(()=>{const r=document.querySelector('#controllerMessage').getBoundingClientRect();return r.top>=document.querySelector('.studio-nav').getBoundingClientRect().bottom&&r.bottom<=innerHeight;});
+      await page.locator('#controllerPanel').screenshot({path:path.join(artifacts,'verified-save-'+width+'.png'),style:'.studio-nav,.skip-link{visibility:hidden!important}'});
+      await nav(page,'#movement');await page.locator('#headMin').fill('120');assert.equal(await page.locator('#controllerStepSave').getAttribute('aria-current'),'step');
+      await noOverflow(page);
+    },{width,height:width===1440?1000:844});
+
     await run('beginner · find installation, configure and verify a simulated save',async page=>{
       assert.match(await page.locator('.hero p').textContent(),/ESP32 over USB/);
       await page.locator('[data-browser-install]').click();assert.match(page.url(),/install\.html$/);
@@ -173,13 +194,15 @@ async function main(){
       assert.match(await page.locator('#eyePreviewLabel').textContent(),/Orange reptile/);
       assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),before,'Enlarging an expression does not change the routine');
       await page.locator('.eye-choice:has(input[value="8"])').click();assert.equal(await page.locator('#eyeBehavior').inputValue(),'fixed');assert.equal(await page.locator('#eyesEnabled').isChecked(),true);
-      assert.match(await page.locator('#lookEyeLabel').textContent(),/Orange reptile/);
+      assert.match(await page.locator('#eyePreviewLabel').textContent(),/Orange reptile/);
       await page.locator('#eyeBehavior').selectOption('random');await page.locator('.eye-choice:has(input[value="4"])').click();assert.deepEqual(await page.evaluate(()=>SkellyStudioGenerator.readConfig().eyeChoices),[4,8]);
       await page.locator('#eyeBehavior').selectOption('stored');assert.equal(await page.locator('#eyesEnabled').isChecked(),false);
       await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.readConfig(),bleName:'12ft Skelly',eyesEnabled:true,eyeChoices:[19]},'skelly12')));
       assert.match(await page.locator('.eye-card:has(input[value="19"]) img').getAttribute('src'),/eye_icon_12/);
-      assert.match(await page.locator('#lookEyeLabel').textContent(),/Skull and crossbones/);
+      assert.match(await page.locator('#eyePreviewLabel').textContent(),/Skull and crossbones/);
       assert.equal(await page.locator('.eye-card:visible').count(),20);
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.readConfig(),bleName:'12ft Skelly',lightsEnabled:true},'skelly12')));
+      assert.equal(await page.locator('#previewHeadRow').isVisible(),false);assert.equal(await page.locator('#previewTorsoLabel').textContent(),'Chest');
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
       await page.locator('#expressions').screenshot({path:path.join(artifacts,'simplified-eyes-mobile.png')});
     },{width:390,height:844});
@@ -192,19 +215,31 @@ async function main(){
       await page.keyboard.press('Escape');assert.equal(await page.locator('#palette0Name').inputValue(),'Halloween');assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),original);
       await page.locator('[data-edit-palette="0"]').click();await page.locator('#palette0Name').fill('Porch');await page.locator('#palette0Torso').fill('#123456');await page.locator('#paletteDialogDone').click();
       assert.equal(await page.locator('#torsoColor').inputValue(),'#123456');assert.match(await page.locator('[data-palette="halloween"]').textContent(),/Porch/);
+      assert.equal(await page.locator('[data-light-swatch="torso"]').evaluate(el=>el.style.getPropertyValue('--swatch-color')),'#123456','Applied palette immediately updates Your Skelly');
       await page.locator('#lightingMode').selectOption('rotate');await page.locator('[data-palette="haunted"]').click();
       assert.equal(await page.locator('#lightingMode').inputValue(),'rotate');assert.equal(await page.locator('[data-palette="haunted"]').getAttribute('aria-pressed'),'false');
       await page.locator('[data-palette="ember"]').click();await page.locator('[data-palette="moonlight"]').click();
       assert.equal(await page.locator('#lightingMode').inputValue(),'rotate');assert.match(await page.locator('#paletteStatus').textContent(),/at least two/);assert.equal(await page.locator('[data-palette][aria-pressed="true"]').count(),2);
+      assert.equal(await page.evaluate(()=>{const c=SkellyStudioGenerator.readConfig();return document.querySelector('[data-light-swatch="torso"]').style.getPropertyValue('--swatch-color')===c['palette'+c.lightPalettes[0]+'Torso'];}),true,'Rotation samples the first included palette');
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+      await page.locator('#lighting').screenshot({path:path.join(artifacts,'lighting-controls-desktop.png'),style:'.studio-nav{visibility:hidden!important}'});
     });
 
-    await run('look editor · default effects stay in Look preview, with independent channels and clear color pickers',async page=>{
+    await run('look editor · effects move to Your Skelly, with independent channels and clear color pickers',async page=>{
       await page.emulateMedia({reducedMotion:'no-preference'});await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();await page.locator('#torsoEffect').selectOption('3');await page.locator('#headEffect').selectOption('2');
-      const torso=page.locator('#lookPreview [data-look-swatch="torso"]>i'),head=page.locator('#lookPreview [data-look-swatch="head"]>i');
+      const torso=page.locator('#lightingPreview [data-light-swatch="torso"]>i'),head=page.locator('#lightingPreview [data-light-swatch="head"]>i');
       assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-strobe');
       await page.locator('#headSpeed').fill('254');const flashes=await head.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(flashes>1,'Head strobe opacity actually changes over time');
-      assert.equal(await page.locator('#effectPreviewToggle, #effectPreviewStatus, #effectPreviewHint, #lookMovement').count(),0,'Compact preview has no controls or explanatory footer');
+      assert.equal(await page.locator('#lookPreview, #lookEyeImage, [href="#lookPreview"]').count(),0,'Redundant panel and its links are removed');
+      assert.equal(await page.locator('#lightingPreview').evaluate(el=>el.closest('aside').id),'finish');
+      assert.match(await page.locator('#lightingPreviewNote').textContent(),/Illustration.*timing varies/);
+      const beforePause=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
+      await page.locator('#lightingPreviewPause').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none');
+      await page.locator('#torsoBrightness').fill('80');assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none','Edits preserve pause');
+      await page.locator('#torsoBrightness').fill('255');await page.locator('#lightingPreviewPause').click();assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
+      assert.equal(await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig())),beforePause,'Pausing never changes saved configuration');
+      await page.locator('#headEffect').selectOption('1');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'none','Static head remains independent from pulsing torso');
+      await page.locator('#headEffect').selectOption('2');
       assert.equal(await page.locator('#lighting .effect-swatch').count(),0,'No animated overlay in color controls');
       for(const id of ['torsoColor','headColor']){
         await page.locator('#'+id).scrollIntoViewIfNeeded();assert.equal(await page.locator('#'+id).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===el;}),true,id+' remains directly accessible');
@@ -213,11 +248,16 @@ async function main(){
       const slow=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));await page.locator('#torsoSpeed').fill('254');const fast=await torso.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration));assert.ok(fast<slow);assert.ok(await head.evaluate(el=>parseFloat(getComputedStyle(el).animationDuration))>=.5);
       await page.locator('#headEffect').selectOption('3');assert.equal(await head.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
       const changes=await torso.evaluate(async el=>{const values=new Set();for(let i=0;i<8;i++){values.add(getComputedStyle(el).opacity);await new Promise(resolve=>setTimeout(resolve,70));}return values.size;});assert.ok(changes>1,'Pulse opacity actually changes over time');
-      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!document.querySelector('#lookPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
-      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>document.querySelector('#lookPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
-      await page.locator('#lookPreview').screenshot({path:path.join(artifacts,'simplified-look-preview-mobile.png')});
+      await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!document.querySelector('#lightingPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
+      await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>document.querySelector('#lightingPreview .is-animating'));assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'look-pulse');
       await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});assert.equal(await torso.evaluate(el=>getComputedStyle(el).animationName),'none');
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);
+      await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+      await toggle(page,'lightsEnabled',false);assert.equal(await page.locator('#lightingPreview').isVisible(),false);assert.equal(await page.locator('#lightingPreview .is-animating').count(),0);
+      await toggle(page,'lightsEnabled',true);
+      await page.emulateMedia({reducedMotion:'reduce'});await nav(page,'#finish');
+      await page.locator('#finish').screenshot({path:path.join(artifacts,'summary-lighting-mobile.png'),style:'.studio-nav{visibility:hidden!important}'});
+      await page.setViewportSize({width:1440,height:1000});await page.locator('#finish').screenshot({path:path.join(artifacts,'summary-lighting-desktop.png'),style:'.studio-nav{visibility:hidden!important}'});
     },{width:390,height:844});
 
     await run('look editor · scoped quick looks, copy between scenes and saved sequence',async page=>{
@@ -233,7 +273,7 @@ async function main(){
       assert.equal(await page.locator('.scene-strip-item').count(),2);assert.match(await page.locator('#sceneStripNote').textContent(),/25 minutes/);
       await page.locator('#sceneOrder').selectOption('random');assert.match(await page.locator('#sceneStripNote').textContent(),/Random/);assert.doesNotMatch(await page.locator('#sceneStripNote').textContent(),/25 minutes/);
       await page.locator('#lookWorkspace').screenshot({path:path.join(artifacts,'look-workspace-desktop.png')});
-      await connect(page);await page.locator('#controllerConsent').check();await page.locator('#controllerScenes').click();await message(page,/read-back verified/);assert.equal(await page.locator('#lookDeviceStatus').getAttribute('data-state'),'ready');
+      await connect(page);await page.locator('#controllerConsent').check();await page.locator('.controller-optional').evaluate(el=>el.open=true);await page.locator('#controllerScenes').click();await message(page,/read-back verified/);assert.equal(await page.locator('#lookDeviceStatus').getAttribute('data-state'),'ready');
     });
 
     for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844]])await run('advanced scenes · create, edit, reorder and save · '+name,async page=>{
@@ -244,7 +284,7 @@ async function main(){
       assert.equal(await page.locator('.scene-card-head strong').first().textContent(),'Late night');
       await page.getByRole('button',{name:'Edit scene Late night',exact:true}).click();await nav(page,'#movement');await page.locator('#headMin').fill('135');
       await nav(page,'#scenes');await page.locator('#sceneUpdate').click();await page.locator('#sceneRotate').check();await page.locator('#sceneOrder').selectOption('random');
-      await connect(page);await page.locator('#controllerConsent').check();await page.locator('#controllerScenes').click();await message(page,/read-back verified/);
+      await connect(page);await page.locator('#controllerConsent').check();await page.locator('.controller-optional').evaluate(el=>el.open=true);await page.locator('#controllerScenes').click();await message(page,/read-back verified/);
       const saved=await page.evaluate(()=>SkellyRuntime.decode(mockUsb.words,SkellyStudioGenerator.DEFAULTS));
       assert.deepEqual(saved.scenes.map(s=>s.name),['Late night','Porch']);assert.equal(saved.scenes[0].config.headMin,135);assert.equal(saved.random,true);assert.equal(saved.rotate,true);
       await page.reload();await nav(page,'#scenes');assert.equal(await page.locator('.scene-card-head strong').first().textContent(),'Late night');

@@ -1,6 +1,6 @@
 # Setup guide
 
-For everyday use, install universal firmware once, then use Studio’s **Send to your ESP32** controls for subsequent read/save operations. [Current release and install/save distinction](status.md) · [next attended checks](next-release-checklist.md). Advanced experimental audio is optional; ordinary movement/eye/light routines need none.
+For everyday use, install universal firmware once, then use Studio’s **Connect & save** controls for subsequent read/save operations. [Current release and install/save distinction](status.md) · [next attended checks](next-release-checklist.md). Advanced experimental audio is optional; ordinary movement/eye/light routines need none.
 
 
 ## 1. Obtain hardware
@@ -9,7 +9,7 @@ A standard Bluetooth-capable ESP32 development board is sufficient (the confirme
 
 ## 2. Install universal firmware in your browser
 
-Open [Studio](../studio/index.html) → **Send to your ESP32 → New ESP32? Start here**.
+Open [Studio](../studio/index.html) → **Connect & save → First-time setup**.
 Follow **Connect ESP32 → Install Firmware → Configure Skelly**. Use an original
 ESP32-WROOM development board with 4 MB flash, desktop Chrome/Edge and a USB data
 cable. The installer fetches the versioned package directly; no Arduino software,

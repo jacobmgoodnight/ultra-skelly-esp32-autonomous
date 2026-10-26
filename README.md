@@ -61,7 +61,7 @@ your own setup. The table below separates physical observations from other evide
 For Ultra Skelly v2, start with a personality or a complete look. **Moonlit Watcher**
 requests a head turn every 60–120 seconds; **Ember Glow** adds an arm request every 150–240 seconds;
 **Haunted Porch** adds torso and combined movements. Every complete look loads
-movement, eyes and lighting. Customize it, then use **Send to your ESP32 → Save
+movement, eyes and lighting. Customize it, then use **Connect & save → Save
 this routine**. Scene builder is optional: save named scenes there when you want
 a collection, then use **Save scene collection** to send that saved library.
 
@@ -100,11 +100,12 @@ requires updated firmware and attended hardware verification; see the
 [audio-scene guide and result sheet](docs/audio-scenes.md). Ordinary presets keep
 audio OFF. Local conversion/trimming and computer-only preview can prepare other browser-supported audio formats; no audio is sent to a server.
 
-Everyday **Send to your ESP32** controls stay separate: connect, read, save a routine
-or save a scene collection. First-time browser installation folds away after USB
-identification; Arduino is an advanced fallback. A scene is not needed for one routine.
+Everyday **Connect & save** controls stay separate: connect, read, save a routine
+or save a scene collection. First-time browser installation has its own disclosure; Arduino is an advanced fallback. A scene is not needed for one routine.
 
-Screenshots show illustrative browser settings, with no hardware connection.
+The compact gallery and illustrative lighting sample in Your Skelly update as you edit.
+The [UI refinement notes](docs/studio-ui-refinements.md) show the revised Connect & save workflow.
+Screenshots show browser settings; USB screenshots use a simulated controller.
 
 Current release: **2026.10.24-preview.2**. [Feature status](docs/status.md) · [Changelog](CHANGELOG.md) · [Next attended checks](docs/next-release-checklist.md).
 
@@ -139,7 +140,7 @@ observations do not establish that this firmware revision passed on the prop.
 ## Quick start
 
 1. Use an **original ESP32-WROOM / 4 MB** board, USB data cable and desktop
-   Chrome/Edge. In Studio open **Send to your ESP32 → New ESP32? Start here**.
+   Chrome/Edge. In Studio open **Connect & save → First-time setup**.
 2. Follow **Connect ESP32 → Install Firmware → Configure Skelly**. The public,
    versioned package is checked before USB access. **Installation replaces ESP32
    firmware and resets saved settings/scenes: export backups first.** Browser
