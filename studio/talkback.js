@@ -77,28 +77,44 @@
 
   // Only a one-shot live-audio enable command. Never files, motor masks or settings.
   class LiveLink {
-    constructor(bluetooth,frame,{setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}={}){Object.assign(this,{bluetooth,frame,setTimer,clearTimer});this.generation=0;this.device=null;this.busy=false;this.cancelWait=null;}
+    constructor(bluetooth,frame,{setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id),onChange=()=>{}}={}){Object.assign(this,{bluetooth,frame,setTimer,clearTimer,onChange});this.generation=0;this.device=null;this.busy=false;this.cancelWait=null;this.stage='idle';this.writeAttempted=false;this.writeCompleted=false;}
+    progress(stage,message){this.stage=stage;this.onChange(message);}
     cancel(){++this.generation;this.cancelWait?.();const d=this.device;this.device=null;if(d?.gatt.connected)d.gatt.disconnect();}
     async bounded(promise,generation,ms=10000){
       if(generation!==this.generation)throw Error('Live setup cancelled.');let timer,cancel;
-      try{return await Promise.race([promise,new Promise((_,reject)=>{cancel=()=>reject(Error('Live setup cancelled.'));this.cancelWait=cancel;timer=this.setTimer(()=>reject(Error('Live setup timed out. No automatic retry.')),ms);})]);}
+      try{return await Promise.race([promise,new Promise((_,reject)=>{cancel=()=>reject(Error('Live setup cancelled.'));this.cancelWait=cancel;timer=this.setTimer(()=>reject(Object.assign(Error('Live setup timed out. No automatic retry.'),{timedOut:true})),ms);})]);}
       finally{this.clearTimer(timer);if(this.cancelWait===cancel)this.cancelWait=null;}
     }
     async enable(name){
       if(this.busy)throw Error('Live setup is already running.');
       if(!this.bluetooth)throw Error('Use desktop Chrome/Edge with Web Bluetooth for live setup.');
       if(typeof name!=='string'||!name.trim()||name.length>48||/[\x00-\x1f]/.test(name)||/12\s*ft/i.test(name))throw Error('Use the advertised name of your 6.5-foot Ultra Skelly. The 12-foot model is excluded.');
-      this.busy=true;const generation=++this.generation,check=()=>{if(generation!==this.generation)throw Error('Live setup cancelled.');};
+      this.busy=true;this.writeAttempted=this.writeCompleted=false;
+      const generation=++this.generation,check=()=>{if(generation!==this.generation)throw Error('Live setup cancelled.');};
       try{
+        this.progress('chooser','Step 1 of 4: choose your Ultra Skelly in the browser’s Bluetooth chooser.');
         const device=await this.bounded(this.bluetooth.requestDevice({filters:[{name:name.trim()}],optionalServices:['0000ae00-0000-1000-8000-00805f9b34fb']}),generation,120000);check();this.device=device;
+        this.progress('connection','Step 2 of 4: connecting to Skelly over BLE. No live-enable request has been sent.');
         const connecting=device.gatt.connect();connecting.then(server=>{if(generation!==this.generation&&server.connected)server.disconnect();}).catch(()=>{});
         const server=await this.bounded(connecting,generation);check();
+        this.progress('service','Step 3 of 4: connected; finding Skelly’s control service. No live-enable request has been sent.');
         const service=await this.bounded(server.getPrimaryService('0000ae00-0000-1000-8000-00805f9b34fb'),generation);check();
+        this.progress('writer','Step 3 of 4: finding Skelly’s write characteristic. No live-enable request has been sent.');
         const writer=await this.bounded(service.getCharacteristic('0000ae01-0000-1000-8000-00805f9b34fb'),generation);check();
         if(!server.connected)throw Error('Skelly disconnected before the request.');
-        await this.bounded(writer.writeValueWithoutResponse(this.frame(0xfd,[1])),generation);check();
-        if(!server.connected)throw Error('Skelly disconnected during the request.');
-        return 'Live-enable write completed; speaker/jaw response is unverified. Pair the (Live) speaker in your computer’s Bluetooth settings.';
+        this.progress('write','Step 4 of 4: sending one live-audio enable request.');
+        const bytes=this.frame(0xfd,[1]);this.writeAttempted=true;
+        await this.bounded(writer.writeValueWithoutResponse(bytes),generation);this.writeCompleted=true;check();
+        return 'Live-enable write completed'+(server.connected?'':'; Skelly disconnected afterward')+'. Speaker/jaw response is unverified. Pair the (Live) speaker in your computer’s Bluetooth settings.';
+      }catch(cause){
+        const cancelled=generation!==this.generation;
+        let message;
+        if(this.writeAttempted)message='Live setup '+(cancelled?'was cancelled':cause.timedOut?'timed out':'failed')+' after a write was attempted. The live-enable request may have reached Skelly; sound and jaw response are unverified. Check the prop and power-cycle it before another setup attempt.';
+        else if(cancelled)message='Live setup cancelled before the write. No live-enable request was sent.';
+        else if(this.stage==='connection')message='BLE connection '+(cause.timedOut?'timed out':'failed')+' before live enable. No live-enable request was sent. Unplug the autonomous ESP32, including USB; close other Skelly apps/tabs; then power-cycle Skelly in Bluetooth mode before one manual retry.';
+        else if(this.stage==='service'||this.stage==='writer')message='Connected, but '+(cause.timedOut?'timed out finding':'could not find')+' Skelly’s '+(this.stage==='service'?'control service':'write characteristic')+'. No live-enable request was sent. Confirm this is the 6.5-foot Ultra Skelly and power-cycle it before one manual retry.';
+        else message='Bluetooth device selection '+(cause.timedOut?'timed out':'did not complete')+'. No live-enable request was sent. Choose your Ultra Skelly again when ready.';
+        throw Object.assign(Error(message),{cause,stage:this.stage,writeAttempted:this.writeAttempted,writeCompleted:this.writeCompleted,cancelled});
       }finally{this.cancel();this.busy=false;}
     }
   }

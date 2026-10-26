@@ -32,6 +32,12 @@ test('late output chooser results cannot change routing after Stop',async()=>{
 test('unsupported features have clear fallback without opening microphone or Bluetooth',()=>{
  const p=page({supported:false,bluetooth:false});assert.equal(p.nodes.record.disabled,true);assert.equal(p.nodes.enableLive.disabled,true);assert.match(p.nodes.status.textContent,/HTTPS or localhost/);assert.deepEqual(p.calls,[]);
 });
+test('live setup preserves an accurate pre-write failure without appending a sent-request warning',async()=>{
+ const p=page();p.nodes.isolated.checked=true;p.nodes.isolated.onchange();
+ const message='BLE connection failed before live enable. No live-enable request was sent.';
+ p.live.enable=async()=>{throw Error(message);};await p.nodes.enableLive.onclick();
+ assert.equal(p.nodes.liveStatus.textContent,message);assert.equal(p.nodes.enableLive.disabled,false);
+});
 test('Chrome/Edge fallback lists only outputs and keeps selection explicit',async()=>{
  const p=page({chooser:false,devices:[{kind:'audioinput',deviceId:'mic',label:'Microphone'},{kind:'audiooutput',deviceId:'speaker',label:'USB speaker <test>'}]});
  assert.equal(p.nodes.chooseOutput.disabled,false);await p.nodes.chooseOutput.onclick();

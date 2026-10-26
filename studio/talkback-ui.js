@@ -4,7 +4,7 @@
   let outputBusy=false,outputGeneration=0,liveBusy=false;
   let outputIds=new Set(['']);
   const repeat=new window.SkellyTalkback.RepeatBack({media:navigator.mediaDevices,Recorder:window.MediaRecorder,onChange:render});
-  const live=new window.SkellyTalkback.LiveLink(navigator.bluetooth,window.SkellyAudio.frame);
+  const live=new window.SkellyTalkback.LiveLink(navigator.bluetooth,window.SkellyAudio.frame,{onChange:message=>{el('liveStatus').textContent=message;}});
   function render(){
     const supported=window.isSecureContext&&!!navigator.mediaDevices?.getUserMedia&&!!window.MediaRecorder;
     el('record').disabled=!supported||active.includes(repeat.state)||outputBusy||liveBusy;
@@ -19,7 +19,7 @@
   }
   function stop(){
     ++outputGeneration;outputBusy=false;live.cancel();repeat.stop();
-    if(liveBusy)el('liveStatus').textContent='Setup stopped. A request already sent cannot be recalled. Stop audio and power-cycle Skelly before resuming autonomous operation.';
+    if(liveBusy)el('liveStatus').textContent=live.writeAttempted?'Setup stopped after a write was attempted. The request may have reached Skelly; power-cycle it before resuming autonomous operation.':'Setup stopped before the write. No live-enable request was sent.';
     render();
   }
   el('record').onclick=()=>repeat.record();el('finish').onclick=()=>repeat.finish();el('repeat').onclick=()=>repeat.play();el('stop').onclick=stop;
@@ -58,7 +58,7 @@
     if(el('enableLive').disabled)return;
     liveBusy=true;render();el('liveStatus').textContent='Choose your Ultra Skelly. Only a live-audio enable request will be sent.';
     try{el('liveStatus').textContent=await live.enable(el('propName').value);}
-    catch(error){el('liveStatus').textContent=error.message+' A request already sent may have taken effect. Check the prop; no automatic retry.';}
+    catch(error){el('liveStatus').textContent=error.message;}
     finally{liveBusy=false;render();}
   };
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});window.addEventListener('pagehide',stop);

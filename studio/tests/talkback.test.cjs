@@ -12,7 +12,7 @@ test('default browser timers keep the Window receiver instead of the engine inst
  const repeat=new BrowserRepeat({visible:()=>true,Recorder:function(){},media:{async getUserMedia(){++requests;throw Object.assign(Error(),{name:'NotAllowedError'});}}});
  await repeat.record();assert.equal(requests,1);assert.equal(repeat.state,'error');assert.match(repeat.message,/permission denied/);assert.equal(timers.size,0);
  const live=new BrowserLive({async requestDevice(){throw Error('chooser dismissed');}},frame);
- await assert.rejects(live.enable('Ultra Skelly v2'),/chooser dismissed/);assert.equal(live.busy,false);assert.equal(timers.size,0);
+ await assert.rejects(live.enable('Ultra Skelly v2'),e=>e.stage==='chooser'&&!e.writeAttempted&&e.cause.message==='chooser dismissed');assert.equal(live.busy,false);assert.equal(timers.size,0);
 });
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 function fixture({pending=false,deny=false,playFails=false,sinkPending=false}={}){
@@ -85,7 +85,7 @@ test('audio construction failure and a late play resolution leave no active play
 });
 function liveFixture({hold=''}={}){
  const wait=deferred(),writes=[],filters=[];let selected=false;
- const server={connected:false,disconnect(){this.connected=false;},async connect(){if(hold==='connect')await wait.promise;this.connected=true;return this;},async getPrimaryService(id){assert.match(id,/ae00/);return {async getCharacteristic(id){assert.match(id,/ae01/);if(hold==='writer')await wait.promise;return {async writeValueWithoutResponse(bytes){writes.push([...bytes]);}};}};}};
+ const server={connected:false,disconnect(){this.connected=false;},async connect(){if(hold==='connect')await wait.promise;this.connected=true;return this;},async getPrimaryService(id){assert.match(id,/ae00/);return {async getCharacteristic(id){assert.match(id,/ae01/);if(hold==='writer')await wait.promise;return {async writeValueWithoutResponse(bytes){writes.push([...bytes]);if(hold==='write')await wait.promise;}};}};}};
  const device={name:'Ultra Skelly v2',gatt:server},bluetooth={async requestDevice(options){filters.push(options.filters);if(hold==='chooser')await wait.promise;selected=true;return device;}};
  const live=new LiveLink(bluetooth,frame);return {live,server,writes,filters,wait,get selected(){return selected;}};
 }
@@ -112,6 +112,29 @@ test('live setup timeout disconnects late connections; failed writes are never r
  p.wait.resolve();await tick();assert.equal(p.server.connected,false);assert.deepEqual(p.writes,[]);assert.equal(timers.size,0);
  const failed=liveFixture();let writes=0;
  failed.server.getPrimaryService=async()=>({getCharacteristic:async()=>({writeValueWithoutResponse:async()=>{++writes;throw Error('write failed');}})});
- await assert.rejects(failed.live.enable('Ultra Skelly v2'),/write failed/);
+ await assert.rejects(failed.live.enable('Ultra Skelly v2'),e=>e.stage==='write'&&e.writeAttempted&&e.cause.message==='write failed');
  assert.equal(writes,1);assert.equal(failed.live.busy,false);assert.equal(failed.server.connected,false);
+});
+test('connection and discovery failures identify the stage and confirm no enable write was attempted',async()=>{
+ for(const stage of ['connection','service','writer']){
+  const p=liveFixture(),progress=[];p.live.onChange=message=>progress.push(message);
+  if(stage==='connection')p.server.connect=async()=>{throw Error('Connection Error: Connection attempt failed.');};
+  if(stage==='service')p.server.getPrimaryService=async()=>{throw Error('service missing');};
+  if(stage==='writer')p.server.getPrimaryService=async()=>({getCharacteristic:async()=>{throw Error('writer missing');}});
+  await assert.rejects(p.live.enable('Ultra Skelly v2'),e=>{
+   assert.equal(e.stage,stage);assert.equal(e.writeAttempted,false);assert.equal(e.writeCompleted,false);
+   assert.match(e.message,/No live-enable request was sent/);assert.doesNotMatch(e.message,/may have reached/);return true;
+  });
+  assert.equal(p.writes.length,0);assert.equal(p.server.connected,false);assert.equal(p.live.busy,false);assert.ok(progress.some(m=>m.includes('Step 2 of 4')));
+ }
+});
+test('cancellation after an enable write reports uncertainty and never retries',async()=>{
+ const p=liveFixture({hold:'write'}),job=p.live.enable('Ultra Skelly v2');await tick();assert.equal(p.writes.length,1);
+ p.live.cancel();await assert.rejects(job,e=>e.cancelled&&e.stage==='write'&&e.writeAttempted&&/may have reached/.test(e.message));
+ p.wait.resolve();await tick();assert.equal(p.writes.length,1);assert.equal(p.server.connected,false);
+});
+test('a completed enable write followed by a disconnect remains a transport-only result',async()=>{
+ const p=liveFixture();p.server.getPrimaryService=async()=>({getCharacteristic:async()=>({writeValueWithoutResponse:async bytes=>{p.writes.push([...bytes]);p.server.connected=false;}})});
+ const message=await p.live.enable('Ultra Skelly v2');assert.match(message,/write completed; Skelly disconnected afterward/);assert.match(message,/unverified/);
+ assert.equal(p.writes.length,1);assert.equal(p.live.writeCompleted,true);
 });

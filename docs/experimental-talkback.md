@@ -1,7 +1,8 @@
 # Experimental repeat-back lab
 
-**Software-only. Microphone capture, actual speaker routing, live-mode behavior,
-jaw synchronization and recovery on the prop remain Untested.** This experiment
+**October 26: the owner reports local repeat-back works.** Detailed microphone,
+browser and output-device information was not supplied. Skelly live-mode behavior,
+jaw synchronization and recovery on the prop remain **Untested**. This experiment
 is for the 6.5-foot Ultra Skelly v2 only, not the experimental 12-foot model.
 
 Open [Repeat-back lab](../studio/talkback.html) in desktop Chrome or Edge over
@@ -70,8 +71,8 @@ computer or optional service; simple recording/replay needs neither.
 
 ## Isolated prop setup and recovery
 
-1. Preserve your working routine. Let current movement finish, power off the
-   autonomous ESP32, close other control apps and put Skelly in Bluetooth mode.
+1. Preserve your working routine. Let current movement finish, unplug the
+   autonomous ESP32 **including USB**, close other control apps/tabs and put Skelly in Bluetooth mode.
 2. Expand the isolated live-audio section and confirm those conditions. Select
    your Ultra by its exact advertised name. No hardcoded device address is used.
 3. The page connects after the device chooser, writes exactly one upstream-based
@@ -92,11 +93,28 @@ occurs, stop playback and power off the prop. Keep the ESP32 off until the prop
 has been returned to the known-working configuration. This page cannot observe
 physical cooldowns or guarantee the motor has stopped.
 
+### If Enable live audio fails
+
+The browser chooser's **Pair** button selects a BLE control device. Pairing the
+separate **(Live)** audio speaker in Windows happens after the enable request.
+The page now identifies selection, BLE connection, service discovery and the
+single write separately. A connection/discovery failure before that write means
+**no live-enable request was sent**. A failure or cancellation after a write was
+attempted leaves the prop's state uncertain; inspect it and power-cycle before
+another setup attempt. There is no automatic retry.
+
+For a connection-stage failure, keep the ESP32 unplugged and other apps closed,
+let any movement finish, turn Skelly off for 10 seconds, then return it to
+Bluetooth mode. Keep the computer close to the prop, hard-refresh the page and
+make one manual attempt. Report the exact failed stage. If the BLE connection
+still fails, investigate the computer/adapter/prop link before audio routing or
+jaw synchronization. Do not change firmware or send motor commands to diagnose it.
+
 ## Attended result sheet
 
 | Test | Pass criterion | Evidence |
 | --- | --- | --- |
-| Local microphone | Permission requested only on Record; phrase repeats clearly; mic indicator turns off before playback | Untested |
+| Local microphone | Permission requested only on Record; phrase repeats clearly; mic indicator turns off before playback | Owner reports local repeat-back works; detailed permission/indicator check pending |
 | Stop/leave | Recording and playback stop; recording cannot be replayed; hidden page never restarts listening | Software-only mocks; physical check pending |
 | Live enable | Correct Ultra selected; live speaker actually becomes available; no unexpected motion | Untested |
 | Output routing | Sound physically comes from the selected output, not unexpectedly from computer/external speakers | Untested |
