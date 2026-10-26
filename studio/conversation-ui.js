@@ -31,7 +31,7 @@
     try{
       const response=await fetch('/api/status',{signal:abort.signal});const value=await window.SkellyConversation.readJSON(response,2048);if(generation!==checkGeneration)return;
       if(!response.ok||value.ready!==true||typeof value.token!=='string'||value.token.length>100)throw Error();
-      token=value.token;el('service').textContent='Local engines ready. Audio stays on this computer. Select Skelly Stereo in Windows sound settings.';
+      token=value.token;el('service').textContent='Local speech/reply engines ready. Bluetooth audio is separate: connect and select Skelly Stereo in Windows sound settings. This check does not verify the speaker.';
     }catch{if(generation===checkGeneration){token='';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };

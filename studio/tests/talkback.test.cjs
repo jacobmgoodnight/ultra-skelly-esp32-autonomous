@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {RepeatBack,LiveLink,RECORD_MS,MAX_BYTES}=require('../talkback.js'),{frame,crc}=require('../audio.js');
+const {RepeatBack,LiveLink,RECORD_MS,MAX_BYTES,DISCOVERY_MS}=require('../talkback.js'),{frame,crc}=require('../audio.js');
 test('default browser timers keep the Window receiver instead of the engine instance',async()=>{
  const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
  const timers=new Map();let next=0,scope;
@@ -101,10 +101,10 @@ test('audio construction failure and a late play resolution leave no active play
  assert.equal(p.events.filter(e=>e==='pause').length,pauses+1);assert.equal(p.timers.size,0);
 });
 function liveFixture({hold=''}={}){
- const wait=deferred(),writes=[],filters=[];let selected=false;
- const server={connected:false,disconnect(){this.connected=false;},async connect(){if(hold==='connect')await wait.promise;this.connected=true;return this;},async getPrimaryService(id){assert.match(id,/ae00/);return {async getCharacteristic(id){assert.match(id,/ae01/);if(hold==='writer')await wait.promise;return {async writeValueWithoutResponse(bytes){writes.push([...bytes]);if(hold==='write')await wait.promise;}};}};}};
+ const wait=deferred(),writes=[],filters=[],lookups=[];let selected=false;
+ const server={connected:false,disconnect(){this.connected=false;},async connect(){if(hold==='connect')await wait.promise;this.connected=true;return this;},async getPrimaryService(id){lookups.push('service');assert.match(id,/ae00/);if(hold==='service')await wait.promise;return {async getCharacteristic(id){lookups.push('writer');assert.match(id,/ae01/);if(hold==='writer')await wait.promise;return {async writeValueWithoutResponse(bytes){writes.push([...bytes]);if(hold==='write')await wait.promise;}};}};}};
  const device={name:'Ultra Skelly v2',gatt:server},bluetooth={async requestDevice(options){filters.push(options.filters);if(hold==='chooser')await wait.promise;selected=true;return device;}};
- const live=new LiveLink(bluetooth,frame);return {live,server,writes,filters,wait,get selected(){return selected;}};
+ const live=new LiveLink(bluetooth,frame);return {live,server,writes,filters,lookups,wait,get selected(){return selected;}};
 }
 test('live setup sends exactly one correctly checksummed AAFD request and releases BLE',async()=>{
  const p=liveFixture();assert.equal(p.selected,false);const message=await p.live.enable('Ultra Skelly v2');
@@ -112,7 +112,7 @@ test('live setup sends exactly one correctly checksummed AAFD request and releas
  assert.match(message,/unverified/);assert.equal(p.server.connected,false);assert.equal(p.live.busy,false);
 });
 test('cancel at chooser, connection or discovery prevents writes and closes late connections',async()=>{
- for(const hold of ['chooser','connect','writer']){
+ for(const hold of ['chooser','connect','service','writer']){
   const p=liveFixture({hold}),job=p.live.enable('Ultra Skelly v2');await tick();p.live.cancel();p.wait.resolve();await assert.rejects(job,/cancelled/);await tick();
   assert.deepEqual(p.writes,[]);assert.equal(p.server.connected,false);assert.equal(p.live.busy,false);
  }
@@ -131,6 +131,24 @@ test('live setup timeout disconnects late connections; failed writes are never r
  failed.server.getPrimaryService=async()=>({getCharacteristic:async()=>({writeValueWithoutResponse:async()=>{++writes;throw Error('write failed');}})});
  await assert.rejects(failed.live.enable('Ultra Skelly v2'),e=>e.stage==='write'&&e.writeAttempted&&e.cause.message==='write failed');
  assert.equal(writes,1);assert.equal(failed.live.busy,false);assert.equal(failed.server.connected,false);
+});
+test('service and characteristic discovery get 30 seconds; the actual write remains bounded to 10',async()=>{
+ assert.equal(DISCOVERY_MS,30000);
+ for(const hold of ['service','writer','write']){
+  const p=liveFixture({hold}),timers=new Map();let next=0;
+  p.live.setTimer=(fn,ms)=>{timers.set(++next,{fn,ms});return next;};p.live.clearTimer=id=>timers.delete(id);
+  const job=p.live.enable('Ultra Skelly v2');await tick();assert.deepEqual([...timers.values()].map(timer=>timer.ms),[hold==='write'?10000:30000]);
+  assert.equal(p.live.writeAttempted,hold==='write');p.wait.resolve();await job;assert.equal(p.writes.length,1);assert.equal(p.server.connected,false);assert.equal(timers.size,0);
+ }
+});
+test('timed-out service or characteristic results never trigger a late enable or another lookup',async()=>{
+ for(const hold of ['service','writer']){
+  const p=liveFixture({hold}),timers=new Map();let next=0;
+  p.live.setTimer=(fn,ms)=>{timers.set(++next,{fn,ms});return next;};p.live.clearTimer=id=>timers.delete(id);
+  const job=p.live.enable('Ultra Skelly v2');await tick();const before=[...p.lookups];[...timers.values()].find(timer=>timer.ms===DISCOVERY_MS).fn();
+  await assert.rejects(job,error=>error.stage===(hold==='service'?'service':'writer')&&!error.writeAttempted&&/No live-enable request was sent/.test(error.message));
+  p.wait.resolve();await tick();assert.deepEqual(p.lookups,before);assert.deepEqual(p.writes,[]);assert.equal(p.server.connected,false);assert.equal(p.live.busy,false);assert.equal(timers.size,0);
+ }
 });
 test('connection and discovery failures identify the stage and confirm no enable write was attempted',async()=>{
  for(const stage of ['connection','service','writer']){

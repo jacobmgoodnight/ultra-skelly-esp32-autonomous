@@ -99,15 +99,17 @@ class Boundaries(unittest.TestCase):
                 self.assertEqual(request('GET', '/studio/conversation.html')[0], 200)
                 self.assertEqual(request('GET', '/studio/conversation-ui.js')[0], 200)
                 headers = {'X-Skelly-Token': token, 'Content-Type': 'audio/wav'}
-                self.assertEqual(request('POST', '/api/reply', audio())[0], 403)
-                self.assertEqual(request('POST', '/api/reply', audio(), {**headers, 'Origin': 'https://evil.example'})[0], 403)
-                self.assertEqual(request('POST', '/api/reply', bytes(companion.MAX_WAV + 1), headers)[0], 413)
+                self.assertEqual(request('POST', '/api/reply', b'')[0], 403)
+                self.assertEqual(request('POST', '/api/reply', b'', {**headers, 'Origin': 'https://evil.example'})[0], 403)
+                # Reject from headers before consuming a body. Sending an unread
+                # oversized body races Windows' connection reset with the 413.
+                self.assertEqual(request('POST', '/api/reply', b'', {**headers, 'Content-Length': str(companion.MAX_WAV + 1)})[0], 413)
                 for path in ['/.git/config', '/studio/../AGENTS.md', '/studio/conversation.html/extra']:
                     self.assertEqual(request('GET', path)[0], 404)
                 first = threading.Thread(target=lambda: request('POST', '/api/reply', audio(), headers))
                 first.start()
                 self.assertTrue(entered.wait(2))
-                self.assertEqual(request('POST', '/api/reply', audio(), headers)[0], 409)
+                self.assertEqual(request('POST', '/api/reply', b'', {**headers, 'Content-Length': str(len(audio()))})[0], 409)
                 release.set()
                 first.join(3)
                 self.assertEqual(engines.calls, 1)

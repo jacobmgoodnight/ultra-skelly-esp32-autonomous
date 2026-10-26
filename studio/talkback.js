@@ -1,7 +1,7 @@
 /* Isolated, opt-in repeat-back experiment. No storage, upload or scheduler access. */
 (function(){
   'use strict';
-  const RECORD_MS=8000,MAX_BYTES=1024*1024;
+  const RECORD_MS=8000,MAX_BYTES=1024*1024,DISCOVERY_MS=30000;
   // Wrap Window timer functions so storing them on an engine cannot change their receiver.
   class RepeatBack {
     constructor({media,Recorder,audioFactory=()=>new Audio(),urls=URL,onChange=()=>{},visible=()=>!document.hidden,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
@@ -103,10 +103,10 @@
         this.progress('connection','Step 2 of 4: connecting to Skelly over BLE. No live-enable request has been sent.');
         const connecting=device.gatt.connect();connecting.then(server=>{if(generation!==this.generation&&server.connected)server.disconnect();}).catch(()=>{});
         const server=await this.bounded(connecting,generation);check();
-        this.progress('service','Step 3 of 4: connected; finding Skelly’s control service. No live-enable request has been sent.');
-        const service=await this.bounded(server.getPrimaryService('0000ae00-0000-1000-8000-00805f9b34fb'),generation);check();
-        this.progress('writer','Step 3 of 4: finding Skelly’s write characteristic. No live-enable request has been sent.');
-        const writer=await this.bounded(service.getCharacteristic('0000ae01-0000-1000-8000-00805f9b34fb'),generation);check();
+        this.progress('service','Step 3 of 4: connected; finding Skelly’s control service (up to 30 seconds). Stay on this page. No live-enable request has been sent.');
+        const service=await this.bounded(server.getPrimaryService('0000ae00-0000-1000-8000-00805f9b34fb'),generation,DISCOVERY_MS);check();
+        this.progress('writer','Step 3 of 4: finding Skelly’s write characteristic (up to 30 seconds). Stay on this page. No live-enable request has been sent.');
+        const writer=await this.bounded(service.getCharacteristic('0000ae01-0000-1000-8000-00805f9b34fb'),generation,DISCOVERY_MS);check();
         if(!server.connected)throw Error('Skelly disconnected before the request.');
         this.progress('write','Step 4 of 4: sending one live-audio enable request.');
         const bytes=this.frame(0xfd,[1]);this.writeAttempted=true;
@@ -117,13 +117,15 @@
         let message;
         if(this.writeAttempted)message='Live setup '+(cancelled?'was cancelled':cause.timedOut?'timed out':'failed')+' after a write was attempted. The live-enable request may have reached Skelly; sound and jaw response are unverified. Check the prop and power-cycle it before another setup attempt.';
         else if(cancelled)message='Live setup cancelled before the write. No live-enable request was sent.';
-        else if(this.stage==='connection')message='BLE connection '+(cause.timedOut?'timed out':'failed')+' before live enable. No live-enable request was sent. Unplug the autonomous ESP32, including USB; close other Skelly apps/tabs; then power-cycle Skelly in Bluetooth mode before one manual retry.';
-        else if(this.stage==='service'||this.stage==='writer')message='Connected, but '+(cause.timedOut?'timed out finding':'could not find')+' Skelly’s '+(this.stage==='service'?'control service':'write characteristic')+'. No live-enable request was sent. Confirm this is the 6.5-foot Ultra Skelly and power-cycle it before one manual retry.';
+        else if(this.stage==='connection'||this.stage==='service'||this.stage==='writer'){
+          message=this.stage==='connection'?'BLE connection '+(cause.timedOut?'timed out':'failed')+' before live enable.':'Connected, but '+(cause.timedOut?'timed out finding':'could not find')+' Skelly’s '+(this.stage==='service'?'control service':'write characteristic')+'.';
+          message+=' No live-enable request was sent. If Skelly’s (Live) Stereo speaker is already connected in Windows, skip Enable and use that audio connection. Otherwise keep the ESP32 unplugged including USB, close other Skelly apps/tabs and power-cycle Skelly in Bluetooth mode before one manual retry.';
+        }
         else message='Bluetooth device selection '+(cause.timedOut?'timed out':'did not complete')+'. No live-enable request was sent. Choose your Ultra Skelly again when ready.';
         throw Object.assign(Error(message),{cause,stage:this.stage,writeAttempted:this.writeAttempted,writeCompleted:this.writeCompleted,cancelled});
       }finally{this.cancel();this.busy=false;}
     }
   }
-  const api={RepeatBack,LiveLink,RECORD_MS,MAX_BYTES};
+  const api={RepeatBack,LiveLink,RECORD_MS,MAX_BYTES,DISCOVERY_MS};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellyTalkback=api;
 })();

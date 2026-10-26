@@ -2,7 +2,7 @@
 
 **October 26: the owner confirms manual repeat-back and one attended automatic
 pilot through Skelly. Both automatic phrases repeated with jaw movement, then the
-pilot stopped.** Windows 10 exposes Ultra Skelly v2(Live) Stereo; microphone
+pilot stopped.** That setup exposed Ultra Skelly v2(Live) Stereo in Windows 10; microphone
 model and detailed timing were not supplied. Longer runs, physical Stop/hidden-page
 checks, body-still criteria and return to autonomy remain **Untested**. This experiment
 is for the 6.5-foot Ultra Skelly v2 only, not the experimental 12-foot model.
@@ -46,6 +46,12 @@ output in Windows Sound settings. The button is disabled only when neither
 selection path is supported. An unavailable selected output fails instead of silently switching sinks.
 With system-default output, the OS may change the destination if a speaker drops;
 verify the actual destination at low volume.
+
+Windows handles Bluetooth audio pairing and connection. If **Ultra Skelly v2(Live)
+Stereo** is already connected/selected and sound actually comes from Skelly, skip
+the isolated Enable/pair steps. A saved pairing alone does not establish a working
+audio connection. This page's microphone/output choices stay in this tab; the
+Halloween conversation page uses the default input/output selected in Windows.
 
 The optional **Deep** voice plays at 80% speed with pitch preservation disabled;
 it lowers the pitch and makes an eight-second recording last at most ten seconds.
@@ -125,14 +131,19 @@ computer or optional service; simple recording/replay needs neither.
 
 1. Preserve your working routine. Let current movement finish, unplug the
    autonomous ESP32 **including USB**, close other control apps/tabs and put Skelly in Bluetooth mode.
-2. Expand the isolated live-audio section and confirm those conditions. Select
-   your Ultra by its exact advertised name. No hardcoded device address is used.
+   If Windows already has **Ultra Skelly v2(Live) Stereo** connected/selected and
+   sound actually comes from Skelly, skip steps 2–4 and use the desired experiment.
+2. If the Live speaker is missing or unavailable, expand the isolated live-audio
+   section and confirm those conditions. Select your Ultra by its exact advertised
+   name. No hardcoded device address is used.
 3. The page connects after the device chooser, writes exactly one upstream-based
    `AAFD` request with payload `01` and CRC, then releases BLE. It sends no motor,
-   eye, light, volume, file-transfer or settings commands. The completed write
+   eye, light, volume, file-transfer or settings commands. Keep the page visible
+   until **Live-enable write completed** appears before opening Windows settings
+   or another page; switching away cancels pending setup. The completed write
    confirms transport only; it does not confirm live mode, sound or jaw response.
-4. Pair the advertised `(Live)` speaker in computer Bluetooth settings and choose
-   it as the computer output. On Windows 10, open **Settings → Devices →
+4. Connect the saved `(Live)` speaker in Windows Bluetooth settings and choose
+   it as the computer output. For first pairing on Windows 10, open **Settings → Devices →
    Bluetooth & other devices → Add Bluetooth or other device → Bluetooth**;
    the main settings list shows devices already added. If asked for a PIN, the
    [community integration documents `1234` as the default](https://github.com/martinecker/SkellyUltra#-live-mode-bluetooth-pairing).
@@ -154,11 +165,27 @@ physical cooldowns or guarantee the motor has stopped.
 
 The browser chooser's **Pair** button selects a BLE control device. Pairing the
 separate **(Live)** audio speaker in Windows happens after the enable request.
+The Halloween conversation page does not connect Bluetooth; **Check local engine**
+checks only its local speech/reply service. If Windows Live Stereo audio is already
+working, use conversation directly without another enable attempt. If the output
+is unavailable, complete the isolated enable procedure before Windows pairing.
 The page now identifies selection, BLE connection, service discovery and the
 single write separately. A connection/discovery failure before that write means
 **no live-enable request was sent**. A failure or cancellation after a write was
 attempted leaves the prop's state uncertain; inspect it and power-cycle before
 another setup attempt. There is no automatic retry.
+
+Service and write-characteristic discovery each wait up to 30 seconds. Connection
+and the actual enable write retain their 10-second limits. The longer discovery
+wait has **Software-only** timing coverage. October 26: after a fresh ten-second
+power-cycle and a hard refresh with the longer discovery bound, the owner reports
+**Live-enable write completed**, then seeing and connecting the Live speaker in
+Windows. This confirms transport/Windows connection recovery; elapsed discovery
+time and which recovery step helped were not measured. Sound/jaw response after
+this reconnection was not separately reported.
+[Microsoft documents variable, queued Windows GATT discovery times](https://learn.microsoft.com/en-us/windows/apps/develop/devices-sensors/gatt-client#connect-to-the-device).
+This makes the previous ten-second discovery deadline a possible contributor,
+not a confirmed cause of the reported failure.
 
 For a connection-stage failure, keep the ESP32 unplugged and other apps closed,
 let any movement finish, turn Skelly off for 10 seconds, then return it to

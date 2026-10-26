@@ -57,12 +57,22 @@ repository files and directory listings are unavailable.
 ## Attended use
 
 1. Let movement finish. Keep the ESP32 unplugged **including USB** and other
-   controller apps disconnected. Enable/pair the Live speaker using the existing
-   [isolated procedure](experimental-talkback.md), then select **Ultra Skelly
-   v2(Live) Stereo** in Windows. Choose the laptop microphone in Windows input
-   settings; this page uses the browser's default input/output, independently of
-   the repeat-back page's in-tab selections.
-2. Start at low volume. Press **Check local engine**, confirm attendance, then
+   controller apps disconnected. Windows handles the Bluetooth audio connection.
+   If **Ultra Skelly v2(Live) Stereo** is already connected/selected and sound
+   actually comes from Skelly, skip live enable and use this page directly.
+   If the Live speaker is missing or unavailable, follow the
+   [isolated procedure](experimental-talkback.md#isolated-prop-setup-and-recovery).
+   Keep the repeat-back page visible until **Live-enable write completed** appears
+   before leaving it. Then connect the saved Live speaker in Windows, or use
+   **Add Bluetooth or other device → Bluetooth** for first pairing. The documented
+   default PIN is **1234**, unless changed. There is no automatic setup retry.
+   Select Skelly Stereo output and the laptop microphone in Windows sound settings.
+   This page uses the browser's default input/output; the repeat-back page's
+   in-tab selections do not carry over. A saved pairing alone does not confirm
+   the speaker is currently connected.
+2. Start at low volume. **Check local engine** checks only the local speech/reply
+   service; it does not connect Bluetooth or verify the speaker. Press it,
+   confirm attendance, then
    **Talk to Skelly**. Stay quiet for one second, say a short phrase and pause.
    Try "Tell me a ghost joke" and "My name is Emma" using a known safe name.
 3. Each click listens once for up to eight seconds. The microphone closes before
@@ -113,6 +123,13 @@ controllers disconnected. The exact spoken line and first-name greeting were not
 separately reported. Body-still criteria, physical microphone-off phases, cooldown,
 Stop/hidden-page cleanup, inappropriate-word/unknown-name trials, child-voice
 recognition, Deep output, longer sessions and return to autonomy remain unverified.
+
+Later October 26 reconnection: the owner reported a control-service lookup timeout
+and missing/unavailable Windows Live output. After a fresh prop power-cycle and
+hard refresh with up to 30 seconds per discovery step, the enable write completed
+and the owner saw/connected the Live speaker in Windows. Discovery duration and
+the effective recovery step are unknown; this is transport/Windows connection
+evidence, not a new sound/jaw or endurance result.
 
 Software-only: unit coverage exercises output/name allowlists, malformed and
 injected selections, audio limits, Host/Origin/token/path rejection, request
