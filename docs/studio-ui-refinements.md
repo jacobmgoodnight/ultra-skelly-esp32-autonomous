@@ -8,7 +8,9 @@ cooldown, BLE/USB command, default or stored configuration format changes.
 
 The redundant Look panel is removed. Eyes and Lighting use the full editor width;
 the torso/head controls sit beside each other where space permits. The gallery
-uses 64 px artwork and an automatic responsive grid, with descriptive names,
+uses 64 px artwork and a balanced responsive grid: six columns in wide editors,
+three in medium editors and two on narrow phones. All 18 Ultra expressions fill
+complete rows. The gallery keeps descriptive names,
 visible selection, keyboard selection and separate 44 px enlarged-preview buttons.
 All 18 Ultra expressions remain available. Numbering and unavailable artwork for
 the experimental 12-foot model remain unchanged. Artwork attribution remains in
@@ -25,10 +27,11 @@ samples still through further edits. No preview opens USB or Bluetooth.
 
 ![Your Skelly with independent torso and head lighting samples](images/studio-summary-lighting.jpg)
 
-The sample deliberately shows only the starting palette during rotation. It says
-“Illustration · hardware timing varies”; simulating a whole rotating program would
-add complexity and imply timing precision that the hardware evidence does not
-establish. A static screenshot cannot show the animation.
+The sample deliberately shows only the starting palette during rotation. It remains
+an illustrative browser sample; no exact hardware timing is established. The visible
+timing caption is removed, and the Pause/Resume row appears only when useful.
+A static screenshot cannot show the animation. The Studio footer credits Jacob
+Goodnight; protocol/artwork attribution and hardware evidence remain in the repository.
 
 ## Everyday Connect & save
 
@@ -59,7 +62,8 @@ results scroll into view below the navigation; background status never scrolls.
 
 ## Validation and limits
 
-- **183 Node tests pass**, including recommended actions, consent, explicit read,
+- **184 Node tests pass**, including balanced rows and simplified footer/caption,
+  recommended actions, consent, explicit read,
   verified save, edited settings, new USB sessions and failed read-back recovery.
 - **18 Playwright workflows pass in desktop Edge**, with a simulated USB controller
   using the real serial parser and transaction code. Checks cover 1440, 768, 390
