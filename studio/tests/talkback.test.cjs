@@ -28,7 +28,7 @@ function fixture({pending=false,deny=false,playFails=false,sinkPending=false}={}
  const engine=new RepeatBack({media:{getUserMedia:async options=>{events.push('mic');constraints.push(options);assert.equal(options.video,false);if(deny)throw Object.assign(Error(),{name:'NotAllowedError'});return pending?request.promise:stream;}},Recorder,
   visible:()=>visible,setTimer:(fn,ms)=>{timers.set(++next,{fn,ms});return next;},clearTimer:id=>timers.delete(id),
   urls:{createObjectURL:()=>{events.push('url');return 'blob:clip';},revokeObjectURL:u=>events.push('revoke:'+u)},
-  audioFactory:()=>audio={onended:null,onerror:null,src:'',preservesPitch:true,playbackRate:1,async setSinkId(id){events.push('sink:'+id);if(sinkPending)await sink.promise;},async play(){assert.equal(track.stopped,true,'microphone must be released before playback');events.push('play');if(playFails)throw Error();},pause(){events.push('pause');},removeAttribute(){this.src='';},load(){}},onChange:()=>{}});
+  audioFactory:()=>audio={onended:null,onerror:null,get src(){return this._src||'';},set src(value){this._src=value;this.playbackRate=this.defaultPlaybackRate;},preservesPitch:true,defaultPlaybackRate:1,playbackRate:1,async setSinkId(id){events.push('sink:'+id);if(sinkPending)await sink.promise;},async play(){assert.equal(track.stopped,true,'microphone must be released before playback');events.push('play');if(playFails)throw Error();},pause(){events.push('pause');},removeAttribute(){this.src='';},load(){}},onChange:()=>{}});
  return {engine,timers,events,constraints,track,stream,request,sink,get recorder(){return recorder;},get audio(){return audio;},hide(){visible=false;engine.stop();},fire(ms){const entry=[...timers.entries()].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms);timers.delete(entry[0]);entry[1].fn();}};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
@@ -53,7 +53,7 @@ test('deep voice lowers pitch with bounded duration and fails closed when unsupp
   if(voice==='unsupported'){const factory=p.engine.audioFactory;p.engine.audioFactory=()=>{const audio=factory();delete audio.preservesPitch;return audio;};}
   await p.engine.play();
   if(['invalid','unsupported'].includes(voice)){assert.equal(p.engine.state,'error');assert.equal(p.events.includes('play'),false);assert.equal(p.engine.clip,null);assert.equal(p.timers.size,0);}
-  else{assert.equal(p.audio.playbackRate,voice==='deep'?.8:1);assert.equal(p.audio.preservesPitch,voice!=='deep');assert.ok(RECORD_MS/p.audio.playbackRate<15000);p.engine.stop();}
+  else{assert.equal(p.audio.playbackRate,voice==='deep'?.8:1);assert.equal(p.audio.defaultPlaybackRate,voice==='deep'?.8:1);assert.equal(p.audio.preservesPitch,voice!=='deep');assert.ok(RECORD_MS/p.audio.playbackRate<15000);p.engine.stop();}
  }
 });
 test('stop or hidden page discards pending permission results and stops every late track',async()=>{

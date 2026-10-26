@@ -67,11 +67,12 @@
         if(!['original','deep'].includes(this.voice)){this.fail('Choose an available playback voice.');return;}
         if(this.voice==='deep'){
           if(!('preservesPitch' in audio)){this.fail('Deep voice is unavailable in this browser. Choose Original voice.');return;}
-          audio.preservesPitch=false;audio.playbackRate=.8;
+          audio.preservesPitch=false;audio.defaultPlaybackRate=.8;
         }
         if(this.sink){if(!audio.setSinkId)throw Error('Output selection is unavailable.');await audio.setSinkId(this.sink);}
         if(generation!==this.generation||this.audio!==audio)return;
         this.url=this.urls.createObjectURL(this.clip);audio.src=this.url;
+        if(this.voice==='deep')audio.playbackRate=.8;
         audio.onended=()=>{if(generation!==this.generation||this.audio!==audio)return;this.clearTimer(this.timer);this.releaseAudio();this.say('ready','Playback ended in the browser. Observe Skelly separately to confirm sound and jaw movement.');};
         audio.onerror=()=>{if(generation===this.generation&&this.audio===audio)this.fail('Playback failed. Check your audio output and record again.');};
         await audio.play();
