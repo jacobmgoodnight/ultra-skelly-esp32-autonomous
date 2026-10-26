@@ -102,14 +102,18 @@ repository files and directory listings are unavailable.
    Try "Tell me a ghost joke" and "My name is Emma" using a known safe name.
 3. Each click listens once for up to eight seconds. The microphone closes before
    transcription, reply selection and speech output. Nothing listens during
-   processing, playback or the 45-second pause after playback. Choose Talk again
-   after the pause; no automatic rearm is implemented. Natural is the default;
-   optional Deeper uses the existing lower/slower playback.
+   processing or playback. Normally, a 45-second pause follows each reply. For
+   attended voice testing, select **Quick voice testing** before Talk to skip that
+   wait after a completed reply. Each next turn still requires a click; listening
+   never restarts automatically. Natural is the default; optional Deeper uses the
+   existing lower/slower playback.
 4. **Stop & forget**, hiding/leaving the page, device changes or errors discard
    the turn and cancel playback/pending browser requests. Late results never play.
    The companion may finish its bounded local processing after browser cancellation;
    that work cannot start playback. Bluetooth buffers may finish queued audio after
-   Stop. An interrupted playback retains a conservative browser pause.
+   Stop. If playback is interrupted, quick-test mode retains a browser pause
+   until 15 seconds after playback began (60 seconds normally). The option is off after reloading the page; it
+   cannot cancel a pause already owed by an earlier turn.
 5. Under After testing, **Stop local companion** shuts down its owned services;
    Ctrl+C in the terminal does the same. Pending bounded processing finishes and
    temporary files are removed. Disconnect Windows from the Live speaker and
@@ -165,7 +169,9 @@ not separately establish a new voice/jaw observation or extended recovery result
 Software-only: unit coverage exercises output/name allowlists, malformed and
 injected selections, audio limits, Host/Origin/token/path rejection, request
 serialization, capture/playback separation, Stop/late results, network bounds,
-UI gating and cooldown retention. Catalog tests cover all 80 lines, stable topic
+UI gating, default cooldown retention and explicitly selected quick testing.
+Quick testing is software-only; physical effects of closely spaced replies are
+not verified. Catalog tests cover all 80 lines, stable topic
 IDs, bounded history and shared explicit/generic shuffle bags. Voice tests cover
 local command construction, visible fallback, reply sample rates/duration and no
 silent fallback after a neural failure. Delivery tests verify the punchline beat,
@@ -214,6 +220,34 @@ With the 700 ms beat, a fresh synthesis sweep of all 80 lines with the same
 long allowlisted name also stayed within the eight-second limit; the longest
 observed WAV was **6.436 seconds**. This is software-only evidence, not a
 measurement of physical jaw response or the owner's preferred timing.
+
+## Voice alternatives investigated
+
+October 26: the owner heard prepared Joe, Kokoro Michael and Kokoro George
+samples, described all three as flat, and noted the alternatives were quieter.
+Their sample loudness was subsequently level-matched for fairer comparison. The
+Kokoro samples were generated locally; measured generation on this laptop was
+roughly 8 seconds for two short segments with a resident model and 13 seconds for
+one longer sentence. These are exploratory timings, not an integrated voice or
+a physical jaw test.
+
+[ElevenLabs](https://elevenlabs.io/pricing) offers a free tier with 10,000
+credits monthly and an expressive speech model that accepts delivery directions;
+its [free output terms](https://elevenlabs.io/docs/overview/administration/billing)
+are non-commercial with attribution. [Azure Speech](https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account?icid=ai-speech)
+lists 500,000 free neural characters monthly, with an account and payment-card
+verification. [Chatterbox Nano](https://huggingface.co/ResembleAI/chatterbox-nano)
+is a free local candidate with expressive vocal tags; its publisher reports CPU
+support, but performance, pronunciation, output guard and hardware behavior on
+this laptop remain untested. Check current plans and terms before using any
+service. None of these alternatives is integrated in this experiment.
+
+If a cloud voice is added later, recognition and reply selection can remain local;
+only approved reply text needs to be sent. Any included greeting name would also
+leave the laptop, so name handling must be an explicit choice. Pre-generating and
+reviewing approved clips can reduce repeated requests and avoid sending visitor
+audio. Synthesized audio still needs review: the approved-text guard alone cannot
+prove every model spoke exactly the intended words.
 
 ## Pinned sources
 

@@ -4,7 +4,7 @@ function fixture({supported=true}={}){
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>[match[1],{disabled:false,checked:false,value:match[1]==='voice'?'original':match[1]==='sensitivity'?'0.025':'',textContent:''}]));
  const events={},mediaEvents={},windowEvents={},timers=new Map(),requests=[],calls=[];let next=0,turn,repeat;
  class Repeat{constructor({onChange}){repeat=this;this.state='idle';this.draw=onChange;}stop(){calls.push('discard');this.state='idle';this.draw();}}
- class Turn{constructor(options){turn=this;this.options=options;this.active=false;this.remaining=0;this.message='Ready';}async start(value){calls.push('start:'+value);this.active=true;this.capture={stream:{getAudioTracks:()=>[{label:'Laptop mic'}]}};this.options.onChange();}stop(){this.active=false;this.capture=null;this.replyText='';this.options.onLevel(0,0,'off');repeat.stop();this.options.onChange();}changed(){}}
+ class Turn{constructor(options){turn=this;this.options=options;this.active=false;this.remaining=0;this.message='Ready';}async start(value,options){calls.push('start:'+value);this.startOptions=options;this.active=true;this.capture={stream:{getAudioTracks:()=>[{label:'Laptop mic'}]}};this.options.onChange();}stop(){this.active=false;this.capture=null;this.replyText='';this.options.onLevel(0,0,'off');repeat.stop();this.options.onChange();}changed(){}}
  const document={hidden:false,getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},addEventListener:(name,fn)=>events[name]=fn};
  const window={isSecureContext:supported,MediaRecorder:{},AudioContext:supported?{}:null,AudioWorkletNode:supported?{}:null,SkellyTalkback:{RepeatBack:Repeat},SkellyTalkbackAuto:{wav(){},SpeechGate:class{},PcmCapture:class{}},SkellyConversation:{Conversation:Turn,readJSON:async response=>response.value},addEventListener:(name,fn)=>windowEvents[name]=fn};
  vm.runInNewContext(source,{document,window,navigator:{mediaDevices:{getUserMedia(){calls.push('unexpected mic');},addEventListener:(name,fn)=>mediaEvents[name]=fn}},AbortController,fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve})),setTimeout:(fn,ms)=>{timers.set(++next,{fn,ms});return next;},clearTimeout:id=>timers.delete(id)});
@@ -14,6 +14,11 @@ test('conversation page stays silent until local check, attendance and an explic
  const p=fixture();assert.deepEqual(p.requests,[]);assert.deepEqual(p.calls,[]);assert.equal(p.nodes.talk.disabled,true);p.nodes.talk.onclick();assert.deepEqual(p.calls,[]);
  const check=p.nodes.check.onclick();assert.equal(p.requests[0].url,'/api/status');p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only'}});await check;assert.equal(p.nodes.talk.disabled,true);
  p.nodes.attending.checked=true;p.nodes.attending.onchange();assert.equal(p.nodes.talk.disabled,false);p.nodes.talk.onclick();assert.ok(p.calls.includes('start:0.025'));assert.match(p.nodes.mic.textContent,/Laptop mic/);assert.equal(p.nodes.voice.disabled,true);assert.equal(p.nodes.check.disabled,true);
+});
+test('quick testing is explicit, off by default, and locked during a turn',async()=>{
+ const p=fixture(),check=p.nodes.check.onclick();p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only'}});await check;
+ assert.equal(p.nodes.quickTest.checked,false);p.nodes.attending.checked=true;p.nodes.attending.onchange();p.nodes.quickTest.checked=true;p.nodes.talk.onclick();
+ assert.equal(p.turn.startOptions.noPause,true);assert.equal(p.nodes.quickTest.disabled,true);p.nodes.stop.onclick();assert.equal(p.nodes.quickTest.disabled,false);
 });
 test('late service checks cannot rearm Talk after Stop or hidden page',async()=>{
  for(const mode of ['stop','hide']){

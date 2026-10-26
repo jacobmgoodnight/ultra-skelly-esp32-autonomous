@@ -17,7 +17,7 @@
   class Conversation{
     constructor({repeat,captureFactory,gateFactory,encode,request,onChange=()=>{},onLevel=()=>{},visible=()=>!document.hidden,now=()=>Date.now(),setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
       Object.assign(this,{repeat,captureFactory,gateFactory,encode,request,onChange,onLevel,visible,now,setTimer,clearTimer});
-      this.generation=0;this.active=false;this.phase='idle';this.message='Check the local engine, then choose Talk.';this.capture=this.gate=this.abort=this.timer=null;this.cooldownUntil=0;this.replyText='';
+      this.generation=0;this.active=false;this.phase='idle';this.message='Check the local engine, then choose Talk.';this.capture=this.gate=this.abort=this.timer=null;this.cooldownUntil=0;this.pauseForTurn=PAUSE_MS;this.replyText='';
     }
     get remaining(){return Math.max(0,Math.ceil((this.cooldownUntil-this.now())/1000));}
     say(phase,message){this.phase=phase;this.message=message;this.onChange(this);}
@@ -25,9 +25,9 @@
     stop(message='Stopped. Microphone off; phrase and reply forgotten.'){
       ++this.generation;this.active=false;this.clearTimer(this.timer);this.timer=null;this.abort?.abort();this.abort=null;this.releaseCapture();this.repeat.stop();this.replyText='';this.say('idle',message);
     }
-    async start(threshold=.025){
+    async start(threshold=.025,{noPause=false}={}){
       if(this.active||this.remaining||!this.visible()||!['idle','ready','error'].includes(this.repeat.state))return;
-      this.stop();this.gate=this.gateFactory(threshold);this.active=true;const generation=this.generation;
+      this.stop();this.pauseForTurn=noPause===true?0:PAUSE_MS;this.gate=this.gateFactory(threshold);this.active=true;const generation=this.generation;
       this.say('requesting','Allow microphone access, then stay quiet for one second.');
       this.timer=this.setTimer(()=>this.stop('Microphone setup timed out. Nothing played.'),30000);
       let capture;
@@ -59,7 +59,7 @@
         const reply=decodeReply(value);this.clearTimer(this.timer);this.timer=null;this.abort=null;
         this.replyText=reply.text;this.repeat.clip=reply.clip;this.repeat.say('ready','Approved local reply ready.');
         // Preserve a conservative pause even if Stop interrupts playback.
-        this.cooldownUntil=this.now()+15000+PAUSE_MS;
+        this.cooldownUntil=this.now()+15000+this.pauseForTurn;
         this.say('playing','Speaking an approved Halloween reply. Microphone OFF.');void this.repeat.play();
       }catch(error){if(generation===this.generation)this.stop(error.message||'Could not get the local reply. Nothing played.');}
     }
@@ -67,7 +67,7 @@
       if(!this.active)return;
       if(this.repeat.state==='error'){this.stop(this.repeat.message);return;}
       if(this.phase!=='playing'||this.repeat.state!=='ready')return;
-      this.active=false;this.cooldownUntil=this.now()+PAUSE_MS;this.repeat.stop();this.say('idle','Reply finished. Microphone off. Choose Talk again after the pause.');
+      this.active=false;this.cooldownUntil=this.now()+this.pauseForTurn;this.repeat.stop();this.say('idle',this.pauseForTurn?'Reply finished. Microphone off. Choose Talk again after the pause.':'Reply finished. Microphone off. Choose Talk again.');
     }
   }
   const api={Conversation,decodeReply,readJSON,MAX_WAV,MAX_REPLY_WAV,PAUSE_MS};

@@ -42,6 +42,16 @@ test('Stop during playback retains a conservative pause and no restart timer or 
  const p=fixture();await p.turn.start();p.speak();p.reply.resolve(valid);await tick();p.turn.stop();assert.equal(p.turn.remaining,60);assert.equal(p.turn.replyText,'');assert.equal(p.timers.size,0);
  await p.turn.start();assert.equal(p.captures.length,1);p.advance(60000);await p.turn.start();assert.equal(p.captures.length,2);p.turn.stop();
 });
+test('explicit quick testing skips the wait only after a completed reply',async()=>{
+ const p=fixture();await p.turn.start(.025,{noPause:true});p.speak();p.reply.resolve(valid);await tick();p.repeat.end();
+ assert.equal(p.turn.remaining,0);assert.equal(p.turn.active,false);assert.match(p.turn.message,/Choose Talk again\.$/);
+ await p.turn.start(.025,{noPause:true});assert.equal(p.captures.length,2);p.speak();await tick();p.turn.stop();
+ assert.equal(p.turn.remaining,15);assert.equal(p.turn.replyText,'');await p.turn.start(.025,{noPause:true});assert.equal(p.captures.length,2);
+});
+test('quick testing cannot bypass a pause already owed by a normal reply',async()=>{
+ const p=fixture();await p.turn.start();p.speak();p.reply.resolve(valid);await tick();p.repeat.end();
+ await p.turn.start(.025,{noPause:true});assert.equal(p.turn.remaining,45);assert.equal(p.captures.length,1);
+});
 test('local response reader bounds streamed bytes before joining or parsing them',async()=>{
  assert.deepEqual(await readJSON(new Response('{"ready":true}')),{ready:true});
  let cancelled=false;const response=new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array(1000));},cancel(){cancelled=true;}}));

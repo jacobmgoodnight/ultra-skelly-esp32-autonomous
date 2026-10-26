@@ -14,7 +14,7 @@
     const supported=window.isSecureContext&&navigator.mediaDevices?.getUserMedia&&window.AudioContext&&window.AudioWorkletNode;
     const busy=!!turn?.active,remaining=turn?.remaining||0;
     el('talk').disabled=!supported||!token||checking||busy||remaining>0||!el('attending').checked;
-    el('check').disabled=checking||busy;el('voice').disabled=el('sensitivity').disabled=el('attending').disabled=busy;
+    el('check').disabled=checking||busy;el('voice').disabled=el('sensitivity').disabled=el('attending').disabled=el('quickTest').disabled=busy;
     el('shutdown').disabled=!token||checking;
     el('status').textContent=turn?.message||'Check the local engine, then choose Talk.';
     const stream=turn?.capture?.stream,label=stream?.getAudioTracks?.()[0]?.label;
@@ -36,7 +36,7 @@
     }catch{if(generation===checkGeneration){token='';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };
-  el('talk').onclick=()=>{if(!el('talk').disabled){repeat.voice=el('voice').value;void turn.start(Number(el('sensitivity').value)).catch(error=>turn.stop(error.message));}};
+  el('talk').onclick=()=>{if(!el('talk').disabled){repeat.voice=el('voice').value;void turn.start(Number(el('sensitivity').value),{noPause:el('quickTest').checked}).catch(error=>turn.stop(error.message));}};
   function stop(){++checkGeneration;checking=false;checkAbort?.abort();checkAbort=null;turn.stop();draw();}
   el('stop').onclick=stop;el('attending').onchange=draw;
   el('shutdown').onclick=async()=>{

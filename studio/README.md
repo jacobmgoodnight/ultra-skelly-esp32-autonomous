@@ -20,6 +20,8 @@ The separate [local Halloween conversation experiment](../docs/local-halloween-c
 adds 80 constrained approved replies across 20 topics and known first-name
 greetings with offline laptop models. Four variants per topic and rotating generic
 jokes retain only bounded recent reply IDs, with no visitor-text/name history.
+An explicitly selected quick-test option skips the 45-second wait after a completed
+conversation reply; it is off by default and has software-only evidence.
 The local companion uses Piper Joe when installed and visibly labels its Windows
 voice fallback otherwise. Question/answer jokes get a short punchline pause and
 mild pacing/pitch emphasis. It requires roughly 700 MB of optional setup downloads;
