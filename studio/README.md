@@ -16,6 +16,24 @@ The laptop supplies the microphone; no ESP32 mic is required. The lab adds expli
 input selection, an automatic-capture sound meter and an optional lower/slower
 Deep voice. Those additions have software coverage; Deep sound/jaw response is
 not hardware verified. Raw repeat-back does not filter words.
+The separate [local Halloween conversation experiment](../docs/local-halloween-conversation.md)
+adds 80 constrained approved replies across 20 topics and known first-name
+greetings with offline laptop models. Four variants per topic and rotating generic
+jokes retain only bounded recent reply IDs, with no visitor-text/name history.
+An explicitly selected quick-test option skips the 45-second wait after a completed
+conversation reply; it is off by default and has software-only evidence.
+The local companion uses Piper Joe when installed and visibly labels its Windows
+voice fallback otherwise. Question/answer jokes get a short punchline pause and
+mild pacing/pitch emphasis. It requires roughly 700 MB of optional setup downloads;
+ordinary Studio and repeat-back keep working independently. The owner confirms one attended
+Original-voice reply through Skelly with jaw movement using the laptop mic.
+Conversation resumed after reconnection, according to the owner. Initial Joe
+listening feedback described the 400 ms pause as too short and the voice as flat.
+The new 700 ms pause and a new jaw result remain unverified. Guard/name trials, cleanup, extended recovery and
+longer sessions also remain unverified.
+The companion can optionally use an explicitly selected ElevenLabs voice when
+started with the owner's key. Only reviewed name-free reply text is sent; no
+visitor audio is uploaded. Real-account and prop behavior remain untested.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

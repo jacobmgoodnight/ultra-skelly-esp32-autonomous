@@ -71,6 +71,9 @@ node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
 python tests/test_packets.py
 python tests/test_prebuilt.py
+python tests/test_local_conversation.py
+python tests/test_local_replies.py
+python tests/test_local_voice.py
 python tests/run_firmware_tests.py
 node studio/tests/export-samples.cjs
 arduino-cli core list
@@ -82,6 +85,29 @@ arduino-cli compile --fqbn esp32:esp32:esp32 experiments/EyeSingleTest
 node scripts/export-attended-tests.cjs
 python scripts/compile-attended-tests.py
 ```
+
+The optional [local Halloween conversation](local-halloween-conversation.md)
+checks need no model downloads: its Python suites cover the approved reply/name
+boundary, 80-line catalog with stable 20-topic IDs, bounded ID-only shuffle history,
+generic-joke rotation, local voice command/fallback behavior, punchline timing,
+unchanged approved words, shared synthesis deadlines, stale-output rejection and eight-second
+audio limits. Inputs remain 16 kHz mono 16-bit PCM up to 256,044 bytes; replies
+allow 16 or 22.05 kHz mono 16-bit PCM up to 352,844 bytes. Browser tests cover
+these reply limits and lifecycle/UI behavior. They establish software behavior,
+not speaker quality, Bluetooth delivery or jaw response.
+
+After optional setup, `python experiments/local-talkback/smoke.py` exercises real
+local recognition, approved selection and synthesis with generated speech; it
+never records from a microphone or plays sound. October 26: the Piper Joe pipeline
+took 2.83 seconds after startup with the earlier 400 ms comic delivery. Separate
+synthesis of all 80 variants with a long allowlisted name stayed within the
+eight-second reply cap, including that earlier pause (maximum 6.61 seconds). A
+fresh sweep with the 700 ms pause also passed (maximum 6.436 seconds).
+The earlier Original-voice owner sound/jaw result remains valid. The owner heard
+the neural voice and requested a longer pause, reporting flat delivery;
+the new 700 ms pause and a new jaw result still require attended checks. Confirm actual
+voice quality, sound location, jaw response, word/name guards and Stop/recovery
+separately before considering longer sessions.
 
 Use Arduino-ESP32 **3.3.12**, board **ESP32 Dev Module**, not the newest core by
 accident. On Windows, the IDE bundles `arduino-cli.exe` under
@@ -215,6 +241,16 @@ USB exclusivity and old-firmware recovery. These are Software-only; physical upl
 stored motor combinations, playback end and full restoration remain Untested.
 
 ## Browser installation packaging
+
+### Optional conversation voice checks
+
+`python tests/test_eleven_voice.py` and `python tests/test_local_conversation.py`
+exercise cloud selection and name-free approved text with mocked requests; they
+do not use credentials or contact ElevenLabs. `python tests/test_chatterbox_extract.py`
+checks archive extraction, including rejection of unsafe paths. The optional
+Chatterbox sample and its measured laptop timings are documented in
+[local conversation](local-halloween-conversation.md); generation and listening
+feedback do not establish live conversation or physical jaw behavior.
 
 ### Studio browser workflows (no physical device)
 
