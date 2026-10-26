@@ -17,11 +17,18 @@ input selection, an automatic-capture sound meter and an optional lower/slower
 Deep voice. Those additions have software coverage; Deep sound/jaw response is
 not hardware verified. Raw repeat-back does not filter words.
 The separate [local Halloween conversation experiment](../docs/local-halloween-conversation.md)
-adds constrained approved replies and known first-name greetings with offline
-laptop models. It requires the optional local companion; ordinary Studio and
-repeat-back keep working independently. The owner confirms one attended
+adds 80 constrained approved replies across 20 topics and known first-name
+greetings with offline laptop models. Four variants per topic and rotating generic
+jokes retain only bounded recent reply IDs, with no visitor-text/name history.
+The local companion uses Piper Joe when installed and visibly labels its Windows
+voice fallback otherwise. Question/answer jokes get a short punchline pause and
+mild pacing/pitch emphasis. It requires roughly 700 MB of optional setup downloads;
+ordinary Studio and repeat-back keep working independently. The owner confirms one attended
 Original-voice reply through Skelly with jaw movement using the laptop mic.
-Guard/name trials, cleanup, recovery and longer sessions remain unverified.
+Conversation resumed after reconnection, according to the owner. Initial Joe
+listening feedback was a little better but monotone; revised delivery and a new
+jaw result remain unverified. Guard/name trials, cleanup, extended recovery and
+longer sessions also remain unverified.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

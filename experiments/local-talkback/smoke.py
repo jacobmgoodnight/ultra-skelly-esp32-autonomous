@@ -1,10 +1,12 @@
 """Real local engines using synthetic speech only. Never records or plays sound."""
+import base64
 import json
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from companion import Engines, approved_reply, validate_wave
+from companion import Engines, REPLIES, validate_wave
+from voice import validate_reply_wave
 
 engines = Engines()
 try:
@@ -17,10 +19,11 @@ try:
         validate_wave(source)
         started = time.monotonic()
         result = engines.respond(source)
-        assert result['text'] == approved_reply('My name is Emma', json.dumps({'card': result['card']}))[1]
+        assert result['text'] in {'Hi, Emma! ' + line for line in REPLIES[result['card']]}
         assert 'Hi, Emma!' in result['text'], 'Synthetic name was not recognized.'
+        validate_reply_wave(base64.b64decode(result['audio']))
         output = Path(__file__).resolve().parents[2] / '.skelly-build' / 'conversation-synthetic-reply.json'
         output.write_text(json.dumps(result), encoding='utf-8')
-        print(json.dumps({'result': 'PASS synthetic local speech -> approved reply -> local WAV', 'seconds': round(time.monotonic() - started, 2), 'card': result['card'], 'reply': result['text']}))
+        print(json.dumps({'result': 'PASS synthetic local speech -> approved reply -> local WAV', 'seconds': round(time.monotonic() - started, 2), 'voice': engines.voice.label, 'card': result['card'], 'reply': result['text']}))
 finally:
     engines.close()

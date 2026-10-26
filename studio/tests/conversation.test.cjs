@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {Conversation,decodeReply,readJSON,MAX_WAV,PAUSE_MS}=require('../conversation.js');
+const {Conversation,decodeReply,readJSON,MAX_WAV,MAX_REPLY_WAV,PAUSE_MS}=require('../conversation.js');
 const {SpeechGate,wav}=require('../talkback-auto.js');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
@@ -29,9 +29,14 @@ test('Stop, hide, timeout and device failure discard late local replies without 
 test('capture silence/permission, local processing errors and invalid replies fail without raw replay',async()=>{
  const silence=fixture();await silence.turn.start();silence.fire(30000);assert.equal(silence.requests,0);assert.equal(silence.repeat.clip,null);
  const broken=fixture({requestError:true});await broken.turn.start();broken.speak();await tick();assert.equal(broken.turn.active,false);assert.equal(broken.repeat.clip,null);assert.match(broken.turn.message,/service failed/);
- for(const value of [{...valid,card:20},{...valid,audio:'not base64!'},{...valid,text:'x'.repeat(181)},{...valid,audio:Buffer.alloc(MAX_WAV+1).toString('base64')}]){
+ for(const value of [{...valid,card:20},{...valid,audio:'not base64!'},{...valid,text:'x'.repeat(181)},{...valid,audio:Buffer.alloc(MAX_REPLY_WAV+1).toString('base64')}]){
   assert.throws(()=>decodeReply(value));const p=fixture();await p.turn.start();p.speak();p.reply.resolve(value);await tick();assert.equal(p.repeat.clip,null);assert.equal(p.turn.active,false);assert.equal(p.timers.size,0);
  }
+});
+test('neural reply audio has a separate bounded allowance without increasing microphone capture',()=>{
+ assert.equal(MAX_WAV,256044);assert.equal(MAX_REPLY_WAV,352844);
+ const reply=decodeReply({...valid,audio:Buffer.alloc(MAX_REPLY_WAV).toString('base64')});assert.equal(reply.clip.size,MAX_REPLY_WAV);
+ assert.throws(()=>decodeReply({...valid,audio:Buffer.alloc(MAX_REPLY_WAV+1).toString('base64')}));
 });
 test('Stop during playback retains a conservative pause and no restart timer or name',async()=>{
  const p=fixture();await p.turn.start();p.speak();p.reply.resolve(valid);await tick();p.turn.stop();assert.equal(p.turn.remaining,60);assert.equal(p.turn.replyText,'');assert.equal(p.timers.size,0);

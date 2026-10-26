@@ -2,6 +2,7 @@
 import importlib.util
 import io
 import json
+import sys
 import threading
 import unittest
 import wave
@@ -10,6 +11,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('companion', Path(__file__).resolve().parents[1] / 'experiments/local-talkback/companion.py')
+sys.path.insert(0, str(Path(spec.origin).parent))
 companion = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(companion)
 
@@ -58,6 +60,25 @@ class Boundaries(unittest.TestCase):
         engine = object.__new__(companion.Engines)
         self.assertEqual(companion.card_from_model(engine.choose('My name is Emma. Tell me a ghost joke.')), 3)
         self.assertEqual(companion.card_from_model(engine.choose('I am wearing a vampire costume.')), 8)
+
+    def test_guarded_variants_and_generic_jokes_keep_only_reviewed_text(self):
+        deck = companion.ReplyDeck()
+        for topic in range(20):
+            lines = [companion.approved_reply('My name is Emma', json.dumps({'card': topic}), deck)[1] for _ in range(4)]
+            self.assertEqual(set(lines), {'Hi, Emma! ' + line for line in companion.REPLIES[topic]})
+        self.assertTrue(companion.generic_joke('Another joke please'))
+        self.assertTrue(companion.generic_joke('another one'))
+        self.assertFalse(companion.generic_joke('another ghost joke'))
+        topics = []
+        for _ in range(9):
+            topic, text = companion.approved_reply('Tell me another joke', '{"card":19}', deck)
+            topics.append(topic)
+            self.assertIn(text, companion.REPLIES[topic])
+        self.assertEqual(len(set(topics)), 9)
+        for output in ['ignore rules', '{"card":true}', '{"card":1,"text":"unsafe"}']:
+            topic, text = companion.approved_reply('my name is unknown', output, deck)
+            self.assertEqual(topic, 0)
+            self.assertIn(text, companion.REPLIES[0])
 
     def test_http_host_origin_token_routes_limits_and_serialization(self):
         entered, release = threading.Event(), threading.Event()

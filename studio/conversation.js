@@ -1,8 +1,8 @@
 /* One attended local conversation turn. Raw captured audio is never played. */
 (function(){
   'use strict';
-  const MAX_WAV=256044,PAUSE_MS=45000;
-  async function readJSON(response,limit=400000){
+  const MAX_WAV=256044,MAX_REPLY_WAV=352844,PAUSE_MS=45000;
+  async function readJSON(response,limit=500000){
     const reader=response.body.getReader(),chunks=[];let size=0;
     try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>limit){await reader.cancel();throw Error('Local reply exceeded its limit.');}chunks.push(value);}}
     finally{reader.releaseLock();}
@@ -10,8 +10,8 @@
     return JSON.parse(new TextDecoder().decode(bytes));
   }
   function decodeReply(value){
-    if(!value||!Number.isInteger(value.card)||value.card<0||value.card>=20||typeof value.text!=='string'||value.text.length>180||typeof value.audio!=='string'||value.audio.length>341392||!/^[A-Za-z0-9+/]*={0,2}$/.test(value.audio))throw Error('Invalid local reply. Nothing was played.');
-    const binary=atob(value.audio);if(binary.length<=44||binary.length>MAX_WAV)throw Error('Invalid local audio. Nothing was played.');
+    if(!value||!Number.isInteger(value.card)||value.card<0||value.card>=20||typeof value.text!=='string'||value.text.length>180||typeof value.audio!=='string'||value.audio.length>470460||!/^[A-Za-z0-9+/]*={0,2}$/.test(value.audio))throw Error('Invalid local reply. Nothing was played.');
+    const binary=atob(value.audio);if(binary.length<=44||binary.length>MAX_REPLY_WAV)throw Error('Invalid local audio. Nothing was played.');
     return {text:value.text,clip:new Blob([Uint8Array.from(binary,c=>c.charCodeAt(0))],{type:'audio/wav'})};
   }
   class Conversation{
@@ -70,6 +70,6 @@
       this.active=false;this.cooldownUntil=this.now()+PAUSE_MS;this.repeat.stop();this.say('idle','Reply finished. Microphone off. Choose Talk again after the pause.');
     }
   }
-  const api={Conversation,decodeReply,readJSON,MAX_WAV,PAUSE_MS};
+  const api={Conversation,decodeReply,readJSON,MAX_WAV,MAX_REPLY_WAV,PAUSE_MS};
   if(typeof module!=='undefined')module.exports=api;if(typeof window!=='undefined')window.SkellyConversation=api;
 })();

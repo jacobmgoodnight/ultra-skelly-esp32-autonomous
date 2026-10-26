@@ -71,6 +71,9 @@ node scripts/version-studio-assets.cjs --check
 node --test studio/tests/*.test.cjs
 python tests/test_packets.py
 python tests/test_prebuilt.py
+python tests/test_local_conversation.py
+python tests/test_local_replies.py
+python tests/test_local_voice.py
 python tests/run_firmware_tests.py
 node studio/tests/export-samples.cjs
 arduino-cli core list
@@ -82,6 +85,28 @@ arduino-cli compile --fqbn esp32:esp32:esp32 experiments/EyeSingleTest
 node scripts/export-attended-tests.cjs
 python scripts/compile-attended-tests.py
 ```
+
+The optional [local Halloween conversation](local-halloween-conversation.md)
+checks need no model downloads: its Python suites cover the approved reply/name
+boundary, 80-line catalog with stable 20-topic IDs, bounded ID-only shuffle history,
+generic-joke rotation, local voice command/fallback behavior, punchline timing,
+unchanged approved words, shared synthesis deadlines, stale-output rejection and eight-second
+audio limits. Inputs remain 16 kHz mono 16-bit PCM up to 256,044 bytes; replies
+allow 16 or 22.05 kHz mono 16-bit PCM up to 352,844 bytes. Browser tests cover
+these reply limits and lifecycle/UI behavior. They establish software behavior,
+not speaker quality, Bluetooth delivery or jaw response.
+
+After optional setup, `python experiments/local-talkback/smoke.py` exercises real
+local recognition, approved selection and synthesis with generated speech; it
+never records from a microphone or plays sound. October 26: the Piper Joe pipeline
+took 2.83 seconds after startup with revised comic delivery. Separate synthesis of
+all 80 variants with a long allowlisted name stayed within the eight-second reply
+cap, including punchline pauses (maximum 6.61 seconds).
+The earlier Original-voice owner sound/jaw result remains valid. The owner heard
+the first neural voice and described a little improvement but monotone delivery;
+revised comic delivery and a new jaw result still require attended checks. Confirm actual
+voice quality, sound location, jaw response, word/name guards and Stop/recovery
+separately before considering longer sessions.
 
 Use Arduino-ESP32 **3.3.12**, board **ESP32 Dev Module**, not the newest core by
 accident. On Windows, the IDE bundles `arduino-cli.exe` under

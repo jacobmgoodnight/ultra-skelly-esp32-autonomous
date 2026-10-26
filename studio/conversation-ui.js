@@ -32,6 +32,7 @@
       const response=await fetch('/api/status',{signal:abort.signal});const value=await window.SkellyConversation.readJSON(response,2048);if(generation!==checkGeneration)return;
       if(!response.ok||value.ready!==true||typeof value.token!=='string'||value.token.length>100)throw Error();
       token=value.token;el('service').textContent='Local speech/reply engines ready. Bluetooth audio is separate: connect and select Skelly Stereo in Windows sound settings. This check does not verify the speaker.';
+      el('voiceSource').textContent='Active voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'older companion; restart it for voice details')+'. Replies rotate through reviewed lines; ask for “another joke” to mix topics.';
     }catch{if(generation===checkGeneration){token='';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };
