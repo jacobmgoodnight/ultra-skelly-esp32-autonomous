@@ -17,7 +17,7 @@ and one-step library Undo; recoverable valid editor drafts; import previews and
 unsaved-change protection; separate editor/browser/verified-controller indicators;
 compact lighting channels and per-palette editing; longer optional timing windows;
 and three opt-in complete looks. Formats and firmware are unchanged. The
-[refresh checklist](studio-scene-builder-checklist.md) records browser spot checks
+[refresh checklist](../studio-scene-builder-checklist.md) records browser spot checks
 and the remaining physical limits.
 
 ## USB settings and saved scenes — October 22
@@ -25,7 +25,7 @@ and the remaining physical limits.
 Implemented as an opt-in universal firmware path, with physical checks pending:
 USB read/save/reset, bounded connected status, up to four saved personalities and
 optional autonomous scene rotation. Ordinary sketch downloads keep their existing
-compile-time settings path. See [implementation and later checks](usb-settings-scenes.md).
+compile-time settings path. See [implementation and later checks](../usb-settings-scenes.md).
 Lights-out scheduling was explicitly deferred; the clock still gates new routines
 without switching off stored prop lighting. Existing Studio/light/USB checks remain
 in progress and are not replaced by this follow-up. Older proposals below describe
@@ -39,7 +39,7 @@ Separate-command overlap is removed after a physical failure report. Eye preview
 are bundled; four palette slots can be renamed/recolored and saved in v4 profiles.
 Bluetooth retries expose a five-second startup scan interval and thirty-second
 normal retry pause. Lighting and browser USB remain pending; previous refresh
-checks were reported complete. See the [follow-up checklist](studio-lighting-checklist.md).
+checks were reported complete. See the [follow-up checklist](../studio-lighting-checklist.md).
 
 ## Earlier October 22 Studio and lighting refresh
 
@@ -54,7 +54,7 @@ lanes/legend show enabled features only. Timing explanations are optional detail
 Lighting supports opt-in selected-palette rotation, independently selected
 Static/Strobe/Pulsing modes and speed for torso/head. New behavior is physically
 Untested. Defaults retain Static with rotation OFF. Profiles are now v3, with
-safe v1/v2 migration. Use the [new focused checklist](studio-lighting-checklist.md).
+safe v1/v2 migration. Use the [new focused checklist](../studio-lighting-checklist.md).
 
 ## October 21 implementation update
 
@@ -74,7 +74,7 @@ be built as a versioned Actions artifact and installed through the separate USB
 page after package/hash validation. Custom settings still require compilation.
 New profiles use version 2; version-1 profiles import with safe defaults for added
 fields. Older Studio rejects version 2 instead of silently dropping those fields.
-See [USB tools](usb-tools.md) and [attended criteria](next-attended-tests.md).
+See [USB tools](../usb-tools.md) and [attended criteria](../next-attended-tests.md).
 
 Hardware is unavailable for this pass, so new physical results remain Untested.
 Serial corruption is not fixed; actual playback-end control, USB-persistent
@@ -108,7 +108,7 @@ combined hardware integration still needs an attended run.
 
 October 21 update: the jaw mix is physically observed; idle pauses and two
 reconnect recoveries have logs with tentative physical reports. Remaining checks
-are optional spot checks from the [short pack](attended-test-pack.md), not a gate
+are optional spot checks from the [short pack](../attended-test-pack.md), not a gate
 for unrelated Studio improvements. Completed checks do not need repetition.
 
 | Priority | Test | Result criteria |

@@ -252,6 +252,10 @@ The [appearance and Connect & save follow-up](studio-ui-refinements.md) adds com
 gallery keyboard selection, moved independent lighting samples, Pause/Resume,
 palette/brightness/speed updates, and connect → read → save → verified guidance.
 Results must remain visible below sticky navigation at desktop and phone widths.
+The eye-preview regression checks that image, descriptive label and alt text stay
+together after an unrelated setting edit, a profile configuration load and model
+changes, including experimental expressions without bundled artwork. Enlarging
+an unselected design must leave the routine's selected eyes unchanged.
 
 ### Package checks
 

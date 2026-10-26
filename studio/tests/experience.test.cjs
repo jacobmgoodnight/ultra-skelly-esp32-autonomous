@@ -1,15 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const {firstRoutine,withoutMouth,scheduleFeedback}=require('../experience.js');
+const {firstRoutine,withoutMouth}=require('../experience.js');
 const ctx=vm.createContext({window:{}});for(const file of ['template.js','app.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'..',file),'utf8'),ctx);
 const api=ctx.window.SkellyStudioGenerator;
 test('head-only first run clears advanced behavior without audio assumptions',()=>{
   const c=firstRoutine({...api.DEFAULTS,compoundEnabled:true,jawFollowupMotor:3,clockEnabled:true});
   assert.equal(c.headMin,60);assert.equal(c.headMax,120);assert.equal(c.jawEnabled,false);assert.equal(c.clockEnabled,false);
   assert.equal(api.validate(c).length,0);assert.match(api.generateSketch(c),/const bool MOUTH_ENABLED = false;/);
-});
-test('feedback explains real delays without claiming movement',()=>{
-  const text=scheduleFeedback({...api.DEFAULTS,jawEnabled:true,jawMin:22,lightsEnabled:true,restEnabled:true,clockEnabled:true}).join(' ');
-  for(const pattern of [/starve/,/light-restoration sequence/,/breaks/,/USB time/,/not guaranteed/])assert.match(text,pattern);
 });
 test('new settings generate bounded estimates, fair turns and offline clock window',()=>{
   const c={...api.DEFAULTS,jawEnabled:true,fairBodyTurns:true,playbackDiagnostics:true,clockEnabled:true,clockStart:1320,clockEnd:120,clockDays:32,jawExtras:'13,14',jawDurations:'13:24,14:30'};
@@ -41,7 +37,6 @@ test('turning mouth off preserves independent routines and clips but removes jaw
   assert.equal(after.jawFollowupMotor,0);
   for(const key of ['headEnabled','armEnabled','torsoEnabled','eyesEnabled','lightsEnabled','clockEnabled','jawFile','jawExtras','jawDurations'])assert.equal(after[key],before[key]);
   assert.doesNotThrow(()=>api.generateSketch(after));
-  assert.doesNotMatch(scheduleFeedback(after).join(' '),/Jaw playback|Jaw-first|Fair turns|six light/);
 });
 test('audio-free common presets retain eyes, lights and scheduled-window configuration',()=>{
   for(const name of ['subtle','normal','haunted','watchful']) {

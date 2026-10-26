@@ -28,7 +28,7 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const g=window.SkellyStudioGenerator,el=id=>document.getElementById(id);
     if(!el('expressions'))return;
-    let previewEye=1,paused=false;
+    let paused=false;
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
     const name=(id,c)=>eyeName(id,c.deviceId);
     function renderGallery(c){
@@ -39,12 +39,6 @@
         const label=card.querySelector('.eye-tile-number');if(label)label.textContent=name(id,c);
         input.setAttribute('aria-label','Choose '+name(id,c)+' · eye '+id);
       }
-      el('eyePreviewLabel').textContent=name(previewEye,c)+' · eye #'+previewEye;
-    }
-    for(const card of document.querySelectorAll('.eye-card')){
-      const input=card.querySelector('input'),id=Number(input.value);
-      input.addEventListener('input',()=>{previewEye=id;renderGallery(g.readConfig());});
-      card.querySelector('.eye-zoom')?.addEventListener('click',()=>{previewEye=id;renderGallery(g.readConfig());});
     }
     function render(){
       const c=g.readConfig(),experimental=c.deviceId==='skelly12';
@@ -86,7 +80,7 @@
         if(errors.length)throw Error(errors.join(' '));g.writeConfig(config);el('appearanceCopyStatus').textContent='Copied '+el('appearanceCopyScope').selectedOptions[0].textContent.toLowerCase()+' from '+source.name+'. Update the current scene to keep it.';
       }catch(error){el('appearanceCopyStatus').textContent=error.message;}
     };
-    document.addEventListener('skelly-config-changed',()=>{const c=g.readConfig();if(!c.eyeChoices.includes(previewEye))previewEye=c.eyeChoices[0]??1;render();});
+    document.addEventListener('skelly-config-changed',render);
     document.addEventListener('skelly-scenes-changed',renderSources);
     renderSources();render();
   });

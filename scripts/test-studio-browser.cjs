@@ -208,6 +208,33 @@ async function main(){
       await page.locator('#expressions').screenshot({path:path.join(artifacts,'simplified-eyes-mobile.png')});
     },{width:390,height:844});
 
+    await run('eye preview · unrelated edits, profile loads and model changes keep image and label together',async page=>{
+      await nav(page,'#expressions');
+      const image=page.locator('#eyePreviewImage'),label=page.locator('#eyePreviewLabel');
+      async function preview(id,file,name){
+        assert.equal(await image.getAttribute('src'),file===null?null:'./images/eyes/eye_icon_'+file+'.png');
+        assert.equal(await image.isHidden(),file===null);
+        assert.equal(await label.textContent(),name+' · eye #'+id);
+        assert.equal(await image.getAttribute('alt'),'Enlarged preview of '+name+' · eye #'+id);
+      }
+      await page.getByRole('button',{name:'Show larger preview of eye pattern 12',exact:true}).click();
+      await preview(12,12,'Skull and crossbones');
+      await page.locator('#headMin').fill('61');
+      await preview(12,12,'Skull and crossbones');
+      assert.deepEqual(await page.evaluate(()=>SkellyStudioGenerator.readConfig().eyeChoices),[1],'Preview never selects a different expression');
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig({...SkellyStudioGenerator.DEFAULTS,eyesEnabled:true,eyeChoices:[1,2,3]}));
+      await page.getByRole('button',{name:'Show larger preview of eye pattern 3',exact:true}).click();
+      await preview(3,3,'Green iris');
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig({eyeChoices:[1,2,3,4]}));
+      await preview(1,1,'Blue iris');
+      assert.deepEqual(await page.evaluate(()=>SkellyStudioGenerator.readConfig().eyeChoices),[1,2,3,4]);
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.DEFAULTS,deviceId:'skelly12',bleName:'12ft Skelly',eyesEnabled:true,eyeChoices:[19]})));
+      await preview(19,12,'Skull and crossbones');
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig({eyeChoices:[5]}));
+      await preview(5,null,'Design 5 · preview unavailable');
+      await page.evaluate(()=>SkellyStudioGenerator.writeConfig(SkellyStudioGenerator.adaptDevice({...SkellyStudioGenerator.DEFAULTS,deviceId:'ultra',eyesEnabled:true,eyeChoices:[1]})));
+      await preview(1,1,'Blue iris');
+    });
     await run('look editor · palette staging, cancel, Apply and rotation selection',async page=>{
       await nav(page,'#lighting');await page.locator('[data-palette="halloween"]').click();
       const original=await page.evaluate(()=>JSON.stringify(SkellyStudioGenerator.readConfig()));
