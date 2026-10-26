@@ -8,8 +8,10 @@ Eye thumbnails and firmware generation work offline from the complete folder.
 The separate [experimental repeat-back lab](talkback.html) records a short phrase
 for manual playback. The owner confirms sound and jaw response through Skelly’s
 Live speaker. An optional automatic pilot detects nearby sound and repeats at
-most two phrases, with bounded capture and a 45-second pause. It defaults OFF and
-remains Untested on the prop. See the [isolated setup and test criteria](../docs/experimental-talkback.md).
+most two phrases, with bounded capture and a 45-second pause. The owner confirms
+both phrases repeated with jaw movement and the pilot stopped in one attended run.
+It defaults OFF; longer sessions and recovery remain Untested. See the
+[isolated setup and test criteria](../docs/experimental-talkback.md).
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

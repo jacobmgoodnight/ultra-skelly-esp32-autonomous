@@ -1,9 +1,10 @@
 # Experimental repeat-back lab
 
-**October 26: the owner confirms manual repeat-back plays through Skelly and its
-jaw follows the phrase.** Windows 10 exposes Ultra Skelly v2(Live) Stereo; microphone
-model and detailed timing were not supplied. Automatic repeat-back, repeated-run
-behavior and recovery on the prop remain **Untested**. This experiment
+**October 26: the owner confirms manual repeat-back and one attended automatic
+pilot through Skelly. Both automatic phrases repeated with jaw movement, then the
+pilot stopped.** Windows 10 exposes Ultra Skelly v2(Live) Stereo; microphone
+model and detailed timing were not supplied. Longer runs, physical Stop/hidden-page
+checks, body-still criteria and return to autonomy remain **Untested**. This experiment
 is for the 6.5-foot Ultra Skelly v2 only, not the experimental 12-foot model.
 
 Open [Repeat-back lab](../studio/talkback.html) in desktop Chrome or Edge over
@@ -70,8 +71,9 @@ that the first phrase repeats once, the microphone turns off during playback and
 the 45-second pause, and the second phrase ends the pilot. Repeat with Skelly only
 after selecting its paired Stereo output and unplugging the autonomous ESP32.
 Observe sound, jaw, unexpected body movement and stop behavior. A false trigger,
-clipped phrase or failure to stop is a failed pilot test. No repeated jaw result
-or cooldown sufficiency is inferred from the one manual phrase already reported.
+clipped phrase or failure to stop is a failed pilot test. The owner confirms both
+phrases repeated with jaw movement and the pilot stopped in one attended run.
+This does not establish cooldown sufficiency for longer sessions.
 
 ## Hardware choices
 
@@ -153,10 +155,11 @@ jaw synchronization. Do not change firmware or send motor commands to diagnose i
 | --- | --- | --- |
 | Local microphone | Permission requested only on Record; phrase repeats clearly; mic indicator turns off before playback | Owner reports local repeat-back works; detailed permission/indicator check pending |
 | Stop/leave | Recording and playback stop; recording cannot be replayed; hidden page never restarts listening | Software-only mocks; physical check pending |
-| Live enable and pairing | Correct Ultra selected; live speaker becomes available and pairs; no unexpected motion | Owner reports completed write, Bluetooth chime, and successful Windows pairing with documented PIN 1234. Windows reports the Ultra Skelly v2(Live) Stereo audio endpoint OK. Sound and motion checks pending. |
+| Live enable and pairing | Correct Ultra selected; live speaker becomes available and pairs; no unexpected motion | Owner reports completed write, Bluetooth chime, and successful Windows pairing with documented PIN 1234. Windows reports the Ultra Skelly v2(Live) Stereo audio endpoint OK. Sound/jaw confirmed below; unexpected-motion criterion not separately reported. |
 | Output routing | Sound physically comes from the selected output, not unexpectedly from computer/external speakers | Verified (owner report): manual phrase came from Skelly |
-| Jaw response | Jaw visibly follows short speech from the live speaker; body remains still | Owner confirms manual phrase jaw response; body-still and repeated-run criteria not separately reported |
-| Automatic pilot | Two phrases at most, bounded capture, mic off during playback/pause, no self-repeat, Stop/hidden page end it | Software-only; attended prop test pending |
+| Jaw response | Jaw visibly follows short speech from the live speaker; body remains still | Owner confirms manual phrase jaw response and both automatic phrases with jaw movement in one pilot; body-still criterion not separately reported |
+| Automatic pilot completion | Both phrases repeat through Skelly with jaw movement, then the pilot stops | Verified (owner report), October 26: both phrases repeated with jaw movement, then the pilot stopped; autonomous ESP32 unplugged |
+| Automatic capture and cancellation | Bounded capture, mic off during playback/pause, no self-repeat, Stop/hidden page end it | Software-only coverage; these individual physical/indicator checks were not separately reported |
 | Repetition | Three short manual phrases complete normally without feedback, resets or extra motion | Untested |
 | Return to autonomy | After documented power-cycle sequence, the saved ordinary routine works as before | Untested |
 
