@@ -105,7 +105,7 @@
         this.progress('write','Step 4 of 4: sending one live-audio enable request.');
         const bytes=this.frame(0xfd,[1]);this.writeAttempted=true;
         await this.bounded(writer.writeValueWithoutResponse(bytes),generation);this.writeCompleted=true;check();
-        return 'Live-enable write completed'+(server.connected?'':'; Skelly disconnected afterward')+'. Speaker/jaw response is unverified. Pair the (Live) speaker in your computer’s Bluetooth settings.';
+        return 'Live-enable write completed'+(server.connected?'':'; Skelly disconnected afterward')+'. Speaker/jaw response is unverified. Pair the (Live) speaker through Windows Add a device. If asked for a PIN, try the documented default 1234, or your configured PIN if changed.';
       }catch(cause){
         const cancelled=generation!==this.generation;
         let message;

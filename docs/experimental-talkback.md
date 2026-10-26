@@ -80,7 +80,12 @@ computer or optional service; simple recording/replay needs neither.
    eye, light, volume, file-transfer or settings commands. The completed write
    confirms transport only; it does not confirm live mode, sound or jaw response.
 4. Pair the advertised `(Live)` speaker in computer Bluetooth settings and choose
-   it as the computer output. Start with low volume and a short phrase. Observe
+   it as the computer output. On Windows 10, open **Settings → Devices →
+   Bluetooth & other devices → Add Bluetooth or other device → Bluetooth**;
+   the main settings list shows devices already added. If asked for a PIN, the
+   [community integration documents `1234` as the default](https://github.com/martinecker/SkellyUltra#-live-mode-bluetooth-pairing).
+   Use the configured PIN if changed. The [manufacturer says DecorPro’s Edit Name section shows the PIN](https://support.sviservice.com/hc/en-us/articles/37548063705239-DecorPro-SVI-App).
+   Start with low volume and a short phrase. Observe
    both sound and motion. Do not use firmware's modeled MP3 completion as live
    stream telemetry.
 5. Stop & discard, disconnect the computer from the live speaker, and power-cycle
@@ -116,7 +121,7 @@ jaw synchronization. Do not change firmware or send motor commands to diagnose i
 | --- | --- | --- |
 | Local microphone | Permission requested only on Record; phrase repeats clearly; mic indicator turns off before playback | Owner reports local repeat-back works; detailed permission/indicator check pending |
 | Stop/leave | Recording and playback stop; recording cannot be replayed; hidden page never restarts listening | Software-only mocks; physical check pending |
-| Live enable | Correct Ultra selected; live speaker actually becomes available; no unexpected motion | Untested |
+| Live enable | Correct Ultra selected; live speaker actually becomes available; no unexpected motion | Owner reports completed write, audible Bluetooth chime, and finding the Live speaker through Windows Add a device; PIN requested. Pairing and motion checks pending. |
 | Output routing | Sound physically comes from the selected output, not unexpectedly from computer/external speakers | Untested |
 | Jaw response | Jaw visibly follows short speech from the live speaker; body remains still | Untested |
 | Repetition | Three short manual phrases complete normally without feedback, resets or extra motion | Untested |
