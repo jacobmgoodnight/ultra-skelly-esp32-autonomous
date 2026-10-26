@@ -19,7 +19,9 @@ not hardware verified. Raw repeat-back does not filter words.
 The separate [local Halloween conversation experiment](../docs/local-halloween-conversation.md)
 adds constrained approved replies and known first-name greetings with offline
 laptop models. It requires the optional local companion; ordinary Studio and
-repeat-back keep working independently. Conversation on Skelly is Untested.
+repeat-back keep working independently. The owner confirms one attended
+Original-voice reply through Skelly with jaw movement using the laptop mic.
+Guard/name trials, cleanup, recovery and longer sessions remain unverified.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

@@ -3,8 +3,10 @@
 This optional Windows laptop companion is separate from Studio and autonomous
 firmware. No ESP32 microphone is needed: the laptop captures speech and sends
 approved reply audio through its Windows output, including Skelly's paired Live
-Stereo speaker. **Conversation on Skelly is Untested.** The owner's successful
-two-phrase raw repeat-back pilot does not verify this new response pipeline.
+Stereo speaker. **October 26: the owner confirms one attended conversation turn
+produced an approved reply through Skelly with jaw movement**, using Original
+voice and the laptop microphone with the ESP32 unplugged. Cleanup, recovery,
+longer sessions and the separate guard/name trials remain unverified.
 
 ## Family reply guard
 
@@ -103,6 +105,14 @@ reply after 45 seconds. There is no retry or saved transcript/history. These
 bounds do not provide physical jaw telemetry or a prop-side cooldown guarantee.
 
 ## Evidence and checks
+
+Verified (owner report), October 26: the first attended conversation test produced
+an approved reply through Skelly with jaw movement. The test specified Original
+voice, laptop microphone, Skelly's Live Stereo output, ESP32 unplugged and other
+controllers disconnected. The exact spoken line and first-name greeting were not
+separately reported. Body-still criteria, physical microphone-off phases, cooldown,
+Stop/hidden-page cleanup, inappropriate-word/unknown-name trials, child-voice
+recognition, Deep output, longer sessions and return to autonomy remain unverified.
 
 Software-only: unit coverage exercises output/name allowlists, malformed and
 injected selections, audio limits, Host/Origin/token/path rejection, request

@@ -4,7 +4,7 @@
 has software-only evidence; none of the Ultra observations below transfer to it.
 See the [feature matrix and attended checklist](experimental-12ft.md).
 
-Latest evidence: engineering handoff and October 20–23, 2026 reports on one Ultra
+Latest evidence: engineering handoff and October 20–26, 2026 reports on one Ultra
 Skelly v2 with an original ESP32-WROOM board. **Verified** means a reported physical
 observation, **Failed** an observed unsuccessful physical test, **Software-only**
 automated checks or serial dispatch evidence, **Untested** no qualifying observation.
@@ -56,7 +56,7 @@ the current status. A transport success alone does not verify an actuator.
 | Per-channel lighting effects | Verified (owner report) | October 22: owner explicitly confirms lighting effects work. Individual channels/effects and speed measurements were not enumerated; no claim of all speeds, LED-region mapping or jaw restoration integration. Packet CRC/order/spacing retain native coverage. |
 | Browser manual repeat-back through Live speaker | Verified (owner report) | October 26: Windows pairing with PIN 1234 succeeded; owner confirms sound from Skelly and jaw following the recorded phrase, with the autonomous ESP32 unplugged. Three-phrase manual repetition, body-still criteria and return to autonomy were not separately reported. See [repeat-back lab](experimental-talkback.md). |
 | Automatic nearby repeat-back pilot | Verified (owner report) | October 26: in one attended two-phrase pilot with the ESP32 unplugged, owner confirms both phrases repeated through Skelly with jaw movement, then the pilot stopped. Longer sessions, physical Stop/hidden-page checks, body-still criteria and return to autonomy remain Untested; capture bounds and microphone cleanup retain Software-only coverage. Default OFF; separate browser experiment. |
-| Local guarded Halloween conversation | Software-only | October 26: synthetic local speech recognition, approved reply/name selection and Windows WAV synthesis pass on the laptop. Conversation speaker/jaw/body response and recovery remain Untested. The model cannot provide spoken text directly; raw input is never replayed in this mode. See [local conversation](local-halloween-conversation.md). |
+| Local guarded Halloween conversation speaker/jaw response | Verified (owner report) | October 26: one attended Original-voice turn using the laptop microphone and Live Stereo output produced an approved reply through Skelly with jaw movement, with the ESP32 unplugged. The exact name/joke, body-still criteria, physical microphone-off/cooldown/Stop/hidden-page behavior, guard/name trials, child-voice accuracy, Deep output, longer sessions and return to autonomy were not separately verified. Reply/name guards retain Software-only coverage. See [local conversation](local-halloween-conversation.md). |
 
 October 22 refresh follow-up: the owner reports completing all Studio refresh
 checks except lighting and USB. This records the reported pass for the previous
