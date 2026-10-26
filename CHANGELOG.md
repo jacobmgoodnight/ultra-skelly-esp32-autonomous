@@ -1,5 +1,18 @@
 # Changelog
 
+## Eye preview consistency and audit cleanup · browser and documentation
+
+The enlarged eye preview now updates its image, descriptive label and alt text
+together. Previewing an unselected expression survives unrelated edits, while
+loading settings or switching models shows the matching expression and artwork.
+Preview still leaves the selected routine unchanged. Browser regression checks
+cover both mismatch paths and unavailable experimental-model artwork.
+
+Removes unused timing-feedback code left after the preview simplification, fixes
+13 links in archived roadmaps, and clarifies local audio conversion and Ultra versus
+experimental profile versions. Firmware, generated sketches and stored formats
+remain unchanged. These changes have software evidence only.
+
 ## Simpler eyes and lighting · browser changes
 
 Removes the separate scene-look heading and puts naming/saving back inside Scene

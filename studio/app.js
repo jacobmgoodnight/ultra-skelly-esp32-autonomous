@@ -717,8 +717,10 @@
     const image=byId("eyePreviewImage");
     const url=eyeImageUrl(index);if(url)image.src=url;else image.removeAttribute('src');
     image.hidden=!url;
-    image.alt="Enlarged preview of Skelly eye pattern "+index;
-    byId("eyePreviewLabel").textContent="Eye pattern #"+index;
+    const name=window.SkellyLooks?.eyeName(index,byId('deviceId')?.value)||'Eye pattern';
+    const label=name+' · eye #'+index;
+    image.alt='Enlarged preview of '+label;
+    byId("eyePreviewLabel").textContent=label;
   }
   function readLibrary() {
     return Object.fromEntries(Object.entries(CLIP_FIELDS).map(([key,id])=>

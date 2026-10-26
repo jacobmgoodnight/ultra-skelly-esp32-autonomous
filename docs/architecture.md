@@ -79,7 +79,10 @@ with a local Pause/Resume control. Channel brightness and increasing UI speed af
 illustrative sample; no physical effect-period mapping is established. Browser
 strobe is capped at two flashes per second. Hidden tabs and reduced-motion
 preferences gate all sample animation. The gallery keeps selection and enlarged
-preview independent. The removed Look panel has no remaining DOM dependencies.
+preview independent. `app.js` updates the enlarged image, descriptive label and
+alt text together through `showEyePreview`; `looks.js` supplies model-specific
+names without maintaining a second preview selection. The removed Look panel has
+no remaining DOM dependencies.
 
 Connect & save groups everyday connection, explicit read and save. A small workflow
 view recommends the next action without adding a mandatory read or confirmation.

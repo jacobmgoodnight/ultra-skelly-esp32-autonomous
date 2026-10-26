@@ -114,7 +114,8 @@ Scene builder sits above Connect & save and Advanced, uses minutes (10 by defaul
 ordered or random switching after full old-action cooldowns. Sketch downloads
 include a local date/time suffix. The clip library maps readable
 names to the user's actual uploaded MP3 serials. Settings and clip mappings can
-be saved/loaded as validated version-4 JSON files without an account. Existing
+be saved/loaded as validated JSON files without an account: version 4 for Ultra
+and version 5 for the experimental 12-foot model. Existing
 firmware defaults remain unchanged.
 
 See [Studio next steps](../docs/studio-roadmap.md) for pending hardware checks,
@@ -141,8 +142,13 @@ Audio scenes is an experimental, optional preview collapsed inside Advanced & te
 Web Bluetooth session, prepared MP3 inspection, fresh-file transfer and verified
 per-file appearance settings. `audio-ui.js` keeps that preparation separate from
 ordinary editing and the ESP32 USB session. Nothing connects or plays on load.
-Only prepared 8 kHz / mono / 32 kbps MP3s are accepted; no encoder or cloud service
-is loaded. Metadata read-back is software evidence, not physical playback proof.
+Uploads accept prepared 8 kHz / mono / 32 kbps MP3s. Optional local preparation
+loads the bundled lamejs encoder only when conversion is requested; it uses no
+cloud service. Metadata read-back is software evidence, not physical playback proof.
 See [setup, limits and attended results](../docs/audio-scenes.md).
 
-October 24: local audio preparation is provided by audio-prep.js/audio-prep-ui.js and a separately licensed bundled lamejs encoder. The complete folder works without a converter CDN. Friendly file labels are optional browser/profile metadata only. See [current status](../docs/status.md), [release notes](../CHANGELOG.md) and [next checks](../docs/next-release-checklist.md).
+Local audio preparation is provided by audio-prep.js/audio-prep-ui.js and the
+separately licensed bundled encoder. The complete folder works without a converter
+CDN. Friendly file labels are optional browser/profile metadata only. See
+[current status](../docs/status.md), [release notes](../CHANGELOG.md) and
+[next checks](../docs/next-release-checklist.md).

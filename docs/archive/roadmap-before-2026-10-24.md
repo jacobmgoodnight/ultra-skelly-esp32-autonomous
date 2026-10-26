@@ -9,7 +9,7 @@ October 21 follow-up: guided setup/scheduling feedback, bounded original-byte US
 capture, the fixed-profile installer build path, optional fair turns, per-file
 clip estimates, passive playback observations and USB-set weekday/time windows
 are now implemented in software. Hardware checks are prepared, not performed.
-See [implementation status](implementation-progress.md).
+See [implementation status](../implementation-progress.md).
 
 ## P0 — Finish the lighting/serial diagnosis
 
@@ -20,9 +20,9 @@ both chosen colors after MP3 #13 in the isolated jaw/lighting setup. The cause o
 serial corruption remains unknown; mode 2 and motor integration remain unverified.
 
 1. Isolate the persistent serial corruption using the comparison procedure in
-   [the testing guide](testing.md). Corruption persists in the lighting-OFF
+   [the testing guide](../testing.md). Corruption persists in the lighting-OFF
    three-clip log, without reported write failures or mid-session reconnects and
-   with steady connected heap. The [serial-only idle test](serial-idle-test.md)
+   with steady connected heap. The [serial-only idle test](../serial-idle-test.md)
    subsequently passed all four cycles cleanly. Compare the unchanged jaw sketch
    in a second terminal next. Affected controller lines contain exactly 64 Unicode replacement characters. Obtain original byte
    capture before assigning a UART/USB/monitor cause. Exact head LED mapping and
@@ -39,7 +39,7 @@ serial corruption remains unknown; mode 2 and motor integration remain unverifie
    unintended repeat movement. A disconnect loses physical animation knowledge.
    The audit follow-up now forces service rediscovery with missing-service,
    missing-characteristic and disconnect tests. Repeated physical reconnect/heap
-   validation remains pending; see [attended regression](audit-follow-up.md).
+   validation remains pending; see [attended regression](../audit-follow-up.md).
 
 ## P1 — Scheduler correctness and endurance
 
@@ -63,7 +63,7 @@ and completion, then extend endurance gradually.
 
 The October 22 branch implements opt-in palette rotation and per-channel
 Static/Strobe/Pulsing with speed. The remaining gate is physical verification;
-use the [focused checklist](studio-lighting-checklist.md). Static defaults and
+use the [focused checklist](../studio-lighting-checklist.md). Static defaults and
 the original six-packet path remain. These effects must not be described as
 hardware-verified.
 
@@ -81,7 +81,7 @@ independent channel enablement and per-file overrides remain separate work.
 ## P3 — Studio architecture and usability
 
 The first usability pass adds progressive disclosure, named jaw-clip selection,
-and validated JSON profiles. See [Studio's next steps](studio-roadmap.md) for the
+and validated JSON profiles. See [Studio's next steps](../studio-roadmap.md) for the
 prioritized remaining hardware tests and staged browser USB upload proposal.
 
 Template generation/CI drift enforcement is in the first PR. Next consolidate
