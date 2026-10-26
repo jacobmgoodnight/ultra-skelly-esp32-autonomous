@@ -11,6 +11,13 @@ application that embeds this sketch and replaces validated constants plus severa
 optional scheduling blocks. It downloads one self-contained `.ino`. No backend,
 Wi-Fi, or ongoing browser connection is involved.
 
+The separate [repeat-back lab](experimental-talkback.md) uses a laptop microphone
+and the paired Live audio speaker. The optional [local Halloween conversation
+companion](local-halloween-conversation.md) adds Windows localhost speech/reply
+engines and a separate page; only approved reply lines and allowlisted first names
+can reach synthesis. These experiments do not participate in the ESP32 scheduler
+or change ordinary Studio's static/offline architecture.
+
 ## Optional USB settings and scenes
 
 Universal sketches explicitly enable `SKELLY_RUNTIME`; ordinary generated sketches
