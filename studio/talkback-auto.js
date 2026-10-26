@@ -22,7 +22,7 @@
     push(input){
       if(!(input instanceof Float32Array)||!input.length||input.length>2048)throw Error('Invalid audio block.');
       let power=0;for(const value of input){if(!Number.isFinite(value)||Math.abs(value)>1.01)throw Error('Invalid audio samples.');power+=value*value;}
-      const rms=Math.sqrt(power/input.length);
+      const rms=this.level=Math.sqrt(power/input.length);
       if(this.calibration<RATE){
         this.calibration+=input.length;this.power+=power;
         if(this.calibration>=RATE){const noise=Math.sqrt(this.power/this.calibration);if(noise>.06)throw Error('Background is too loud. Restart in a quieter position.');this.threshold=Math.max(this.threshold,noise*3);}
@@ -55,7 +55,7 @@
   }
 
   class PcmCapture{
-    constructor({media,Context,WorkletNode,urls=URL}){Object.assign(this,{media,Context,WorkletNode,urls});this.generation=0;this.stream=this.context=this.node=this.source=this.gain=null;this.url=null;this.onState=()=>{};}
+    constructor({media,Context,WorkletNode,input='',urls=URL}){Object.assign(this,{media,Context,WorkletNode,input,urls});this.generation=0;this.stream=this.context=this.node=this.source=this.gain=null;this.url=null;this.onState=()=>{};}
     stop(){
       ++this.generation;const stream=this.stream,context=this.context;this.stream=this.context=null;
       if(this.node){this.node.port.onmessage=null;this.node.onprocessorerror=null;this.node.port.close();this.node.disconnect();}this.node=null;
@@ -70,7 +70,7 @@
         const context=this.context=new this.Context({sampleRate:RATE});
         // Resume in the Start click, before awaiting a permission dialog.
         const resumed=context.resume();resumed.catch(()=>{});
-        const stream=await this.media.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:false},video:false});
+        const stream=await this.media.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:false,...(this.input?{deviceId:{exact:this.input}}:{})},video:false});
         if(generation!==this.generation){stream.getTracks().forEach(t=>t.stop());return false;}
         this.stream=stream;this.onState();await resumed;
         if(generation!==this.generation)return false;
@@ -91,13 +91,13 @@
         this.source.connect(node);node.connect(this.gain);this.gain.connect(context.destination);
         context.onstatechange=()=>{if(generation===this.generation&&context.state!=='running')onError(Error('Audio capture was interrupted.'));};
         return true;
-      }catch(error){if(generation===this.generation)this.stop();throw error;}
+      }catch(error){if(generation===this.generation)this.stop();if(this.input&&['NotFoundError','OverconstrainedError'].includes(error.name))throw Error('Selected microphone unavailable. Choose microphone again; no other input was substituted.');throw error;}
     }
   }
 
   class AutomaticRepeat{
-    constructor({repeat,captureFactory,onChange=()=>{},visible=()=>!document.hidden,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
-      Object.assign(this,{repeat,captureFactory,onChange,visible,setTimer,clearTimer});this.generation=0;this.active=false;this.phase='idle';this.message='Automatic pilot is off.';this.capture=null;this.gate=null;this.repeats=0;this.sessionTimer=this.phaseTimer=null;
+    constructor({repeat,captureFactory,onChange=()=>{},onLevel=()=>{},visible=()=>!document.hidden,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
+      Object.assign(this,{repeat,captureFactory,onChange,onLevel,visible,setTimer,clearTimer});this.generation=0;this.active=false;this.phase='idle';this.message='Automatic pilot is off.';this.capture=null;this.gate=null;this.repeats=0;this.sessionTimer=this.phaseTimer=null;
     }
     say(phase,message){this.phase=phase;this.message=message;this.onChange(this);}
     stopCapture(){const capture=this.capture;this.capture=null;capture?.stop();this.gate=null;}
@@ -126,6 +126,7 @@
       if(!this.active||generation!==this.generation||!['calibrating','listening','capturing'].includes(this.phase))return;
       try{
         const result=this.gate.push(samples);
+        this.onLevel(this.gate.level,this.gate.threshold,result.kind);
         if(result.kind==='waiting'&&this.phase!=='listening')this.say('listening','Listening for a phrase. Sound level detection can also react to noise.');
         if(result.kind==='speech'&&this.phase!=='capturing')this.say('capturing','Capturing your phrase · maximum 8 seconds.');
         if(result.kind!=='phrase')return;

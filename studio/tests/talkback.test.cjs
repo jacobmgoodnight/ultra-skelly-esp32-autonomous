@@ -16,7 +16,7 @@ test('default browser timers keep the Window receiver instead of the engine inst
 });
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 function fixture({pending=false,deny=false,playFails=false,sinkPending=false}={}){
- const timers=new Map(),events=[],request=deferred(),sink=deferred();let next=0,recorder,audio;
+ const timers=new Map(),events=[],constraints=[],request=deferred(),sink=deferred();let next=0,recorder,audio;
  const track={stopped:false,onended:null,stop(){this.stopped=true;}},stream={getTracks:()=>[track],getAudioTracks:()=>[track]};
  class Recorder{
   static isTypeSupported(t){return t==='audio/webm;codecs=opus';}
@@ -25,19 +25,36 @@ function fixture({pending=false,deny=false,playFails=false,sinkPending=false}={}
   stop(){this.state='inactive';queueMicrotask(()=>{this.ondataavailable?.({data:new Blob(['voice'])});this.onstop?.();});}
  }
  let visible=true;
- const engine=new RepeatBack({media:{getUserMedia:async options=>{events.push('mic');assert.equal(options.video,false);if(deny)throw Object.assign(Error(),{name:'NotAllowedError'});return pending?request.promise:stream;}},Recorder,
+ const engine=new RepeatBack({media:{getUserMedia:async options=>{events.push('mic');constraints.push(options);assert.equal(options.video,false);if(deny)throw Object.assign(Error(),{name:'NotAllowedError'});return pending?request.promise:stream;}},Recorder,
   visible:()=>visible,setTimer:(fn,ms)=>{timers.set(++next,{fn,ms});return next;},clearTimer:id=>timers.delete(id),
   urls:{createObjectURL:()=>{events.push('url');return 'blob:clip';},revokeObjectURL:u=>events.push('revoke:'+u)},
-  audioFactory:()=>audio={onended:null,onerror:null,src:'',async setSinkId(id){events.push('sink:'+id);if(sinkPending)await sink.promise;},async play(){assert.equal(track.stopped,true,'microphone must be released before playback');events.push('play');if(playFails)throw Error();},pause(){events.push('pause');},removeAttribute(){this.src='';},load(){}},onChange:()=>{}});
- return {engine,timers,events,track,stream,request,sink,get recorder(){return recorder;},get audio(){return audio;},hide(){visible=false;engine.stop();},fire(ms){const entry=[...timers.entries()].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms);timers.delete(entry[0]);entry[1].fn();}};
+  audioFactory:()=>audio={onended:null,onerror:null,src:'',preservesPitch:true,playbackRate:1,async setSinkId(id){events.push('sink:'+id);if(sinkPending)await sink.promise;},async play(){assert.equal(track.stopped,true,'microphone must be released before playback');events.push('play');if(playFails)throw Error();},pause(){events.push('pause');},removeAttribute(){this.src='';},load(){}},onChange:()=>{}});
+ return {engine,timers,events,constraints,track,stream,request,sink,get recorder(){return recorder;},get audio(){return audio;},hide(){visible=false;engine.stop();},fire(ms){const entry=[...timers.entries()].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms);timers.delete(entry[0]);entry[1].fn();}};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
+test('manual input selection is exact, stays in memory and never retries with a different microphone',async()=>{
+ const p=fixture();await p.engine.record();assert.equal(p.constraints[0].audio.deviceId,undefined);p.engine.stop();
+ p.engine.input='chosen-mic';await p.engine.record();assert.deepEqual(p.constraints[1].audio.deviceId,{exact:'chosen-mic'});p.engine.stop();assert.equal(p.engine.input,'chosen-mic');
+ for(const name of ['NotFoundError','OverconstrainedError']){
+  let calls=0;p.engine.media={async getUserMedia(options){calls++;assert.equal(options.audio.deviceId.exact,'chosen-mic');throw Object.assign(Error(),{name});}};
+  await p.engine.record();assert.equal(calls,1);assert.equal(p.engine.state,'error');assert.match(p.engine.message,/no other input was substituted/);assert.equal(p.timers.size,0);
+ }
+});
 test('manual recording is bounded, releases microphone before explicit playback and revokes URLs',async()=>{
  const p=fixture();assert.deepEqual(p.events,[]);await p.engine.record();assert.equal(p.engine.state,'recording');assert.equal(p.events.includes('play'),false);
  p.fire(RECORD_MS);await tick();assert.equal(p.engine.state,'ready');assert.equal(p.track.stopped,true);assert.equal(p.events.includes('play'),false);
  await p.engine.play();assert.equal(p.engine.state,'playing');await p.engine.record();assert.equal(p.events.filter(e=>e==='mic').length,1);
  p.audio.onended();assert.equal(p.engine.state,'ready');assert.ok(p.events.includes('revoke:blob:clip'));assert.equal(p.timers.size,0);
  p.engine.stop();assert.equal(p.engine.clip,null);
+});
+test('deep voice lowers pitch with bounded duration and fails closed when unsupported',async()=>{
+ for(const voice of ['original','deep','invalid','unsupported']){
+  const p=fixture();await p.engine.record();p.engine.finish();await tick();p.engine.voice=voice==='unsupported'?'deep':voice;
+  if(voice==='unsupported'){const factory=p.engine.audioFactory;p.engine.audioFactory=()=>{const audio=factory();delete audio.preservesPitch;return audio;};}
+  await p.engine.play();
+  if(['invalid','unsupported'].includes(voice)){assert.equal(p.engine.state,'error');assert.equal(p.events.includes('play'),false);assert.equal(p.engine.clip,null);assert.equal(p.timers.size,0);}
+  else{assert.equal(p.audio.playbackRate,voice==='deep'?.8:1);assert.equal(p.audio.preservesPitch,voice!=='deep');assert.ok(RECORD_MS/p.audio.playbackRate<15000);p.engine.stop();}
+ }
 });
 test('stop or hidden page discards pending permission results and stops every late track',async()=>{
  for(const mode of ['stop','hide','timeout']){

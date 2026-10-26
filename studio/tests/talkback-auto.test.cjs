@@ -31,14 +31,20 @@ test('worklet accepts variable render blocks and bounds queued audio; overload i
  assert.ok(messages[4].missed>0);assert.equal(p.process([]),true);
 });
 function pilot({pending=false,denied=false,factoryFails=false}={}){
- const timers=new Map(),captures=[],starting=deferred();let next=0,auto,visible=true;
+ const timers=new Map(),captures=[],levels=[],starting=deferred();let next=0,auto,visible=true;
  const repeat={state:'idle',clip:null,message:'',stop(){this.state='idle';this.clip=null;auto?.changed();},say(state,message){this.state=state;this.message=message;auto.changed();},async play(){assert.equal(captures.at(-1).stream,null,'microphone must stop before playback');assert.ok(this.clip.size>44);this.state='playing';},end(){this.say('ready','Ended');}};
- auto=new AutomaticRepeat({repeat,visible:()=>visible,onChange:()=>{},setTimer:(fn,ms)=>{timers.set(++next,{fn,ms});return next;},clearTimer:id=>timers.delete(id),captureFactory:()=>{
+ auto=new AutomaticRepeat({repeat,visible:()=>visible,onChange:()=>{},onLevel:(...args)=>levels.push(args),setTimer:(fn,ms)=>{timers.set(++next,{fn,ms});return next;},clearTimer:id=>timers.delete(id),captureFactory:()=>{
   if(factoryFails)throw Error('capture unavailable');
   const capture={stream:null,stops:0,async start(send,error){this.send=send;this.error=error;if(pending)await starting.promise;if(denied)throw Object.assign(Error(),{name:'NotAllowedError'});this.stream={};return true;},stop(){this.stream=null;this.stops++;}};captures.push(capture);return capture;
  }});
- return {auto,repeat,timers,captures,starting,hide(){visible=false;auto.stop();},fire(ms){const entry=[...timers].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms);timers.delete(entry[0]);entry[1].fn();},speak(){phrase(samples=>captures.at(-1).send(samples));}};
+ return {auto,repeat,timers,captures,levels,starting,hide(){visible=false;auto.stop();},fire(ms){const entry=[...timers].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms);timers.delete(entry[0]);entry[1].fn();},speak(){phrase(samples=>captures.at(-1).send(samples));}};
 }
+test('sound levels reflect calibrated capture only and stop arriving during playback or after Stop',async()=>{
+ const p=pilot();await p.auto.start();p.speak();assert.ok(p.levels.some(([level,,kind])=>level===0&&kind==='calibrating'));
+ assert.ok(p.levels.some(([level,threshold,kind])=>level>threshold&&kind==='speech'));
+ const before=p.levels.length;phrase(samples=>p.captures[0].send(samples));assert.equal(p.levels.length,before);
+ p.auto.stop();phrase(samples=>p.captures[0].send(samples));assert.equal(p.levels.length,before);
+});
 test('pilot releases the mic before playback, waits 45 seconds and ends after two repeats',async()=>{
  const p=pilot();assert.equal(p.captures.length,0);await p.auto.start();assert.equal(p.auto.phase,'calibrating');p.speak();
  assert.equal(p.auto.phase,'playing');assert.equal(p.repeat.state,'playing');assert.equal(p.captures[0].stream,null);assert.equal(p.auto.repeats,1);
@@ -66,13 +72,18 @@ test('session limit and Stop during cooldown or playback clear every restart tim
   p.repeat.end();assert.equal(p.auto.active,false);assert.equal(p.timers.size,0);assert.equal(p.captures.length,1);
  }
 });
-function captureFixture({hold='',rate=RATE,deny=false}={}){
- const wait=deferred(),events=[],track={onended:null,stop(){events.push('track stopped');}},stream={getTracks:()=>[track],getAudioTracks:()=>[track]};let context,node;
+function captureFixture({hold='',rate=RATE,deny=false,input='',failure=''}={}){
+ const wait=deferred(),events=[],constraints=[],track={onended:null,stop(){events.push('track stopped');}},stream={getTracks:()=>[track],getAudioTracks:()=>[track]};let context,node;
  class Context{constructor(){context=this;this.sampleRate=rate;this.state='running';this.destination={};this.audioWorklet={addModule:async()=>{if(hold==='module')await wait.promise;}};}async resume(){events.push('resume');}async close(){events.push('context closed');}createMediaStreamSource(){return {connect(){},disconnect(){events.push('source disconnected');}};}createGain(){return {gain:{value:1},connect(){},disconnect(){}};}}
  class Node{constructor(){node=this;this.port={onmessage:null,postMessage(){events.push('ack');},close(){events.push('port closed');}};}connect(){}disconnect(){events.push('node disconnected');}}
- const capture=new PcmCapture({Context,WorkletNode:Node,media:{async getUserMedia(){events.push('permission');if(deny)throw Object.assign(Error(),{name:'NotAllowedError'});if(hold==='permission')await wait.promise;return stream;}},urls:{createObjectURL:()=> 'blob:worklet',revokeObjectURL:()=>events.push('url revoked')}});
- return {capture,events,track,wait,get context(){return context;},get node(){return node;}};
+ const capture=new PcmCapture({Context,WorkletNode:Node,input,media:{async getUserMedia(options){events.push('permission');constraints.push(options);if(failure||deny)throw Object.assign(Error(),{name:failure||'NotAllowedError'});if(hold==='permission')await wait.promise;return stream;}},urls:{createObjectURL:()=> 'blob:worklet',revokeObjectURL:()=>events.push('url revoked')}});
+ return {capture,events,constraints,track,wait,get context(){return context;},get node(){return node;}};
 }
+test('automatic capture honors exact input selection and fails closed if that microphone disappears',async()=>{
+ const p=captureFixture({input:'laptop-mic'});await p.capture.start(()=>{},()=>{});assert.deepEqual(p.constraints[0].audio.deviceId,{exact:'laptop-mic'});p.capture.stop();
+ const defaultInput=captureFixture();await defaultInput.capture.start(()=>{},()=>{});assert.equal(defaultInput.constraints[0].audio.deviceId,undefined);defaultInput.capture.stop();
+ for(const failure of ['NotFoundError','OverconstrainedError']){const absent=captureFixture({input:'gone',failure});await assert.rejects(absent.capture.start(()=>{},()=>{}),/no other input was substituted/);assert.equal(absent.constraints.length,1);assert.equal(absent.capture.stream,null);assert.ok(absent.events.includes('context closed'));}
+});
 test('PCM capture closes tracks, worklet, context and URLs, including late setup results',async()=>{
  const p=captureFixture();let blocks=0,errors=0;await p.capture.start(()=>blocks++,()=>errors++);assert.deepEqual(p.events.slice(0,2),['resume','permission']);
  p.node.port.onmessage({data:{samples:block(.1),missed:0}});assert.equal(blocks,1);assert.ok(p.events.includes('ack'));

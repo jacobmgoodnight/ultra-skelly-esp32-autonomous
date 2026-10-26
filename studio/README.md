@@ -12,6 +12,10 @@ most two phrases, with bounded capture and a 45-second pause. The owner confirms
 both phrases repeated with jaw movement and the pilot stopped in one attended run.
 It defaults OFF; longer sessions and recovery remain Untested. See the
 [isolated setup and test criteria](../docs/experimental-talkback.md).
+The laptop supplies the microphone; no ESP32 mic is required. The lab adds explicit
+input selection, an automatic-capture sound meter and an optional lower/slower
+Deep voice. Those additions have software coverage; Deep sound/jaw response is
+not hardware verified. Raw repeat-back does not filter words.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

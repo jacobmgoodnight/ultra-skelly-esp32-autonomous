@@ -6,7 +6,7 @@
   class RepeatBack {
     constructor({media,Recorder,audioFactory=()=>new Audio(),urls=URL,onChange=()=>{},visible=()=>!document.hidden,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
       Object.assign(this,{media,Recorder,audioFactory,urls,onChange,visible,setTimer,clearTimer});
-      this.generation=0;this.state='idle';this.message='Ready for a short recording.';this.timer=null;this.stream=null;this.recorder=null;this.audio=null;this.clip=null;this.url=null;this.sink='';
+      this.generation=0;this.state='idle';this.message='Ready for a short recording.';this.timer=null;this.stream=null;this.recorder=null;this.audio=null;this.clip=null;this.url=null;this.sink='';this.input='';this.voice='original';
     }
     say(state,message){this.state=state;this.message=message;this.onChange(this);}
     deadline(fn,ms){this.clearTimer(this.timer);this.timer=this.setTimer(fn,ms);}
@@ -27,7 +27,7 @@
       this.say('requesting','Allow microphone access. Nothing is sent to a server.');
       this.deadline(()=>this.fail('Microphone request timed out. Retry when ready.'),30000);
       try{
-        const stream=await this.media.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:false});
+        const stream=await this.media.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,...(this.input?{deviceId:{exact:this.input}}:{})},video:false});
         if(generation!==this.generation||!this.visible()){stream.getTracks().forEach(t=>t.stop());if(generation===this.generation)this.stop();return;}
         this.clearTimer(this.timer);this.stream=stream;
         for(const track of stream.getAudioTracks())track.onended=()=>{if(generation===this.generation)this.fail('Microphone disconnected. Recording discarded.');};
@@ -48,7 +48,7 @@
         };
         recorder.start(250);this.say('recording','Recording · maximum 8 seconds. Stop recording when finished.');
         this.deadline(()=>this.finish(),RECORD_MS);
-      }catch(error){if(generation===this.generation)this.fail(error.name==='NotAllowedError'?'Microphone permission denied. Allow access in your browser and retry.':'Could not start the microphone. Check the selected input and close other recording apps.');}
+      }catch(error){if(generation===this.generation)this.fail(error.name==='NotAllowedError'?'Microphone permission denied. Allow access in your browser and retry.':this.input&&['NotFoundError','OverconstrainedError'].includes(error.name)?'Selected microphone unavailable. Choose microphone again; no other input was substituted.':'Could not start the microphone. Check the selected input and close other recording apps.');}
     }
     finish(){
       if(this.state!=='recording')return;
@@ -64,6 +64,11 @@
       this.deadline(()=>{if(generation===this.generation)this.fail('Playback timed out. Check the audio output and record again.');},15000);
       try{
         audio=this.audioFactory();this.audio=audio;
+        if(!['original','deep'].includes(this.voice)){this.fail('Choose an available playback voice.');return;}
+        if(this.voice==='deep'){
+          if(!('preservesPitch' in audio)){this.fail('Deep voice is unavailable in this browser. Choose Original voice.');return;}
+          audio.preservesPitch=false;audio.playbackRate=.8;
+        }
         if(this.sink){if(!audio.setSinkId)throw Error('Output selection is unavailable.');await audio.setSinkId(this.sink);}
         if(generation!==this.generation||this.audio!==audio)return;
         this.url=this.urls.createObjectURL(this.clip);audio.src=this.url;

@@ -29,7 +29,15 @@ Audio stays in tab memory; manual recorded data is bounded to 1 MiB. Automatic
 capture has the separate sample/WAV bounds below. The page does not
 store recordings, upload them to Skelly or send them to a server. There are no
 accounts, API keys, paid services, network libraries or automatic connections.
-Use computer sound settings to select the microphone and output. The optional
+The laptop remains the microphone/detection host; no ESP32 microphone is needed.
+**Choose microphone** lists browser-exposed inputs without opening a recording.
+If names are hidden, grant access during Record, then list inputs again. Selection
+applies to both manual and automatic capture and stays only in tab memory. An
+explicitly selected unavailable input fails; no other microphone is substituted.
+The active track's label appears beside Microphone ON when available. Browser
+permission/device constraints are described in the [input API documentation](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia).
+
+Use computer sound settings as a fallback for the microphone and output. The optional
 Choose speaker button uses the browser's picker where supported. Chrome/Edge can
 instead list the audio outputs exposed by the browser. If only the default is
 visible, record a phrase and allow microphone access, then choose speaker again;
@@ -39,7 +47,14 @@ selection path is supported. An unavailable selected output fails instead of sil
 With system-default output, the OS may change the destination if a speaker drops;
 verify the actual destination at low volume.
 
-Voice effects and AI replies are not implemented. The optional automatic pilot
+The optional **Deep** voice plays at 80% speed with pitch preservation disabled;
+it lowers the pitch and makes an eight-second recording last at most ten seconds.
+It adds no echo or extra repeat, and the 45-second pause still begins after
+playback. Original remains the default. Deep voice is **Software-only**; its sound
+and jaw behavior on Skelly are not verified. [Browser pitch behavior](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch).
+
+AI replies are not implemented on this page. Raw repeat-back has no word filter
+and can repeat anything spoken. The optional automatic pilot
 uses local sound-energy detection; it does not recognize words or distinguish
 people from music, wind, pets or other noise.
 
@@ -65,6 +80,9 @@ the latest quarter second; a phrase holds at most 128,000 float samples, and its
 WAV is at most 256,044 bytes. Audio stays in memory. No recordings or calibration
 values are saved or uploaded. A browser lacking the required Web Audio support
 can still use manual recording. Input audio is never monitored to the speakers.
+The sound-level meter runs only during automatic capture and shows whether the
+current sound crosses the calibrated phrase-start level. It resets during
+playback, the pause and Stop; it does not open a separate microphone stream.
 
 For the first attended test, start with computer speakers at low volume. Check
 that the first phrase repeats once, the microphone turns off during playback and
