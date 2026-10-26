@@ -1,296 +1,153 @@
-# Ultra Skelly ESP32 Autonomous Controller 💀
+# 💀 Ultra Skelly — Autonomous ESP32 Controller
 
-Custom, scheduled routines for the Home Depot Ultra Skelly v2, running autonomously
-on an ESP32: head, arm and torso movement at your own intervals, optional eyes and RGB.
-Configure it
-in **[Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)**,
-flash an inexpensive ESP32-WROOM board, and let it run without a connected phone,
-browser, Wi-Fi, cloud service or subscription.
+**Make your Skelly come alive — even when nobody walks by.**
 
-For Ultra Skelly v2 owners who want occasional movement without keeping a phone
-connected. The recommended [browser setup](docs/browser-installation.md) installs
-universal firmware directly, with no Arduino software or GitHub account. Install
-once, then change the current routine or up to four saved scenes over USB in Studio.
-Advanced self-contained Arduino source downloads remain available offline.
-The owner confirms USB connection, reading/saving settings and observed changed
-routines. Power-cycle retention, recovery and physical scene transitions remain
-separate checks.
-The software is free and MIT licensed; you supply the prop,
-an original Bluetooth-capable ESP32-WROOM board, USB power/data cable, and a
-computer for the initial USB installation. Other prop revisions and ESP32 variants
-are not covered by the current hardware evidence.
+Give the Home Depot **6.5-foot Ultra Skelly v2** its own personality. An inexpensive ESP32 uses Bluetooth to trigger randomized head, arm and torso movements, change LCD eyes, and control RGB lighting — **without waiting for the motion sensor or keeping a phone connected**.
 
-Want Skelly's head to move on its own every few minutes, even when nobody walks
-past? Choose **Subtle**, which defaults to **60–120 seconds**, install universal firmware and save the routine over USB. It requests a head animation at a random point
-in that range, repeatedly, while powered and connected to the prop. You choose
-the intervals; the ESP32 handles the recurring triggers. Other enabled routines
-and safety locks may delay starts.
+**[🎛️ Launch Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)** · **[🚀 Quick start](#quick-start)** · [Explore features](#what-can-it-do) · [Hardware compatibility](#compatibility-and-test-status)
 
-This adds a recurring schedule in Bluetooth mode without manual DecorPro taps or
-waiting for the prop's sensor. **Default scheduling uses fixed or randomized
-intervals.** An experimental weekday/time window can limit new routines after
-you set local time over USB; it pauses after every restart until time is set again.
-The stock sensor mode's active-window timer is a different feature. This project
-does not establish compatibility with other props. An unobtrusive Advanced option
-offers [experimental 2026 app-controlled 12-foot support](docs/experimental-12ft.md),
-**not hardware tested**, with head, eyes and chest lighting only. Ultra remains
-the default; older 12-foot models are excluded.
+**Free & open source (MIT)** · **No Wi-Fi, cloud service or subscription for autonomous operation** · **No wiring to the prop**
 
-## What you can configure
+![Skelly Studio showing movement controls and a live routine summary](docs/images/studio-routine-overview.jpg)
 
-![Skelly Studio: movement controls and live routine summary](docs/images/studio-routine-overview.jpg)
+*Skelly Studio lets you build a routine in your browser. Previews illustrate requested actions; they are not a live feed or proof of physical movement.*
 
-- Random head intervals, with optional arm and torso movements and
-  conservative motor cooldowns.
-- Fixed or random eye expressions, torso/head RGB, brightness, Static/Strobe/Pulsing
-  effects, custom palettes and palette rotation, without uploaded audio.
-- Optional **limited mouth routines**, OFF by default, using your own uploaded clips.
-- Separate opt-in jaw-first arm/torso and compound body modes, plus idle breaks.
-- Named clip mappings, color palettes and portable JSON settings files.
-- Up to four named scenes: duplicate, rename, reorder, undo and recover drafts,
-  with ordered or random rotation in universal firmware.
-- USB settings readback and connected diagnostics with universal firmware.
-- Self-contained `.ino` downloads, generated locally and usable offline.
+## Why use it?
 
-Treat this as a hobby preview tested on one prop. Start with a simple attended
-routine; advanced combinations and long unattended operation need validation on
-your own setup. The table below separates physical observations from other evidence.
+Normally, Skelly needs its sensor or an app command to perform an action. This project gives it an **autonomous routine**: maybe it looks around, changes expressions, or shifts its lighting while the porch is quiet.
 
-## Build a complete routine
+Set it up in **Skelly Studio**, save the routine to an ESP32 over USB, and leave the ESP32 powered near Skelly. It handles the recurring Bluetooth commands on its own. The browser, phone and computer are not needed for everyday operation.
 
-For Ultra Skelly v2, start with a personality or a complete look. **Moonlit Watcher**
-requests a head turn every 60–120 seconds; **Ember Glow** adds an arm request every 150–240 seconds;
-**Haunted Porch** adds torso and combined movements. Every complete look loads
-movement, eyes and lighting. Customize it, then use **Connect & save → Save
-this routine**. Scene builder is optional: save named scenes there when you want
-a collection, then use **Save scene collection** to send that saved library.
+## What can it do?
 
-Normal selects fixed eye #1. Haunted randomly switches eyes #1–8 every 150–300
-seconds. The summary shows a small eye preview and a rotation marker when needed.
-
-![Studio eye picker: preview all 18 designs and choose fixed or random expressions](docs/images/studio-eye-picker.jpg)
-
-Preview each design before selecting a fixed expression or a random set. Bundled
-eye images remain available offline.
-
-![Compact scene library and the selected scene’s sample request tracks](docs/images/studio-scene-routine.jpg)
-
-Each scene defaults to a 10-minute hold. The small **Routine preview** shows sample
-requests for the saved scene selected in its dropdown; unfinished editor changes
-are excluded. Compact scene rows keep Edit visible, with other actions under More
-options. Ordered
-rotation follows the saved list. Random starts with the first scene, then chooses
-another without immediate repeats. Holds begin after connection; active actions,
-cooldowns and reconnects can extend transitions. These charts illustrate requests,
-not predicted physical movement.
-
-![Studio lighting: palette choices and separate head and torso effects](docs/images/studio-lighting-controls.jpg)
-
-Choose a palette or edit your own colors, link head and torso, and optionally rotate
-palettes. Effects, speed and brightness apply per channel across that scene. Start
-here can collapse; idle breaks, clock settings and diagnostics live under Advanced.
-Small purple head, torso and arm illustrations animate automatically in place of the left movement icons. Reduced-motion preferences keep them static, and hidden
-pages pause them. These illustrations do not indicate live prop movement.
-
-For Ultra Skelly v2, **Advanced & testing → Audio scenes · experimental and optional**
-can upload prepared MP3s directly to Skelly over Web Bluetooth and save per-file
-movement, eyes, colors and effects. A clip
-can own the routine temporarily, then restore the selected regular look. This
-requires updated firmware and attended hardware verification; see the
-[audio-scene guide and result sheet](docs/audio-scenes.md). Ordinary presets keep
-audio OFF. Local conversion/trimming and computer-only preview can prepare other browser-supported audio formats; no audio is sent to a server.
-
-Everyday **Connect & save** controls stay separate: connect, read, save a routine
-or save a scene collection. First-time browser installation has its own disclosure; Arduino is an advanced fallback. A scene is not needed for one routine.
-
-The compact gallery and illustrative lighting sample in Your Skelly update as you edit.
-The [UI refinement notes](docs/studio-ui-refinements.md) show the revised Connect & save workflow.
-Screenshots show browser settings; USB screenshots use a simulated controller.
-
-Current release: **2026.10.24-preview.2**. [Feature status](docs/status.md) · [Changelog](CHANGELOG.md) · [Next attended checks](docs/next-release-checklist.md).
-
-## Current evidence — October 23–24, 2026
-
-| Feature | Latest result |
+| Feature | What you can customize |
 | --- | --- |
-| Head / arm / torso commands | Physically verified: ~25 / 22 / 25 seconds; arm includes two motions |
-| Compound masks `0x03`, `0x05`, `0x06`, `0x07` | All activated the selected motors from one packet, with no MP3 |
-| Recurring compound scheduler | Owner reports random combined movements work; detailed interleaving/endurance remains unconfirmed |
-| Jaw MP3 → 2 s → arm or torso | Physical overlap verified; protected alternating scheduler logged ~30 minutes without reported mid-session reconnects/skips |
-| Jaw MP3 → head at 2 or 10 s | **Failed physically** despite logged writes; use protected standalone head |
-| Live one-shot / randomized eyes | Physically verified; MP3 eye restoration still needs observation |
-| Live torso/head RGB initialization | Both chosen colors physically appeared |
-| Lighting effects / palette rotation | Owner confirms both work; exact channel/speed and integration coverage not enumerated |
-| Browser USB connection / read / save | Owner confirms success and physically observed changed behavior |
-| Browser firmware installation / recovery | Software-only; physical flashing remains Untested. The owner used Arduino for the confirmed installation |
-| Saved-settings retention / recovery / scene transitions | Software coverage; physical confirmation still pending |
-| MP3 lighting override | **Observed:** file #13 restored its saved colors |
-| Post-MP3 lighting restoration (mode 1) | **Physically confirmed:** red body and green head return after MP3 #13; isolated jaw/lighting setup |
-| Garbled Serial Monitor output | Reported near playback/restoration; cause unknown |
-| Power-cycle reconnect / multi-day endurance | Automatic retries implemented; complete field verification pending |
+| **💀 Autonomous movement** | Fixed or randomized head intervals; optional independent arm and torso routines with motor cooldowns. |
+| **🦴 Combined movements** | Optional compound body animations, with separate controls and protections for more advanced combinations. |
+| **👀 Expressive eyes** | Pick from **18 Ultra Skelly LCD expressions**, or randomly rotate through a chosen set. |
+| **🌈 RGB lighting** | Separate head and torso colors, brightness, **Static / Strobe / Pulsing** effects, custom palettes and timed palette rotation. |
+| **🎭 Personalities & complete looks** | Load a starting look, then customize movement, eyes and lighting together. |
+| **🎬 Saved scenes** | Build **up to four named scenes** and rotate them in order or randomly; duplicate, reorder and edit them in Studio. |
+| **🔌 USB configuration** | Connect, read existing settings, save a routine or a scene collection, and check read-back and diagnostics. |
+| **🛠️ Advanced tools** | Optional jaw coordination, audio experiments, idle breaks, clock windows, JSON backups and standalone Arduino sketch downloads. |
 
-All observations are from one prop. Logged BLE writes and compile tests do not
-prove actuator response. See the [verification matrix](docs/hardware-verification.md)
-for evidence limits and the [experiment history](docs/experiments.md) for chronology.
+All features have different levels of hardware verification. The core Ultra movements, eyes and lighting have been observed on one prop; newer combinations and browser workflows have additional limits. See [current feature status](docs/status.md) and [hardware verification](docs/hardware-verification.md).
 
-The latest timing/reconnect corrections have software coverage; their focused
-[attended regression](docs/audit-follow-up.md) is still pending. Earlier physical
-observations do not establish that this firmware revision passed on the prop.
+## Take a look inside Skelly Studio
+
+Studio is a browser-based editor — you don't need to edit Arduino code each time you change a routine.
+
+**Eyes:** browse the expression gallery and choose fixed or randomized LCD eyes.
+
+<img src="docs/images/studio-eye-picker.jpg" alt="Skelly Studio compact eye-expression gallery" width="680">
+
+**Lighting:** adjust each channel's colors, palettes, brightness and animated effects.
+
+<img src="docs/images/studio-lighting-controls.jpg" alt="Skelly Studio separate head and torso lighting controls" width="680">
+
+<details>
+<summary><strong>See more: scene builder and Connect & save</strong></summary>
+
+**Scenes:** save named looks and inspect the illustrative request timeline.
+
+<img src="docs/images/studio-scene-routine.jpg" alt="Skelly Studio scene library and routine preview" width="680">
+
+**Connect & save:** connect the ESP32, optionally read what's already saved, and explicitly save your changes.
+
+<img src="docs/images/studio-connect-save-desktop.jpg" alt="Skelly Studio connect, read and save workflow" width="680">
+
+</details>
+
+These are browser screenshots. USB examples may use a simulated controller; appearance and timelines are illustrative, not real-time hardware telemetry. [More Studio UI details](docs/studio-ui-refinements.md).
 
 ## Quick start
 
-1. Use an **original ESP32-WROOM / 4 MB** board, USB data cable and desktop
-   Chrome/Edge. In Studio open **Connect & save → First-time setup**.
-2. Follow **Connect ESP32 → Install Firmware → Configure Skelly**. The public,
-   versioned package is checked before USB access. **Installation replaces ESP32
-   firmware and resets saved settings/scenes: export backups first.** Browser
-   flashing remains physically Untested; Arduino fallback is available.
-3. Close the completed installer, return to Studio, Connect ESP32 and wait for
-   Ready. Choose **Subtle**, confirm replacement and **Save this routine**. No
-   scene is needed. Save scene collection is only for a saved Scene builder library.
-   Wait for read-back verified, then disconnect. Ordinary edits need no reinstall.
-4. Power Skelly in Bluetooth mode and disconnect other BLE controllers. The ESP32
-   discovers **Ultra Skelly v2** by advertised name; no MAC entry or wiring to the
-   prop is needed. Visually verify a simple attended routine. Startup scans target
-   five-second intervals; after the first minute, failed attempts pause 30 seconds.
-   Optional audio is OFF and not needed for movement, eyes or lighting.
+### What you'll need
 
-[Full setup](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
+- A **Home Depot 6.5-foot Ultra Skelly v2** in Bluetooth mode.
+- An **original ESP32-WROOM development board with 4 MB flash** and a USB **data** cable.
+- A computer running desktop **Chrome or Edge** for the recommended first-time browser setup.
+- USB power for the ESP32 during normal operation.
 
-For a first try, select **Subtle** in Studio. It enables
-occasional head movement and disables jaw, arm and torso. To use Studio offline,
-download the repository ZIP, extract it, and open `studio/index.html`; keep
-all files in the `studio` folder together. Editing, JSON backups, eye previews and
-sketch generation work offline. First-time browser installation needs internet;
-compiling source instead requires the Arduino toolchain. USB and direct BLE
-features also require a browser that supports their respective device APIs.
-MP3 preparation is only needed for optional mouth routines.
+### Set it up
 
-### Optional mouth routines · limited
+1. **Open [Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/).** Under **Connect & save**, choose **First-time setup**.
+2. **Install the universal ESP32 firmware.** Follow **Connect ESP32 → Install Firmware → Configure Skelly**. The browser installer uses a versioned, checked package; you don't need Arduino IDE or a GitHub account for this path.
+3. **Save a simple routine.** Return to Studio, connect the ESP32 again and wait for **Ready**. If the board already contains a routine, read and back up its settings first. Select **Subtle** (head movement every **60–120 seconds**; arm, torso and jaw OFF), then choose **Save this routine** and wait for **read-back verified**. You don't need to create a scene.
+4. **Let Skelly run.** Disconnect USB from your computer, keep the ESP32 powered, put Skelly in Bluetooth mode and disconnect competing Bluetooth controllers. Watch a simple routine **while attended** before trying advanced combinations.
 
-The collapsed section at the very bottom of Studio contains clip setup and all
-mouth coordination controls. Enable it only if mouth movement is worth the
-additional limits: playback can interrupt body movement and replace live eyes
-and colors. Protection delays other routines, and clip completion is estimated.
-Turning mouth OFF clears jaw-first coordination, fair turns and playback logging,
-while keeping your clip numbers, body settings and clock window.
+> **Before you install:** Flashing firmware **replaces the ESP32 program and resets saved settings/scenes**. Export backups first. The owner's successful Arduino installation and Studio USB read/save tests **do not yet verify physical browser flashing or recovery**. Browser installation is the recommended workflow, but it remains physically **untested**; [Arduino installation is an advanced fallback](docs/browser-installation.md).
 
-Use the community [Skelly Ultra Web Controller](https://martinecker.github.io/SkellyUltraWebController/)
-to upload clips once with saved head/arm/torso flags **`0x00`**, test them and record
-their actual file serials. **#12/#13/#14 belong to the original test device.**
-The physical volume knob can silence the speaker while the jaw moves; software
-volume zero is not equivalent. Disconnect that controller before using the ESP32.
-Existing saved Studio profiles retain their explicit mouth setting when loaded.
+**Changing the routine later?** You generally only need to reconnect over USB and **Save this routine** (or **Save scene collection**), **not reinstall firmware**. Saving a routine sends the current editor settings; saving a scene collection sends the saved Scene builder library and switching policy, not unfinished edits.
 
-### Lighting effects
+[Detailed browser installation & recovery](docs/browser-installation.md) · [Full setup guide](docs/setup.md) · [Troubleshooting](docs/troubleshooting.md)
 
-Studio generates **static RGB and brightness** for torso and head, plus optional
-selected-palette rotation at your chosen interval. Each channel can also select
-**Strobe or Pulsing with speed**. The owner confirms effects and palette rotation
-work; exact speed/channel coverage and advanced integration remain unconfirmed.
-Static and rotation OFF remain the personality defaults.
-The upstream controller lists [Static, Strobe and Pulsing](https://github.com/martinecker/SkellyUltraWebController/blob/main/js/constants.js)
-for Ultra Skelly. Effects use direct commands without audio preparation.
-Use the [new Studio and lighting checklist](docs/studio-lighting-checklist.md)
-before combining these options with motors or mouth playback.
+## Start with a personality
 
-[Browser installation](studio/install.html) fetches versioned universal firmware
-from free GitHub Pages, then directs you to Studio USB configuration. Internet is
-needed for the package and pinned installer library; installed firmware needs none.
-[USB tools](studio/usb.html) remain available for original-byte capture and the
-optional clock. Source downloads require Arduino compilation. See
-[installation/recovery/checklist](docs/browser-installation.md) and
-[settings/scenes](docs/usb-settings-scenes.md).
+Studio has starting looks for different kinds of activity:
 
-## Conservative movement scheduling
+| Look | Example behavior |
+| --- | --- |
+| **Subtle** | Beginner-friendly, occasional head movement; arm, torso and jaw OFF. |
+| **Moonlit Watcher** | Head turns requested at randomized **60–120-second** intervals. |
+| **Ember Glow** | Adds occasional arm requests at **150–240-second** intervals. |
+| **Haunted Porch** | Includes torso and optional combined movement for a busier routine. |
 
-The recommended **universal installer package** starts with Subtle: head-only
-requests every 60–120 seconds on Ultra, with jaw, arm, torso, eyes and lighting OFF.
-Read saved settings before editing an existing controller; its saved program takes
-priority over that factory seed. Experimental 12-foot builds use 90–120 seconds
-and separate restrictions; those timings are unmeasured.
+These are **requests**, not guaranteed exact start times: motor cooldowns, Bluetooth reconnects and other enabled actions can delay them. Adjust the look in Studio before saving.
 
-The **checked-in developer sketch** instead enables head and jaw, with torso,
-arm, eyes, compound mode, live lighting and verbose diagnostics OFF. Start intervals
-are start-to-start requests; motor locks or playback may postpone them. Cooldowns remain head **25+7 s**,
-arm **22+10 s**, torso **25+10 s**. Conservative presets reduce motor activity.
+Want different moods through the evening? The optional **Scene builder** supports up to four scenes, ordered or random rotation, and a default **10-minute hold** per scene. Physical scene-transition and long-duration tests remain pending. [Scene settings explained](docs/usb-settings-scenes.md).
 
-MP3 protection defaults ON and includes **head, arm and torso**. It prevents an
-MP3 from interrupting active body motion and blocks standalone body commands
-while playback is due/active. Proven jaw-first arm/torso follow-ups are deliberate
-exceptions. Keep compound mode OFF to retain the alternating jaw-first setup;
-Studio rejects selecting both modes. Separate-write body overlap has been removed
-after physical interruption reports; Studio always serializes separate commands.
+## Advanced features (optional)
 
-[Body safety](docs/body-movements.md) · [Jaw-first guide](docs/jaw-first-experiment.md) ·
-[Compound tests](docs/body-combo-test.md)
+The beginner routine requires **no audio upload, scene collection or advanced settings**. If you want more control:
 
-## Lighting diagnosis in progress
+- **Compound / coordinated movement:** opt into supported combined body commands or protected jaw-first arm/torso follow-ups. They are separate modes; arbitrary overlapping body commands are not supported. **Jaw-first head follow-ups failed physical testing.** [Body movement safety](docs/body-movements.md) · [Jaw-first tests](docs/jaw-first-experiment.md) · [Compound tests](docs/body-combo-test.md).
+- **Mouth and MP3 routines:** limited, **OFF by default**. Stored clips can drive jaw motion, but audio may take over eyes/lighting and interrupt body actions without protections. Clip numbers belong to your own prop, not a universal preset. [Jaw audio recipes](audio/jaw-personalities.md).
+- **Experimental audio scenes:** prepare/trim audio locally, preview it on your computer and configure per-clip movement and appearance. The newer direct Web Bluetooth upload/metadata workflow has **software tests only; real uploads and coordinated playback remain physically untested**. [Audio-scene guide](docs/audio-scenes.md).
+- **Idle breaks and time windows:** pause requests between active periods. The experimental weekday/time window needs its clock set over USB **after every restart**; it does not have a persistent real-time clock or automatic daylight-saving adjustment. [Feature status](docs/status.md).
+- **Backups, diagnostics and source:** export/import portable JSON, inspect USB status and read-back, and generate self-contained `.ino` source for advanced Arduino use. Studio editing and source generation also work from a complete downloaded folder offline. [Architecture](docs/architecture.md) · [Testing](docs/testing.md).
 
-Channel 0 is **Torso Light**, channel 1 **Head Light**; the exact head LED region
-has not been mapped to the mouth. Live colors worked before MP3 playback, which
-then reapplied saved purple colors. On October 21 the user confirmed that restore
-mode 1 returns both the red body and green head afterward. This verifies the
-isolated jaw/lighting setup on one prop, not mode 2 or integration with motors.
+## Compatibility and test status
 
-The reliability changes honor BLE write failures, add timestamped text and boot/reset
-information, and complete all six restore writes before the next MP3. Verbose
-mode adds heap, connection and write/queue diagnostics. Playback end is still
-**estimated**, defaulting to 21 seconds, with a 500 ms grace before queuing
-restoration. Studio accepts conservative per-file estimates for longer clips;
-experimental playback observations do not control motor or restoration timing.
+| | **6.5-foot Ultra Skelly v2** | **2026 app-controlled 12-foot Skelly** |
+| --- | --- | --- |
+| Support level | **Primary target; tested on one prop** | **Experimental opt-in; NOT hardware tested** |
+| Head | Yes | Experimental |
+| Arm / torso / combinations | Optional | **Disabled** |
+| LCD eyes | 18 designs | 20 numbered options |
+| RGB | Head + torso | Chest channel only |
+| Audio / jaw | Optional, limited | **Disabled** |
 
-**Test reference:** [isolated jaw/RGB settings and pass/fail criteria](docs/testing.md).
-Mode 1 color recovery is now visually verified on the test prop. Serial corruption
-remains unresolved; the log shows steady connected heap and no reported BLE write
-failures during four clips. See the October 21 entry in the experiment log.
+The 12-foot option is tucked under Advanced and targets **only the newer app-controlled 2026 model**, not older 12-foot props. No physical 12-foot compatibility has been established. [Read the 12-foot precautions and volunteer checklist](docs/experimental-12ft.md).
 
-## Studio and development
+**Evidence matters:** Individual Ultra movements, eye changes, lighting and USB read/save have been observed on the owner's single test setup. Browser firmware flashing, power-cycle retention, some audio/scene paths and extended unattended reliability still need focused physical confirmation. Software tests or successful BLE writes alone do not prove that a prop moved. Start with conservative, attended testing and keep power accessible.
 
-Studio runs entirely in the browser and can also be opened as `studio/index.html`
-from a downloaded ZIP. It supports motor intervals, compound masks, jaw file pools,
-jaw-first follow-ups, fixed/random eyes, optional idle breaks, custom lighting
-palettes/effects, scenes and USB settings read/save. Eye thumbnails and sketch
-generation use local assets. Editor and saved-scene timelines illustrate requests;
-they do not simulate physical movement.
+[Detailed hardware verification matrix](docs/hardware-verification.md) · [Experiment history](docs/experiments.md) · [Next attended checks](docs/next-release-checklist.md)
 
-Studio has no application telemetry, login or server-side settings storage.
-Saved scenes and valid recovery drafts stay in this browser; export a JSON copy
-for backup or transfer. A controller changes only after an explicit save/upload. The hosted
-page and bundled eye previews are served by GitHub Pages, which receives normal
-web requests. An extracted local Studio folder works offline. Firmware uses
-BLE locally and does not configure Wi-Fi or send data to a backend.
+## No cloud account or subscription
 
-The canonical `.ino` generates `studio/template.js` via
-`node scripts/sync-template.cjs`; CI fails if they differ. Checks include generator
-and gallery tests, actual firmware C++ with mocked clock/BLE, CRC vectors, canonical
-and the full pinned ESP32 3.3.12 generated/diagnostic compile matrix.
-Tests do not replace physical observation.
+Skelly Studio runs in your browser. It has **no app login, telemetry or server-side profile storage**; settings and scene drafts stay in the browser unless you export them or explicitly save to the ESP32. Firmware uses **local Bluetooth**, not Wi-Fi. The hosted Studio page still makes normal web requests to GitHub Pages; first-time browser installation needs internet for the firmware package and installer library. Optional audio processing stays local.
 
-- [Architecture and known limitations](docs/architecture.md)
-- [Automated checks and hardware procedure](docs/testing.md)
-- [Prioritized roadmap](docs/roadmap.md)
-- [Owner requests and community research](docs/community-demand.md)
-- [BLE protocol](docs/protocol.md)
-- [Jaw audio recipes](audio/jaw-personalities.md)
-- [Contributor instructions](CONTRIBUTING.md) and [agent instructions](AGENTS.md)
+## Documentation and development
 
-## Report a bug or suggest a feature
+| Looking for… | Start here |
+| --- | --- |
+| Installation, updates and recovery | [Browser setup](docs/browser-installation.md) · [USB settings and scenes](docs/usb-settings-scenes.md) |
+| Troubleshooting and safety | [Troubleshooting](docs/troubleshooting.md) · [Body safeguards](docs/body-movements.md) |
+| Actual feature readiness | [Feature status](docs/status.md) · [Verification matrix](docs/hardware-verification.md) |
+| Building and testing the project | [Architecture](docs/architecture.md) · [Tests](docs/testing.md) · [BLE protocol](docs/protocol.md) |
+| What's changing next | [Changelog](CHANGELOG.md) · [Roadmap](docs/roadmap.md) · [Experiment notes](docs/experiments.md) |
 
-Use [GitHub Issues](https://github.com/jacobmgoodnight/ultra-skelly-esp32-autonomous/issues)
-for bugs, setup problems and ideas. Include your board, ESP32 core version,
-browser (for Studio), selected settings, expected result and actual result.
-For hardware reports, separate visible movement/lighting from serial messages.
-Remove device addresses and other private information from logs and profiles.
-Pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and run the
-[documented checks](docs/testing.md) before submitting a change.
+The Arduino firmware, local browser Studio, generators and tests are open source. Generated `.ino` files require an Arduino toolchain to compile; the browser installer instead installs an already-built firmware package. Automated checks include JavaScript, protocol, native firmware and ESP32 compile tests, but **none substitutes for physical hardware testing**.
+
+## Bugs, ideas and contributions
+
+[Open a GitHub issue](https://github.com/jacobmgoodnight/ultra-skelly-esp32-autonomous/issues) for an improvement or a bug. For setup or hardware reports, share your board, browser, settings, expected vs. observed behavior, and whether a result was **physically seen** or only logged. Remove Bluetooth addresses and other private details before posting logs.
+
+Contributions are welcome: [CONTRIBUTING.md](CONTRIBUTING.md) · [Project test instructions](docs/testing.md).
 
 ## Credits and license
 
-The [Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController)
-by martinecker enabled file upload, saved-settings experiments and protocol
-research. This is a separately written, unofficial hobby controller, not affiliated
-with Home Depot or the manufacturer. Original code, documentation and synthesized
-audio use the [MIT License](LICENSE); upstream assets retain their own terms.
+This is an **unofficial hobby project**, not affiliated with Home Depot or the manufacturer. Thanks to [martinecker's Skelly Ultra Web Controller](https://github.com/martinecker/SkellyUltraWebController) for protocol research, saved-settings experiments and file-upload groundwork. This is a separate implementation.
 
-The optional local MP3 encoder is [lamejs 1.2.1 / LAME](studio/vendor/lamejs-1.2.1/NOTICE.md), distributed separately under LGPL-3.0 with unmodified readable source and notices. Studio code remains MIT.
+Original project code and documentation are distributed under the [MIT License](LICENSE), with upstream assets subject to their own terms. The optional local encoder [lamejs / LAME](studio/vendor/lamejs-1.2.1/NOTICE.md) is distributed with its separate **LGPL-3.0** notices and source.
