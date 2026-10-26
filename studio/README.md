@@ -31,6 +31,9 @@ Conversation resumed after reconnection, according to the owner. Initial Joe
 listening feedback described the 400 ms pause as too short and the voice as flat.
 The new 700 ms pause and a new jaw result remain unverified. Guard/name trials, cleanup, extended recovery and
 longer sessions also remain unverified.
+The companion can optionally use an explicitly selected ElevenLabs voice when
+started with the owner's key. Only reviewed name-free reply text is sent; no
+visitor audio is uploaded. Real-account and prop behavior remain untested.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive
 names, fixed or multiple selection, and a separate enlarged preview. Your Skelly

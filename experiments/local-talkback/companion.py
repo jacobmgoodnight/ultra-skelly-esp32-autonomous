@@ -3,6 +3,7 @@ import argparse
 import base64
 import io
 import json
+import os
 import re
 import secrets
 import socket
@@ -17,6 +18,8 @@ from pathlib import Path
 from urllib.request import Request, build_opener, ProxyHandler
 from replies import TOPICS, REPLIES, ReplyDeck
 from voice import LocalVoice
+from eleven_voice import ElevenVoice
+from eleven_worker import DEFAULT_VOICE
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / '.skelly-build' / 'local-talkback'
@@ -57,9 +60,9 @@ def generic_joke(transcript):
     return literal_topic(transcript) is None and bool(re.search(r'\b(?:jokes?|funny|laugh|another(?:\s+one)?|one more|something else)\b', transcript.casefold()))
 
 
-def approved_reply(transcript, model_output, deck=None):
+def approved_reply(transcript, model_output, deck=None, include_name=True):
     card = card_from_model(model_output)
-    name = safe_name(transcript)
+    name = safe_name(transcript) if include_name else ''
     if deck is None:
         text = REPLIES[card][0]
     else:
@@ -96,6 +99,13 @@ class Engines:
         self.process = None
         self.deck = ReplyDeck()
         self.voice = LocalVoice(TOOLS)
+        self.eleven_voice = None
+        if os.environ.get('SKELLY_ELEVENLABS_API_KEY'):
+            try:
+                self.eleven_voice = ElevenVoice(os.environ['SKELLY_ELEVENLABS_API_KEY'],
+                    os.environ.get('SKELLY_ELEVENLABS_VOICE_ID', DEFAULT_VOICE))
+            except ValueError:
+                pass  # Local voice remains usable if online configuration is invalid.
         self.llama = next((TOOLS / 'llama').rglob('llama-server.exe'), None)
         self.whisper = next((TOOLS / 'whisper').rglob('whisper-cli.exe'), None)
         if not self.llama or not self.whisper or not all((TOOLS / name).is_file() for name in ['ggml-tiny.en.bin', 'qwen2.5-0.5b-instruct-q4_k_m.gguf']):
@@ -139,7 +149,9 @@ class Engines:
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'card', 'strict': True, 'schema': {'type': 'object', 'properties': {'card': {'type': 'integer', 'minimum': 0, 'maximum': len(CARDS) - 1}}, 'required': ['card'], 'additionalProperties': False}}}}, timeout=12)
         return result['choices'][0]['message']['content']
 
-    def respond(self, data):
+    def respond(self, data, voice='local'):
+        if voice not in ('local', 'elevenlabs') or (voice == 'elevenlabs' and self.eleven_voice is None):
+            raise ValueError('Requested voice is unavailable.')
         validate_wave(data)
         with tempfile.TemporaryDirectory(prefix='skelly-conversation-') as folder:
             work = Path(folder)
@@ -156,8 +168,8 @@ class Engines:
                 model_output = self.choose(transcript)
             except Exception:
                 model_output = ''  # The reviewed friendly fallback topic bounds output.
-            card, text = approved_reply(transcript, model_output, self.deck)
-            audio = self.voice.synthesize(text, work)
+            card, text = approved_reply(transcript, model_output, self.deck, include_name=voice == 'local')
+            audio = (self.voice if voice == 'local' else self.eleven_voice).synthesize(text, work)
             return {'card': card, 'text': text, 'audio': base64.b64encode(audio).decode('ascii')}
 
 
@@ -207,7 +219,7 @@ def make_handler(engines, port=8766):
                 return
             if route == '/api/status':
                 voice = getattr(engines, 'voice', None)
-                return self.send(200, json.dumps({'ready': True, 'token': token, 'voice': getattr(voice, 'label', 'Local voice'), 'replyCount': sum(map(len, REPLIES))}).encode())
+                return self.send(200, json.dumps({'ready': True, 'token': token, 'voice': getattr(voice, 'label', 'Local voice'), 'elevenlabs': getattr(engines, 'eleven_voice', None) is not None, 'replyCount': sum(map(len, REPLIES))}).encode())
             name = route.removeprefix('/studio/')
             if name not in ASSETS:
                 return self.send(404, b'{}')
@@ -223,6 +235,11 @@ def make_handler(engines, port=8766):
                 return
             if self.path != '/api/reply' or self.headers.get('Content-Type') != 'audio/wav' or self.headers.get('Transfer-Encoding'):
                 return self.send(400, b'{}')
+            voice = self.headers.get('X-Skelly-Voice', 'local')
+            if voice not in ('local', 'elevenlabs'):
+                return self.send(400, b'{}')
+            if voice == 'elevenlabs' and getattr(engines, 'eleven_voice', None) is None:
+                return self.send(503, b'{"error":"ElevenLabs is not configured. Local voice is still available."}')
             try:
                 length = int(self.headers.get('Content-Length', '0'))
             except ValueError:
@@ -235,12 +252,12 @@ def make_handler(engines, port=8766):
                 data = self.rfile.read(length)
                 if len(data) != length:
                     raise ValueError('Incomplete audio.')
-                result = engines.respond(data)
+                result = engines.respond(data) if voice == 'local' else engines.respond(data, voice=voice)
                 self.send(200, json.dumps(result).encode())
             except ValueError as error:
                 self.send(400, json.dumps({'error': str(error)}).encode())
             except Exception:
-                self.send(503, b'{"error":"Local speech processing failed or timed out. Check the companion and try again."}')
+                self.send(503, b'{"error":"Speech processing failed or timed out. Check the selected voice and try again. No automatic retry."}')
             finally:
                 busy.release()
 

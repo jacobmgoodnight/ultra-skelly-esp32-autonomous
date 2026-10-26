@@ -6,6 +6,7 @@ import sys
 import threading
 import unittest
 import wave
+from unittest.mock import patch
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -48,6 +49,9 @@ class Boundaries(unittest.TestCase):
         for text in ['hello Emma', 'I am hungry', 'My name is Unknown', "my name is <Alice>", 'call me badword', 'my name is malicious_text']:
             self.assertEqual(companion.safe_name(text), '')
         self.assertEqual(companion.safe_name('I\u2019m Emma'), 'Emma')
+        for name in companion.NAMES:
+            _, text = companion.approved_reply('My name is ' + name, '{"card":1}', include_name=False)
+            self.assertEqual(text, companion.CARDS[1][1])
 
     def test_audio_bounds_and_format(self):
         companion.validate_wave(audio())
@@ -60,6 +64,88 @@ class Boundaries(unittest.TestCase):
         engine = object.__new__(companion.Engines)
         self.assertEqual(companion.card_from_model(engine.choose('My name is Emma. Tell me a ghost joke.')), 3)
         self.assertEqual(companion.card_from_model(engine.choose('I am wearing a vampire costume.')), 8)
+
+    def test_cloud_receives_only_reviewed_reply_without_recognized_name(self):
+        spoken = []
+        class Online:
+            def synthesize(self, text, work):
+                spoken.append(text)
+                return audio()
+        engine = object.__new__(companion.Engines)
+        engine.whisper = 'synthetic-whisper'
+        engine.deck = companion.ReplyDeck()
+        engine.voice = None
+        engine.eleven_voice = Online()
+        engine.choose = lambda transcript: '{"card":3}'
+        def recognize(command, **kwargs):
+            Path(command[command.index('-of') + 1]).with_suffix('.txt').write_text(
+                'My name is Emma. Tell me a ghost joke.', encoding='utf-8')
+        with patch.object(companion.subprocess, 'run', side_effect=recognize):
+            result = engine.respond(audio(), voice='elevenlabs')
+        self.assertEqual(result['card'], 3)
+        self.assertIn(result['text'], companion.REPLIES[3])
+        self.assertEqual(spoken, [result['text']])
+        self.assertNotIn('Emma', result['text'])
+
+    def test_cloud_http_selection_requires_configuration(self):
+        class Engines:
+            eleven_voice = None
+            def respond(self, data):
+                raise AssertionError('No speech request should run')
+        with ThreadingHTTPServer(('127.0.0.1', 0), companion.make_handler(Engines(), port=0)) as server:
+            port = server.server_address[1]
+            server.RequestHandlerClass = companion.make_handler(Engines(), port)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                conn = HTTPConnection('127.0.0.1', port, timeout=5)
+                conn.request('GET', '/api/status')
+                response = conn.getresponse()
+                status = json.loads(response.read())
+                conn.close()
+                self.assertFalse(status['elevenlabs'])
+                for selected, expected in [('elevenlabs', 503), ('anything-else', 400)]:
+                    conn = HTTPConnection('127.0.0.1', port, timeout=5)
+                    conn.request('POST', '/api/reply', b'', headers={'Content-Type': 'audio/wav',
+                        'X-Skelly-Token': status['token'], 'X-Skelly-Voice': selected})
+                    response = conn.getresponse()
+                    self.assertEqual(response.status, expected)
+                    response.read()
+                    conn.close()
+            finally:
+                server.shutdown()
+                thread.join(3)
+
+    def test_cloud_http_selection_is_explicit_and_authenticated(self):
+        class Engines:
+            eleven_voice = object()
+            calls = []
+            def respond(self, data, voice='local'):
+                self.calls.append(voice)
+                return {'card': 0, 'text': companion.REPLIES[0][0], 'audio': ''}
+        engines = Engines()
+        with ThreadingHTTPServer(('127.0.0.1', 0), companion.make_handler(engines, port=0)) as server:
+            port = server.server_address[1]
+            server.RequestHandlerClass = companion.make_handler(engines, port)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                conn = HTTPConnection('127.0.0.1', port, timeout=5)
+                conn.request('GET', '/api/status')
+                status = json.loads(conn.getresponse().read())
+                conn.close()
+                self.assertTrue(status['elevenlabs'])
+                conn = HTTPConnection('127.0.0.1', port, timeout=5)
+                conn.request('POST', '/api/reply', audio(), headers={'Content-Type': 'audio/wav',
+                    'X-Skelly-Token': status['token'], 'X-Skelly-Voice': 'elevenlabs'})
+                response = conn.getresponse()
+                self.assertEqual(response.status, 200)
+                response.read()
+                conn.close()
+                self.assertEqual(engines.calls, ['elevenlabs'])
+            finally:
+                server.shutdown()
+                thread.join(3)
 
     def test_guarded_variants_and_generic_jokes_keep_only_reviewed_text(self):
         deck = companion.ReplyDeck()

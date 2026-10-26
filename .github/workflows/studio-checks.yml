@@ -42,6 +42,8 @@ jobs:
           python tests/test_local_conversation.py
           python tests/test_local_replies.py
           python tests/test_local_voice.py
+          python tests/test_eleven_voice.py
+          python tests/test_chatterbox_extract.py
       - name: Set up Arduino CLI
         uses: arduino/setup-arduino-cli@v2
       - name: Install Espressif ESP32 core (3.3.12)

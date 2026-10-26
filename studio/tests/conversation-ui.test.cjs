@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const html=fs.readFileSync(path.join(__dirname,'../conversation.html'),'utf8'),source=fs.readFileSync(path.join(__dirname,'../conversation-ui.js'),'utf8');
 function fixture({supported=true}={}){
- const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>[match[1],{disabled:false,checked:false,value:match[1]==='voice'?'original':match[1]==='sensitivity'?'0.025':'',textContent:''}]));
+ const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>[match[1],{disabled:false,checked:false,value:match[1]==='voice'?'original':match[1]==='engine'?'local':match[1]==='sensitivity'?'0.025':'',textContent:''}]));
  const events={},mediaEvents={},windowEvents={},timers=new Map(),requests=[],calls=[];let next=0,turn,repeat;
  class Repeat{constructor({onChange}){repeat=this;this.state='idle';this.draw=onChange;}stop(){calls.push('discard');this.state='idle';this.draw();}}
  class Turn{constructor(options){turn=this;this.options=options;this.active=false;this.remaining=0;this.message='Ready';}async start(value,options){calls.push('start:'+value);this.startOptions=options;this.active=true;this.capture={stream:{getAudioTracks:()=>[{label:'Laptop mic'}]}};this.options.onChange();}stop(){this.active=false;this.capture=null;this.replyText='';this.options.onLevel(0,0,'off');repeat.stop();this.options.onChange();}changed(){}}
@@ -19,6 +19,13 @@ test('quick testing is explicit, off by default, and locked during a turn',async
  const p=fixture(),check=p.nodes.check.onclick();p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only'}});await check;
  assert.equal(p.nodes.quickTest.checked,false);p.nodes.attending.checked=true;p.nodes.attending.onchange();p.nodes.quickTest.checked=true;p.nodes.talk.onclick();
  assert.equal(p.turn.startOptions.noPause,true);assert.equal(p.nodes.quickTest.disabled,true);p.nodes.stop.onclick();assert.equal(p.nodes.quickTest.disabled,false);
+});
+test('online voice requires configuration and sends its selection only for an explicit turn',async()=>{
+ const p=fixture(),check=p.nodes.check.onclick();p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only',elevenlabs:true}});await check;
+ assert.equal(p.nodes.engine.value,'local');assert.equal(p.nodes.cloudVoiceOption.disabled,false);
+ p.nodes.attending.checked=true;p.nodes.attending.onchange();p.nodes.engine.value='elevenlabs';p.nodes.talk.onclick();
+ assert.equal(p.nodes.engine.disabled,true);const pending=p.turn.options.request(new Blob(['audio']),new AbortController().signal);
+ assert.equal(p.requests[1].options.headers['X-Skelly-Voice'],'elevenlabs');p.requests[1].resolve({ok:true,value:{}});await pending;
 });
 test('late service checks cannot rearm Talk after Stop or hidden page',async()=>{
  for(const mode of ['stop','hide']){

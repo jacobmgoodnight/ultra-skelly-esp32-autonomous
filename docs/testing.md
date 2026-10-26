@@ -242,6 +242,16 @@ stored motor combinations, playback end and full restoration remain Untested.
 
 ## Browser installation packaging
 
+### Optional conversation voice checks
+
+`python tests/test_eleven_voice.py` and `python tests/test_local_conversation.py`
+exercise cloud selection and name-free approved text with mocked requests; they
+do not use credentials or contact ElevenLabs. `python tests/test_chatterbox_extract.py`
+checks archive extraction, including rejection of unsafe paths. The optional
+Chatterbox sample and its measured laptop timings are documented in
+[local conversation](local-halloween-conversation.md); generation and listening
+feedback do not establish live conversation or physical jaw behavior.
+
 ### Studio browser workflows (no physical device)
 
 `node scripts/test-studio-browser.cjs` exercises the actual static pages and serial

@@ -1,20 +1,20 @@
 (function(){
   'use strict';
-  const el=id=>document.getElementById(id);let turn,token='',checking=false,checkGeneration=0,checkAbort,tick;
+  const el=id=>document.getElementById(id);let turn,token='',selectedEngine='local',checking=false,checkGeneration=0,checkAbort,tick;
   const repeat=new window.SkellyTalkback.RepeatBack({media:navigator.mediaDevices,Recorder:window.MediaRecorder,onChange:()=>{draw();turn?.changed();}});
   turn=new window.SkellyConversation.Conversation({repeat,
     captureFactory:()=>new window.SkellyTalkbackAuto.PcmCapture({media:navigator.mediaDevices,Context:window.AudioContext,WorkletNode:window.AudioWorkletNode}),
     gateFactory:threshold=>new window.SkellyTalkbackAuto.SpeechGate(threshold),encode:window.SkellyTalkbackAuto.wav,onChange:draw,
     onLevel:(level,threshold,kind)=>{el('level').value=Math.min(.2,level);el('levelHint').textContent=kind==='off'?'Microphone off.':kind==='calibrating'?'Measuring background noise.':level>=threshold?'Sound detected.':'Waiting for speech.';},
     request:async(clip,signal)=>{
-      const response=await fetch('/api/reply',{method:'POST',headers:{'Content-Type':'audio/wav','X-Skelly-Token':token},body:clip,signal});
+      const response=await fetch('/api/reply',{method:'POST',headers:{'Content-Type':'audio/wav','X-Skelly-Token':token,'X-Skelly-Voice':selectedEngine},body:clip,signal});
       const value=await window.SkellyConversation.readJSON(response);if(!response.ok)throw Error(value.error||'Local companion is unavailable.');return value;
     }});
   function draw(){
     const supported=window.isSecureContext&&navigator.mediaDevices?.getUserMedia&&window.AudioContext&&window.AudioWorkletNode;
     const busy=!!turn?.active,remaining=turn?.remaining||0;
     el('talk').disabled=!supported||!token||checking||busy||remaining>0||!el('attending').checked;
-    el('check').disabled=checking||busy;el('voice').disabled=el('sensitivity').disabled=el('attending').disabled=el('quickTest').disabled=busy;
+    el('check').disabled=checking||busy;el('engine').disabled=el('voice').disabled=el('sensitivity').disabled=el('attending').disabled=el('quickTest').disabled=busy;
     el('shutdown').disabled=!token||checking;
     el('status').textContent=turn?.message||'Check the local engine, then choose Talk.';
     const stream=turn?.capture?.stream,label=stream?.getAudioTracks?.()[0]?.label;
@@ -32,11 +32,13 @@
       const response=await fetch('/api/status',{signal:abort.signal});const value=await window.SkellyConversation.readJSON(response,2048);if(generation!==checkGeneration)return;
       if(!response.ok||value.ready!==true||typeof value.token!=='string'||value.token.length>100)throw Error();
       token=value.token;el('service').textContent='Local speech/reply engines ready. Bluetooth audio is separate: connect and select Skelly Stereo in Windows sound settings. This check does not verify the speaker.';
-      el('voiceSource').textContent='Active voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'older companion; restart it for voice details')+'. Replies rotate through reviewed lines; ask for “another joke” to mix topics.';
-    }catch{if(generation===checkGeneration){token='';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
+      el('cloudVoiceOption').disabled=value.elevenlabs!==true;
+      if(el('cloudVoiceOption').disabled)el('engine').value='local';
+      el('voiceSource').textContent='Local voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'older companion; restart it for voice details')+'. '+(value.elevenlabs===true?'ElevenLabs key configured; connection not checked.':'ElevenLabs is not configured.')+' Replies rotate through reviewed lines.';
+    }catch{if(generation===checkGeneration){token='';el('cloudVoiceOption').disabled=true;el('engine').value='local';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };
-  el('talk').onclick=()=>{if(!el('talk').disabled){repeat.voice=el('voice').value;void turn.start(Number(el('sensitivity').value),{noPause:el('quickTest').checked}).catch(error=>turn.stop(error.message));}};
+  el('talk').onclick=()=>{if(!el('talk').disabled){selectedEngine=el('engine').value;repeat.voice=el('voice').value;void turn.start(Number(el('sensitivity').value),{noPause:el('quickTest').checked}).catch(error=>turn.stop(error.message));}};
   function stop(){++checkGeneration;checking=false;checkAbort?.abort();checkAbort=null;turn.stop();draw();}
   el('stop').onclick=stop;el('attending').onchange=draw;
   el('shutdown').onclick=async()=>{

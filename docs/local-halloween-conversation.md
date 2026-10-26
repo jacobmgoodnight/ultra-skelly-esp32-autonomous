@@ -79,6 +79,72 @@ CORS access and requires a separate ephemeral key for the model engine. Do not
 expose these ports to the network. The server serves only its listed page/assets;
 repository files and directory listings are unavailable.
 
+## Optional ElevenLabs voice
+
+The ElevenLabs v3 voice is an explicitly selected experiment; the local voice
+remains the default. It needs internet, an ElevenLabs account and credits. Only a
+reviewed catalog reply is sent; visitor audio, transcript and recognized names
+stay on the laptop. This first online mode omits name greetings. A mischievous
+delivery tag is added to the selected reply. For a question and answer, the
+companion makes two requests and inserts the same 700 ms pause; both requests
+consume credits. It does not retry automatically or switch voices on failure.
+
+Create a free ElevenLabs account and API key in your own browser. Never paste the
+key into chat. Stop the running companion using **After testing → Stop local
+companion**, then start the optional launcher from a PowerShell terminal:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-talkback-elevenlabs.ps1
+```
+
+The launcher asks for the key with hidden input and places it in the companion's
+process environment, not a project file. It is visible to sufficiently privileged
+local processes and remains in memory while running. Close the companion when
+finished. If `python` is not on PATH, provide `-Python` followed by your Python
+executable path. The default is ElevenLabs' documented George voice; an optional
+`-VoiceId` parameter selects another available voice ID. The free API and website
+may offer different voice access.
+
+Open the conversation page, refresh, click **Check local engine**, then select
+**ElevenLabs v3 · online**. A configured key is not proof of valid credentials or
+an available balance. Each explicit Talk may consume credits; stopping a browser
+turn cannot recall an online request already sent, and the companion may finish
+its bounded processing without playing a late reply. A failure is reported and
+does not trigger an automatic retry. Model-generated speech can differ from its
+input: review the audio before using it around children. This online path has
+mocked software coverage but no reported real-account or prop test.
+
+## Optional Chatterbox Nano preview
+
+This is a separate CPU-only experiment, not a live conversation engine. Setup
+downloads approximately 2 GB of model weights plus Python and CPU libraries to
+the ignored project folder. It requires Windows x64 and Python 3.10–3.13. Nothing
+is installed globally or added to startup:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-chatterbox-nano.ps1
+.skelly-build/local-talkback/chatterbox-env/Scripts/python.exe experiments/local-talkback/chatterbox_sample.py
+```
+
+Setup pins the upstream source revision and model revision, checks the published
+SHA-256 for large model files, and checks a recorded hash for the source archive.
+The CPU PyTorch and Chatterbox package versions are pinned; transitive Python
+dependencies are resolved by pip. Generation uses the downloaded model offline
+and writes an eight-second-bounded WAV under `.skelly-build`; it does not open a
+microphone or speaker. Review the generated audio before sharing it with children.
+
+October 26 on the owner's laptop: the first sample loaded in 17.05 seconds, then
+its two short segments took 23.8 and 6.74 seconds to generate. The final WAV was
+about 5 seconds. Local Whisper recognized the intended joke, with an approximate
+spelling of the punchline; recognition is not proof of every spoken word. A
+prepared sample was added to the local comparison page. The owner described it
+as a little better than Joe but still flat; jaw behavior was not separately
+reported. Live conversation with Chatterbox has not been tested. These initial
+timings exceed the current live synthesis limit.
+A second run after caches had been populated loaded in 22.75 seconds and took
+8.99 and 7.89 seconds for the two segments. These individual measurements do not
+establish sustained performance or suitability for unattended use.
+
 ## Attended use
 
 1. Let movement finish. Keep the ESP32 unplugged **including USB** and other
@@ -128,8 +194,9 @@ report sound/jaw/body and recovery separately from software completion.
 
 ## Privacy and resource bounds
 
-No accounts, keys to paid services, cloud recognition or online voice are used.
-English recognition uses local whisper.cpp tiny.en; selection uses a small local
+By default, no account, cloud recognition or online voice is used. The optional
+ElevenLabs path described above sends approved, name-free reply text online only
+when selected. English recognition uses local whisper.cpp tiny.en; selection uses a small local
 Qwen model; approved speech is synthesized locally by Piper Joe, with Windows
 System.Speech as the labelled fallback when Piper is absent. After setup,
 the code contacts only its fixed loopback model endpoint. Recordings/transcripts
@@ -183,6 +250,7 @@ node --test studio/tests/conversation*.test.cjs
 python tests/test_local_conversation.py
 python tests/test_local_replies.py
 python tests/test_local_voice.py
+python tests/test_eleven_voice.py
 ```
 
 `python experiments/local-talkback/smoke.py` runs the actual installed engines
@@ -238,13 +306,14 @@ are non-commercial with attribution. [Azure Speech](https://azure.microsoft.com/
 lists 500,000 free neural characters monthly, with an account and payment-card
 verification. [Chatterbox Nano](https://huggingface.co/ResembleAI/chatterbox-nano)
 is a free local candidate with expressive vocal tags; its publisher reports CPU
-support, but performance, pronunciation, output guard and hardware behavior on
-this laptop remain untested. Check current plans and terms before using any
-service. None of these alternatives is integrated in this experiment.
+support. One local preview was measured as described above, but full-catalog
+pronunciation, output guard and hardware behavior remain untested. Check current
+plans and terms before using any service. ElevenLabs is available as an opt-in
+path; Azure and Chatterbox are not integrated into live conversation.
 
-If a cloud voice is added later, recognition and reply selection can remain local;
-only approved reply text needs to be sent. Any included greeting name would also
-leave the laptop, so name handling must be an explicit choice. Pre-generating and
+The optional ElevenLabs path keeps recognition and reply selection local and
+sends only approved reply text. Name greetings are omitted so they do not leave
+the laptop. Pre-generating and
 reviewing approved clips can reduce repeated requests and avoid sending visitor
 audio. Synthesized audio still needs review: the approved-text guard alone cannot
 prove every model spoke exactly the intended words.

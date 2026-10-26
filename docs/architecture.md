@@ -17,6 +17,10 @@ companion](local-halloween-conversation.md) adds Windows localhost speech/reply
 engines and a separate page; only approved reply lines and allowlisted first names
 can reach synthesis. These experiments do not participate in the ESP32 scheduler
 or change ordinary Studio's static/offline architecture.
+The conversation experiment also offers an explicitly selected ElevenLabs voice;
+it sends only name-free reviewed reply text to the provider, while recognition,
+reply selection and the ESP32 firmware remain local. This option requires the
+owner's own key and internet and never runs by default.
 
 ## Optional USB settings and scenes
 
