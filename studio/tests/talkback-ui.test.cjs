@@ -1,17 +1,18 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../talkback.html'),'utf8'),source=fs.readFileSync(path.join(__dirname,'../talkback-ui.js'),'utf8');
-function page({supported=true,bluetooth=true,chooser=true,enumeration=true,sink=true,devices=[],enumerationError=false}={}){
- const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],{disabled:false,checked:false,hidden:m[1]==='outputField',dataset:{},textContent:'',value:m[1]==='propName'?'Ultra Skelly v2':'',children:[],replaceChildren(...children){this.children=children;},get selectedOptions(){return this.children.filter(o=>o.value===this.value);}}]));
- const events={},windowEvents={},calls=[];let repeat,live,resolveOutput;
+function page({supported=true,bluetooth=true,chooser=true,enumeration=true,sink=true,devices=[],enumerationError=false,autoAvailable=true}={}){
+ const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],{disabled:false,checked:false,hidden:m[1]==='outputField',dataset:{},textContent:'',value:m[1]==='propName'?'Ultra Skelly v2':m[1]==='sensitivity'?'0.025':'',children:[],replaceChildren(...children){this.children=children;},get selectedOptions(){return this.children.filter(o=>o.value===this.value);}}]));
+ const events={},windowEvents={},mediaEvents={},calls=[];let repeat,live,auto,resolveOutput;
  class Repeat{constructor({onChange}){repeat=this;this.state='idle';this.message='Ready';this.stream=null;this.render=onChange;}record(){calls.push('record');this.state='recording';this.stream={};this.render();}finish(){this.state='ready';this.stream=null;this.render();}play(){calls.push('play');}stop(){calls.push('stop');this.state='idle';this.stream=null;this.render();}}
  class Live{constructor(){live=this;}cancel(){calls.push('cancel');}async enable(name){calls.push('enable:'+name);return 'Transport only';}}
+ class Auto{constructor({onChange}){auto=this;this.active=false;this.message='Off';this.render=onChange;}async start(threshold){calls.push('auto:'+threshold);this.active=true;this.capture={stream:{}};this.render();}stop(message='Stopped'){this.active=false;this.capture=null;this.message=message;repeat.stop();this.render();}changed(){}}
  const document={hidden:false,createElement:()=>({}),getElementById:id=>{assert.ok(nodes[id],id);return nodes[id];},addEventListener:(name,fn)=>events[name]=fn};
- const window={isSecureContext:supported,MediaRecorder:supported?{}:null,SkellyTalkback:{RepeatBack:Repeat,LiveLink:Live},SkellyAudio:{frame(){}},addEventListener:(name,fn)=>windowEvents[name]=fn};
- const navigator={bluetooth:bluetooth?{}:null,mediaDevices:{getUserMedia(){}}};
+ const window={isSecureContext:supported,MediaRecorder:supported?{}:null,AudioContext:supported?{}:null,AudioWorkletNode:supported?{}:null,SkellyTalkbackAuto:autoAvailable?{AutomaticRepeat:Auto}:undefined,SkellyTalkback:{RepeatBack:Repeat,LiveLink:Live},SkellyAudio:{frame(){}},addEventListener:(name,fn)=>windowEvents[name]=fn};
+ const navigator={bluetooth:bluetooth?{}:null,mediaDevices:{getUserMedia(){},addEventListener:(name,fn)=>mediaEvents[name]=fn}};
  if(chooser)navigator.mediaDevices.selectAudioOutput=()=>new Promise(r=>resolveOutput=r);
  if(enumeration)navigator.mediaDevices.enumerateDevices=async()=>{calls.push('enumerate');if(enumerationError)throw Error('unavailable');return devices;};
  vm.runInNewContext(source,{document,window,navigator,HTMLMediaElement:{prototype:sink?{setSinkId(){}}:{}}});
- return {nodes,calls,events,windowEvents,document,repeat,live,media:navigator.mediaDevices,resolveOutput:device=>resolveOutput(device)};
+ return {nodes,calls,events,windowEvents,mediaEvents,document,repeat,live,auto,media:navigator.mediaDevices,resolveOutput:device=>resolveOutput(device)};
 }
 test('isolated page is idle on load, never enables Bluetooth before consent, and locks setup during capture',async()=>{
  const p=page();assert.deepEqual(p.calls,[]);assert.equal(p.nodes.enableLive.disabled,true);assert.equal(p.nodes.repeat.disabled,true);
@@ -31,6 +32,17 @@ test('late output chooser results cannot change routing after Stop',async()=>{
 });
 test('unsupported features have clear fallback without opening microphone or Bluetooth',()=>{
  const p=page({supported:false,bluetooth:false});assert.equal(p.nodes.record.disabled,true);assert.equal(p.nodes.enableLive.disabled,true);assert.match(p.nodes.status.textContent,/HTTPS or localhost/);assert.deepEqual(p.calls,[]);
+});
+test('automatic pilot requires explicit attendance, locks manual controls and stops on hide or device changes',async()=>{
+ for(const mode of ['stop','hide','device']){
+  const p=page();assert.equal(p.nodes.startAuto.disabled,true);p.nodes.autoConsent.checked=true;p.nodes.autoConsent.onchange();
+  assert.equal(p.nodes.startAuto.disabled,false);p.nodes.startAuto.onclick();assert.equal(p.auto.active,true);assert.equal(p.nodes.micState.textContent,'Microphone ON');
+  for(const id of ['record','repeat','chooseOutput','speakerSelect','enableLive','sensitivity'])assert.equal(p.nodes[id].disabled,true,id);
+  if(mode==='stop')p.nodes.stop.onclick();if(mode==='hide'){p.document.hidden=true;p.events.visibilitychange();}if(mode==='device')p.mediaEvents.devicechange();
+  assert.equal(p.auto.active,false);assert.equal(p.nodes.micState.textContent,'Microphone OFF');assert.equal(p.nodes.record.disabled,false);
+ }
+ assert.equal(page({supported:false}).nodes.startAuto.disabled,true);
+ const fallback=page({autoAvailable:false});assert.equal(fallback.nodes.startAuto.disabled,true);assert.equal(fallback.nodes.record.disabled,false);fallback.nodes.record.onclick();assert.ok(fallback.calls.includes('record'));
 });
 test('live setup preserves an accurate pre-write failure without appending a sent-request warning',async()=>{
  const p=page();p.nodes.isolated.checked=true;p.nodes.isolated.onchange();

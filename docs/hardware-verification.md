@@ -54,6 +54,8 @@ the current status. A transport success alone does not verify an actuator.
 | Browser USB capture / prebuilt installer | Software-only | Mocked stream cleanup, original-byte capture, package/hash rejection and local UI checked. No real USB capture or flashing performed. |
 | Selected-palette rotation | Verified (owner report) | October 22: owner explicitly confirms rotating lighting palettes work. Exact palettes, interval and integration settings were not supplied; clock/idle/jaw integration remains separately scoped. |
 | Per-channel lighting effects | Verified (owner report) | October 22: owner explicitly confirms lighting effects work. Individual channels/effects and speed measurements were not enumerated; no claim of all speeds, LED-region mapping or jaw restoration integration. Packet CRC/order/spacing retain native coverage. |
+| Browser manual repeat-back through Live speaker | Verified (owner report) | October 26: Windows pairing with PIN 1234 succeeded; owner confirms sound from Skelly and jaw following the recorded phrase, with the autonomous ESP32 unplugged. Repeated runs, body-still criteria and return to autonomy were not separately reported. See [repeat-back lab](experimental-talkback.md). |
+| Automatic nearby repeat-back pilot | Software-only | Local sound-energy capture, bounded session/phrases, microphone-off playback/pause and cleanup tests; attended prop result pending. Default OFF; separate browser experiment. |
 
 October 22 refresh follow-up: the owner reports completing all Studio refresh
 checks except lighting and USB. This records the reported pass for the previous

@@ -1,8 +1,9 @@
 # Experimental repeat-back lab
 
-**October 26: the owner reports local repeat-back works.** Detailed microphone,
-browser and output-device information was not supplied. Skelly live-mode behavior,
-jaw synchronization and recovery on the prop remain **Untested**. This experiment
+**October 26: the owner confirms manual repeat-back plays through Skelly and its
+jaw follows the phrase.** Windows 10 exposes Ultra Skelly v2(Live) Stereo; microphone
+model and detailed timing were not supplied. Automatic repeat-back, repeated-run
+behavior and recovery on the prop remain **Untested**. This experiment
 is for the 6.5-foot Ultra Skelly v2 only, not the experimental 12-foot model.
 
 Open [Repeat-back lab](../studio/talkback.html) in desktop Chrome or Edge over
@@ -23,7 +24,8 @@ at eight seconds. Choose **Repeat** to play the clip; playback is deliberately
 explicit. **Stop & discard** clears it and releases microphone/audio resources.
 Leaving or hiding the page cancels pending work and discards the recording.
 
-Audio stays in tab memory, bounded to 1 MiB of recorded data. The page does not
+Audio stays in tab memory; manual recorded data is bounded to 1 MiB. Automatic
+capture has the separate sample/WAV bounds below. The page does not
 store recordings, upload them to Skelly or send them to a server. There are no
 accounts, API keys, paid services, network libraries or automatic connections.
 Use computer sound settings to select the microphone and output. The optional
@@ -36,10 +38,40 @@ selection path is supported. An unavailable selected output fails instead of sil
 With system-default output, the OS may change the destination if a speaker drops;
 verify the actual destination at low volume.
 
-Automatic nearby listening, voice effects and AI replies are not implemented.
-First establish a reliable record/play/jaw path. Later automatic listening needs
-speech detection, noise rejection, bounded phrase length, a pause after playback
-and microphone suppression during playback to avoid repeating itself.
+Voice effects and AI replies are not implemented. The optional automatic pilot
+uses local sound-energy detection; it does not recognize words or distinguish
+people from music, wind, pets or other noise.
+
+## Automatic repeat-back pilot
+
+Automatic mode defaults OFF. After a successful manual output/jaw test, expand
+the pilot, confirm attendance/output/isolation, choose sensitivity and explicitly
+press **Start automatic pilot**. Stay quiet for the first second while background
+noise is measured, then speak a short phrase. About 0.8 seconds of quiet ends it;
+capture is capped at eight seconds. A quarter-second pre-roll preserves onset.
+
+The microphone stream and capture graph close before WAV playback. The mic stays
+off during a **45-second pause after playback**, then the pilot listens for the
+second phrase. This conservative first test stops after **two repeats or two
+minutes**, whichever happens first. No complete phrase within 30 seconds stops
+the pilot. Silence calibration that is too loud, audio processing overload,
+permission/capture/output failures, a changed audio device, Stop, hiding the page
+or leaving it all stop the pilot without automatic restart. There are no BLE
+commands in automatic mode; it uses the already paired computer audio output.
+
+Capture runs locally with an AudioWorklet at 16 kHz mono. Waiting retains only
+the latest quarter second; a phrase holds at most 128,000 float samples, and its
+WAV is at most 256,044 bytes. Audio stays in memory. No recordings or calibration
+values are saved or uploaded. A browser lacking the required Web Audio support
+can still use manual recording. Input audio is never monitored to the speakers.
+
+For the first attended test, start with computer speakers at low volume. Check
+that the first phrase repeats once, the microphone turns off during playback and
+the 45-second pause, and the second phrase ends the pilot. Repeat with Skelly only
+after selecting its paired Stereo output and unplugging the autonomous ESP32.
+Observe sound, jaw, unexpected body movement and stop behavior. A false trigger,
+clipped phrase or failure to stop is a failed pilot test. No repeated jaw result
+or cooldown sufficiency is inferred from the one manual phrase already reported.
 
 ## Hardware choices
 
@@ -121,9 +153,10 @@ jaw synchronization. Do not change firmware or send motor commands to diagnose i
 | --- | --- | --- |
 | Local microphone | Permission requested only on Record; phrase repeats clearly; mic indicator turns off before playback | Owner reports local repeat-back works; detailed permission/indicator check pending |
 | Stop/leave | Recording and playback stop; recording cannot be replayed; hidden page never restarts listening | Software-only mocks; physical check pending |
-| Live enable | Correct Ultra selected; live speaker actually becomes available; no unexpected motion | Owner reports completed write, audible Bluetooth chime, and finding the Live speaker through Windows Add a device; PIN requested. Pairing and motion checks pending. |
-| Output routing | Sound physically comes from the selected output, not unexpectedly from computer/external speakers | Untested |
-| Jaw response | Jaw visibly follows short speech from the live speaker; body remains still | Untested |
+| Live enable and pairing | Correct Ultra selected; live speaker becomes available and pairs; no unexpected motion | Owner reports completed write, Bluetooth chime, and successful Windows pairing with documented PIN 1234. Windows reports the Ultra Skelly v2(Live) Stereo audio endpoint OK. Sound and motion checks pending. |
+| Output routing | Sound physically comes from the selected output, not unexpectedly from computer/external speakers | Verified (owner report): manual phrase came from Skelly |
+| Jaw response | Jaw visibly follows short speech from the live speaker; body remains still | Owner confirms manual phrase jaw response; body-still and repeated-run criteria not separately reported |
+| Automatic pilot | Two phrases at most, bounded capture, mic off during playback/pause, no self-repeat, Stop/hidden page end it | Software-only; attended prop test pending |
 | Repetition | Three short manual phrases complete normally without feedback, resets or extra motion | Untested |
 | Return to autonomy | After documented power-cycle sequence, the saved ordinary routine works as before | Untested |
 
@@ -134,7 +167,8 @@ software events, not physical observations.
 
 Run `node --test studio/tests/talkback*.test.cjs` for recording lifecycle,
 bounded memory/time, late permission/connect results, cancellation, output failures,
-UI gating and exact live-enable packet tests. Full baseline and pinned compilation
+UI gating, speech segmentation/WAV bounds, worklet overload, automatic session
+limits/cleanup and exact live-enable packet tests. Full baseline and pinned compilation
 requirements remain in [testing](testing.md). Firmware and generation are unchanged.
 
 ## Primary research references
