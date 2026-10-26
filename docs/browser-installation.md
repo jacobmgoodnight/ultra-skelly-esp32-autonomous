@@ -1,6 +1,6 @@
 # Browser installation and first USB configuration
 
-Use **Studio → Send to your ESP32 → New ESP32? Start here**. The recommended
+Use **Studio → Connect & save → First-time setup**. The recommended
 path is **Connect ESP32 → Install Firmware → Configure Skelly**. No Arduino
 software, manual Actions download, GitHub account, backend or paid hosting is
 needed. An original ESP32-WROOM development board with 4 MB flash and a USB data

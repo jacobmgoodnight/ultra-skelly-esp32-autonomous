@@ -2,7 +2,7 @@
 
 The optional [universal firmware](usb-settings-scenes.md) adds persistent USB
 settings, saved scene rotation and connected status. Studio places these controls
-in **Send to your ESP32**, with detailed tools under **Advanced & testing**.
+in **Connect & save**, with detailed tools under **Advanced & testing**.
 The owner confirms USB connection/read/save; physical flashing, retention and scene
 transitions remain separate checks.
 

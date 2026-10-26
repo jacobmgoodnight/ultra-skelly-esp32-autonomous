@@ -28,7 +28,7 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const g=window.SkellyStudioGenerator,el=id=>document.getElementById(id);
     if(!el('expressions'))return;
-    let previewEye=1;
+    let previewEye=1,paused=false;
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
     const name=(id,c)=>eyeName(id,c.deviceId);
     function renderGallery(c){
@@ -36,7 +36,7 @@
       for(const card of document.querySelectorAll('.eye-card')){
         const input=card.querySelector('input'),id=Number(input.value);
         card.hidden=id>limit;
-        const label=card.querySelector('.eye-tile-number');if(label)label.textContent=name(id,c)+' · #'+id;
+        const label=card.querySelector('.eye-tile-number');if(label)label.textContent=name(id,c);
         input.setAttribute('aria-label','Choose '+name(id,c)+' · eye '+id);
       }
       el('eyePreviewLabel').textContent=name(previewEye,c)+' · eye #'+previewEye;
@@ -49,22 +49,28 @@
     function render(){
       const c=g.readConfig(),experimental=c.deviceId==='skelly12';
       const moving=c.lightsEnabled&&(c.torsoEffect!==1||(!experimental&&c.headEffect!==1));
-      const active=!document.hidden&&!reduced.matches&&moving;
+      const active=!document.hidden&&!reduced.matches&&!paused;
       const first=c.lightPalettes[0]??0;
-      for(const part of ['torso','head'])for(const swatch of el('lookPreview').querySelectorAll('[data-look-swatch="'+part+'"]')){
+      el('lightingPreview').hidden=!c.lightsEnabled;
+      for(const part of ['torso','head'])for(const swatch of el('lightingPreview').querySelectorAll('[data-light-swatch="'+part+'"]')){
         const color=c.lightRotation?c['palette'+first+(part==='torso'?'Torso':'Head')]:c[part+'Color'];
         swatch.style.setProperty('--swatch-color',color);swatch.style.setProperty('--swatch-brightness',c[part+'Brightness']/255);
         swatch.style.setProperty('--effect-period',previewPeriod(c[part+'Effect'],c[part+'Speed'])+'s');
-        swatch.dataset.effect=String(c[part+'Effect']);swatch.classList.toggle('is-animating',active);swatch.classList.toggle('is-stored',!c.lightsEnabled);
+        swatch.dataset.effect=String(c[part+'Effect']);swatch.classList.toggle('is-animating',active&&c.lightsEnabled&&c[part+'Effect']!==1&&!(experimental&&part==='head'));
+        swatch.setAttribute('aria-label',(part==='torso'&&experimental?'Chest':part==='torso'?'Torso':'Head')+' '+color+' · '+({1:'Static',2:'Strobe',3:'Pulsing'}[c[part+'Effect']])+' · '+Math.round(c[part+'Brightness']/255*100)+'% brightness');
       }
-      const id=c.eyeChoices[0]??1,url=g.eyeImageUrl(id);
-      el('lookEyeImage').hidden=!c.eyesEnabled||!url;if(url)el('lookEyeImage').src=url;else el('lookEyeImage').removeAttribute('src');
-      el('lookEyeImage').alt=name(id,c)+' · eye '+id;
-      el('lookEyeLabel').textContent=!c.eyesEnabled?'Use Skelly’s stored eyes':c.eyeChoices.length>1?c.eyeChoices.length+' selected expressions · sample #'+id:name(id,c)+' · fixed';
-      el('lookTorsoLabel').textContent=experimental?'Chest':'Torso';el('lookHeadRow').hidden=experimental;
-      el('lookLightLabel').textContent=!c.lightsEnabled?'Use Skelly’s stored lighting':c.lightRotation?'Starts with '+c['palette'+first+'Name']:'Selected colors';
+      el('previewTorsoLabel').textContent=experimental?'Chest':'Torso';el('previewHeadRow').hidden=experimental;
+      el('lightingPreviewNote').textContent=(c.lightRotation?'Starts with '+c['palette'+first+'Name']+' · ':'')+'Illustration · hardware timing varies';
+      el('lightingPreviewPause').hidden=!moving||reduced.matches;
+      el('lightingPreviewPause').textContent=paused?'Resume':'Pause';
+      el('lightingPreviewPause').setAttribute('aria-label',(paused?'Resume':'Pause')+' lighting preview');
+      el('lightingPreviewPause').setAttribute('aria-pressed',String(paused));
+      const eye=c.eyeChoices[0]??1;
+      el('eyeSummary').textContent=!c.eyesEnabled?'Off · stored eyes':c.eyeChoices.length===1?name(eye,c)+' · fixed':c.eyeChoices.length+' expressions · '+c.eyesMin+'–'+c.eyesMax+' sec';
+      el('summaryEyeImage').alt=c.eyesEnabled?name(eye,c):'';
       renderGallery(c);
     }
+    el('lightingPreviewPause').onclick=()=>{paused=!paused;render();};
     document.addEventListener('visibilitychange',render);reduced.addEventListener('change',render);
     function renderSources(){
       const selected=el('appearanceCopySource').value;el('appearanceCopySource').replaceChildren();

@@ -24,9 +24,9 @@ are illustrations; no measured prop speed or physical integration pass is added.
    values. Loading different settings discards an open palette draft. In rotation
    mode, palette buttons toggle inclusion and retain at least two choices.
 5. Select Pulsing or Strobe. The corresponding Torso/Head swatches animate by
-   default inside Look preview; native color pickers stay clear and static.
+   default under Lighting in Your Skelly; native color pickers stay clear and static.
    Brightness and speed affect each channel independently. The compact preview
-   has no Pause button, explanatory footer or movement summary. Preview never
+   has a local Pause/Resume button and labels timing as illustrative. Preview never
    changes stored RGB; browser strobe is capped at two flashes/second.
    Reduced motion keeps samples still; hiding the tab pauses animation.
 6. Test phone/keyboard flow and offline editing. Preview and palette drafts open

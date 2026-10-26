@@ -248,6 +248,10 @@ under `.skelly-build/browser-results/`. These are **Software-only** checks, incl
 simulated controller read-back. They do not verify physical flashing, retention,
 Bluetooth delivery, motors, eyes, lights or scene transitions. See the
 [audit](studio-ux-audit.md) for findings and remaining usability limitations.
+The [appearance and Connect & save follow-up](studio-ui-refinements.md) adds compact
+gallery keyboard selection, moved independent lighting samples, Pause/Resume,
+palette/brightness/speed updates, and connect → read → save → verified guidance.
+Results must remain visible below sticky navigation at desktop and phone widths.
 
 ### Package checks
 

@@ -10,7 +10,7 @@ for this interface update.
 
 ## Install once, then change settings
 
-Use **Studio → Send to your ESP32 → New ESP32? Start here** for the recommended
+Use **Studio → Connect & save → First-time setup** for the recommended
 [browser installer](browser-installation.md). It fetches a versioned universal
 package directly; no Arduino software or account needed. Use an original
 ESP32-WROOM/4 MB board. Back up first: installation replaces firmware and resets
@@ -21,7 +21,7 @@ experimental 12-foot package starts at 90–120 seconds. Fixed head-only firmwar
 cannot accept USB settings. No Wi-Fi/backend is required at runtime.
 
 In desktop Chrome/Edge, close Arduino Serial Monitor and other port users. Connect
-with **Connect ESP32** in **Send to your ESP32**, read saved settings, then
+with **Connect ESP32** in **Connect & save**, read saved settings, then
 choose **Save this routine** or **Save scene collection** after checking the replacement
 notice. The browser waits for chunk acknowledgments, an applied acknowledgment
 and a matching read-back checksum. That confirms configuration, not physical motion.
@@ -71,7 +71,7 @@ not an endurance or hardware pass.
 
 ### First setup and identification recovery
 
-Use Studio's **New ESP32? Start here** browser setup, close its dialog after
+Use Studio's **First-time setup** browser setup, close its dialog after
 completion, then Connect ESP32 in Studio. The advanced source fallback uses ESP32
 Dev Module and Arduino-ESP32 3.3.12; close Serial Monitor after upload. Select the
 board's USB adapter (CP2102/CH340; COM number varies) and wait for **Ready** under
@@ -102,7 +102,7 @@ and scene transitions remain **Untested** on hardware.
 
 ### Everyday controls and live status
 
-The open **Send to your ESP32** panel sits below Scene builder and above Advanced.
+The open **Connect & save** panel sits below Scene builder and above Advanced.
 Connect, read and save here; scene saving becomes available after at least one
 scene is saved in the builder. **First-time setup** is collapsed unless firmware
 identification reports that universal settings support is missing. It explains
@@ -127,7 +127,7 @@ the same port. Clock is needed only for enabled clock windows.
 
 ### Scene durations and order
 
-Scene builder sits above Send to your ESP32. Durations display **minutes**, default
+Scene builder sits above Connect & save. Durations display **minutes**, default
 **10**, range 1–60 (fractional minutes supported); JSON/USB retain integer seconds.
 Automatic switching OFF runs only the first scene. **In order** loops through the
 list. **Random** starts with the first scene, then chooses a different scene each

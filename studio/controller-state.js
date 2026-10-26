@@ -84,6 +84,18 @@
     const skelly=!data?'Unknown':state.stale?'Last reported: '+(data.connected?'Connected':'Not connected'):data.connected?'Connected':'Not connected yet';
     return {usb,skelly,scene:data?'Scene '+(data.scene+1):'—',usbTone:state.usb==='ready'?'ready':'info',skellyTone:data&&!state.stale&&data.connected?'ready':'info'};
   }
+  function workflowView(state,{supported=true,reviewed=false,verified=false,valid=true,consent=false,activeStep=null}={}){
+    if(!supported)return {step:'Connect',action:null,hint:'Use desktop Chrome or Edge to connect USB. Editing and downloads still work here.'};
+    if(state.busy)return {step:activeStep??(state.usb==='choosing'||state.usb==='identifying'?'Connect':reviewed?'Save':'Read'),action:null,hint:'Wait for the current operation to finish.'};
+    if(!state.port)return {step:'Connect',action:'controllerConnect',hint:'Next: connect your ESP32 with a USB data cable.'};
+    if(!state.identified)return {step:'Connect',action:'controllerIdentify',hint:'Next: retry identification. If it fails, open connection troubleshooting below.'};
+    if(!state.capable)return {step:'Connect',action:null,hint:'Next: open First-time setup below to install compatible universal firmware.'};
+    if(state.tone==='error'&&/updated universal firmware/.test(state.message))return {step:'Connect',action:null,hint:'Next: open First-time setup below to update universal firmware, then reconnect.'};
+    if(state.tone==='error'&&/Save was not verified|checksum mismatch/.test(state.message)||/Firmware defaults restored/.test(state.message))return {step:'Read',action:'controllerRead',hint:'Next: read saved settings to check what is on the ESP32 before saving again.'};
+    if(verified&&state.tone!=='error')return {step:'Done',action:null,hint:'You can disconnect USB. The ESP32 will keep running the saved program.'};
+    if(!reviewed&&!consent)return {step:'Read',action:'controllerRead',hint:'Next: read saved settings before editing an existing setup. For a new routine, continue to Save below.'};
+    return {step:'Save',action:valid?'controllerWrite':null,hint:!valid?'Fix the highlighted settings below before saving this routine.':consent?'Next: Save this routine to the ESP32.':'Next: check replacement consent, then Save this routine.'};
+  }
   function diagnosticView(data,stale=false){
     if(!data)return [];
     const reasons=['Waiting for requested intervals','Waiting for Skelly Bluetooth','Estimated clip playback','Eye/light restoration or correction queued','Motor cooldown (modeled)','Idle break','Clock window closed / time not set','Jaw-first follow-up','Audio scene protected window (estimated)'];
@@ -94,7 +106,7 @@
     if(data.accepted!==undefined)rows.push([stale?'Last reported write age':'Last accepted BLE write',data.accepted?Math.floor(data.acceptedAge/1000)+' seconds before this snapshot':'None reported']);
     return rows;
   }
-  const api={ControllerState,parseStatus,connectionView,diagnosticView};
+  const api={ControllerState,parseStatus,connectionView,workflowView,diagnosticView};
   if(typeof module!=='undefined')module.exports=api;
   if(typeof window!=='undefined')window.SkellyControllerState=api;
 })();

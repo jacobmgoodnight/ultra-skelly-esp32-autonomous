@@ -582,8 +582,6 @@
     byId("torsoSummary").textContent=c.torsoEnabled?c.torsoMin+"–"+c.torsoMax+" sec":"Off";
     byId("armSummary").textContent=c.armEnabled?c.armMin+"–"+c.armMax+" sec":"Off";
     byId('lightSummary').textContent=window.SkellyExperience.lightingSummary(c);
-    const summaryPalette=c.lightPalettes[0]??0;
-    for(const part of ['torso','head']){const dot=byId(part==='torso'?'summaryTorsoColor':'summaryHeadColor');dot.hidden=!c.lightsEnabled;dot.style.background=c.lightRotation?c['palette'+summaryPalette+(part==='torso'?'Torso':'Head')]:c[part+'Color'];}
     const files=[c.jawFile,...extraFileNumbers(c)];
     const clips=readLibrary();
     const names={chatter:"Chatter",longOpen:"Long open",gasp:"Whisper & gasp"};
@@ -682,7 +680,7 @@
     byId('torsoLightTitle').textContent=experimental?'Chest (experimental)':'Torso';
     byId('headEnabled').closest('.movement-block').querySelector('small').textContent=experimental?'Duration unmeasured; 60 s estimate + 30 s cooldown':'Turns for about 25 seconds';
     byId('headMin').min=experimental?90:32;byId('headMax').min=experimental?90:32;
-    if(experimental){byId('linkLightRow').hidden=true;byId('summaryHeadColor').hidden=true;}
+    if(experimental){byId('linkLightRow').hidden=true;}
     for(let i=0;i<4;i++){
       byId('palette'+i+'Head').closest('label').hidden=experimental;
       document.querySelector('[data-palette-link="'+i+'"]').closest('label').hidden=experimental;
