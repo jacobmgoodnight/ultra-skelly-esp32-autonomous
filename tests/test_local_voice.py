@@ -131,8 +131,8 @@ class VoiceTests(unittest.TestCase):
                     gaps.append((start, index))
                     start = None
             gap_start, gap_end = max(gaps, key=lambda gap: gap[1] - gap[0])
-            self.assertGreaterEqual(gap_end - gap_start, round(rate * .4))
-            self.assertLessEqual(gap_end - gap_start, round(rate * .4) + 2)
+            self.assertGreaterEqual(gap_end - gap_start, round(rate * .7))
+            self.assertLessEqual(gap_end - gap_start, round(rate * .7) + 2)
             self.assertGreater(max(pcm[:gap_start]), 900)
             self.assertLess(max(pcm[:gap_start]), 1100)
             self.assertGreater(max(pcm[gap_end:]), 3900)
@@ -231,7 +231,7 @@ class VoiceTests(unittest.TestCase):
             for sample in pcm:
                 run = run + 1 if sample == 0 else 0
                 longest = max(longest, run)
-            self.assertGreaterEqual(longest, 6400)
+            self.assertGreaterEqual(longest, 11200)
             voice.validate_reply_wave(result)
 
     def test_missing_new_output_cannot_reuse_a_stale_reply_or_segment(self):

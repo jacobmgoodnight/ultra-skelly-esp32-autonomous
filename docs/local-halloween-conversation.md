@@ -7,8 +7,10 @@ Stereo speaker. **October 26: the owner confirms one attended conversation turn
 produced an approved reply through Skelly with jaw movement**, using Original
 voice and the laptop microphone with the ESP32 unplugged. Cleanup, recovery,
 longer sessions and the separate guard/name trials remain unverified. The owner
-described the first Piper voice as a little better but monotone. Revised comic
-timing and emphasis have software evidence only; a new jaw result was not reported.
+described the first Piper voice as a little better but monotone. After trying the
+400 ms punchline beat, the owner requested a slightly longer pause and said the
+voice was still flat. The new 700 ms beat has software evidence only; a new jaw
+result was not reported.
 
 ## Family reply guard
 
@@ -55,7 +57,7 @@ the companion to add the neural voice to an existing installation. Natural/Deepe
 on the page changes playback pitch/speed, independently of the synthesis engine.
 
 For a reviewed question followed by an answer, synthesis separates the
-setup and punchline, adds a 400 ms silent beat, and gives the answer quicker pacing
+setup and punchline, adds a 700 ms silent beat, and gives the answer quicker pacing
 and mild pitch/energy emphasis. Non-joke replies keep a single synthesis pass.
 These are comic delivery effects; Piper does not offer an emotion instruction.
 Both synthesis calls share one ten-second deadline, and the assembled WAV must
@@ -201,12 +203,17 @@ as a little better but monotone and requested a punchline pause. Revised comic
 delivery, a new jaw observation, guard/name trials and extended sessions remain
 **Untested on hardware**.
 
-Revised comic delivery passed a new real synthesis sweep of all 80 lines with the
+The previous 400 ms comic delivery passed a real synthesis sweep of all 80 lines with the
 same long name: maximum **6.61 seconds**, including the inserted pause. The full
 synthetic recognition → approved reply → revised Joe WAV pipeline took **2.83
 seconds** after startup. The 400 ms beat, unchanged approved words, shared deadline
 and fail-closed audio checks have software coverage; audible timing and emphasis
 still need the owner's next listening test.
+
+With the 700 ms beat, a fresh synthesis sweep of all 80 lines with the same
+long allowlisted name also stayed within the eight-second limit; the longest
+observed WAV was **6.436 seconds**. This is software-only evidence, not a
+measurement of physical jaw response or the owner's preferred timing.
 
 ## Pinned sources
 

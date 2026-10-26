@@ -99,12 +99,13 @@ not speaker quality, Bluetooth delivery or jaw response.
 After optional setup, `python experiments/local-talkback/smoke.py` exercises real
 local recognition, approved selection and synthesis with generated speech; it
 never records from a microphone or plays sound. October 26: the Piper Joe pipeline
-took 2.83 seconds after startup with revised comic delivery. Separate synthesis of
-all 80 variants with a long allowlisted name stayed within the eight-second reply
-cap, including punchline pauses (maximum 6.61 seconds).
+took 2.83 seconds after startup with the earlier 400 ms comic delivery. Separate
+synthesis of all 80 variants with a long allowlisted name stayed within the
+eight-second reply cap, including that earlier pause (maximum 6.61 seconds). A
+fresh sweep with the 700 ms pause also passed (maximum 6.436 seconds).
 The earlier Original-voice owner sound/jaw result remains valid. The owner heard
-the first neural voice and described a little improvement but monotone delivery;
-revised comic delivery and a new jaw result still require attended checks. Confirm actual
+the neural voice and requested a longer pause, reporting flat delivery;
+the new 700 ms pause and a new jaw result still require attended checks. Confirm actual
 voice quality, sound location, jaw response, word/name guards and Stop/recovery
 separately before considering longer sessions.
 

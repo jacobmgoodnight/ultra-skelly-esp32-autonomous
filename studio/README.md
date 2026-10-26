@@ -26,8 +26,8 @@ mild pacing/pitch emphasis. It requires roughly 700 MB of optional setup downloa
 ordinary Studio and repeat-back keep working independently. The owner confirms one attended
 Original-voice reply through Skelly with jaw movement using the laptop mic.
 Conversation resumed after reconnection, according to the owner. Initial Joe
-listening feedback was a little better but monotone; revised delivery and a new
-jaw result remain unverified. Guard/name trials, cleanup, extended recovery and
+listening feedback described the 400 ms pause as too short and the voice as flat.
+The new 700 ms pause and a new jaw result remain unverified. Guard/name trials, cleanup, extended recovery and
 longer sessions also remain unverified.
 
 Eyes and Lighting use the editor's full width. The compact gallery keeps descriptive

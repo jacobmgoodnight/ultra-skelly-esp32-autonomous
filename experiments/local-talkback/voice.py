@@ -8,7 +8,7 @@ from array import array
 from pathlib import Path
 
 MAX_REPLY_WAV = 44 + 22050 * 8 * 2
-DELIVERY_PAUSE = .4
+DELIVERY_PAUSE = .7
 
 
 def validate_reply_wave(data):
