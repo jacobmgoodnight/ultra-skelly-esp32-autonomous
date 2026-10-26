@@ -2,8 +2,9 @@
 (function(){
   'use strict';
   const RECORD_MS=8000,MAX_BYTES=1024*1024;
+  // Wrap Window timer functions so storing them on an engine cannot change their receiver.
   class RepeatBack {
-    constructor({media,Recorder,audioFactory=()=>new Audio(),urls=URL,onChange=()=>{},visible=()=>!document.hidden,setTimer=setTimeout,clearTimer=clearTimeout}){
+    constructor({media,Recorder,audioFactory=()=>new Audio(),urls=URL,onChange=()=>{},visible=()=>!document.hidden,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
       Object.assign(this,{media,Recorder,audioFactory,urls,onChange,visible,setTimer,clearTimer});
       this.generation=0;this.state='idle';this.message='Ready for a short recording.';this.timer=null;this.stream=null;this.recorder=null;this.audio=null;this.clip=null;this.url=null;this.sink='';
     }
@@ -76,7 +77,7 @@
 
   // Only a one-shot live-audio enable command. Never files, motor masks or settings.
   class LiveLink {
-    constructor(bluetooth,frame,{setTimer=setTimeout,clearTimer=clearTimeout}={}){Object.assign(this,{bluetooth,frame,setTimer,clearTimer});this.generation=0;this.device=null;this.busy=false;this.cancelWait=null;}
+    constructor(bluetooth,frame,{setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}={}){Object.assign(this,{bluetooth,frame,setTimer,clearTimer});this.generation=0;this.device=null;this.busy=false;this.cancelWait=null;}
     cancel(){++this.generation;this.cancelWait?.();const d=this.device;this.device=null;if(d?.gatt.connected)d.gatt.disconnect();}
     async bounded(promise,generation,ms=10000){
       if(generation!==this.generation)throw Error('Live setup cancelled.');let timer,cancel;

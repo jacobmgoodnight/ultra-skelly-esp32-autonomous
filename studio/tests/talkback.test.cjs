@@ -1,5 +1,19 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {RepeatBack,LiveLink,RECORD_MS,MAX_BYTES}=require('../talkback.js'),{frame,crc}=require('../audio.js');
+test('default browser timers keep the Window receiver instead of the engine instance',async()=>{
+ const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+ const timers=new Map();let next=0,scope;
+ function receiver(value){assert.ok(value===undefined||value===scope,'browser timer called with an invalid receiver');}
+ const context=vm.createContext({module:{exports:{}},URL,Blob,
+  setTimeout:function(fn,ms){'use strict';receiver(this);timers.set(++next,{fn,ms});return next;},
+  clearTimeout:function(id){'use strict';receiver(this);timers.delete(id);}});
+ scope=vm.runInContext('globalThis',context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../talkback.js'),'utf8'),context);
+ const {RepeatBack:BrowserRepeat,LiveLink:BrowserLive}=context.module.exports;let requests=0;
+ const repeat=new BrowserRepeat({visible:()=>true,Recorder:function(){},media:{async getUserMedia(){++requests;throw Object.assign(Error(),{name:'NotAllowedError'});}}});
+ await repeat.record();assert.equal(requests,1);assert.equal(repeat.state,'error');assert.match(repeat.message,/permission denied/);assert.equal(timers.size,0);
+ const live=new BrowserLive({async requestDevice(){throw Error('chooser dismissed');}},frame);
+ await assert.rejects(live.enable('Ultra Skelly v2'),/chooser dismissed/);assert.equal(live.busy,false);assert.equal(timers.size,0);
+});
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 function fixture({pending=false,deny=false,playFails=false,sinkPending=false}={}){
  const timers=new Map(),events=[],request=deferred(),sink=deferred();let next=0,recorder,audio;

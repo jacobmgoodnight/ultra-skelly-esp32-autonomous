@@ -26,8 +26,12 @@ Audio stays in tab memory, bounded to 1 MiB of recorded data. The page does not
 store recordings, upload them to Skelly or send them to a server. There are no
 accounts, API keys, paid services, network libraries or automatic connections.
 Use computer sound settings to select the microphone and output. The optional
-Choose speaker button appears disabled when the browser lacks output-selection
-support. An unavailable selected output fails instead of silently switching sinks.
+Choose speaker button uses the browser's picker where supported. Chrome/Edge can
+instead list the audio outputs exposed by the browser. If only the default is
+visible, record a phrase and allow microphone access, then choose speaker again;
+microphone permission can reveal more output devices. You can also select the
+output in Windows Sound settings. The button is disabled only when neither
+selection path is supported. An unavailable selected output fails instead of silently switching sinks.
 With system-default output, the OS may change the destination if a speaker drops;
 verify the actual destination at low volume.
 
