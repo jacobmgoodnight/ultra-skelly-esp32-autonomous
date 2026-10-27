@@ -54,9 +54,14 @@ authorized reference on a lighter engine before committing to that combination.
 Whether a voice transfers cleanly, runs quickly and is licensed for the chosen
 use remains an experiment, not a guarantee.
 
-## Milestone 0: finish the listening decision
+## Milestone 0: first listening comparison
 
-When the owner is available, use the existing comparison page, with the ESP32
+October 27 owner report: Supertonic sounded better than Piper Joe, and the jaw
+followed the prepared Supertonic samples. This does not establish the result of
+each phrase, precise intelligibility or timing, or live conversation. The next
+step is a bounded live-voice prototype and an attended conversation test.
+
+For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output
 to the connected Live Stereo speaker. Start quietly, then compare the same three
 Piper and Supertonic clips at matched average level. For each, record:

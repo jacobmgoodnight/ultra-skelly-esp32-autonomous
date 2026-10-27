@@ -15,11 +15,14 @@ Use one recognizable character voice, with a little variation in performance,
 rather than switching to a different speaker for each topic. Do not create 80
 recordings until a few have actually sounded better through Skelly.
 
-On this computer, Supertonic 3 is the most promising *measured live candidate*,
-pending the owner's listening and prop test. Three offline replies synthesized in
+On this computer, Supertonic 3 is the most promising *measured live candidate*.
+On October 27, the owner reported that its prepared samples sounded better than
+Piper Joe and Skelly's jaw followed those samples. That result does not establish
+live microphone conversation or the accuracy of each spoken phrase. Three
+offline replies synthesized in
 1.52–1.70 seconds after model load; one synthetic ghost-joke turn took 2.96 seconds
 from completed input to a validated reply. These are not physical conversation or
-jaw measurements. The project has been archived and offers no further support.
+jaw measurements for live conversation. The project has been archived and offers no further support.
 Qwen3-TTS VoiceDesign is the stronger *candidate* for expressive prerecorded
 performances on a more capable machine; it was not run or listened to here.
 Piper remains the simplest low-risk fallback. Do not replace it automatically.
@@ -115,7 +118,9 @@ with no distribution, endurance, concurrent-user or thermal test. Supertonic
 was resident; Piper launches a child process for each fragment. The joke renders
 are not perfectly matched delivery: Piper adds its beat/shaping, while the
 Supertonic probe synthesized a whole sentence. Volumes were matched by turning
-louder samples down; no listening quality judgment is inferred from the file.
+louder samples down. On October 27 the owner reported Supertonic sounded better
+and the jaw followed its prepared samples; individual intelligibility, timing and
+body behavior were not separately reported.
 
 The synthetic full pipeline generated an input phrase locally, then measured
 Whisper recognition 1.422 s, direct literal-topic selection 0.001 s, and
@@ -135,8 +140,8 @@ feedback was a little better but still flat; a Nano jaw result was not reported.
 resampling Supertonic 44.1 kHz to 22.05 kHz with a polyphase filter and validating
 the existing WAV limit. `prepare-supertonic-comparison.py` creates a local playback
 page and turns down louder samples to match RMS. The page opens no microphone or
-BLE connection. Audio validity is software evidence; audible accuracy, subjective
-performance and jaw behavior require the owner to listen. No samples are automatically
+BLE connection. Audio validity is software evidence; the owner's listening and jaw
+feedback applies to the prepared samples only. No samples are automatically
 approved for use with visitors.
 
 ## Hybrid design and staged plan
