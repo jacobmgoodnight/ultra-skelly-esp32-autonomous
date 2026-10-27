@@ -44,6 +44,16 @@ review and add that name; it should not silently permit arbitrary visitor text.
 The current code adds an allowlisted name only to the current reply and does not
 remember it for a later visitor turn.
 
+The recordings and the live voice also need to sound like the **same character**.
+A recording from a more expressive model followed by a Piper name greeting may
+sound like two different speakers. First try preparing and live-generating with
+the same selected voice; producing several candidates offline and reviewing the
+best can improve a performance, but does not give a model capabilities it lacks.
+If a heavier model's recordings are much better, test a compatible local voice or
+authorized reference on a lighter engine before committing to that combination.
+Whether a voice transfers cleanly, runs quickly and is licensed for the chosen
+use remains an experiment, not a guarantee.
+
 ## Milestone 0: finish the listening decision
 
 When the owner is available, use the existing comparison page, with the ESP32
@@ -127,6 +137,11 @@ back to the fallback voice. Per-topic playful, spooky or suspenseful delivery is
 an optional label for a small number of clips, not an invitation to create a
 large content management system.
 
+The conversation page uses the Windows default output. A Windows device change
+can redirect that default; the current local-engine check does not verify the
+speaker. The attended operator should confirm the selected output and hear a
+quiet test through the prop before proceeding.
+
 **Exit:** software tests prove the reviewed-ID mapping, name fallback, bounds,
 failure cases, cancellation and unchanged reply selection. An attended prop
 test confirms both a prepared clip and a live fallback are audible with the jaw
@@ -199,3 +214,7 @@ PR #54 (repeat-back) is based on `main`; PR #55 (conversation) is stacked on
 PR #54; PR #56 (voice research) is stacked on PR #55. All three are currently
 drafts. Their dependency order matters for later review and any user-authorized
 merge; no physical outcome follows merely from green CI.
+
+If a particular Halloween event is close, the scope can stop at a working,
+attended push-to-talk setup with the best voice already tested. Automatic
+listening, new hardware and concurrent ESP32 control can remain future work.
