@@ -19,7 +19,11 @@ samples = root / 'samples'
 parser = argparse.ArgumentParser()
 parser.add_argument('--large-moss-reference', action='store_true',
                     help='Test 1.7B Base with the locally generated MOSS introduction.')
+parser.add_argument('--ghost-only', action='store_true',
+                    help='Generate only the ghost joke for the larger MOSS-reference test.')
 args = parser.parse_args()
+if args.ghost_only and not args.large_moss_reference:
+    parser.error('--ghost-only requires --large-moss-reference')
 if psutil.virtual_memory().available < 4.5 * 1024**3:
     raise SystemExit('Not started: fewer than 4.5 GiB of available system memory.')
 if args.large_moss_reference:
@@ -35,8 +39,12 @@ if args.large_moss_reference:
     transcript = root / 'moss-intro-reference.txt'
     transcript.write_text('I am Skelly, the friendly skeleton. Chief officer of silly Halloween jokes!', encoding='utf-8')
     model = models / 'qwen-talker-1.7b-base-Q4_K_M.gguf'
-    tasks = [('large-moss-skeleton', 'Why did the skeleton skip the party? He had no body to go with!', True)]
-    metrics_path = root / 'qwen-large-moss-clone-metrics.json'
+    if args.ghost_only:
+        tasks = [('large-moss-ghost', 'Why did the ghost wear glasses? To improve its spook tacles!', True)]
+        metrics_path = root / 'qwen-large-moss-ghost-metrics.json'
+    else:
+        tasks = [('large-moss-skeleton', 'Why did the skeleton skip the party? He had no body to go with!', True)]
+        metrics_path = root / 'qwen-large-moss-clone-metrics.json'
 else:
     reference = samples / 'qwen-demo-spooky-2.wav'
     transcript = root / 'qwen-theatrical-reference.txt'

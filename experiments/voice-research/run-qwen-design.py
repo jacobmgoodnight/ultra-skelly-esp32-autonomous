@@ -1,5 +1,7 @@
 """One isolated, resource-bounded, fixed-text CPU voice-design preview."""
 from pathlib import Path
+import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -10,13 +12,33 @@ import psutil
 root = Path('.skelly-build/voice-research')
 exe = root / 'qwentts-ninja/qwen-tts.exe'
 models = root / 'qwen-design-models'
-output = root / 'samples/qwen-spooky-1-raw.wav'
-log = root / 'qwen-spooky-1.log'
-metrics_path = root / 'qwen-spooky-1-metrics.json'
-phrase = 'Why did the ghost wear glasses? To improve its spook tacles!'
-direction = ('A deep resonant raspy male voice for a theatrical Halloween skeleton, '
-             'mischievous and playfully sinister, with suspenseful pauses and a gleeful '
-             'punchline; clear American English, spooky but family friendly.')
+parser = argparse.ArgumentParser()
+parser.add_argument('--style', choices=('baseline', 'spooky', 'playful', 'raspy', 'phantom'), default='baseline')
+args = parser.parse_args()
+stem = 'qwen-spooky-1' if args.style == 'baseline' else f'qwen-design-{args.style}-intro'
+output = root / 'samples' / f'{stem}-raw.wav'
+log = root / f'{stem}.log'
+metrics_path = root / f'{stem}-metrics.json'
+phrase = ('Why did the ghost wear glasses? To improve its spook tacles!' if args.style == 'baseline'
+          else 'I am Skelly, the friendly skeleton. Chief officer of silly Halloween jokes!')
+directions = {
+    'baseline': ('A deep resonant raspy male voice for a theatrical Halloween skeleton, '
+                 'mischievous and playfully sinister, with suspenseful pauses and a gleeful '
+                 'punchline; clear American English, spooky but family friendly.'),
+    'spooky': ('An adult male Halloween skeleton with a deep, dry, hollow, slightly raspy voice, '
+               'clear American English, haunting but playful and family friendly, '
+               'with measured theatrical storytelling and a mischievous grin.'),
+    'playful': ('A lively animated male skeleton with a low, resonant gravelly voice, '
+                'spooky and mischievous, slyly humorous, clear expressive American English, '
+                'theatrical pauses and exaggerated surprise, family friendly.'),
+    'raspy': ('A low-pitched adult male Halloween skeleton with a dry, slightly raspy voice '
+              'and spooky playful energy, clear American English, theatrical storytelling, '
+              'sly humor and gentle warmth; family friendly.'),
+    'phantom': ('A deep hollow adult male skeletal ghost voice with a gravelly whisper at the edges, '
+                'eerie and mysterious but mischievous and friendly, clear American English '
+                'with expressive dramatic pauses; a family-friendly Halloween story character.'),
+}
+direction = directions[args.style]
 start_free = psutil.virtual_memory().available
 if start_free < 4.5 * 1024**3:
     raise SystemExit('Preview not started: less than 4.5 GiB of available system memory.')
@@ -62,12 +84,14 @@ elapsed = time.monotonic() - start
 result = {'elapsed_s': round(elapsed, 2), 'peak_working_set_mib': round(peak / 1024**2),
           'min_available_mib': round(min_free / 1024**2), 'cpu_seconds': cpu_seconds,
           'exit_code': proc.returncode, 'stop_reason': stop_reason, 'direction': direction,
-          'phrase': phrase}
+          'phrase': phrase, 'eos_seen': '[Pipeline] EOS at step' in log.read_text(encoding='utf-8', errors='replace')}
 if proc.returncode == 0 and output.exists():
     with wave.open(str(output), 'rb') as wav:
         result['wav'] = {'channels': wav.getnchannels(), 'sample_width_bytes': wav.getsampwidth(),
                          'sample_rate': wav.getframerate(),
                          'duration_s': round(wav.getnframes() / wav.getframerate(), 3)}
+    with output.open('rb') as stream:
+        result['sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
 metrics_path.write_text(json.dumps(result, indent=2), encoding='utf-8')
 print(json.dumps(result), flush=True)
-sys.exit(0 if proc.returncode == 0 and 'wav' in result else 1)
+sys.exit(0 if proc.returncode == 0 and 'wav' in result and result['eos_seen'] else 1)

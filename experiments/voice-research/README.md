@@ -205,11 +205,39 @@ generated locally:
 ```powershell
 .skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/download-qwen-base.py --large
 .skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-qwen-clone.py --large-moss-reference
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-qwen-clone.py --large-moss-reference --ghost-only
 .skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-qwen-large-moss-comparison.py
 ```
 
 The large talker adds about 1.22 GB. The script converts only the fixed
 synthetic reference, applies the same memory and time guards and records the
-completed WAV's hash. Open
+completed WAVs' hashes. Open
 `/.skelly-build/voice-research/samples/compare-qwen-large-moss.html` locally.
 This is another prerecorded comparison, not evidence of live speed or safety.
+
+After the same synthetic MOSS reference exists, an optional local timing probe
+extracts and reuses only that reference's codes, then compares the output with
+the previously generated skeleton WAV:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-qwen-cached-moss.py
+```
+
+This needs the separately built `qwen-codec.exe` in the research build directory.
+The generated reference codes remain in ignored research output and do not
+contain visitor recordings or names. Reusing them is not integrated into the
+conversation engine.
+
+To compare four locally described synthetic character designs:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/run-qwen-design.py --style spooky
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/run-qwen-design.py --style playful
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/run-qwen-design.py --style raspy
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/run-qwen-design.py --style phantom
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-spooky-design-comparison.py
+```
+
+The comparison page is `/.skelly-build/voice-research/samples/compare-spooky-designs.html`.
+The descriptions request tone rather than guaranteeing it. Listen to the actual
+words and judge character consistency over multiple lines before any integration.

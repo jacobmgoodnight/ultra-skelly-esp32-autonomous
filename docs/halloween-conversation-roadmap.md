@@ -77,6 +77,13 @@ current decision gate; neither variant is yet a selected live voice.
 The owner preferred the smaller local Qwen voice match B to A, but neither
 matched the desired character; a jaw response was reported without individual
 clip identification. These are listening results, not live-conversation tests.
+The larger Qwen model later produced a prerecorded skeleton joke the owner said
+was a pretty good match to the liked MOSS introduction; its jaw followed. Two
+fresh-process generations took about 30 seconds each, so the existing live
+synthesis deadline remains unmet. Check consistency across other lines before
+making a character choice. The owner later reported the character mostly stayed
+consistent across the ghost and skeleton jokes but wanted a spookier,
+more skeleton-like sound.
 
 For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output

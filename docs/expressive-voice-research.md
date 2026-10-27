@@ -361,16 +361,45 @@ model file matched publisher SHA-256
 same GGUF revision; this is file integrity against publisher metadata, not an
 independent security audit. No visitor recording or personal name was used.
 
-One skeleton joke completed in 29.688 seconds from process start; the runtime
-reported 26.122 seconds pipeline time. Peak sampled working set was 4,620 MiB,
-and minimum sampled system available memory was 1,751 MiB. The 24 kHz mono
-output reported EOS, was 5.36 seconds long, and was converted to a validated
-22.05 kHz WAV. An approximate automatic speech check heard the expected joke,
-but this does not prove the exact words or approve it. This one run exceeds
-the current synthesis limit; it measures neither steady-state synthesis nor a
+A skeleton joke and ghost joke completed in 29.688 and 29.828 seconds from
+separate process starts; the runtime reported 26.122 and 26.816 seconds of
+pipeline time. Peak sampled working sets were 4,620 and 4,605 MiB, and minimum
+sampled available memory was 1,751 and 1,773 MiB. Both 24 kHz mono outputs
+reported EOS, were 5.36 and 5.12 seconds long, and were converted to validated
+22.05 kHz WAVs. An approximate automatic speech check heard the expected jokes,
+but this does not prove the exact words or approve them. These two runs exceed
+the current synthesis limit; they measure neither steady-state synthesis nor a
 complete live turn. A focused listening page compares the liked MOSS
-introduction with MOSS and Qwen versions of the same skeleton joke. The larger
-model's voice match, jaw response and consistency remain unreported.
+introduction with MOSS and Qwen versions of each joke. The owner reported the
+larger-Qwen skeleton joke was a pretty good match to the MOSS introduction and
+that Skelly's jaw followed it. After hearing the ghost joke as well, the owner
+said the character mostly stayed consistent but wanted a spookier, more
+skeleton-like voice. The jaw observation covers the skeleton sample; live
+conversation and extended operation remain unreported.
+
+The owner wanted a spookier, more skeleton-like character. Four additional
+1.7B VoiceDesign Q4 previews of the same approved introduction were generated
+locally using fictional voice descriptions; no visitor audio was used. A and B
+took 26.16 and 23.20 seconds per fresh process (20.991 and 20.701 seconds
+reported pipeline time). C and D took 22.33 and 23.20 seconds per fresh process
+(19.868 and 20.757 seconds reported pipeline time). Sampled process peaks were
+about 4.0 GiB. All reported EOS, fell within the existing eight-second WAV bound
+and were matched by turning down louder previews. A Whisper check approximately
+heard the intended introduction, but heard the name as “Skilly” in A; that is
+not proof of what was spoken, so the actual words require listening. The owner
+said neither A nor B fit yet but kind of liked A, and reported a jaw response
+when asked about either design without identifying individual clips. C and D,
+their voice consistency across lines, and their jaw responses are unreported.
+
+To investigate speed without saving visitor data, a separate probe encoded the
+fixed synthetic MOSS reference once. Extraction took 2.938 seconds, then one
+fresh Qwen Base process generated the same skeleton joke in 26.875 seconds with
+24.431 seconds reported pipeline time. Its WAV was byte-identical to the
+previous uncached skeleton WAV. The earlier uncached run reported 26.122
+seconds in the pipeline; these are individual runs, not a controlled performance
+distribution. Reference caching alone did not bring this run under the current
+ten-second limit. The cache contains only the fictional synthetic reference,
+never visitor recordings or names, and is not integrated into conversation.
 
 `benchmark-supertonic.py` produces three matching-text Supertonic/Piper WAV pairs,
 resampling Supertonic 44.1 kHz to 22.05 kHz with a polyphase filter and validating

@@ -25,6 +25,18 @@ sources = [
     ('moss', 'MOSS original reference · skeleton joke', 'moss-qwen-cached-skeleton.wav'),
     ('large', 'Larger local Qwen matching MOSS · skeleton joke', raw.name),
 ]
+ghost_metrics = root / '.skelly-build/voice-research/qwen-large-moss-ghost-metrics.json'
+if ghost_metrics.is_file():
+    ghost_rows = json.loads(ghost_metrics.read_text(encoding='utf-8'))
+    ghost = [row for row in ghost_rows if row.get('name') == 'large-moss-ghost']
+    ghost_raw = samples / 'qwen-clone-large-moss-ghost-raw.wav'
+    if (len(ghost) != 1 or ghost[0].get('exit_code') != 0 or not ghost[0].get('eos_seen')
+            or hashlib.sha256(ghost_raw.read_bytes()).hexdigest() != ghost[0].get('sha256')):
+        raise ValueError('The large-model ghost joke was incomplete or its WAV hash changed.')
+    sources.extend([
+        ('mossghost', 'MOSS original reference · ghost joke', 'moss-qwen-cached-ghost.wav'),
+        ('largeghost', 'Larger local Qwen matching MOSS · ghost joke', ghost_raw.name),
+    ])
 items = []
 for key, label, filename in sources:
     audio, rate = sf.read(samples / filename, dtype='float64')
@@ -65,6 +77,11 @@ or connect to Skelly.</p><section><h2>Reference character</h2>
 <p>I am Skelly, the friendly skeleton. Chief officer of silly Halloween jokes!</p>'''
 page += labels[0] + '</section><section><h2>Same skeleton joke</h2>'
 page += '<p>Why did the skeleton skip the party? He had no body to go with!</p>'
-page += ''.join(labels[1:]) + '</section></html>'
+page += ''.join(labels[1:3]) + '</section>'
+if len(labels) > 3:
+    page += '<section><h2>Same ghost joke</h2>'
+    page += '<p>Why did the ghost wear glasses? To improve its spook tacles!</p>'
+    page += ''.join(labels[3:]) + '</section>'
+page += '</html>'
 (samples / 'compare-qwen-large-moss.html').write_text(page, encoding='utf-8')
 print(f'Prepared {len(labels)} validated, matched-level previews.')
