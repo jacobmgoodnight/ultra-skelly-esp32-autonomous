@@ -34,7 +34,9 @@
       token=value.token;el('service').textContent='Local speech/reply engines ready. Bluetooth audio is separate: connect and select Skelly Stereo in Windows sound settings. This check does not verify the speaker.';
       el('cloudVoiceOption').disabled=value.elevenlabs!==true;
       if(el('cloudVoiceOption').disabled)el('engine').value='local';
-      el('voiceSource').textContent='Local voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'older companion; restart it for voice details')+'. '+(value.elevenlabs===true?'ElevenLabs key configured; connection not checked.':'ElevenLabs is not configured.')+' Replies rotate through reviewed lines.';
+      const setupMessages={missing_key:'ElevenLabs key was not received by this companion.',invalid_key:'ElevenLabs key format was rejected; use the hidden-input launcher.',invalid_voice_id:'ElevenLabs voice ID format was rejected.'};
+      const cloudStatus=value.elevenlabs===true?'ElevenLabs key configured; connection not checked.':(setupMessages[value.elevenlabsSetup]||'ElevenLabs is not configured.');
+      el('voiceSource').textContent='Local voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'older companion; restart it for voice details')+'. '+cloudStatus+' Replies rotate through reviewed lines.';
     }catch{if(generation===checkGeneration){token='';el('cloudVoiceOption').disabled=true;el('engine').value='local';el('service').textContent='Start the local companion, then open http://127.0.0.1:8766/ and check again.';}}
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };

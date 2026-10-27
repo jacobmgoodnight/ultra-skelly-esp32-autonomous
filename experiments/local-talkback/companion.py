@@ -94,18 +94,25 @@ def local_json(path, payload=None, timeout=10):
         return json.loads(data)
 
 
+def elevenlabs_configuration(environ):
+    """Classify local configuration without returning or logging the key."""
+    key = environ.get('SKELLY_ELEVENLABS_API_KEY', '')
+    if not key:
+        return None, 'missing_key'
+    try:
+        voice = ElevenVoice(key, environ.get('SKELLY_ELEVENLABS_VOICE_ID', DEFAULT_VOICE))
+    except ValueError as error:
+        issue = 'invalid_voice_id' if str(error) == 'Invalid ElevenLabs voice ID' else 'invalid_key'
+        return None, issue
+    return voice, 'configured'
+
+
 class Engines:
     def __init__(self):
         self.process = None
         self.deck = ReplyDeck()
         self.voice = LocalVoice(TOOLS)
-        self.eleven_voice = None
-        if os.environ.get('SKELLY_ELEVENLABS_API_KEY'):
-            try:
-                self.eleven_voice = ElevenVoice(os.environ['SKELLY_ELEVENLABS_API_KEY'],
-                    os.environ.get('SKELLY_ELEVENLABS_VOICE_ID', DEFAULT_VOICE))
-            except ValueError:
-                pass  # Local voice remains usable if online configuration is invalid.
+        self.eleven_voice, self.eleven_setup = elevenlabs_configuration(os.environ)
         self.llama = next((TOOLS / 'llama').rglob('llama-server.exe'), None)
         self.whisper = next((TOOLS / 'whisper').rglob('whisper-cli.exe'), None)
         if not self.llama or not self.whisper or not all((TOOLS / name).is_file() for name in ['ggml-tiny.en.bin', 'qwen2.5-0.5b-instruct-q4_k_m.gguf']):
@@ -219,7 +226,9 @@ def make_handler(engines, port=8766):
                 return
             if route == '/api/status':
                 voice = getattr(engines, 'voice', None)
-                return self.send(200, json.dumps({'ready': True, 'token': token, 'voice': getattr(voice, 'label', 'Local voice'), 'elevenlabs': getattr(engines, 'eleven_voice', None) is not None, 'replyCount': sum(map(len, REPLIES))}).encode())
+                available = getattr(engines, 'eleven_voice', None) is not None
+                setup = getattr(engines, 'eleven_setup', 'configured' if available else 'missing_key')
+                return self.send(200, json.dumps({'ready': True, 'token': token, 'voice': getattr(voice, 'label', 'Local voice'), 'elevenlabs': available, 'elevenlabsSetup': setup, 'replyCount': sum(map(len, REPLIES))}).encode())
             name = route.removeprefix('/studio/')
             if name not in ASSETS:
                 return self.send(404, b'{}')
@@ -273,6 +282,13 @@ def main():
         engines.start()
         with ThreadingHTTPServer(('127.0.0.1', 8766), make_handler(engines)) as server:
             server.daemon_threads = False  # Finish bounded work and delete temp files on exit.
+            setup_message = {
+                'configured': 'ElevenLabs: key format accepted; connection and credits not checked.',
+                'missing_key': 'ElevenLabs: no key was received; local voice is available.',
+                'invalid_key': 'ElevenLabs: key format rejected; local voice is available.',
+                'invalid_voice_id': 'ElevenLabs: voice ID format rejected; local voice is available.',
+            }
+            print(setup_message[engines.eleven_setup], flush=True)
             print('Ready: http://127.0.0.1:8766/ — Ctrl+C stops the companion.', flush=True)
             try:
                 server.serve_forever()
