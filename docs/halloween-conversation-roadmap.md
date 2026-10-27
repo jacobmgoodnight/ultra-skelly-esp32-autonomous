@@ -71,8 +71,12 @@ physical behavior remain unreported. The owner also really liked a MOSS
 introduction generated with a synthetic Qwen reference and said its jaw
 followed, though the voice sounded like a different character. Evaluate it as a
 separate candidate rather than assuming a faithful match. The owner likes MOSS
-across further clips but observed that its voice and delivery vary between
-responses, so consistency is a current decision gate.
+across further clips but reported that its voice and delivery vary between
+responses with both original and self-reference variants. Consistency is a
+current decision gate; neither variant is yet a selected live voice.
+The owner preferred the smaller local Qwen voice match B to A, but neither
+matched the desired character; a jaw response was reported without individual
+clip identification. These are listening results, not live-conversation tests.
 
 For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output

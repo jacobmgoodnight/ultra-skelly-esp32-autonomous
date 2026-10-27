@@ -176,3 +176,40 @@ The probe declines to synthesize when its direct-topic check fails; it does not
 exercise the companion's ambiguous-topic Qwen fallback. Its timing starts after
 the input WAV exists and ends after a validated reply WAV, so it is not a real
 spoken-turn or first-audible-output measurement.
+
+## Smaller Qwen voice-matching probe
+
+After the earlier research setup has built the local CPU executable, downloaded
+the Q4 codec and saved the synthetic theatrical reference, this optional probe
+downloads the 0.6B Qwen Base Q4 talker and generates three comparison clips:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/download-qwen-base.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-qwen-clone.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-qwen-clone-comparison.py
+```
+
+Open `/.skelly-build/voice-research/samples/compare-qwen-clone.html` on the
+loopback server. The benchmark uses a fictional, synthetic Qwen reference and
+two fixed approved phrases; it never records a visitor. It enforces memory and
+time guards per process and records EOS and WAV hashes. The comparison requires
+those recorded completions and hashes and validates its output WAVs. Voice match
+A uses a speaker embedding; B also uses the reference's written transcript.
+These are isolated previews, not an engine integration or a guarantee of voice
+consistency, spoken content, jaw behavior, or live performance.
+
+To test the larger Base model using the liked, synthetic MOSS introduction as
+the reference, after that introduction and the MOSS skeleton sample have been
+generated locally:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/download-qwen-base.py --large
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-qwen-clone.py --large-moss-reference
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-qwen-large-moss-comparison.py
+```
+
+The large talker adds about 1.22 GB. The script converts only the fixed
+synthetic reference, applies the same memory and time guards and records the
+completed WAV's hash. Open
+`/.skelly-build/voice-research/samples/compare-qwen-large-moss.html` locally.
+This is another prerecorded comparison, not evidence of live speed or safety.
