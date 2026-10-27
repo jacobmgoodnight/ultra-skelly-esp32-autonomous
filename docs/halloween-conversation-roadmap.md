@@ -108,9 +108,11 @@ i7-6700 after loading. A synthetic, direct-topic input-to-validated-WAV turn too
 Bluetooth and the prop. Its local archive has stopped development. Consider
 [MOSS-TTS-Nano ONNX](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX)
 as a second CPU candidate: its authors document reference voices, streaming and
-an Apache-2.0 model. It generates 48 kHz stereo and needs validated downmix and
-resampling for the current 22.05 kHz mono contract. Its voice quality, resource
-use, complete generation and speed on this machine remain untested. An
+an Apache-2.0 model. In an October 27 software-only test on this machine, a
+resident model generated the three comparison replies in 7.04–8.53 seconds;
+the process used up to 1,734 MiB. Its 48 kHz stereo output was downmixed and
+resampled into validated 22.05 kHz mono WAVs. Its voice quality, complete live
+conversation, first audible sound and jaw response have not been reported. An
 authorized or appropriately licensed reference is required for voice copying.
 
 [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) is another candidate for

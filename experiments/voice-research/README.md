@@ -37,3 +37,29 @@ The synthetic turn records no visitor audio. It excludes calibration, actual
 speech duration, browser transfer, Bluetooth and physical playback. The hybrid
 probe operates only on passed data; it is not an integration or a mechanism for
 approving recordings.
+
+## MOSS-TTS-Nano comparison
+
+The MOSS ONNX sample uses the research environment above plus the **separate,
+already installed** CPU PyTorch/Torchaudio packages from the Chatterbox test
+environment. Although the ONNX model itself does not require PyTorch, this
+pinned upstream Python wrapper imports PyTorch and Torchaudio. This reuse is an
+experimental convenience, not a locked, standalone installation recipe. The
+model downloads are approximately 763 MB in addition to the environments.
+With that CPU environment already installed, run:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe -m pip install sentencepiece==0.2.1
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/download-moss.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-moss.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-three-voice-comparison.py
+```
+
+Downloads use pinned revisions and verify LFS files against publisher metadata;
+the source archive is checked against a recorded hash. The benchmark uses the
+supplied Nathan voice, no microphone and no network after setup. It downmixes
+and resamples the output into a validated 22.05 kHz WAV, rejects a generation cap
+or oversized audio, and writes everything under ignored `.skelly-build`. Open
+`/.skelly-build/voice-research/samples/compare-three.html` from the loopback
+static server to compare the three models. Review words and voice before using
+any generated sample around children.

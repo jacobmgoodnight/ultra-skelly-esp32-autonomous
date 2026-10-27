@@ -1,6 +1,6 @@
 # Expressive voices for Skelly: research and isolated experiments
 
-Research checked October 26, 2026. The existing conversation in draft PR #55 is
+Research checked October 27, 2026. The existing conversation in draft PR #55 is
 stacked on repeat-back PR #54. This note and the research probe are separate from
 both: they do not change the running conversation or firmware.
 
@@ -76,6 +76,7 @@ sound dramatic, whisper, laugh or preserve a voice consistently.
 | Candidate | Delivery and character control | Practical fit and license |
 | --- | --- | --- |
 | **1. Supertonic 3** | Fixed voice styles and 10 documented inline expression tags including `<laugh>`, `<breath>` and `<sigh>`; no verified free-form character prompt or local cloning path. Not a demonstrated whisper control. Eight-step M1 tested here without tags. | CPU ONNX, approximately 398 MB model assets, 44.1 kHz source. Our measured short clips and model-load timing are below. Cross-platform examples include Windows; the tested Python path returns a complete WAV, not streamed first audio. Archived without support. Code MIT; weights [OpenRAIL-M](https://huggingface.co/supertone-oss-archive/supertonic-3/blob/main/LICENSE) have use conditions. [Model and archive](https://github.com/supertone-oss-archive/supertonic). |
+| **MOSS-TTS-Nano ONNX** | Built-in voices and reference-audio voice cloning. The Nathan preset has now been used for three offline samples; listening quality and character continuity remain unreported. No free-form character instruction or specific expressive tag is established for this version. | [Apache-2.0 ONNX model](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX) and [audio tokenizer](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX), about 763 MB of selected files. On this machine a loaded model needed 7.04–8.53 seconds for three replies, leaving little margin within the current 10-second synthesis bound. The pinned upstream Python wrapper imports CPU PyTorch/Torchaudio even though the ONNX model itself can run without PyTorch. Live and physical tests remain unreported. |
 | **2. Piper Joe baseline** | Fast fixed voice, no free-form emotional prompt or cloning in the existing path. Owner reports a flat delivery despite comic timing adjustments. | Already installed, offline, modest CPU and memory. Existing pinned legacy runtime/model licenses must be checked per component and voice; do not assume every Piper voice has the same license. Newer [Piper development](https://github.com/OHF-Voice/piper1-gpl) has different GPL terms from the project's pinned legacy runtime. |
 | **3. Kyutai Pocket TTS** | 100M model, streaming and voice conditioning/cloning; no documented natural-language style instruction or silence tag. A good reference may establish character, but expression control and its quality on this machine are unmeasured. | CPU-oriented, Windows Python supported; creator's 200 ms first chunk and 6× real-time were measured on an M4 Mac and cannot be applied here. Project code MIT; model card declares CC-BY-4.0 and voice licenses vary. The [cloning checkpoint](https://huggingface.co/kyutai/pocket-tts) is gated and requires account/conditions; a [non-cloning checkpoint](https://huggingface.co/kyutai/pocket-tts-without-voice-cloning) is available without that gate. Actual storage, RAM and latency for a pinned selection remain unmeasured. |
 | **4. Qwen3-TTS 1.7B VoiceDesign** | Explicit natural-language voice descriptions; the official workflow can create a reference and use a separate Base model to reuse its voice. Style/emotion control is promising, but exact voice stability, whisper and laughter need listening trials. Other Qwen3 models differ: 0.6B Base is not VoiceDesign. | [VoiceDesign weights](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main) occupy about 4.52 GB in the repository; additional Base weights may be needed for cloning. Apache-2.0. [Official examples](https://github.com/QwenLM/Qwen3-TTS) emphasize CUDA, so Windows CPU setup and time are unmeasured here. Family-level streaming claims do not prove this particular offline code path streams or fits this computer. Best candidate for offline generation on stronger hardware, not a proven live choice here. |
@@ -135,6 +136,26 @@ Previously observed Nano sample: model load 17.05 s, two fragments 23.8 + 6.74 s
 a later run loaded in 22.75 s and generated fragments in 8.99 + 7.89 s. These are
 isolated runs with different cache conditions, not a sustained benchmark. Owner
 feedback was a little better but still flat; a Nano jaw result was not reported.
+
+October 27, MOSS-TTS-Nano ONNX on the same CPU, preset Nathan, four threads:
+one model load took 5.812 seconds. The same three catalog phrases took 8.267,
+7.039 and 8.526 seconds to generate as complete audio after loading; converted
+audio durations were 5.68, 4.8 and 5.6 seconds. The process working set rose
+from 1,477 MiB after loading to 1,734 MiB after the third sample. A separate
+first run took 7.234 seconds to load and 9.21 seconds to synthesize the ghost
+joke. The runtime internally used streaming decode but returned a complete file;
+first audible audio, full conversation, Qwen classification and physical jaw
+response were not measured. These are single runs and do not predict other
+machines or sustained operation. The MOSS samples are not yet owner-evaluated.
+
+MOSS source revision `8b7bcc9341b3b4ef3a3a58ba1338a7d85ff133eb`, model revision
+`f52645cb467506d8e18e746ddd59482685b74e58`, and codec revision
+`ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae` were downloaded into ignored output.
+Large files matched publisher LFS metadata; the source archive matched a locally
+recorded SHA-256, not an independent publisher signature. The wrapper reused the
+isolated research and Chatterbox Python environments; dependencies are not fully
+hash-locked. The clips were downmixed from 48 kHz stereo and resampled to
+22.05 kHz mono for the same existing WAV validation as the other previews.
 
 `benchmark-supertonic.py` produces three matching-text Supertonic/Piper WAV pairs,
 resampling Supertonic 44.1 kHz to 22.05 kHz with a polyphase filter and validating
