@@ -15,16 +15,22 @@ Use one recognizable character voice, with a little variation in performance,
 rather than switching to a different speaker for each topic. Do not create 80
 recordings until a few have actually sounded better through Skelly.
 
-On this computer, Supertonic 3 is the most promising *measured live candidate*.
-On October 27, the owner reported that its prepared samples sounded better than
-Piper Joe and Skelly's jaw followed those samples. That result does not establish
-live microphone conversation or the accuracy of each spoken phrase. Three
+Supertonic 3 is the fastest expressive candidate measured here, but speed alone
+does not make it the selected voice. On October 27, the owner reported that its
+prepared samples sounded better than Piper Joe and Skelly's jaw followed those
+samples. After comparing more options, the owner said MOSS Adam was much better
+than MOSS Nathan, but none of the later Adam/Supertonic preset comparisons fit
+Skelly yet. That feedback supersedes any earlier suggestion to choose Supertonic
+for integration. Three Supertonic
 offline replies synthesized in
 1.52–1.70 seconds after model load; one synthetic ghost-joke turn took 2.96 seconds
 from completed input to a validated reply. These are not physical conversation or
 jaw measurements for live conversation. The project has been archived and offers no further support.
-Qwen3-TTS VoiceDesign is the stronger *candidate* for expressive prerecorded
-performances on a more capable machine; it was not run or listened to here.
+Qwen3-TTS VoiceDesign is the next candidate for expressive prerecorded
+performances. A compact CPU version has been prepared locally, but its initial
+load was stopped under memory pressure before any local sample was produced.
+Three name-free previews were instead obtained from Qwen's public online demo;
+they have not yet been evaluated by the owner or shown to work live here.
 Piper remains the simplest low-risk fallback. Do not replace it automatically.
 
 ## Current implementation and physical evidence
@@ -75,11 +81,11 @@ sound dramatic, whisper, laugh or preserve a voice consistently.
 
 | Candidate | Delivery and character control | Practical fit and license |
 | --- | --- | --- |
-| **1. Supertonic 3** | Fixed voice styles and 10 documented inline expression tags including `<laugh>`, `<breath>` and `<sigh>`; no verified free-form character prompt or local cloning path. Not a demonstrated whisper control. Eight-step M1 tested here without tags. | CPU ONNX, approximately 398 MB model assets, 44.1 kHz source. Our measured short clips and model-load timing are below. Cross-platform examples include Windows; the tested Python path returns a complete WAV, not streamed first audio. Archived without support. Code MIT; weights [OpenRAIL-M](https://huggingface.co/supertone-oss-archive/supertonic-3/blob/main/LICENSE) have use conditions. [Model and archive](https://github.com/supertone-oss-archive/supertonic). |
-| **MOSS-TTS-Nano ONNX** | Built-in voices and reference-audio voice cloning. The owner said Nathan sounded most natural, but not as high-quality or direct as Supertonic, and like an older man that did not fit Skelly. No free-form character instruction or specific expressive tag is established for this version. | [Apache-2.0 ONNX model](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX) and [audio tokenizer](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX), about 763 MB of selected files. On this machine a loaded model needed 7.04–8.53 seconds for three replies, leaving little margin within the current 10-second synthesis bound. The pinned upstream Python wrapper imports CPU PyTorch/Torchaudio even though the ONNX model itself can run without PyTorch. Live and MOSS jaw tests remain unreported. |
+| **1. Supertonic 3** | Fixed voice styles and 10 documented inline expression tags including `<laugh>`, `<breath>` and `<sigh>`; no verified free-form character prompt or local cloning path. Not a demonstrated whisper control. The owner did not find a suitable Skelly character among the later M1–M5 and experimental laugh-tag comparisons. | CPU ONNX, approximately 398 MB model assets, 44.1 kHz source. Our measured short clips and model-load timing are below. Cross-platform examples include Windows; the tested Python path returns a complete WAV, not streamed first audio. Archived without support. Code MIT; weights [OpenRAIL-M](https://huggingface.co/supertone-oss-archive/supertonic-3/blob/main/LICENSE) have use conditions. [Model and archive](https://github.com/supertone-oss-archive/supertonic). |
+| **MOSS-TTS-Nano ONNX** | Built-in voices and reference-audio voice cloning. The owner said Nathan sounded natural but like an older man that did not fit Skelly; Adam was much better than Nathan but was among the later comparison options that still did not fit. No free-form character instruction or specific expressive tag is established for this version. | [Apache-2.0 ONNX model](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX) and [audio tokenizer](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX), about 763 MB of selected files. On this machine a loaded Nathan model needed 7.04–8.53 seconds for three replies, leaving little margin within the current 10-second synthesis bound. The pinned upstream Python wrapper imports CPU PyTorch/Torchaudio even though the ONNX model itself can run without PyTorch. Live and MOSS jaw tests remain unreported. |
 | **2. Piper Joe baseline** | Fast fixed voice, no free-form emotional prompt or cloning in the existing path. Owner reports a flat delivery despite comic timing adjustments. | Already installed, offline, modest CPU and memory. Existing pinned legacy runtime/model licenses must be checked per component and voice; do not assume every Piper voice has the same license. Newer [Piper development](https://github.com/OHF-Voice/piper1-gpl) has different GPL terms from the project's pinned legacy runtime. |
 | **3. Kyutai Pocket TTS** | 100M model, streaming and voice conditioning/cloning; no documented natural-language style instruction or silence tag. A good reference may establish character, but expression control and its quality on this machine are unmeasured. | CPU-oriented, Windows Python supported; creator's 200 ms first chunk and 6× real-time were measured on an M4 Mac and cannot be applied here. Project code MIT; model card declares CC-BY-4.0 and voice licenses vary. The [cloning checkpoint](https://huggingface.co/kyutai/pocket-tts) is gated and requires account/conditions; a [non-cloning checkpoint](https://huggingface.co/kyutai/pocket-tts-without-voice-cloning) is available without that gate. Actual storage, RAM and latency for a pinned selection remain unmeasured. |
-| **4. Qwen3-TTS 1.7B VoiceDesign** | Explicit natural-language voice descriptions; the official workflow can create a reference and use a separate Base model to reuse its voice. Style/emotion control is promising, but exact voice stability, whisper and laughter need listening trials. Other Qwen3 models differ: 0.6B Base is not VoiceDesign. | [VoiceDesign weights](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main) occupy about 4.52 GB in the repository; additional Base weights may be needed for cloning. Apache-2.0. [Official examples](https://github.com/QwenLM/Qwen3-TTS) emphasize CUDA, so Windows CPU setup and time are unmeasured here. Family-level streaming claims do not prove this particular offline code path streams or fits this computer. Best candidate for offline generation on stronger hardware, not a proven live choice here. |
+| **4. Qwen3-TTS 1.7B VoiceDesign** | Explicit natural-language voice descriptions; the official workflow can create a reference and use a separate Base model to reuse its voice. Style/emotion control is promising, but exact voice stability, whisper and laughter need listening trials. Other Qwen3 models differ: 0.6B Base is not VoiceDesign. | [Official VoiceDesign weights](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main) occupy about 4.52 GB; additional Base weights may be needed for cloning. The [third-party GGUF conversion](https://huggingface.co/Serveurperso/Qwen3-TTS-GGUF) and [CPU runtime](https://github.com/ServeurpersoCom/qwentts.cpp) offer smaller Windows-compatible files. This machine's first bounded CPU attempt stopped during loading under memory pressure; no synthesis time, sound or live result is available. Model Apache-2.0; runtime MIT. Family-level streaming claims do not establish live speed here. |
 | **5. IndexTTS 2.5** | A reference voice plus emotion reference/vector or text-derived emotion, plus duration controls. `use_emo_text` in 2.5 requires its extra Qwen emotion component. It does not establish reliable nonverbal laughter or whispering for every English prompt. | [2.5 release](https://github.com/index-tts/index-tts/releases) August 2026; [model repository](https://huggingface.co/IndexTeam/IndexTTS-2.5/tree/main) about 5.49 GB before dependencies. Windows setup exists, but GPU-oriented dependencies and CPU speed are untested here. The [bilibili model license](https://huggingface.co/IndexTeam/IndexTTS-2.5/blob/main/LICENSE) is royalty-free under its conditions, including a large-organization threshold and distribution/use restrictions; it is not Apache or MIT. Upstream's reported 2.5 RTF around 0.20 uses an RTX 4090, not this PC. |
 | **6. Chatterbox Turbo / Nano** | Fixed/reference voice, with supported nonverbal tags such as `[laugh]` and `[chuckle]`. The original 500M Chatterbox also has exaggeration/CFG controls; don't assume those apply unchanged to Turbo or Nano. No demonstrated free-form voice-design prompt. | [Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) and [Nano](https://huggingface.co/ResembleAI/chatterbox-nano) list MIT model licenses. Nano runs on Windows CPU in the isolated preview but missed the current live deadline here; Turbo is larger and untested here. Reference cloning requires a suitable authorized recording. No verified streaming/first-chunk figure for our code. |
 | **7. Orpheus 3B** | Documented expressive tags include laugh, chuckle, sigh and gasp, plus named speakers; no verified free-form character voice design. | [Apache-2.0 model](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft); [upstream](https://github.com/canopyai/Orpheus-TTS) documents a CPU alternative but its 3B model and inference stack make this an unmeasured, heavy option on this PC. GPU/Windows setup, memory, first audio and full latency are unknown. |
@@ -160,6 +166,10 @@ including reference encoding each time. Observed process working set reached
 the current ten-second live limit; retained reference encodings or a different
 implementation would require separate measurement. The resulting 12-sample
 matched comparison is a listening preview, not a live conversation or jaw test.
+The owner subsequently preferred Adam to Nathan. In the later same-joke page
+containing Adam, Supertonic M1–M5 and an experimental M1 laugh tag, the owner
+reported that none fit Skelly yet. Neither feedback included a separate MOSS jaw
+observation or established whether the laugh tag produced a laugh.
 
 MOSS source revision `8b7bcc9341b3b4ef3a3a58ba1338a7d85ff133eb`, model revision
 `f52645cb467506d8e18e746ddd59482685b74e58`, and codec revision
@@ -169,6 +179,48 @@ recorded SHA-256, not an independent publisher signature. The wrapper reused the
 isolated research and Chatterbox Python environments; dependencies are not fully
 hash-locked. The clips were downmixed from 48 kHz stereo and resampled to
 22.05 kHz mono for the same existing WAV validation as the other previews.
+
+### VoiceDesign CPU preparation and memory check
+
+On October 27, an isolated Windows CPU executable was built from
+`qwentts.cpp` revision `5916bf7c79dbb4e66fc059cdc507a79a23a28bb4` and its
+`ggml` submodule `cc5df49a6b878db2b68b9a7b45976e279594627d`. The compact
+Q4 VoiceDesign talker (1,182,630,816 bytes) and Q4 codec (254,974,752 bytes)
+came from [GGUF revision `b7ee2e8`](https://huggingface.co/Serveurperso/Qwen3-TTS-GGUF/tree/b7ee2e8c7459c3bea99da23e3d178125a7d1713c)
+and matched the publisher's SHA-256 metadata. Those hashes establish file
+integrity against that metadata, not an independent security audit of the
+third-party runtime or converted weights.
+
+The first bounded attempt started with approximately 2.23 GiB available and
+was stopped after 3.25 seconds while loading, when available memory fell rapidly;
+the sampled peak process working set was 2,493 MiB and minimum available memory
+was 302 MiB. No WAV, load time, inference duration, voice quality or live
+turnaround was measured. The monitor stopped the attempt; it did not prove the
+full model memory requirement. A retry is set to require at least 4.5 GiB free
+and to stop if available memory remains below 1.25 GiB. These are conservative
+experimental thresholds, not vendor requirements or a guarantee against paging.
+The intended test uses a fixed approved joke and a fictional skeleton description;
+it needs no microphone, visitor recording or cloud service.
+
+For an earlier listening opportunity without another local load, three samples
+were generated with [Qwen's public VoiceDesign demo](https://huggingface.co/spaces/Qwen/Qwen3-TTS)
+using only the same fixed ghost joke and different fictional skeleton
+descriptions: playful storyteller, theatrical/mischievous, and breathy/whispery.
+The provider received the text and description; no microphone audio, visitor
+name or API key was submitted. Qwen's model can try to follow those descriptions,
+but the labels are requested directions, not verified descriptions of the audio.
+Cloud availability, policy and free access may change; this optional preview does
+not make the conversation system depend on the service.
+
+The three online request-to-download times were 11.16, 7.83 and 9.51 seconds;
+they include remote queuing and network effects and are **not** local model
+speed or complete conversation latency. Their 24 kHz mono WAVs were resampled
+to 22.05 kHz, matched by reducing louder clips and structurally validated against
+the existing eight-second reply bound; the converted lengths were 5.337, 5.577
+and 4.537 seconds. An automatic tiny-Whisper check heard the ghost/glasses setup
+and variants of the pun, but cannot establish the exact words, safety, voice
+quality or a genuine whisper. The owner must listen before choosing or approving
+any performance; no Qwen jaw or live conversation result is reported.
 
 `benchmark-supertonic.py` produces three matching-text Supertonic/Piper WAV pairs,
 resampling Supertonic 44.1 kHz to 22.05 kHz with a polyphase filter and validating

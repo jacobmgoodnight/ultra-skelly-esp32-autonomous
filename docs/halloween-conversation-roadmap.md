@@ -1,6 +1,6 @@
 # Halloween conversation: decisions, tests and milestones
 
-Planning snapshot: October 26, 2026. This is a proposed roadmap, not a claim
+Planning snapshot: October 27, 2026. This is a proposed roadmap, not a claim
 that the future behaviors have been tested. The project can stop after any
 milestone and retain the last working setup.
 
@@ -31,7 +31,7 @@ Decisions are made as evidence becomes available, rather than all at once.
 | Decision | Proposed default | Evidence that can change it |
 | --- | --- | --- |
 | Character voice | One friendly, mischievous character; vary its delivery modestly. | Compare the same lines at matched volume through Skelly and ask which one the owner prefers. |
-| Live voice | Keep Piper until an alternative is audibly better and meets response and reliability targets. | Compare Supertonic, then one more candidate only if worthwhile. |
+| Live voice | Keep Piper until an alternative fits the character and meets response and reliability targets. | Test an appealing character voice end to end; do not select a voice purely because it is fast. |
 | Recorded library | Small hybrid library of individually reviewed complete replies; live fallback for missing clips. | If live speech is already expressive enough, start without recordings. |
 | Personalized names | Only a reviewed first-name allowlist; synthesize the full greeting live initially. No persistent visitor-name cache. | Decide later whether short, approved name clips improve continuity without causing awkward joins or retaining visitor data. |
 | Session memory | No cross-turn visitor name memory initially. | If desired, add short-lived, explicit, resettable session memory after the single-turn experience is reliable. |
@@ -57,9 +57,15 @@ use remains an experiment, not a guarantee.
 ## Milestone 0: first listening comparison
 
 October 27 owner report: Supertonic sounded better than Piper Joe, and the jaw
-followed the prepared Supertonic samples. This does not establish the result of
-each phrase, precise intelligibility or timing, or live conversation. The next
-step is a bounded live-voice prototype and an attended conversation test.
+followed the prepared Supertonic samples. Later the owner preferred MOSS Adam to
+Nathan, but said none of the Adam/Supertonic preset comparison sounded like the
+desired Skelly character. The character choice remains open. Qwen3-TTS
+VoiceDesign is the next prerecorded-voice candidate because it accepts a voice
+description; its first local loading attempt stopped under memory pressure, so
+there is no local synthesis-speed result yet. Three optional previews from Qwen's
+public demo are ready for listening, using fixed text and no visitor data. This
+feedback does not establish a MOSS or Qwen jaw result, live conversation or
+full-turn timing for any new model.
 
 For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output

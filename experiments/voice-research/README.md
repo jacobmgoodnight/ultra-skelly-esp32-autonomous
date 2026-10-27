@@ -77,3 +77,51 @@ The reference is the existing generated Skelly introduction under ignored
 output. It is not a real person's recording. The extra samples and the page
 `/.skelly-build/voice-research/samples/compare-character.html` are also local
 previews, not automatically approved for the conversation system.
+
+## Qwen3-TTS VoiceDesign: isolated preparation
+
+The [research report](../../docs/expressive-voice-research.md#voicedesign-cpu-preparation-and-memory-check)
+records why this is the next character-voice candidate and the initial
+memory-limited result. This is a prerecorded preview, not an installed
+conversation voice. The two verified Q4 model files occupy about 1.44 GB and
+remain under ignored output. Python `requests` and `psutil` are needed.
+
+The experiment used the third-party `qwentts.cpp` source at
+`5916bf7c79dbb4e66fc059cdc507a79a23a28bb4` with its pinned `ggml` submodule.
+Build a CPU-only `qwen-tts.exe` from that source into
+`.skelly-build/voice-research/qwentts-ninja/` using the upstream instructions
+and an appropriate Windows C++ toolchain. The source, build and models stay
+outside the conversation runtime. Then, from the repository root:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/download-qwen-design.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/run-qwen-design.py
+```
+
+The downloader pins the public model revision and verifies file lengths and
+publisher SHA-256 values. The preview runs locally with a fixed reviewed joke
+and a fictional skeleton description, using no microphone or visitor audio.
+It starts only with at least 4.5 GiB available memory, lowers its process
+priority, monitors free memory and stops after five minutes. Those conservative
+guards cannot guarantee that Windows will avoid paging. The resulting raw
+24 kHz WAV is a research artifact, not yet validated against the conversation
+system's eight-second/22.05 kHz bounds or reviewed for its actual words, voice,
+Bluetooth playback or jaw response.
+
+For a separate online comparison, three fixed-text samples were obtained from
+the [official Qwen public demo](https://huggingface.co/spaces/Qwen/Qwen3-TTS).
+The provider receives the chosen joke and voice description. This is optional;
+no microphone, visitor name, API key or conversation audio was sent. If those
+three WAVs already exist under `samples/qwen-demo-spooky-{1,2,3}.wav` and the
+existing Adam/Supertonic comparison clips are present, prepare the local page:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-qwen-comparison.py
+```
+
+Open `/.skelly-build/voice-research/samples/compare-qwen-design.html` from the
+loopback server. The preparation resamples and validates the WAV containers,
+enforces the existing eight-second bound, and matches average level by turning
+down louder clips. It does not verify the spoken content or characterize the
+actual voice. The online demo is separate from local inference and may change
+or become unavailable.
