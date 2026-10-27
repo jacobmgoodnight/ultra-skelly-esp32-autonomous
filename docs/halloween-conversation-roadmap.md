@@ -66,8 +66,13 @@ CPU version then generated that joke in one 18.83-second process run; its
 reported 13.63-second synthesis exceeds the current 10-second synthesis bound.
 The owner said the online performance was more expressive; the local sample was
 definitely better than Supertonic M1 and probably better than Adam, and its jaw
-followed. Other Qwen phrases, live conversation, full-turn timing and a MOSS jaw
-result remain unreported.
+followed. Other Qwen phrases, live conversation, full-turn timing and other
+physical behavior remain unreported. The owner also really liked a MOSS
+introduction generated with a synthetic Qwen reference and said its jaw
+followed, though the voice sounded like a different character. Evaluate it as a
+separate candidate rather than assuming a faithful match. The owner likes MOSS
+across further clips but observed that its voice and delivery vary between
+responses, so consistency is a current decision gate.
 
 For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output

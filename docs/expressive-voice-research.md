@@ -253,11 +253,67 @@ end of synthesis was 2,001.5 MiB; that is not a peak-memory measurement. The
 output was 5.84 seconds and passed the existing WAV structural validator.
 Reference reuse or other optimizations have not been measured. A one-run result
 slightly beyond the ten-second synthesis limit is not evidence of reliable live
-performance, and neither matching character nor jaw behavior has been reported.
+performance. The owner really liked the prepared MOSS introduction and reported
+that Skelly's jaw followed it, but said it did not sound like the same character
+as the Qwen reference. After listening to two further MOSS samples, the owner
+said they liked that voice but its sound and delivery varied between responses.
+Treat the Qwen and MOSS voices as separate character candidates, and investigate
+consistency before integrating either.
 An optional public-demo request for the same introduction returned an error of
 unknown cause, so the comparison uses the original Qwen ghost joke as the voice
-reference and compares the MOSS introductions with each other; the Qwen reference
-and introductions do not use identical words.
+reference and a MOSS introduction; the Qwen reference and introduction do not
+use identical words. Later generated MOSS ghost and skeleton jokes provide
+additional same-text and cross-phrase comparisons. The owner asked to remove the
+basic Adam and Supertonic introductions from the active comparison page.
+
+A separate research-only probe kept the fixed synthetic reference encoding in
+memory, rather than encoding it for every synthesis. It loaded MOSS in 5.845
+seconds, encoded the reference once in 0.572 seconds, then generated a reviewed
+introduction and two jokes in 8.267, 7.380 and 7.005 seconds respectively.
+The three 22.05 kHz mono previews passed the existing WAV validator; generated
+audio lengths were 5.84, 5.28 and 4.88 seconds. Working-set snapshots after
+synthesis were 2,001–2,019 MiB, not peak or whole-system usage. The previously
+heard introduction was bit-identical in an earlier cached-reference trial using
+the same PCM conversion; a later conversion from the unclipped float waveform
+differed by at most one 16-bit sample step. Two later raw floats had peaks above
+full scale, so the research preview reduces gain before writing; it cannot prove
+the audio is otherwise free of distortion. Caching the synthetic reference is an
+isolated monkeypatch in the probe, not an integrated feature or a visitor-data
+cache. These three runs fit the current synthesis cap but do not establish
+end-to-end latency, worst-case reliability, safety of generated words or physical
+results for the new clips.
+
+Because the owner liked the MOSS introduction but heard variation across lines,
+another isolated probe used that **synthetic MOSS introduction itself** as the
+fixed reference. It loaded in 5.824 seconds, encoded the reference once in 0.635
+seconds, then synthesized the ghost and skeleton jokes in 7.787 and 10.355
+seconds. The latter exceeds the current ten-second synthesis bound. Before PCM
+output, the resampled float peaks were 1.388 and 0.999 and gain was reduced to
+0.685 and 0.951 respectively; the validated clips were 5.52 and 5.92 seconds.
+An automatic Whisper check struggled with the second joke's words; this could
+reflect the recording, recognition, or both, so the owner must listen rather
+than treating the transcript as proof. Sound consistency, jaw response and live
+operation for the self-reference samples are unreported. No visitor audio or
+name was used.
+
+For a synthetic input-to-ready probe, a resident MOSS model with the same
+in-memory reference produced one direct-topic ghost reply in 7.721 seconds
+after the synthetic input WAV was complete (1.092 seconds recognition, 6.601
+seconds synthesis, plus selection/conversion). An earlier attempt did not pass
+the direct ghost-topic recognition check; its transcript was not retained.
+
+A subsequent three-turn synthetic probe loaded the model and reference in
+6.553 seconds, before timing turns. The ghost and pumpkin inputs were recognized
+as their intended direct topics and yielded validated WAVs in 7.067 and 9.099
+seconds from completed input respectively; their synthesis portions were 5.871
+and 7.986 seconds. The synthetic skeleton input was transcribed as “Tell me a
+skull and joke,” so the probe stopped that turn before synthesis. It did not
+call the companion's ambiguous-topic Qwen fallback, so this is not a measurement
+of how the actual system would handle that input. These are very few generated
+inputs, not a recognition accuracy estimate. All timings exclude real speech,
+microphone calibration/capture, browser transfer, the Live Stereo connection,
+prop playback and actual first audible output; they do not establish reliable
+live conversation or physical safety.
 
 `benchmark-supertonic.py` produces three matching-text Supertonic/Piper WAV pairs,
 resampling Supertonic 44.1 kHz to 22.05 kHz with a polyphase filter and validating

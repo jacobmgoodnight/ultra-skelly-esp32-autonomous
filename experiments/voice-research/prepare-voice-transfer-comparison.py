@@ -14,9 +14,19 @@ from voice import validate_reply_wave
 sources = [
     ('qwen', 'Qwen theatrical reference · ghost joke', 'qwen-comparison-qwen2.wav'),
     ('mossqwen', 'MOSS using the synthetic Qwen reference · introduction', 'moss-qwen-reference-intro.wav'),
-    ('adam', 'MOSS Adam · introduction', 'character-adam-3.wav'),
-    ('supertonic', 'Supertonic M1 · introduction', 'character-supertonic-3.wav'),
 ]
+cached_samples = [
+    ('mossghost', 'MOSS original reference · ghost joke', 'moss-qwen-cached-ghost.wav'),
+    ('mossskeleton', 'MOSS original reference · skeleton joke', 'moss-qwen-cached-skeleton.wav'),
+]
+if all((samples / source[2]).is_file() for source in cached_samples):
+    sources.extend(cached_samples)
+self_samples = [
+    ('selfghost', 'MOSS self-reference · ghost joke', 'moss-self-cached-ghost.wav'),
+    ('selfskeleton', 'MOSS self-reference · skeleton joke', 'moss-self-cached-skeleton.wav'),
+]
+if len(sources) == 4 and all((samples / source[2]).is_file() for source in self_samples):
+    sources.extend(self_samples)
 items = []
 for key, label, name in sources:
     audio, rate = sf.read(samples / name, dtype='float64')
@@ -42,18 +52,28 @@ page = '''<!doctype html><html lang="en"><meta charset="utf-8">
 section{padding:1rem;margin:1rem 0;border:1px solid #a491ca;border-radius:.7rem}
 label{display:block;margin:1rem 0}audio{display:block;width:min(100%,34rem);margin-top:.4rem}</style>
 <h1>Can a local voice keep Skelly's character?</h1>
-<p>Start at low volume. The first recording is the theatrical Qwen ghost joke;
-the other recordings use the same introduction. Compare whether the local MOSS
-reference sounds like the same character, while remembering the words differ
-from the ghost joke. Average levels were matched by turning louder clips down.</p>
+<p>Start at low volume. Compare the Qwen ghost joke with the local MOSS samples,
+then listen to the introduction. Average levels were matched by turning louder
+clips down.</p>
 <p>The voice reference is a synthetic sample from Qwen's public demo, not a
-visitor's recording. MOSS generated the introduction locally. These are previews;
+visitor's recording. The optional MOSS self-reference uses its own locally
+generated introduction instead. These are previews;
 listen to the actual words before any use around children. This page only plays
 saved files; it does not open the microphone or connect to Skelly.</p>
 <section><h2>Reference voice</h2>
 <p>Why did the ghost wear glasses? To improve its spook tacles!</p>'''
-page += labels[0] + '</section><section><h2>Same introduction</h2>'
+page += labels[0] + (labels[2] if len(labels) > 2 else '') + (labels[4] if len(labels) > 4 else '')
+page += '</section><section><h2>MOSS introduction</h2>'
 page += '<p>I am Skelly, the friendly skeleton. Chief officer of silly Halloween jokes!</p>'
-page += ''.join(labels[1:]) + '</section></html>'
+page += labels[1] + '</section>'
+if len(labels) > 3:
+    page += '<section><h2>Another local MOSS joke</h2>'
+    page += '<p>Why did the skeleton skip the party? He had no body to go with!</p>'
+    if len(labels) > 5:
+        page += ('<p>An automatic speech check struggled with the self-reference '
+                 'version of this joke. Listen carefully to the actual words; '
+                 'automatic recognition can also make mistakes.</p>')
+    page += labels[3] + (labels[5] if len(labels) > 5 else '') + '</section>'
+page += '</html>'
 (samples / 'compare-voice-transfer.html').write_text(page, encoding='utf-8')
-print('Prepared four validated, matched-level voice-transfer previews.')
+print(f'Prepared {len(labels)} validated, matched-level voice-transfer previews.')

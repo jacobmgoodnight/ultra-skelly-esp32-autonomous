@@ -138,7 +138,41 @@ whether a lighter model may carry over that voice. It never records a visitor:
 ```
 
 The page at `/.skelly-build/voice-research/samples/compare-voice-transfer.html`
-compares the Qwen ghost-joke reference with three introductions; the reference
-has different words from the introductions. This is a listening experiment,
+compares the Qwen ghost-joke reference with a MOSS introduction; the reference
+has different words from the introduction. Additional same-text jokes appear
+when the cached-reference samples below exist. This is a listening experiment,
 not a conversation integration. Review actual speech and model timing before
 drawing conclusions about voice matching or live use.
+
+After the preceding experiment prepares its fixed synthetic reference, this
+separate probe keeps the reference's encoding in memory and times three
+approved phrases:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-moss-cached-qwen.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-moss-cached-qwen.py --self-reference
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-voice-transfer-comparison.py
+```
+
+This is not a persistent name or visitor cache and is not connected to the
+conversation companion. The probe uses an isolated method override to avoid
+re-encoding the one known synthetic reference. It measures complete generated
+WAVs, not browser or Bluetooth playback, and reduces gain before writing if the
+returned floating-point audio would otherwise exceed full scale. The page then
+includes additional same-text ghost and skeleton joke samples, including an
+optional reference made from MOSS's own synthetic introduction. No visitor
+recording or name is used. Automatic recognition had trouble with one
+self-reference sample, so review its actual words carefully.
+
+With the existing local Whisper, Piper and conversation assets installed, this
+separate synthetic probe measures three direct-topic turns after preparing the
+same reference. It creates its own locally synthesized input and opens no mic:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/synthetic-turn-moss-matrix.py
+```
+
+The probe declines to synthesize when its direct-topic check fails; it does not
+exercise the companion's ambiguous-topic Qwen fallback. Its timing starts after
+the input WAV exists and ends after a validated reply WAV, so it is not a real
+spoken-turn or first-audible-output measurement.
