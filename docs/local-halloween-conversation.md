@@ -105,6 +105,14 @@ executable path. The default is ElevenLabs' documented George voice; an optional
 `-VoiceId` parameter selects another available voice ID. The free API and website
 may offer different voice access.
 
+The launcher rejects keys containing whitespace or unsupported characters
+without printing them. When it starts, the companion says whether it received
+and accepted the key's format; this does not contact ElevenLabs or verify the
+key. **Check local engine** shows whether a key is missing or a local format was
+rejected. If the terminal says the key format was accepted but the page says a
+key was not received, an older or different companion may be serving the page;
+stop it, then start the launcher again. Never paste a key into chat.
+
 Open the conversation page, refresh, click **Check local engine**, then select
 **ElevenLabs v3 · online**. A configured key is not proof of valid credentials or
 an available balance. Each explicit Talk may consume credits; stopping a browser

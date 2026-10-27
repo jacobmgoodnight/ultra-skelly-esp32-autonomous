@@ -27,6 +27,12 @@ test('online voice requires configuration and sends its selection only for an ex
  assert.equal(p.nodes.engine.disabled,true);const pending=p.turn.options.request(new Blob(['audio']),new AbortController().signal);
  assert.equal(p.requests[1].options.headers['X-Skelly-Voice'],'elevenlabs');p.requests[1].resolve({ok:true,value:{}});await pending;
 });
+test('the online setup reason is visible without making an online request',async()=>{
+ for(const [reason,message] of [['missing_key',/not received/],['invalid_key',/format was rejected/],['invalid_voice_id',/voice ID format/]]){
+  const p=fixture(),check=p.nodes.check.onclick();p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only',elevenlabs:false,elevenlabsSetup:reason}});await check;
+  assert.equal(p.nodes.cloudVoiceOption.disabled,true);assert.match(p.nodes.voiceSource.textContent,message);assert.equal(p.requests.length,1);
+ }
+});
 test('late service checks cannot rearm Talk after Stop or hidden page',async()=>{
  for(const mode of ['stop','hide']){
   const p=fixture(),check=p.nodes.check.onclick();p.nodes.attending.checked=true;if(mode==='stop')p.nodes.stop.onclick();else{p.document.hidden=true;p.events.visibilitychange();}
