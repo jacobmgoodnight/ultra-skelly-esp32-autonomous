@@ -14,8 +14,9 @@ output = root / 'samples/qwen-spooky-1-raw.wav'
 log = root / 'qwen-spooky-1.log'
 metrics_path = root / 'qwen-spooky-1-metrics.json'
 phrase = 'Why did the ghost wear glasses? To improve its spook tacles!'
-direction = ('A deep, slightly gravelly male voice for a friendly animated skeleton, '
-             'mischievous and theatrical, clear English, playful spooky storyteller.')
+direction = ('A deep resonant raspy male voice for a theatrical Halloween skeleton, '
+             'mischievous and playfully sinister, with suspenseful pauses and a gleeful '
+             'punchline; clear American English, spooky but family friendly.')
 start_free = psutil.virtual_memory().available
 if start_free < 4.5 * 1024**3:
     raise SystemExit('Preview not started: less than 4.5 GiB of available system memory.')

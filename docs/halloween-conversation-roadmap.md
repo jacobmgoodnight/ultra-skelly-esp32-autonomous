@@ -59,13 +59,15 @@ use remains an experiment, not a guarantee.
 October 27 owner report: Supertonic sounded better than Piper Joe, and the jaw
 followed the prepared Supertonic samples. Later the owner preferred MOSS Adam to
 Nathan, but said none of the Adam/Supertonic preset comparison sounded like the
-desired Skelly character. The character choice remains open. Qwen3-TTS
-VoiceDesign is the next prerecorded-voice candidate because it accepts a voice
-description; its first local loading attempt stopped under memory pressure, so
-there is no local synthesis-speed result yet. Three optional previews from Qwen's
-public demo are ready for listening, using fixed text and no visitor data. This
-feedback does not establish a MOSS or Qwen jaw result, live conversation or
-full-turn timing for any new model.
+desired Skelly character. Qwen3-TTS VoiceDesign accepts a voice description; the
+owner subsequently said the theatrical/mischievous fixed-text sample generated
+by Qwen's public demo sounded best so far, and its jaw followed. A compact local
+CPU version then generated that joke in one 18.83-second process run; its
+reported 13.63-second synthesis exceeds the current 10-second synthesis bound.
+The owner said the online performance was more expressive; the local sample was
+definitely better than Supertonic M1 and probably better than Adam, and its jaw
+followed. Other Qwen phrases, live conversation, full-turn timing and a MOSS jaw
+result remain unreported.
 
 For a more detailed comparison, use the existing page, with the ESP32
 including USB unplugged and other control apps disconnected. Set Windows output

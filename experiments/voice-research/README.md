@@ -122,6 +122,23 @@ existing Adam/Supertonic comparison clips are present, prepare the local page:
 Open `/.skelly-build/voice-research/samples/compare-qwen-design.html` from the
 loopback server. The preparation resamples and validates the WAV containers,
 enforces the existing eight-second bound, and matches average level by turning
-down louder clips. It does not verify the spoken content or characterize the
+down louder clips. When the bounded local CPU run has produced
+`samples/qwen-spooky-1-raw.wav`, the page also adds that local theatrical
+preview for comparison. It does not verify the spoken content or characterize the
 actual voice. The online demo is separate from local inference and may change
 or become unavailable.
+
+With the previously installed MOSS dependencies and the locally saved,
+synthetic Qwen theatrical sample, the following one-phrase experiment tests
+whether a lighter model may carry over that voice. It never records a visitor:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-moss-qwen.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-voice-transfer-comparison.py
+```
+
+The page at `/.skelly-build/voice-research/samples/compare-voice-transfer.html`
+compares the Qwen ghost-joke reference with three introductions; the reference
+has different words from the introductions. This is a listening experiment,
+not a conversation integration. Review actual speech and model timing before
+drawing conclusions about voice matching or live use.
