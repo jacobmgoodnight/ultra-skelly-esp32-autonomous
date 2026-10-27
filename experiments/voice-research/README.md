@@ -63,3 +63,17 @@ or oversized audio, and writes everything under ignored `.skelly-build`. Open
 `/.skelly-build/voice-research/samples/compare-three.html` from the loopback
 static server to compare the three models. Review words and voice before using
 any generated sample around children.
+
+To also compare the MOSS Adam preset and MOSS using a **synthetic** Supertonic
+M1 reference (never visitor audio), first generate the Supertonic samples as
+above, then run:
+
+```powershell
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/benchmark-moss-options.py
+.skelly-build/voice-research-env/Scripts/python.exe experiments/voice-research/prepare-character-comparison.py
+```
+
+The reference is the existing generated Skelly introduction under ignored
+output. It is not a real person's recording. The extra samples and the page
+`/.skelly-build/voice-research/samples/compare-character.html` are also local
+previews, not automatically approved for the conversation system.

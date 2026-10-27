@@ -111,8 +111,9 @@ as a second CPU candidate: its authors document reference voices, streaming and
 an Apache-2.0 model. In an October 27 software-only test on this machine, a
 resident model generated the three comparison replies in 7.04–8.53 seconds;
 the process used up to 1,734 MiB. Its 48 kHz stereo output was downmixed and
-resampled into validated 22.05 kHz mono WAVs. Its voice quality, complete live
-conversation, first audible sound and jaw response have not been reported. An
+resampled into validated 22.05 kHz mono WAVs. The owner said the Nathan preset
+sounds natural but does not suit Skelly; live conversation, first audible sound
+and jaw response have not been reported. An
 authorized or appropriately licensed reference is required for voice copying.
 
 [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) is another candidate for
