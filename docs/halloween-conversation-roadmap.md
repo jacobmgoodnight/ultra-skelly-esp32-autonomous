@@ -108,6 +108,14 @@ resampling for the current 22.05 kHz mono contract. Its voice quality, resource
 use, complete generation and speed on this machine remain untested. An
 authorized or appropriately licensed reference is required for voice copying.
 
+[OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) is another candidate for
+preparing a few character performances: its documentation describes voice
+attributes including whisper and a laughter marker. Its 0.6B model's speed and
+quality on this computer are untested, and its pretrained weights use a
+noncommercial license even though its code is Apache-2.0. That distinction
+matters if the project is later distributed or used commercially. Compare it
+with Qwen3 VoiceDesign only if the owner wants to try a heavier offline model.
+
 **Exit:** one selected live voice is clearly preferable in listening tests,
 produces correct and intelligible reviewed lines, fits existing bounds, and
 works in repeated software tests. Otherwise keep Piper and pursue recordings.
