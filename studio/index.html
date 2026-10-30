@@ -13,10 +13,10 @@
 <script src="./serial.js?v=375802e81edf" defer></script>
 <script src="./app.js?v=d607f391c77d" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
-<script src="./scenes.js?v=77ee2c326c6b" defer></script>
+<script src="./scenes.js?v=40d265784548" defer></script>
 <script src="./looks.js?v=55dee1d1c002" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
-<script src="./controller-state.js?v=5cecd4485eb0" defer></script>
+<script src="./controller-state.js?v=5397557df793" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
 <script src="./audio-prep.js?v=460944ee3d5f" defer></script>
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
@@ -33,7 +33,7 @@
 <section class="hero">
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
   <h1>Make your Skelly<br><em>come alive.</em></h1>
-  <p>Choose movements, eyes and lights for your Skelly. Save them to an ESP32 over USB, then let it run the routine on its own.</p>
+  <p>Choose a personality, customize movement, eyes and lighting, then connect and save to your ESP32 over USB. Watch Skelly to verify the result.</p>
   <div class="chips"><span>Runs on its own after setup</span><span>No Wi-Fi or account</span><span>Custom movement, eyes &amp; lights</span></div>
 </section>
 <nav class="studio-nav" aria-label="Studio sections">
@@ -43,8 +43,8 @@
 <main class="layout">
   <p id="deviceWarning" class="notice" role="status" hidden>Experimental — Not Hardware Tested. Experimental support for the 2026 app-controlled 12-foot Skelly. This model has not been physically tested with this controller. Start with head-only movement and verify each feature carefully. Audio/jaw is disabled; only chest lighting channel 0 is used.</p>
   <div class="controls">
-    <details class="panel fold-panel" id="first-run" open>
-      <summary><span><small>START HERE</small><strong>Your first autonomous routine</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
+    <details class="panel fold-panel" id="first-run">
+      <summary><span><small>NEW HERE?</small><strong>First-time setup &amp; tips</strong></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
       <p id="firstRunIntro">Choose Subtle for a spooky head turn every 1–2 minutes. No wiring to the prop is needed.</p>
       <p id="firstRunDevice" class="small-description">Use a 6.5-foot Ultra Skelly v2 and an original ESP32-WROOM. Other models are unverified.</p>
       <p><a data-browser-install class="install-link" href="./install.html">First time? Install firmware →</a></p>
@@ -164,7 +164,7 @@
     <section class="panel controller-panel" id="controllerPanel" aria-labelledby="controllerTitle" tabindex="-1">
       <div class="section-head"><div><span class="step">USB</span><h2 id="controllerTitle">Connect &amp; save</h2></div></div>
       <p class="small-description">Edits above stay in this browser until you save to the ESP32. Once saved, your routine runs without the computer.</p>
-      <ol class="controller-progress" aria-label="Save workflow"><li id="controllerStepConnect" aria-current="step">Connect</li><li id="controllerStepRead">Read</li><li id="controllerStepSave">Save</li><li id="controllerStepDone">Verified</li></ol>
+      <ol class="controller-progress" aria-label="Save workflow"><li id="controllerStepConnect" aria-current="step">Connect</li><li id="controllerStepRead">Read</li><li id="controllerStepSave">Save</li><li id="controllerStepDone">Read-back</li></ol>
       <p id="controllerMessage" role="status" aria-live="polite" data-state="info">Connect your ESP32 to read or save settings.</p>
       <p id="controllerNext" class="controller-next">Next: connect your ESP32 with a USB data cable.</p>
       <div class="controller-before-save">
@@ -189,11 +189,11 @@
       </div>
       <section class="controller-step" aria-labelledby="saveHeading"><h3 id="saveHeading">3 · Save your changes</h3>
       <p class="small-description" id="controllerRoutineHelp">Save this routine sends the settings in the editor above. You don’t need to create a scene.</p>
-      <p id="deviceSaveStatus" class="save-comparison" role="status">ESP32 · connect and read to compare</p>
+      <p id="deviceSaveStatus" class="save-comparison" role="status">Editing locally · connect and read to compare ESP32 settings</p>
       <div class="error" id="error" role="alert" tabindex="-1" hidden></div>
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
       <button id="controllerWrite" class="controller-save" type="button" aria-describedby="controllerRoutineHelp deviceSaveStatus error" disabled>Save this routine</button>
-      <p class="small-description">Wait for <strong>read-back verified</strong> before unplugging.</p>
+      <p class="small-description">Wait for <strong>read-back verified</strong> before unplugging. Then watch Skelly while attended to verify movement, eyes and lights.</p>
       <details class="instructions controller-optional"><summary>Optional · save a scene collection</summary><p>Scenes saved in Scene builder stay in this browser. Use this action to replace the ESP32’s program with that saved collection, including its scene order. Unfinished editor changes are excluded.</p><button id="controllerScenes" type="button" disabled>Save scene collection</button></details>
       </section>
       <details class="instructions" id="controllerSetup"><summary>First-time setup · install firmware once</summary>
