@@ -92,7 +92,7 @@
     if(!state.capable)return {step:'Connect',action:null,hint:'Next: open First-time setup below to install compatible universal firmware.'};
     if(state.tone==='error'&&/updated universal firmware/.test(state.message))return {step:'Connect',action:null,hint:'Next: open First-time setup below to update universal firmware, then reconnect.'};
     if(state.tone==='error'&&/Save was not verified|checksum mismatch/.test(state.message)||/Firmware defaults restored/.test(state.message))return {step:'Read',action:'controllerRead',hint:'Next: read saved settings to check what is on the ESP32 before saving again.'};
-    if(verified&&state.tone!=='error')return {step:'Done',action:null,hint:'You can disconnect USB. The ESP32 will keep running the saved program.'};
+    if(verified&&state.tone!=='error')return {step:'Done',action:null,hint:'You can disconnect USB. Keep the ESP32 powered.'};
     if(!reviewed&&!consent)return {step:'Read',action:'controllerRead',hint:'Next: read saved settings before editing an existing setup. For a new routine, continue to Save below.'};
     return {step:'Save',action:valid?'controllerWrite':null,hint:!valid?'Fix the highlighted settings below before saving this routine.':consent?'Next: Save this routine to the ESP32.':'Next: check replacement consent, then Save this routine.'};
   }

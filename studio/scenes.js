@@ -36,12 +36,12 @@
     }
     function wireKey(program){return JSON.stringify(window.SkellyRuntime.encode(program.scenes,program.rotate,g.validate,program.random));}
     function renderDevice(){
-      let text=!usbPort?'ESP32 · connect and read to compare':'ESP32 · read saved settings to compare';
+      let text=!usbPort?'Editing locally · connect and read to compare ESP32 settings':'Editing locally · read saved settings to compare with ESP32';
       let tone='info';
       if(verified){
         try{
           const matches=verified.kind==='routine'?wireKey({...verified.program,scenes:[{...verified.program.scenes[0],config:g.readConfig()}]})===verified.key:wireKey(library.program())===verified.key;
-          text=matches?(verified.kind==='routine'?'ESP32 · current routine matches verified settings':'ESP32 · scene library matches verified settings'):'ESP32 · changes have not been sent';
+          text=matches?(verified.kind==='routine'?'ESP32 · current routine matches verified settings':'ESP32 · scene library matches verified settings'):'Unsaved to ESP32 · changes have not been sent';
           if(matches&&verified.kind!=='routine'&&dirty())text='ESP32 · library verified; editor changes are not in it';
           tone=matches&&(verified.kind==='routine'||!dirty())?'ready':'changed';
         }catch(_){text='ESP32 · editor changes have not been sent';tone='changed';}

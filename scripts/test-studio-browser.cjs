@@ -87,7 +87,21 @@ async function main(){
     for(const [name,width,height] of [['desktop',1440,1000],['tablet',768,1024],['mobile',390,844],['narrow',320,740]]){
       await run('responsive, navigation and focus · '+name,async page=>{
         await noOverflow(page);
+        assert.equal(await page.locator('#first-run').evaluate(el=>el.open),false);
+        assert.match(await page.locator('#deviceSaveStatus').textContent(),/Editing locally.*connect and read/);
+        assert.equal(await page.locator('#combinedMovement').evaluate(el=>el.open),false);
+        assert.match(await page.locator('#combinedMovementStatus').textContent(),/Off/);
+        await page.locator('[data-preset="haunted"]').click();
+        assert.match(await page.locator('#combinedMovementStatus').textContent(),/On/);
+        await page.locator('#combinedMovement > summary').click();
+        assert.equal(await page.locator('#compoundEnabled').isChecked(),true);
+        const bounds=await page.locator('#combinedMovement').evaluate(el=>({bottom:el.getBoundingClientRect().bottom,next:el.parentElement.getBoundingClientRect().bottom}));
+        assert.ok(bounds.bottom<=bounds.next+1,'Expanded movement controls remain inside their section');
+        await page.locator('[data-preset="normal"]').click();
+        await page.locator('#combinedMovement > summary').click();
+        await page.evaluate(()=>window.scrollTo(0,0));
         if(['desktop','mobile'].includes(name))await page.screenshot({path:path.join(artifacts,'after-'+name+'.png')});
+        await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#eyeGrid input').length===20);
         // First Tab exposes a skip link and Enter moves focus past the masthead.
         await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.className),'skip-link');
         await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'personality');
@@ -130,14 +144,16 @@ async function main(){
       await connect(page);assert.equal(await page.locator('#controllerRead').getAttribute('data-recommended'),'true');assert.equal(await page.evaluate(()=>mockUsb.commands.some(c=>c.includes(' CFG GET '))),false);
       await page.locator('#controllerRead').click();await page.locator('#sceneImportDialog button[value="replace"]').click();await message(page,/Read 1 saved/);assert.match(await page.locator('#controllerNext').textContent(),/replacement consent/);
       await save(page);await page.waitForFunction(()=>document.querySelector('#controllerStepDone').getAttribute('aria-current')==='step');await page.waitForFunction(()=>{const r=document.querySelector('#controllerMessage').getBoundingClientRect();return r.top>=document.querySelector('.studio-nav').getBoundingClientRect().bottom&&r.bottom<=innerHeight;});
+      assert.match(await page.locator('#controllerStepDone').textContent(),/Read-back/);
+      assert.match(await page.locator('#controllerMessage').textContent(),/Watch Skelly to confirm/);
       await page.locator('#controllerPanel').screenshot({path:path.join(artifacts,'verified-save-'+width+'.png'),style:'.studio-nav,.skip-link{visibility:hidden!important}'});
-      await nav(page,'#movement');await page.locator('#headMin').fill('120');assert.equal(await page.locator('#controllerStepSave').getAttribute('aria-current'),'step');
+      await nav(page,'#movement');await page.locator('#headMin').fill('120');assert.equal(await page.locator('#controllerStepSave').getAttribute('aria-current'),'step');assert.match(await page.locator('#deviceSaveStatus').textContent(),/Unsaved to ESP32/);
       await noOverflow(page);
     },{width,height:width===1440?1000:844});
 
     await run('beginner · find installation, configure and verify a simulated save',async page=>{
       assert.match(await page.locator('.hero p').textContent(),/ESP32 over USB/);
-      await page.locator('[data-browser-install]').click();assert.match(page.url(),/install\.html$/);
+      await page.locator('#first-run > summary').click();await page.locator('[data-browser-install]').click();assert.match(page.url(),/install\.html$/);
       assert.match(await page.locator('h1').textContent(),/Set up your ESP32/);
       await page.locator('#prepareInstall').click();assert.match(await page.locator('#installerStatus').textContent(),/Confirm the board/);
       assert.equal(await page.evaluate(()=>mockUsb.opens),0);

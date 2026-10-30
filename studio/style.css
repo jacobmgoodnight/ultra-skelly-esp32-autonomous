@@ -326,6 +326,8 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 .controller-progress li[data-state=complete]{border-color:var(--green)}
 .controller-progress li[aria-current]{border-color:var(--purple);color:var(--text);font-weight:700}
 .controller-next{font-size:13px;color:#e0cffb;line-height:1.6;margin:12px 0}
+#combinedMovement>summary{min-height:44px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+#combinedMovementStatus{color:var(--muted);font-weight:600}
 .controller-before-save{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px}
 .controller-before-save>.controller-step{min-width:0}
 .controller-step{padding:16px 0;border-top:1px solid var(--line)}
