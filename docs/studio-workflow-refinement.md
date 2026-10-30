@@ -7,8 +7,7 @@ Connect & save already existed; they remain in place.
 
 The opening now describes the journey from personality through customization,
 USB save and visual verification. First-time setup remains available in a compact
-disclosure. Combined body movement settings are grouped under Advanced within
-Movement, with their On/Off state visible even when collapsed. The ESP32 comparison
+disclosure. The ESP32 comparison
 calls out local editing and changes not yet sent when it has a verified baseline.
 The final USB milestone is labeled Read-back, and the save guidance asks the user
 to observe the prop separately. No USB command, firmware setting or format changed.

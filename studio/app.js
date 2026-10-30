@@ -671,8 +671,7 @@
     }
     byId('deviceWarning').hidden=!experimental;
     for(const id of ['armEnabled','torsoEnabled'])byId(id).closest('.movement-block').hidden=experimental;
-    byId('combinedMovement').hidden=experimental;
-    byId('combinedMovementStatus').textContent=c.compoundEnabled?'· On':'· Off';
+    byId('compoundEnabled').closest('.eye-sync-control').hidden=experimental;
     byId('mouth').hidden=experimental;
     byId('audioScenes').hidden=experimental;
     byId('headLightTitle').closest('section').hidden=experimental;

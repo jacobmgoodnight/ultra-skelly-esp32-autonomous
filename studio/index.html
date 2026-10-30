@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=7917274a0a33">
+<link rel="stylesheet" href="./style.css?v=4417f12effa8">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=63da65c09f7c" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=375802e81edf" defer></script>
-<script src="./app.js?v=acca92b6c598" defer></script>
+<script src="./app.js?v=d607f391c77d" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=40d265784548" defer></script>
 <script src="./looks.js?v=55dee1d1c002" defer></script>
@@ -74,10 +74,9 @@
         <div class="movement-top"><div class="movement-label"><span class="movement-icon movement-demo arm-demo" data-motion-for="armEnabled" aria-hidden="true"><svg viewBox="0 0 64 52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 11h8M13 8v6"/><g class="demo-moving"><circle cx="23" cy="12" r="3"/><path d="m25 14 9 12-3 2-9-12m12 10 8-9 3 3-10 11-4-3m11-11 1-5 3-5m-2 9 6-8m-4 10 7-6m-6 8 7-4m-7 5 5-1"/></g></svg></span><div><strong>Arm movement</strong><small>Two motions over about 22 seconds</small></div></div><label class="switch"><input type="checkbox" id="armEnabled" checked><span></span><span class="sr-only">Enable arm movement</span></label></div>
         <div class="frequency" data-for="armEnabled"><label>Start every <input id="armMin" type="number" min="45" max="3600" value="150" inputmode="numeric" aria-label="Arm minimum seconds"> to <input id="armMax" type="number" min="45" max="3600" value="240" inputmode="numeric" aria-label="Arm maximum seconds"> seconds</label></div>
       </div>
-      <details class="instructions" id="combinedMovement"><summary>Advanced · combined body movements <span id="combinedMovementStatus">· Off</span></summary>
       <div class="eye-sync-control" style="margin:18px 0">
         <div class="movement-label"><span class="movement-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8v8m-7-5 7 3 7-3M8 21l4-5 4 5M3 5v4m-2-2h4m16 10v4m-2-2h4"/></svg></span><label class="freq-inline"><input id="compoundEnabled" type="checkbox"> <strong>Random combined body movements <span class="experimental">OPTIONAL</span></strong></label></div>
-        <p>Move selected motors together with one command. Waits for the current movement's full cooldown before starting. Interleaving combined and individual routines needs an attended hardware check.</p>
+        <p>Move selected motors together with one command. Waits for the current movement's full cooldown before starting.</p>
         <details class="instructions"><summary>Combination choices and timing</summary>
         <label><input id="compoundAlongside" type="checkbox" checked> Keep individual routines between combined actions</label>
         <label>Combined action every <input id="compoundMin" type="number" min="45" max="3600" value="240" aria-label="Combined movement minimum seconds"> to <input id="compoundMax" type="number" min="45" max="3600" value="600" aria-label="Combined movement maximum seconds"> seconds</label>
@@ -90,7 +89,7 @@
         </div>
         <p>If mouth is enabled, keep body protection ON and jaw-first reactions OFF.</p>
         </details>
-      </div></details>
+      </div>
     </section>
       <div class="appearance-editors" id="lookWorkspace">
     <details class="panel fold-panel" id="expressions" open><summary><span><strong>Eye expressions</strong><small id="eyesStatus">Off · preview your chosen expression</small></span><span class="fold-icon" aria-hidden="true">+</span></summary><div class="fold-content">
