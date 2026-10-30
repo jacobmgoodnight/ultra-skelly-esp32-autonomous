@@ -95,7 +95,7 @@ test('USB cancellation, blocked permission and failed opens offer recovery witho
 });
 test('replacement confirmation gates actual saves and successful read-back is shown even if status is unavailable',async()=>{
  const p=page({statusFails:true});try{
-  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerUsb.textContent,'Ready');assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');
+  await p.nodes.controllerConnect.onclick();assert.equal(p.nodes.controllerUsb.textContent,'Ready');assert.equal(p.nodes.controllerSkelly.textContent,'Unknown');assert.match(p.nodes.controllerSkellyHelp.textContent,/Wait for refresh.*reconnect USB/);
   await p.nodes.controllerWrite.onclick();assert.match(p.nodes.controllerMessage.textContent,/Confirm replacing/);assert.equal(p.session.operations.length,0);
   p.nodes.controllerConsent.checked=true;await p.nodes.controllerWrite.onclick();assert.deepEqual(p.session.operations,['write','read']);assert.match(p.nodes.controllerMessage.textContent,/read-back verified/);assert.equal(p.nodes.controllerMessage.dataset.state,'ready');
  }finally{await p.close();}

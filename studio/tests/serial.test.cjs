@@ -63,3 +63,12 @@ test('unplug/read failure releases the reader and closes the port',async()=>{
   const s=new Session({requestPort:async()=>port});await s.connect();await s.readTask;
   assert.equal(s.port,null);assert.equal(released,1);assert.equal(closed,1);assert.equal(s.error,'unplugged');
 });
+
+
+test('diagnostics exports only known numeric status fields, never arbitrary identifiers or raw serial text',()=>{
+ const s=new Session(null);
+ s.ingest(new TextEncoder().encode('visitor private text AA:BB:CC:DD:EE:FF\nUSB STATUS v2 connected=1 scene=0 firmware=5 build=2026102401 wait=2 visitor=123456 address=987654 failures=1\n'));
+ const result=s.diagnostics(), json=JSON.stringify(result);
+ assert.equal(result.controller.connected,1);assert.equal(result.controller.firmware,5);assert.equal(result.controller.wait,2);
+ assert.doesNotMatch(json,/visitor|address|123456|987654|AA:BB|private text/);
+});
