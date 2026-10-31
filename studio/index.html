@@ -22,6 +22,8 @@
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
 <script src="./controller.js?v=c1eec92ad883" defer></script>
+<script src="./character-director.js?v=25c070a9dc2a" defer></script>
+<script src="./character-preview.js?v=bc4e755bb894" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#personality">Skip to routine controls</a>
@@ -59,6 +61,11 @@
         <button class="preset chosen" type="button" data-preset="normal"><span class="preset-symbol">◈</span><b>Normal</b><small>Head + occasional arm</small></button>
         <button class="preset" type="button" data-preset="haunted"><span class="preset-symbol">✺</span><b>Haunted</b><small>A little more active</small></button>
       </div>
+      <details class="instructions" id="characterPreview" data-look-ui><summary>Rehearse a character</summary>
+        <p class="small-description">Illustration only: no sound or prop commands. Choose eyes and lighting below to create an autonomous look; this rehearsal does not change your settings.</p>
+        <label>Character <select><option value="friendly">Friendly Trick-or-Treater</option><option value="mischief">Mischievous Skeleton</option><option value="guardian">Haunted Guardian</option><option value="storyteller">Creepy Storyteller</option></select></label>
+        <button type="button">Preview performance</button><p role="status" aria-live="polite"></p>
+      </details>
     </section>
     <section class="panel" id="movement">
       <div class="section-head"><div><span class="step">02</span><h2>Body movement</h2></div><span class="tiny">Intervals are start-to-start</span></div>
