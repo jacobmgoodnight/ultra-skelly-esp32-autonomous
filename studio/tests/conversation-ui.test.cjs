@@ -46,3 +46,13 @@ test('local shutdown stops the turn and uses only the authenticated local endpoi
  const stopping=p.nodes.shutdown.onclick();assert.equal(p.requests[1].url,'/api/shutdown');assert.equal(p.requests[1].options.headers['X-Skelly-Token'],'test-only');assert.equal(p.turn.active,false);assert.equal(p.nodes.talk.disabled,true);
  p.requests[1].resolve({ok:true});await stopping;assert.match(p.nodes.service.textContent,/is stopping/);assert.equal(p.nodes.shutdown.disabled,true);
 });
+test('preview selects the local comparison mode without opening the microphone',async()=>{
+ const p=fixture(),check=p.nodes.check.onclick();p.requests[0].resolve({ok:true,value:{ready:true,token:'test-only'}});await check;
+ p.nodes.attending.checked=true;p.nodes.attending.onchange();let options;
+ p.turn.preview=value=>{options=value;};p.nodes.engine.value='fallback';p.nodes.engine.onchange();p.nodes.preview.onclick();
+ assert.equal(options.noPause,false);assert.ok(!p.calls.includes('unexpected mic'));
+ const request=p.turn.options.request(null,new AbortController().signal,true);assert.equal(p.requests[1].url,'/api/preview');
+ assert.equal(p.requests[1].options.headers['X-Skelly-Voice'],'fallback');p.requests[1].resolve({ok:true,value:{}});await request;
+ p.turn.replySource='Piper Joe · local neural voice';p.turn.options.onChange();assert.match(p.nodes.performance.textContent,/Piper Joe/);
+ p.nodes.engine.value='elevenlabs';p.nodes.engine.onchange();assert.equal(p.nodes.preview.disabled,true);
+});

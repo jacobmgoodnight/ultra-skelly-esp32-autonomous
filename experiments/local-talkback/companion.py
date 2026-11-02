@@ -18,6 +18,7 @@ from pathlib import Path
 from urllib.request import Request, build_opener, ProxyHandler
 from replies import TOPICS, REPLIES, ReplyDeck
 from voice import LocalVoice
+from recordings import Library, catalog_text
 from eleven_voice import ElevenVoice
 from eleven_worker import DEFAULT_VOICE
 
@@ -61,14 +62,19 @@ def generic_joke(transcript):
 
 
 def approved_reply(transcript, model_output, deck=None, include_name=True):
+    card, _, text = selected_reply(transcript, model_output, deck, include_name)
+    return card, text
+
+
+def selected_reply(transcript, model_output, deck=None, include_name=True):
     card = card_from_model(model_output)
     name = safe_name(transcript) if include_name else ''
     if deck is None:
-        text = REPLIES[card][0]
+        variant, text = 0, REPLIES[card][0]
     else:
-        card, _, text = deck.next_joke() if generic_joke(transcript) else deck.next(card)
+        card, variant, text = deck.next_joke() if generic_joke(transcript) else deck.next(card)
     # Neither transcript nor model output can enter the speech text here.
-    return card, ('Hi, ' + name + '! ' if name else '') + text
+    return card, variant, ('Hi, ' + name + '! ' if name else '') + text
 
 
 def validate_wave(data):
@@ -99,6 +105,7 @@ class Engines:
         self.process = None
         self.deck = ReplyDeck()
         self.voice = LocalVoice(TOOLS)
+        self.recordings = Library(ROOT / '.skelly-build' / 'reviewed-voice')
         self.eleven_voice = None
         if os.environ.get('SKELLY_ELEVENLABS_API_KEY'):
             try:
@@ -150,27 +157,45 @@ class Engines:
         return result['choices'][0]['message']['content']
 
     def respond(self, data, voice='local'):
-        if voice not in ('local', 'elevenlabs') or (voice == 'elevenlabs' and self.eleven_voice is None):
+        if voice not in ('local', 'fallback', 'elevenlabs') or (voice == 'elevenlabs' and self.eleven_voice is None):
             raise ValueError('Requested voice is unavailable.')
         validate_wave(data)
         with tempfile.TemporaryDirectory(prefix='skelly-conversation-') as folder:
             work = Path(folder)
-            source, output = work / 'input.wav', work / 'transcript'
-            source.write_bytes(data)
-            subprocess.run([str(self.whisper), '-m', str(TOOLS / 'ggml-tiny.en.bin'), '-f', str(source), '-l', 'en', '-t', '4', '-nt', '-np', '-otxt', '-of', str(output)], check=True, timeout=20, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-            text_path = output.with_suffix('.txt')
-            if not text_path.is_file() or text_path.stat().st_size > 4096:
+            # The pinned whisper-cli reads WAV bytes from stdin. An explicit
+            # non-dash output name keeps results on stdout; without -otxt no
+            # output file is opened. Visitor audio and transcripts stay in memory.
+            result = subprocess.run([str(self.whisper), '-m', str(TOOLS / 'ggml-tiny.en.bin'), '-f', '-', '-l', 'en', '-t', '4', '-nt', '-np', '-of', 'unused'], input=data, check=True, timeout=20, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            if len(result.stdout) > 4096:
                 raise ValueError('No usable phrase was recognized. Try again.')
-            transcript = text_path.read_text(encoding='utf-8').strip()[:500]
+            transcript = result.stdout.decode('utf-8', errors='replace').strip()[:500]
             if not transcript or not re.search('[a-zA-Z]', transcript):
                 raise ValueError('No usable phrase was recognized. Try again.')
             try:
                 model_output = self.choose(transcript)
             except Exception:
                 model_output = ''  # The reviewed friendly fallback topic bounds output.
-            card, text = approved_reply(transcript, model_output, self.deck, include_name=voice == 'local')
-            audio = (self.voice if voice == 'local' else self.eleven_voice).synthesize(text, work)
-            return {'card': card, 'text': text, 'audio': base64.b64encode(audio).decode('ascii')}
+            # Do not include names in synthesized temporary WAV/text files.
+            card, variant, text = selected_reply(transcript, model_output, self.deck, include_name=False)
+            return self.render_reply(card, variant, text, voice, work)
+
+    def render_reply(self, card, variant, text, voice, work):
+        recording = self.recordings.lookup_details(card, variant, text) if voice == 'local' else None
+        if recording is not None:
+            audio, voice_name = recording
+            source = 'Reviewed recording · ' + voice_name
+        else:
+            engine = self.eleven_voice if voice == 'elevenlabs' else self.voice
+            audio = engine.synthesize(text, work)
+            source = getattr(engine, 'label', 'Synthesized fallback')
+        return {'card': card, 'variant': variant, 'text': text, 'source': source,
+                'audio': base64.b64encode(audio).decode('ascii')}
+
+    def preview(self, voice):
+        if voice not in ('local', 'fallback'):
+            raise ValueError('Choose a local voice for preview.')
+        with tempfile.TemporaryDirectory(prefix='skelly-preview-') as folder:
+            return self.render_reply(1, 0, catalog_text(1, 0), voice, Path(folder))
 
 
 ASSETS = {'conversation.html', 'conversation.js', 'conversation-ui.js', 'style.css', 'talkback.js', 'talkback-auto.js'}
@@ -233,10 +258,24 @@ def make_handler(engines, port=8766):
                 self.send(200, b'{"stopping":true}')
                 threading.Thread(target=self.server.shutdown, daemon=True).start()
                 return
+            if self.path == '/api/preview':
+                if self.headers.get('Transfer-Encoding') or self.headers.get('Content-Length', '0') != '0':
+                    return self.send(400, b'{}')
+                if not busy.acquire(blocking=False):
+                    return self.send(409, b'{"error":"Another phrase is still processing. Wait, then try again."}')
+                try:
+                    result = engines.preview(self.headers.get('X-Skelly-Voice', 'local'))
+                    return self.send(200, json.dumps(result).encode())
+                except ValueError as error:
+                    return self.send(400, json.dumps({'error': str(error)}).encode())
+                except Exception:
+                    return self.send(503, b'{"error":"Preview failed or timed out. Check the local voice setup."}')
+                finally:
+                    busy.release()
             if self.path != '/api/reply' or self.headers.get('Content-Type') != 'audio/wav' or self.headers.get('Transfer-Encoding'):
                 return self.send(400, b'{}')
             voice = self.headers.get('X-Skelly-Voice', 'local')
-            if voice not in ('local', 'elevenlabs'):
+            if voice not in ('local', 'fallback', 'elevenlabs'):
                 return self.send(400, b'{}')
             if voice == 'elevenlabs' and getattr(engines, 'eleven_voice', None) is None:
                 return self.send(503, b'{"error":"ElevenLabs is not configured. Local voice is still available."}')

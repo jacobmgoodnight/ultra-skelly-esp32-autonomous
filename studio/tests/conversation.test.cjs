@@ -58,3 +58,13 @@ test('local response reader bounds streamed bytes before joining or parsing them
  await assert.rejects(readJSON(response,100),/exceeded/);assert.equal(cancelled,true);
  await assert.rejects(readJSON(new Response('not json')));
 });
+test('preview uses no microphone, respects Stop and preserves playback cooldown',async()=>{
+ const pending=deferred();let calls=0, played=0, now=0, turn;
+ const repeat={state:'idle',stop(){this.state='idle';},say(state){this.state=state;},play(){played++;this.state='playing';}};
+ turn=new Conversation({repeat,captureFactory:()=>{throw Error('preview opened microphone');},gateFactory:()=>{},encode:()=>{},visible:()=>true,now:()=>now,
+   request:(clip,signal,preview)=>{calls++;assert.equal(clip,null);assert.equal(preview,true);return pending.promise;}});
+ turn.preview();assert.equal(calls,1);assert.equal(turn.active,true);turn.stop();pending.resolve({...valid,source:'Reviewed recording · E'});await tick();assert.equal(played,0);
+ const second=deferred();turn.request=()=>second.promise;turn.preview();second.resolve({...valid,source:'Reviewed recording · E'});await tick();
+ assert.equal(played,1);assert.equal(turn.replySource,'Reviewed recording · E');turn.stop();assert.equal(turn.remaining,60);
+ turn.preview({noPause:true});assert.equal(played,1);now+=60000;
+});

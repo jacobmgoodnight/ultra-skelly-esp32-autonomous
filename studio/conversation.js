@@ -12,7 +12,7 @@
   function decodeReply(value){
     if(!value||!Number.isInteger(value.card)||value.card<0||value.card>=20||typeof value.text!=='string'||value.text.length>180||typeof value.audio!=='string'||value.audio.length>470460||!/^[A-Za-z0-9+/]*={0,2}$/.test(value.audio))throw Error('Invalid local reply. Nothing was played.');
     const binary=atob(value.audio);if(binary.length<=44||binary.length>MAX_REPLY_WAV)throw Error('Invalid local audio. Nothing was played.');
-    return {text:value.text,clip:new Blob([Uint8Array.from(binary,c=>c.charCodeAt(0))],{type:'audio/wav'})};
+    return {text:value.text,source:typeof value.source==='string'?value.source.slice(0,120):'Local reply',clip:new Blob([Uint8Array.from(binary,c=>c.charCodeAt(0))],{type:'audio/wav'})};
   }
   class Conversation{
     constructor({repeat,captureFactory,gateFactory,encode,request,onChange=()=>{},onLevel=()=>{},visible=()=>!document.hidden,now=()=>Date.now(),setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
@@ -23,7 +23,12 @@
     say(phase,message){this.phase=phase;this.message=message;this.onChange(this);}
     releaseCapture(){const capture=this.capture;this.capture=this.gate=null;capture?.stop();this.onLevel(0,0,'off');}
     stop(message='Stopped. Microphone off; phrase and reply forgotten.'){
-      ++this.generation;this.active=false;this.clearTimer(this.timer);this.timer=null;this.abort?.abort();this.abort=null;this.releaseCapture();this.repeat.stop();this.replyText='';this.say('idle',message);
+      ++this.generation;this.active=false;this.clearTimer(this.timer);this.timer=null;this.abort?.abort();this.abort=null;this.releaseCapture();this.repeat.stop();this.replyText='';this.replySource='';this.say('idle',message);
+    }
+    preview({noPause=false}={}){
+      if(this.active||this.remaining||!this.visible()||!['idle','ready','error'].includes(this.repeat.state))return;
+      this.stop();this.pauseForTurn=noPause===true?0:PAUSE_MS;this.active=true;
+      void this.respond(null,this.generation,true);
     }
     async start(threshold=.025,{noPause=false}={}){
       if(this.active||this.remaining||!this.visible()||!['idle','ready','error'].includes(this.repeat.state))return;
@@ -43,21 +48,21 @@
       if(!this.active||generation!==this.generation||!['calibrating','listening','capturing'].includes(this.phase))return;
       try{
         const result=this.gate.push(samples);this.onLevel(this.gate.level,this.gate.threshold,result.kind);
-        if(result.kind==='waiting'&&this.phase!=='listening')this.say('listening','Listening. Ask for a joke, say hello, or tell Skelly your first name.');
+        if(result.kind==='waiting'&&this.phase!=='listening')this.say('listening','Listening. Ask for a joke or say hello.');
         if(result.kind==='speech'&&this.phase!=='capturing')this.say('capturing','Capturing one phrase · maximum eight seconds.');
         if(result.kind!=='phrase')return;
         this.clearTimer(this.timer);this.timer=null;this.releaseCapture();
         void this.respond(this.encode(result.samples),generation);
       }catch(error){this.stop(error.message);}
     }
-    async respond(clip,generation){
+    async respond(clip,generation,preview=false){
       this.say('thinking','Microphone OFF. Choosing a family Halloween reply locally…');
       const abort=this.abort=new AbortController();this.timer=this.setTimer(()=>this.stop('Local reply timed out. Nothing played.'),45000);
       try{
-        const value=await this.request(clip,abort.signal);
+        const value=await this.request(clip,abort.signal,preview);
         if(generation!==this.generation||!this.active||!this.visible())return;
         const reply=decodeReply(value);this.clearTimer(this.timer);this.timer=null;this.abort=null;
-        this.replyText=reply.text;this.repeat.clip=reply.clip;this.repeat.say('ready','Approved local reply ready.');
+        this.replyText=reply.text;this.replySource=reply.source;this.repeat.clip=reply.clip;this.repeat.say('ready','Approved local reply ready.');
         // Preserve a conservative pause even if Stop interrupts playback.
         this.cooldownUntil=this.now()+15000+this.pauseForTurn;
         this.say('playing','Speaking an approved Halloween reply. Microphone OFF.');void this.repeat.play();
