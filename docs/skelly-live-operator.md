@@ -100,3 +100,18 @@ each pause and perform one guarded conversation turn. Finally follow the
 recovery procedure above and observe autonomous operation. Stop the trial for
 unexpected movement, feedback, incorrect speech, lost device selection, or
 failure to recover. Record physical observations separately from software logs.
+
+## Optional local startup checks
+
+After setup, these Windows checks start the actual local companion and model on
+isolated loopback ports, then verify that they shut down. They do not open a
+browser, microphone, speaker, or Bluetooth device. Close any application using
+ports 18776–18778 first; the checks refuse to start if those ports are occupied.
+
+```powershell
+& .\.skelly-build\voice-research-env\Scripts\python.exe tests/smoke_skelly_live_startup.py
+& .\.skelly-build\voice-research-env\Scripts\python.exe tests/smoke_skelly_live_launcher.py
+```
+
+Both should report `PASS`. These checks establish local software startup and
+shutdown only. They do not replace the attended speaker, jaw, or recovery checks.
