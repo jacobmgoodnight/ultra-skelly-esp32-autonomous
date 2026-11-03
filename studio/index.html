@@ -14,7 +14,7 @@
 <script src="./app.js?v=d607f391c77d" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
 <script src="./scenes.js?v=77ee2c326c6b" defer></script>
-<script src="./looks.js?v=55dee1d1c002" defer></script>
+<script src="./looks.js?v=1c72e2a2c19f" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=5cecd4485eb0" defer></script>
 <script src="./audio.js?v=3c79ada4d093" defer></script>
@@ -22,7 +22,7 @@
 <script src="./audio-prep-ui.js?v=a583d5bd2c89" defer></script>
 <script src="./audio-ui.js?v=0e6c4d673d54" defer></script>
 <script src="./controller.js?v=c1eec92ad883" defer></script>
-<script src="./character-director.js?v=25c070a9dc2a" defer></script>
+<script src="./character-director.js?v=6783546fe342" defer></script>
 <script src="./character-preview.js?v=bc4e755bb894" defer></script>
 </head>
 <body>
@@ -63,8 +63,9 @@
       </div>
       <details class="instructions" id="characterPreview" data-look-ui><summary>Rehearse a character</summary>
         <p class="small-description">Illustration only: no sound or prop commands. Choose eyes and lighting below to create an autonomous look; this rehearsal does not change your settings.</p>
-        <label>Character <select><option value="friendly">Friendly Trick-or-Treater</option><option value="mischief">Mischievous Skeleton</option><option value="guardian">Haunted Guardian</option><option value="storyteller">Creepy Storyteller</option></select></label>
+        <label>Character <select id="characterLookProfile"><option value="friendly">Friendly Trick-or-Treater</option><option value="mischief">Mischievous Skeleton</option><option value="guardian">Haunted Guardian</option><option value="storyteller">Creepy Storyteller</option></select></label>
         <button type="button">Preview performance</button><p role="status" aria-live="polite"></p>
+        <button id="characterLookApply" type="button">Apply character look to editor</button><p id="characterLookStatus" class="small-description" role="status">Optional starting point: enables one eye design and static lighting in this editor. Movement, mouth, safety timing and brightness stay as configured. Update or save the scene to keep it; no device command is sent.</p>
       </details>
     </section>
     <section class="panel" id="movement">
