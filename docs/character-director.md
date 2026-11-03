@@ -10,6 +10,8 @@ exact catalog text and any name again immediately before synthesis. It never
 speaks generated model text. The separately labeled **Open conversation** mode
 is the existing generated conversation experiment, not the family catalog.
 The selected reply mode is explicit and the previous open-mode default remains.
+Open mode retains its earlier, less restrictive first-name handling; use Family
+when spoken names must be limited to the reviewed allowlist.
 
 Choose **New visitor** to cancel the turn and clear the session. Family mode
 also recognizes a spoken “new visitor.” Its bounded memory retains intent
