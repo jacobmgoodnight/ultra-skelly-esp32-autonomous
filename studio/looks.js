@@ -5,12 +5,25 @@
   const LIGHT_KEYS=['lightsEnabled','torsoColor','headColor','torsoBrightness','headBrightness','lightRotation','lightInterval','lightPalettes','torsoEffect','headEffect','torsoSpeed','headSpeed',...Array.from({length:4},(_,i)=>['Name','Torso','Head'].map(p=>'palette'+i+p)).flat()];
   const NAMES=['Blue iris','Hazel iris','Green iris','Amber iris','Red iris','Silver iris','Yellow reptile','Orange reptile','Rainbow spiral','Flames','Star','Skull and crossbones','Blue vortex','American flag','Heart','Shamrock','Snowflake','Confetti'];
   const MAPPING=[14,15,16,17,0,0,18,1,2,3,4,5,6,7,8,9,10,11,12,13];
+  // Explicit editor starting points, not device commands or live-audio cues.
+  const CHARACTER_LOOKS=Object.freeze({
+    friendly:Object.freeze({eye:1,torso:'#ff6000',head:'#ffb000'}),
+    mischief:Object.freeze({eye:4,torso:'#ff6000',head:'#8000ff'}),
+    guardian:Object.freeze({eye:3,torso:'#176bff',head:'#00e6cc'}),
+    storyteller:Object.freeze({eye:2,torso:'#8000ff',head:'#c8e8ff'})
+  });
   const clone=v=>JSON.parse(JSON.stringify(v));
   function appearance(current,source,scope='appearance'){
     const keys=scope==='eyes'?EYE_KEYS:scope==='lights'?LIGHT_KEYS:scope==='appearance'?[...EYE_KEYS,...LIGHT_KEYS]:null;
     if(!keys)throw Error('Choose eyes, lighting or both.');
     if((current.deviceId??'ultra')!==(source.deviceId??'ultra'))throw Error('Copy a look from the same Skelly model.');
     return {...clone(current),...Object.fromEntries(keys.filter(k=>Object.hasOwn(source,k)).map(k=>[k,clone(source[k])]))};
+  }
+  function characterLook(current,profile){
+    if(!Object.hasOwn(CHARACTER_LOOKS,profile))throw Error('Choose a known character.');
+    const look=CHARACTER_LOOKS[profile];
+    return {...clone(current),eyesEnabled:true,eyeChoices:[look.eye],lightsEnabled:true,
+      lightRotation:false,torsoColor:look.torso,headColor:look.head,torsoEffect:1,headEffect:1};
   }
   function eyeName(id,device='ultra'){
     const image=device==='skelly12'?MAPPING[id-1]:id;
@@ -22,7 +35,7 @@
     // Browser strobe samples never exceed two flashes per second.
     return effect===2?1.6-1.1*fraction:4.5-3.7*fraction;
   }
-  const api={appearance,eyeName,previewPeriod,EYE_KEYS,LIGHT_KEYS};
+  const api={appearance,characterLook,eyeName,previewPeriod,EYE_KEYS,LIGHT_KEYS};
   if(typeof module!=='undefined')module.exports=api;
   if(typeof window==='undefined')return;window.SkellyLooks=api;
   document.addEventListener('DOMContentLoaded',()=>{
@@ -79,6 +92,14 @@
         const config=appearance(g.readConfig(),source.profile.config,el('appearanceCopyScope').value),errors=g.validate(config);
         if(errors.length)throw Error(errors.join(' '));g.writeConfig(config);el('appearanceCopyStatus').textContent='Copied '+el('appearanceCopyScope').selectedOptions[0].textContent.toLowerCase()+' from '+source.name+'. Update the current scene to keep it.';
       }catch(error){el('appearanceCopyStatus').textContent=error.message;}
+    };
+    el('characterLookApply').onclick=()=>{
+      try{
+        const config=characterLook(g.readConfig(),el('characterLookProfile').value),errors=g.validate(config);
+        if(errors.length)throw Error(errors.join(' '));
+        g.writeConfig(config);
+        el('characterLookStatus').textContent='Character look applied to this editor. Customize it, then update or save the scene to keep it.';
+      }catch(error){el('characterLookStatus').textContent=error.message;}
     };
     document.addEventListener('skelly-config-changed',render);
     document.addEventListener('skelly-scenes-changed',renderSources);

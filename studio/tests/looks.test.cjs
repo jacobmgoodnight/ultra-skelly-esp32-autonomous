@@ -1,6 +1,21 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const looks=require('../looks.js'),model=require('../scene-model.js'),runtime=require('../runtime.js');
 const context=vm.createContext({window:{}});for(const name of ['template.js','app.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+name,'utf8'),context);const g=context.window.SkellyStudioGenerator;
+test('character looks are explicit, valid editor starting points with safety and other settings preserved',()=>{
+ for(const deviceId of ['ultra','skelly12']){
+  const current=g.adaptDevice({...g.DEFAULTS,bleName:g.DEVICE_PROFILES[deviceId].bleName,headMin:130,headMax:190,torsoBrightness:79,headBrightness:88,lightRestoreMode:1},deviceId);
+  const before=JSON.stringify(current);
+  for(const profile of ['friendly','mischief','guardian','storyteller']){
+   const result=looks.characterLook(current,profile);
+   assert.equal(g.validate(result).length,0);
+   assert.equal(result.eyesEnabled,true);assert.equal(result.lightsEnabled,true);
+   assert.equal(result.eyeChoices.length,1);assert.equal(result.lightRotation,false);
+   for(const key of Object.keys(current))if(!['eyesEnabled','eyeChoices','lightsEnabled','lightRotation','torsoColor','headColor','torsoEffect','headEffect'].includes(key))assert.deepEqual(result[key],JSON.parse(JSON.stringify(current[key])),key);
+  }
+  assert.equal(JSON.stringify(current),before);
+ }
+ assert.throws(()=>looks.characterLook(g.DEFAULTS,'__proto__'),/known character/);
+});
 test('scoped copying keeps motor, mouth, restoration and connection fields on the current scene',()=>{
  const current={...g.DEFAULTS,jawEnabled:true,jawProtectBody:true,eyeJawMode:1,lightRestoreMode:1,clockEnabled:true,clockStart:100,headMin:81,headMax:130};
  const source=model.starter('haunted',g).profile.config,before=JSON.stringify(current),sourceBefore=JSON.stringify(source);
