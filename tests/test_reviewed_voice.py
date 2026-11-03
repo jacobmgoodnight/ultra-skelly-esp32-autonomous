@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/local-talkback'))
 import companion
 from recordings import Library, catalog_text
-from review_library import stage, approve, STARTER
+from review_library import stage, approve, review_page, STARTER
 
 
 def sample():
@@ -68,6 +68,17 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(len(STARTER), 16)
         self.assertEqual(len(set(STARTER)), 16)
         self.assertTrue(all(catalog_text(*pair) for pair in STARTER))
+
+    def test_review_page_is_local_escaped_and_does_not_approve(self):
+        stage(self.library, 1, 0, self.source, '<script>bad</script>', 'playful')
+        page = review_page(self.library).read_text(encoding='utf-8')
+        self.assertIn('&lt;script&gt;bad&lt;/script&gt;', page)
+        self.assertNotIn('<script>bad</script>', page)
+        self.assertIn('src="1-0.wav"', page)
+        self.assertIn(catalog_text(1, 0), page)
+        self.assertIsNone(self.library.lookup(1, 0, catalog_text(1, 0)))
+        (self.library.directory / '1-0.wav').write_bytes(b'damaged')
+        with self.assertRaises(ValueError): review_page(self.library)
 
     def test_route_exact_ids_and_fallback(self):
         self.make_approved(3, 1)

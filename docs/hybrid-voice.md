@@ -95,9 +95,12 @@ visitor audio into this library.
 
 ## Listen and approve each exact file
 
-1. Run `python experiments/local-talkback/review_library.py list` and identify
-   the topic, variant, expected text, filename and `audio_sha256` of an
-   **unreviewed** entry. Open the staged WAV in a local player and listen to the
+1. Run `python experiments/local-talkback/review_library.py review-page` and
+   open the displayed local HTML file to compare the complete recordings with
+   their expected text, review status and hashes. Regenerate the page after any
+   library change; opening it does not approve anything. Alternatively, run
+   `python experiments/local-talkback/review_library.py list` and open the staged
+   WAV in a local player. For each **unreviewed** entry, listen to the
    **entire** recording, including its beginning and ending, while reading the
    exact text. Reject omissions, additions, unclear words, clipping or an
    unsuitable performance. Automated transcription and a valid WAV are not
