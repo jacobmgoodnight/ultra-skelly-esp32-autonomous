@@ -21,6 +21,19 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
+Character Director software checks cover the family catalog/name boundary,
+session reset and cancellation, opt-in local events, preview state transitions,
+and Live UI mode/older-companion safeguards. No physical test is implied:
+
+```sh
+python tests/test_family_conversation.py
+node --test studio/tests/character-director.test.cjs studio/tests/character-events.test.cjs studio/tests/character-preview.test.cjs tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs
+```
+
+The Python family check needs NumPy and SciPy from the local Live environment;
+it mocks recognition, synthesis and providers. For attended acceptance and the
+manual return to autonomy, see [Character Director](character-director.md).
+
 The [experimental 12-foot profile](experimental-12ft.md) adds browser-model tests
 for legacy imports, model-specific exports, restricted presets/starters, mixed-model
 scene rejection and USB round trips. The native runner executes fixed and runtime

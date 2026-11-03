@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
+<title>Optional cloud setup · Skelly</title><link rel="stylesheet" href="./style.css"><script src="./cloud-setup.js" defer></script></head>
+<body><div class="shell"><header class="mast"><span class="brand">Skelly experiments</span><span class="experimental">Session-only setup</span></header>
+<main><section class="panel"><h1>Optional cloud setup</h1>
+<p>Keys go directly to this laptop’s companion and stay in its memory until it stops. This page writes no credential file or browser storage. Fields clear after submission. Local conversation and voice remain the defaults.</p>
+<p>Leave a key blank to skip that service or keep its current session configuration. Setup checks format only and makes no provider request. Your provider’s free quota, billing and account terms still apply when you later select a cloud service.</p>
+<form id="cloudSetup" autocomplete="off" method="post" action="/api/cloud-configure">
+<fieldset><legend>Claude · optional conversation</legend>
+<label for="anthropicKey">Anthropic API key <input id="anthropicKey" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" maxlength="2048"></label>
+<label for="anthropicModel">Conversation model <select id="anthropicModel"><option value="claude-haiku-5-5">Haiku 5.5</option><option value="claude-sonnet-5-5">Sonnet 5.5</option></select></label></fieldset>
+<fieldset><legend>ElevenLabs · optional voice</legend>
+<label for="elevenlabsKey">ElevenLabs API key <input id="elevenlabsKey" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" maxlength="512"></label>
+<label for="elevenlabsVoiceId">Chosen voice ID <input id="elevenlabsVoiceId" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="50"></label>
+<label for="elevenlabsModel">Speech model <select id="elevenlabsModel"><option value="eleven_v3">Eleven v3 · expressive</option><option value="eleven_v4">Eleven v4</option></select></label></fieldset>
+<button id="configure" type="submit" disabled>Connect for this session</button></form>
+<p id="setupStatus" role="status" aria-live="polite">Checking the local companion. No provider is being contacted.</p>
+<p>After connecting, return to the conversation page, check the local engine, and explicitly select and allow your chosen cloud service. Restarting the companion discards these keys.</p>
+<p><a href="./conversation.html">Return to conversation</a></p>
+</section></main></div></body></html>
