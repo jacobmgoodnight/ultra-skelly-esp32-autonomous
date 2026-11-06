@@ -2,7 +2,7 @@
 
 **Make your Skelly come alive — even when nobody walks by.**
 
-Give the Home Depot **6.5-foot Ultra Skelly v2** its own personality. An inexpensive ESP32 uses Bluetooth to trigger randomized head, arm and torso movements, change LCD eyes, and control RGB lighting — **without waiting for the motion sensor or keeping a phone connected**.
+Give the Home Depot **6.5-foot Ultra Skelly v2** its own personality. An inexpensive ESP32 uses Bluetooth to trigger randomized head, arm and torso movements, change LCD eyes, and control RGB lighting. Build customizable routines and up to four named scenes in the browser-based **Skelly Studio**, then let the controller run on its own — **without waiting for the motion sensor or keeping a phone connected**.
 
 **[🎛️ Launch Skelly Studio](https://jacobmgoodnight.github.io/ultra-skelly-esp32-autonomous/studio/)** · **[🚀 Quick start](#quick-start)** · [Explore features](#what-can-it-do) · [Hardware compatibility](#compatibility-and-test-status)
 
