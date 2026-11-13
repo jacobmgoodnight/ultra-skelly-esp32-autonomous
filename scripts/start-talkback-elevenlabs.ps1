@@ -13,6 +13,9 @@ $voicePointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($voiceSecu
 try {
     $voicePlainKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($voicePointer)
     if (!$voicePlainKey) { throw 'No API key was entered.' }
+    if ($voicePlainKey.Length -gt 512 -or $voicePlainKey -cnotmatch '^[\x21-\x7E]+$') {
+        throw 'The API key contains whitespace or unsupported characters. Copy only the key and try again; do not share it in chat.'
+    }
     [Environment]::SetEnvironmentVariable('SKELLY_ELEVENLABS_API_KEY', $voicePlainKey, 'Process')
     if ($VoiceId) { [Environment]::SetEnvironmentVariable('SKELLY_ELEVENLABS_VOICE_ID', $VoiceId, 'Process') }
     else { [Environment]::SetEnvironmentVariable('SKELLY_ELEVENLABS_VOICE_ID', $null, 'Process') }
