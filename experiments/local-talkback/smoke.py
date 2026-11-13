@@ -19,8 +19,8 @@ try:
         validate_wave(source)
         started = time.monotonic()
         result = engines.respond(source)
-        assert result['text'] in {'Hi, Emma! ' + line for line in REPLIES[result['card']]}
-        assert 'Hi, Emma!' in result['text'], 'Synthetic name was not recognized.'
+        assert result['text'] in REPLIES[result['card']]
+        assert 'Emma' not in result['text'], 'Visitor names must not enter speech.'
         validate_reply_wave(base64.b64decode(result['audio']))
         output = Path(__file__).resolve().parents[2] / '.skelly-build' / 'conversation-synthetic-reply.json'
         output.write_text(json.dumps(result), encoding='utf-8')

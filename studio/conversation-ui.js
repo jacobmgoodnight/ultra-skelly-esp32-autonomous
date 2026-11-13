@@ -6,20 +6,22 @@
     captureFactory:()=>new window.SkellyTalkbackAuto.PcmCapture({media:navigator.mediaDevices,Context:window.AudioContext,WorkletNode:window.AudioWorkletNode}),
     gateFactory:threshold=>new window.SkellyTalkbackAuto.SpeechGate(threshold),encode:window.SkellyTalkbackAuto.wav,onChange:draw,
     onLevel:(level,threshold,kind)=>{el('level').value=Math.min(.2,level);el('levelHint').textContent=kind==='off'?'Microphone off.':kind==='calibrating'?'Measuring background noise.':level>=threshold?'Sound detected.':'Waiting for speech.';},
-    request:async(clip,signal)=>{
-      const response=await fetch('/api/reply',{method:'POST',headers:{'Content-Type':'audio/wav','X-Skelly-Token':token,'X-Skelly-Voice':selectedEngine},body:clip,signal});
+    request:async(clip,signal,preview=false)=>{
+      const response=await fetch(preview?'/api/preview':'/api/reply',{method:'POST',headers:{'Content-Type':'audio/wav','X-Skelly-Token':token,'X-Skelly-Voice':selectedEngine},body:preview?null:clip,signal});
       const value=await window.SkellyConversation.readJSON(response);if(!response.ok)throw Error(value.error||'Local companion is unavailable.');return value;
     }});
   function draw(){
     const supported=window.isSecureContext&&navigator.mediaDevices?.getUserMedia&&window.AudioContext&&window.AudioWorkletNode;
     const busy=!!turn?.active,remaining=turn?.remaining||0;
     el('talk').disabled=!supported||!token||checking||busy||remaining>0||!el('attending').checked;
+    el('preview').disabled=!token||checking||busy||remaining>0||!el('attending').checked||el('engine').value==='elevenlabs';
     el('check').disabled=checking||busy;el('engine').disabled=el('voice').disabled=el('sensitivity').disabled=el('attending').disabled=el('quickTest').disabled=busy;
     el('shutdown').disabled=!token||checking;
     el('status').textContent=turn?.message||'Check the local engine, then choose Talk.';
     const stream=turn?.capture?.stream,label=stream?.getAudioTracks?.()[0]?.label;
     el('mic').textContent=stream?'Microphone ON'+(label?' · '+label.slice(0,120):''):'Microphone OFF';
     el('reply').textContent=turn?.replyText||'';
+    if(turn?.replySource)el('performance').textContent='Last playback: '+turn.replySource;
     el('pause').textContent=remaining?'Pause: '+remaining+' seconds before the next Talk. The microphone stays off.':'';
     clearTimeout(tick);if(remaining&&!document.hidden)tick=setTimeout(draw,1000);
     if(!supported)el('service').textContent='Use desktop Chrome/Edge with microphone and Web Audio support.';
@@ -39,6 +41,8 @@
     finally{clearTimeout(timer);if(generation===checkGeneration){checking=false;checkAbort=null;draw();}}
   };
   el('talk').onclick=()=>{if(!el('talk').disabled){selectedEngine=el('engine').value;repeat.voice=el('voice').value;void turn.start(Number(el('sensitivity').value),{noPause:el('quickTest').checked}).catch(error=>turn.stop(error.message));}};
+  el('preview').onclick=()=>{if(!el('preview').disabled){selectedEngine=el('engine').value;repeat.voice=el('voice').value;turn.preview({noPause:el('quickTest').checked});}};
+  el('engine').onchange=draw;
   function stop(){++checkGeneration;checking=false;checkAbort?.abort();checkAbort=null;turn.stop();draw();}
   el('stop').onclick=stop;el('attending').onchange=draw;
   el('shutdown').onclick=async()=>{

@@ -1,5 +1,10 @@
 # Local Halloween conversation experiment
 
+For the current reviewed-recording hybrid, comparison controls and review workflow,
+see [Reviewed hybrid character voice](hybrid-voice.md). Runtime replies no longer
+include visitor names, and recognition uses in-memory input and output. Historical
+name and timing observations below describe earlier versions.
+
 This optional Windows laptop companion is separate from Studio and autonomous
 firmware. No ESP32 microphone is needed: the laptop captures speech and sends
 approved reply audio through its Windows output, including Skelly's paired Live
@@ -28,11 +33,9 @@ last **12 reply IDs** avoid recent replies when alternatives remain; they do not
 promise that a phrase can never recur. Only numeric topic/variant IDs are retained,
 with no visitor text or names in that history. Restarting the companion resets it.
 
-A spoken introduction such as "My name is Emma" can add "Hi, Emma!" only if that
-first name is in the reviewed list. Unknown names, surnames, arbitrary nicknames
-and model-suggested names are omitted. Name recognition can be wrong; this is not
-identity verification. There is no visitor-name library or visitor-text history.
-The browser holds the current approved greeting until the next turn, Stop or hide.
+Visitor names are omitted from runtime replies. There is no visitor-name library
+or visitor-text history. The browser holds the current approved reply until the
+next turn, Stop or hide.
 
 Raw microphone audio is **never replayed** in conversation mode. The separate
 repeat-back page can repeat offensive speech and has no word filter; use this
@@ -165,7 +168,7 @@ establish sustained performance or suitability for unattended use.
    service and shows the active voice; it does not connect Bluetooth or verify
    the speaker. Press it, confirm attendance, then
    **Talk to Skelly**. Stay quiet for one second, say a short phrase and pause.
-   Try "Tell me a ghost joke" and "My name is Emma" using a known safe name.
+   Try "Tell me a ghost joke" and a greeting.
 3. Each click listens once for up to eight seconds. The microphone closes before
    transcription, reply selection and speech output. Nothing listens during
    processing or playback. Normally, a 45-second pause follows each reply. For
@@ -199,13 +202,11 @@ ElevenLabs path described above sends approved, name-free reply text online only
 when selected. English recognition uses local whisper.cpp tiny.en; selection uses a small local
 Qwen model; approved speech is synthesized locally by Piper Joe, with Windows
 System.Speech as the labelled fallback when Piper is absent. After setup,
-the code contacts only its fixed loopback model endpoint. Recordings/transcripts
-are not logged. The browser holds bounded audio in memory; the companion briefly
-uses a system temporary folder for input WAV, transcription and approved speech,
-then removes it after each request. Abrupt process/OS termination can leave temp
-files, so this is not a guarantee against forensic recovery. Model inference can
-also hold transient prompt text in memory. The bounded reply-ID history stores
-no prompt, transcript or name.
+the code contacts only its fixed loopback model endpoint. Visitor audio and
+transcripts remain in memory and are not logged or saved by the companion.
+Approved name-free synthesis text and audio may briefly use a system temporary
+folder; abrupt termination can leave those files. Model inference can hold transient
+prompt text in memory. The bounded reply-ID history stores no prompt, transcript or name.
 
 Input WAVs are capped at eight seconds of 16 kHz mono 16-bit PCM (256,044 bytes).
 Replies remain at most eight seconds, with 16 or 22.05 kHz mono 16-bit PCM and a

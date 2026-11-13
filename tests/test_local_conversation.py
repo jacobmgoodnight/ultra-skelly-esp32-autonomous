@@ -3,9 +3,11 @@ import importlib.util
 import io
 import json
 import sys
+import tempfile
 import threading
 import unittest
 import wave
+from types import SimpleNamespace
 from unittest.mock import patch
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
@@ -78,14 +80,40 @@ class Boundaries(unittest.TestCase):
         engine.eleven_voice = Online()
         engine.choose = lambda transcript: '{"card":3}'
         def recognize(command, **kwargs):
-            Path(command[command.index('-of') + 1]).with_suffix('.txt').write_text(
-                'My name is Emma. Tell me a ghost joke.', encoding='utf-8')
+            self.assertEqual(command[command.index('-f') + 1], '-')
+            self.assertNotIn('-otxt', command)
+            self.assertEqual(kwargs['input'], audio())
+            return SimpleNamespace(stdout=b'My name is Emma. Tell me a ghost joke.')
         with patch.object(companion.subprocess, 'run', side_effect=recognize):
             result = engine.respond(audio(), voice='elevenlabs')
         self.assertEqual(result['card'], 3)
         self.assertIn(result['text'], companion.REPLIES[3])
         self.assertEqual(spoken, [result['text']])
         self.assertNotIn('Emma', result['text'])
+
+    def test_local_recognition_uses_pipes_and_never_synthesizes_a_name(self):
+        from recordings import Library
+        class Voice:
+            label = 'Test voice'
+            def synthesize(self, text, work):
+                self.text = text
+                return audio()
+        engine = object.__new__(companion.Engines)
+        engine.whisper, engine.deck = 'synthetic-whisper', companion.ReplyDeck()
+        engine.voice, engine.eleven_voice = Voice(), None
+        engine.choose = lambda transcript: '{"card":3}'
+        with tempfile.TemporaryDirectory() as folder:
+            engine.recordings = Library(Path(folder) / 'empty')
+            def recognize(command, **kwargs):
+                self.assertEqual(command[command.index('-f') + 1], '-')
+                self.assertNotIn('-otxt', command)
+                self.assertEqual(kwargs['input'], audio())
+                return SimpleNamespace(stdout=b'My name is Emma. Tell me a ghost joke.')
+            with patch.object(companion.subprocess, 'run', side_effect=recognize):
+                result = engine.respond(audio())
+        self.assertIn(result['text'], companion.REPLIES[3])
+        self.assertEqual(engine.voice.text, result['text'])
+        self.assertNotIn('Emma', engine.voice.text)
 
     def test_cloud_http_selection_requires_configuration(self):
         class Engines:
