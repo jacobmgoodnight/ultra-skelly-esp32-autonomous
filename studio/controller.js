@@ -54,7 +54,7 @@
       if(state.usb==='unsupported')el('controllerSetup').open=true;
       else if(state.usb==='ready'&&previousUsb!=='ready'){el('controllerSetup').open=false;el('first-run').open=false;}
       previousUsb=state.usb;
-      el('controllerSkellyHelp').textContent=!port?'USB is for settings; the ESP32 connects to Skelly over Bluetooth.':state.stale?'Bluetooth status may be out of date. USB can still read and save.':state.data?.connected===0?'Skelly is offline. USB can still read and save; Bluetooth retries automatically.':'Bluetooth status is reported by the ESP32. Watch Skelly to confirm movement.';
+      el('controllerSkellyHelp').textContent=!port?'USB is for settings; the ESP32 connects to Skelly over Bluetooth.':state.stale?'Bluetooth status is out of date. Wait for refresh; if it stays stale, reconnect USB and close other serial tools.':state.data?.connected===0?'Skelly is offline. USB can still read and save; Bluetooth retries automatically.':'Bluetooth status is reported by the ESP32. Watch Skelly to confirm movement.';
       el('controllerReceived').textContent=state.receivedAt===null?'No controller status received yet.':(state.stale?'Older status · last received ':'Status received ')+new Date(state.receivedAt).toLocaleTimeString()+'. Auto-refreshes every 5 seconds while idle.';
       const dl=el('controllerDetails');dl.replaceChildren();
       if(port&&state.data){

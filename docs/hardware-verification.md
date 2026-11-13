@@ -1,5 +1,7 @@
 # Hardware verification matrix
 
+For a manual result sheet and attended coexistence procedure, see the [hardware verification center](hardware-checklist.md).
+
 **2026 app-controlled 12-foot Skelly: Untested on hardware.** Its opt-in profile
 has software-only evidence; none of the Ultra observations below transfer to it.
 See the [feature matrix and attended checklist](experimental-12ft.md).
