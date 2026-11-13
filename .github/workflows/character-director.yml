@@ -1,0 +1,37 @@
+name: Character Director software checks
+on:
+  pull_request:
+    paths:
+      - "studio/**"
+      - "experiments/pocket-conversation/**"
+      - "tests/test_family_conversation.py"
+      - "tests/test_skelly_*.py"
+      - "tests/test_skelly_*.cjs"
+      - ".github/workflows/character-director.yml"
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  family-and-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install speech-processing test dependencies
+        run: python -m pip install numpy==2.2.6 scipy==1.15.3 requests==2.34.2
+      - name: Check family catalog and conversation guards
+        run: |
+          python tests/test_family_conversation.py
+          python tests/test_skelly_cloud_routing.py
+          python tests/test_skelly_names.py
+          python tests/test_skelly_followups.py
+          python tests/test_skelly_voice_references.py
+      - name: Check Live UI and cancellation
+        run: |
+          node --test tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs
