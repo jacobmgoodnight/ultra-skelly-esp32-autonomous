@@ -81,10 +81,34 @@ text. Provider billing and retention terms apply.
 
 ## Voice
 
-The launcher uses the local **Piper** voice, so **Advanced → Local voice** shows
-one option. The other voices listed there need separately prepared Pocket voice
-files that this repository does not include. Voice quality is the main open
-problem; see the [research archive](archive/skelly-live/README.md).
+The launcher's live voice is **Piper**, which is fast but flat. **Advanced → Local
+voice** shows one option because the other listed voices need separately
+prepared Pocket voice files that this repository does not include.
+
+### Reviewed recordings (better voice, recommended)
+
+Family mode only ever says lines from its fixed catalog, so each line can be
+recorded ahead of time with a slower, more characterful voice. When you approve
+a take, Family mode plays it instead of Piper. Lines without an approved take,
+and lines personalized with a visitor's name, still use Piper.
+**Advanced** shows which one played for the last reply.
+
+Using the local Python environment (`.skelly-build\voice-research-env\Scripts\python.exe`):
+
+1. List a varied starter set of 16 lines (topic and variant numbers):
+   `experiments/local-talkback/review_library.py starter`
+2. Render a take of one line with the Qwen voice-matching setup from the
+   [voice research](archive/skelly-live/expressive-voice-research.md), using a
+   synthetic reference clip you liked (never a visitor recording):
+   `experiments/voice-research/generate-candidate.py 2 1 --reference <ref.wav> --reference-text <ref.txt> --voice "Skelly" --delivery "dry and spooky"`
+   This can be slow on a CPU; it runs ahead of time, not during a visit.
+3. Listen to every staged take on a local page:
+   `experiments/local-talkback/review_library.py review-page`
+4. Approve the exact take you listened to, using the SHA-256 printed in step 2:
+   `experiments/local-talkback/review_library.py approve 2 1 <sha256>`
+
+A take plays only while its text, review status and audio checksum still
+match, so editing a line or its audio automatically falls back to Piper.
 
 ## Stop
 

@@ -29,6 +29,11 @@ test('a fresh page starts in Family mode and sends only family turns',async()=>{
  const request=p.requests.find(r=>r.url==='/api/reply');assert.equal(request.options.headers['X-Skelly-Conversation'],'family');assert.equal(request.options.headers['X-Skelly-Brain'],'local');
  request.resolve({ok:true,value:{responseMode:'family'}});await pending;
 });
+test('a reviewed recording is labelled as the reviewed take, not as synthesis',async()=>{
+ const p=fixture();await ready(p);p.nodes.talk.onclick();const pending=p.turn.options.request(new Blob(['audio']),new AbortController().signal);
+ p.requests.find(r=>r.url==='/api/reply').resolve({ok:true,value:{responseMode:'family',source:'Reviewed recording · Qwen matched MOSS'}});await pending;
+ assert.equal(p.nodes.voiceSource.textContent,'Last reply: Reviewed recording · Qwen matched MOSS. Reviewed family reply.');
+});
 test('without reviewed replies the default Family page explains the problem and never talks',async()=>{
  const p=fixture();await ready(p,{familyCatalog:false});assert.equal(p.nodes.talk.disabled,true);assert.match(p.nodes.service.textContent,/family replies are unavailable/i);
  p.nodes.talk.onclick();assert.ok(!p.calls.some(x=>x.startsWith('start:')));

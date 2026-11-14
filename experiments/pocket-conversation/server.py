@@ -87,6 +87,20 @@ class Turns:
 
 class Engines(companion.Engines):
     conversation = False
+
+    def reviewed_recording(self, card, text):
+        """An approved local take of this exact catalog line, or None to synthesize.
+
+        The library re-checks review status, text and audio hashes on every read,
+        so an unreviewed, edited or name-personalized line never plays a take.
+        """
+        recordings = getattr(self, 'recordings', None)
+        if recordings is None or type(card) is not int or not 0 <= card < len(companion.REPLIES):
+            return None
+        for variant, line in enumerate(companion.REPLIES[card]):
+            if line == text:
+                return recordings.lookup_details(card, variant, text)
+        return None
     def __init__(self, pocket=False):
         super().__init__()
         self.eleven_voice = None  # This separate experiment is entirely local.
@@ -130,12 +144,16 @@ class Engines(companion.Engines):
                 from family_conversation import validate_speech
                 validate_speech(text)
             synth_started = time.monotonic()
-            audio, source_name = self.voice.synthesize(text, work, cancel, min(turn_deadline, synth_started + 10))
+            recording = self.reviewed_recording(card, text) if getattr(self, 'family_mode', False) else None
+            if recording is not None:
+                audio, source_name = recording[0], 'Reviewed recording · ' + recording[1]
+            else:
+                audio, source_name = self.voice.synthesize(text, work, cancel, min(turn_deadline, synth_started + 10))
             check(cancel, turn_deadline)
             self.remember_reply(decision, transcript, session)
             return {'card': card, 'text': text, 'audio': base64.b64encode(audio).decode('ascii'),
                 'source': source_name, 'synthesisSeconds': round(time.monotonic() - synth_started, 3),
-                'fallbackReason': self.voice.fallback_reason,
+                'fallbackReason': None if recording is not None else self.voice.fallback_reason,
                 'responseMode': decision.get('mode', 'catalog'),
                 'responseReason': decision.get('reason'),
                 'modelSeconds': decision.get('modelSeconds'),
