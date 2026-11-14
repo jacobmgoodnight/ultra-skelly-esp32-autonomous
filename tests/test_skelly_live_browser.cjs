@@ -1,4 +1,4 @@
-// Software-only: real page with simulated devices and playback; no hardware opens.
+// Software-only: real page with simulated devices and playback; no hardware opens. Set SKELLY_BROWSER_CHANNEL=msedge to use installed Edge; otherwise Playwright's Chromium.
 const {test}=require('node:test'),assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
@@ -8,7 +8,7 @@ test('operator page starts silent, routes explicit devices and discards a test c
   const server=http.createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;if(route==='/api/status'){res.setHeader('Content-Type','application/json');if(!online){res.writeHead(503);res.end('{}');return;}res.end(JSON.stringify({ready:true,conversation:true,familyCatalog:true,token:'test-token',voice:'local test',brain:'local test',tones:['haunt-dry'],modelLoaded:true}));return;}const file=routes[route];if(!file){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',file.endsWith('.html')?'text/html':'text/javascript');res.end(fs.readFileSync(path.join(root,file)));});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
   try{
-    browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    browser=await chromium.launch({headless:true,...(process.env.SKELLY_BROWSER_CHANNEL?{channel:process.env.SKELLY_BROWSER_CHANNEL}:{})});const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
       window.testMicCalls=[];window.testSinks=[];
       const media={getUserMedia:async constraints=>{window.testMicCalls.push(constraints);return {getTracks:()=>[{stop(){}}],getAudioTracks:()=>[{label:'FLOW 8'}]};},enumerateDevices:async()=>[{kind:'audioinput',deviceId:'usb',label:'FLOW 8'},{kind:'audiooutput',deviceId:'skelly',label:'Skelly Live Stereo'}],addEventListener(){}};
