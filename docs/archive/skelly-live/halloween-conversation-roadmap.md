@@ -16,7 +16,7 @@ repeat inappropriate visitor speech and has no conversation word guard.
 One owner-reported Original-voice conversation reply and one two-phrase
 repeat-back pilot worked through Skelly with jaw movement. They do not prove a
 new voice, long sessions, automatic conversation, reconnect behavior, or
-coexistence with the autonomous ESP32. The [hardware matrix](hardware-verification.md)
+coexistence with the autonomous ESP32. The [hardware matrix](../../hardware-verification.md)
 and [research note](expressive-voice-research.md) detail those limits.
 
 The laptop is currently the audio computer: it captures and processes speech,

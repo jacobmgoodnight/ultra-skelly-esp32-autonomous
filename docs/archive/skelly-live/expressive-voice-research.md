@@ -74,7 +74,7 @@ Piper remains the simplest low-risk fallback. Do not replace it automatically.
   enable write verifies transport only.
 
 See [conversation details](local-halloween-conversation.md) and the latest
-[hardware matrix](hardware-verification.md) for the full boundaries and evidence.
+[hardware matrix](../../hardware-verification.md) for the full boundaries and evidence.
 
 ## Candidate comparison
 

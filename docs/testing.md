@@ -21,18 +21,18 @@ that this newly changed firmware has passed its hardware regression.
 
 ## Automated checks
 
-Character Director software checks cover the family catalog/name boundary,
-session reset and cancellation, opt-in local events, preview state transitions,
-and Live UI mode/older-companion safeguards. No physical test is implied:
+Skelly Live software checks cover the family catalog and name boundary, session
+reset and cancellation, the Family-by-default page, cloud permission, and device
+selection. No physical test is implied:
 
 ```sh
 python tests/test_family_conversation.py
-node --test studio/tests/character-director.test.cjs studio/tests/character-events.test.cjs studio/tests/character-preview.test.cjs tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs
+node --test tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs
 ```
 
 The Python family check needs NumPy and SciPy from the local Live environment;
 it mocks recognition, synthesis and providers. For attended acceptance and the
-manual return to autonomy, see [Character Director](character-director.md).
+manual return to autonomy, see the [Skelly Live guide](skelly-live-operator.md).
 
 The [experimental 12-foot profile](experimental-12ft.md) adds browser-model tests
 for legacy imports, model-specific exports, restricted presets/starters, mixed-model
@@ -99,7 +99,7 @@ node scripts/export-attended-tests.cjs
 python scripts/compile-attended-tests.py
 ```
 
-The optional [local Halloween conversation](local-halloween-conversation.md)
+The optional Skelly Live reply and voice
 checks need no model downloads: its Python suites cover the approved reply/name
 boundary, 80-line catalog with stable 20-topic IDs, bounded ID-only shuffle history,
 generic-joke rotation, local voice command/fallback behavior, punchline timing,
@@ -262,7 +262,7 @@ exercise cloud selection and name-free approved text with mocked requests; they
 do not use credentials or contact ElevenLabs. `python tests/test_chatterbox_extract.py`
 checks archive extraction, including rejection of unsafe paths. The optional
 Chatterbox sample and its measured laptop timings are documented in
-[local conversation](local-halloween-conversation.md); generation and listening
+[local conversation notes](archive/skelly-live/local-halloween-conversation.md); generation and listening
 feedback do not establish live conversation or physical jaw behavior.
 
 ### Studio browser workflows (no physical device)

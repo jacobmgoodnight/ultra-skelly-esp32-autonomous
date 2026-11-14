@@ -1,19 +1,33 @@
-# Skelly Live operator preview
+# Skelly Live
 
-This is an **experimental, attended** Windows conversation interface. The
-conversation companion and its current models are prerequisites; it does not
-replace ordinary Studio or change the autonomous firmware. The local conversation
-files live under `experiments/pocket-conversation`; setup for the local Python
-environment, models and runtimes is below.
-Setup requires public downloads; everyday local use does not require an account
-or cloud service. Skelly Live uses the local Piper voice, or the clearly labeled
-Windows voice fallback if Piper is missing. It does not require the gated Pocket
-cloning weights. Optional cloud services need separate configuration and explicit
-permission in the page. The conversational model can generate replies: its
-content guard rejects recognized unsafe output but cannot guarantee suitability.
-An adult must remain present and monitor the actual speech.
+**Experimental. Optional. Attended use only.** Skelly Live lets visitors talk to
+Skelly: a microphone near the prop feeds a Windows laptop, which recognizes the
+speech, picks a reply and plays it through Skelly's own Bluetooth speaker so the
+jaw moves. It is separate from the autonomous ESP32 controller and never changes
+its firmware or saved routine.
 
-For a fresh Windows setup with Python 3.12 available, from the project folder run:
+Skelly Live and the autonomous ESP32 do not run at the same time. Unplug the ESP32,
+including USB, before starting Live, and follow
+[Back to normal operation](#back-to-normal-operation) afterward.
+
+## What has been confirmed
+
+| | Status |
+| --- | --- |
+| Live speaker pairing in Windows; sound from Skelly with jaw movement | Owner-confirmed (October 2026, ESP32 unplugged) |
+| Repeat-back of a recorded phrase, manual and in a two-phrase automatic pilot | Owner-confirmed |
+| One reviewed (Family) reply through Skelly with jaw movement | Owner-confirmed |
+| Prepared voice samples (Qwen, MOSS, Supertonic) moving the jaw | Owner-confirmed for those clips |
+| This single-page layout, Family-by-default flow and the speaker button on this page | Untested on hardware |
+| Physical Stop, longer sessions, recovery and return to autonomy | Untested |
+| Live audio while the ESP32 is also connected | Untested; do not attempt |
+| Claude or ElevenLabs cloud options with a real account | Untested |
+
+Details and dates are in the [hardware verification matrix](hardware-verification.md).
+
+## One-time setup (Windows)
+
+You need Python 3.12 and desktop Chrome or Edge. From the project folder:
 
 ```powershell
 py -3.12 -m venv .skelly-build/voice-research-env
@@ -22,96 +36,104 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-talkback-l
 & .\.skelly-build\voice-research-env\Scripts\python.exe experiments/pocket-conversation/prepare-brain.py
 ```
 
-The setup script verifies its pinned speech/model downloads. The separate brain
-preparation verifies its public LFM model. Allow disk space for the downloaded
-speech and model assets. This does not install globally. The family reply mode
-uses only the reviewed catalog, although the current launcher still starts the
-local conversation model. See [Character Director](character-director.md).
-The optional Pocket voice assets and their local lock files are not included in
-this source package. Use the launcher, which explicitly selects Piper; a direct
-`chat_server.py` invocation must also select `--voice piper` unless those
-optional assets have been separately prepared.
+The setup script downloads and checks the speech recognizer, the Piper voice and
+the local model runtimes. Everything stays inside the project's `.skelly-build`
+folder; nothing is installed globally. Everyday use needs no account or internet.
 
-## Start
+Then right-click `Skelly Live.cmd` and choose **Send to → Desktop (create
+shortcut)**. Keep the `.cmd` file in the project folder.
 
-1. Keep `Skelly Live.cmd` in the project folder. Right-click it and choose
-   **Send to → Desktop (create shortcut)**; launch the shortcut, not a copied
-   `.cmd` file. No administrator permission or global installation is needed.
-2. Disconnect the autonomous ESP32, including USB, and other Skelly control
-   apps. Connect the **Ultra Skelly v2(Live) Stereo** output in Windows. Keep
-   the volume low and attend the prop. If live audio needs enabling, follow the
-   existing [repeat-back setup](experimental-talkback.md) with the ESP32 off.
-3. Launch Skelly Live and leave its small window open. It starts the local
-   companion and its model, then opens the default browser. Use desktop Chrome
-   or Edge if the default browser lacks microphone or output selection support.
-   The microphone does not open on launch.
-4. Choose **Check local engine**, then **Enable devices**. Allow microphone
-   access; the permission check closes the microphone immediately. Choose the
-   Windows input (for example, the FLOW 8 USB input) and Skelly's Bluetooth
-   Stereo output separately. Saved device IDs are local to this browser. If a
-   device is unavailable, reconnect it or explicitly select another. Windows
-   or the browser may change device IDs after a reconnect; reselect as needed.
-5. Confirm attendance, choose **Test microphone**, say a short, appropriate test
-   phrase, and then **Play test on speaker**. The test repeats microphone audio
-   without a content guard; browser noise suppression and echo cancellation may
-   be applied. It is discarded after playback, Stop, a device change or leaving
-   the page.
-   Listen at the prop and watch the jaw; a browser playback completion is only a
-   software result. A conservative pause follows test playback. In Voice &
-   conversation settings, choose **Family · reviewed replies only** for the
-   catalog-guarded mode; the separate Open mode uses generated replies. Choose
-   a character, confirm attendance, and choose **Talk to Skelly**. Each turn
-   is explicit and retains the normal 45-second pause after a completed reply.
+## Each time
 
-Ports 8777, 8776 and launcher reservation 8778 are required. If occupied, close
-the other application normally and restart; the launcher will not kill an unknown process. It also
-reports occupied legacy ports 8765–8767. If startup fails, its window reports
-the error and points to the setup notes. The page's connection check reports
-optional cloud configuration locally and reports incomplete or malformed
-environment configuration; it does not verify provider credentials.
-Processing has a bounded timeout; Stop cancels the current request and suppresses
-late browser playback. A model or runtime that fails during a turn requires a
-new explicit attempt or companion restart.
+1. Unplug the autonomous ESP32, including USB, and close other Skelly apps.
+2. Open the **Skelly Live** shortcut. Leave its small window open. It starts the
+   local companion and opens the page. The microphone stays off.
+3. On the page:
+   1. **Skelly's speaker.** Skip this if Windows already lists
+      **Ultra Skelly v2 (Live) Stereo** as a sound output. Otherwise tick the
+      ESP32-unplugged box and choose **Turn on Skelly's speaker**, pick Skelly
+      in the browser's Bluetooth chooser, then pair the Live speaker in Windows
+      Bluetooth settings (PIN 1234 if asked). The button sends one request and
+      never retries by itself.
+   2. **Microphone and speaker.** Choose devices, pick your microphone and
+      Skelly's Live speaker, then use **Test microphone** and
+      **Play test through Skelly**. Listen at the prop and watch the jaw.
+   3. **Talk.** Pick a character, tick the box confirming you're with Skelly,
+      and choose **Talk to Skelly**. Stay quiet for a second, then speak.
 
-## Stop and return to autonomy
+After each reply there is a pause of about 45 seconds before the next **Talk**.
 
-1. Select **Stop** in the page. Confirm the microphone indicator says OFF.
-   Stop releases browser capture and playback; it cannot physically stop an
-   animation already sent to the prop, and queued Bluetooth audio may continue.
-2. Choose **Stop and exit** in the launcher. It requests shutdown only from
-   the companion process it started and waits for that companion to close its
-   model. If normal shutdown times out, the launcher reports that Windows will
-   force-close its owned process tree as the launcher exits; it does not stop
-   unrelated processes. Confirm that live audio has stopped before continuing.
-3. Disconnect Windows from Skelly Live Stereo, power-cycle Skelly, and only
-   then reconnect the known-good autonomous ESP32. Verify the expected normal
-   behavior while attending. Do not run autonomous movement concurrently with
-   live conversation; coexistence has not been physically verified.
+## Reply modes
 
-## Attended acceptance (Untested)
+- **Family** (default): Skelly only plays replies from a catalog of 80 lines a
+  person has reviewed. Only first names on a fixed allowlist can be spoken.
+  If the reviewed catalog is unavailable, **Talk** stays disabled; Family never
+  falls back to Open.
+- **Open** (Advanced): a language model writes replies. A content check rejects
+  recognized unsafe output but cannot guarantee suitability. Use it only while
+  you are listening.
 
-With the ESP32 unplugged, use low volume and an adult at the prop. Confirm the
-chosen USB microphone captures speech, the selected Skelly speaker actually
-plays the test, and the jaw's physical response. Disconnect each selected
-device in separate trials and require capture/playback to stop without silently
-switching to another microphone or speaker. Test Stop during capture, thinking,
-and speaking, and watch for any queued sound or movement after Stop. Wait out
-each pause and perform one guarded conversation turn. Finally follow the
-recovery procedure above and observe autonomous operation. Stop the trial for
-unexpected movement, feedback, incorrect speech, lost device selection, or
-failure to recover. Record physical observations separately from software logs.
+Cloud options (Claude for Open-mode replies, ElevenLabs for the voice) are off
+by default. They need setup through **Advanced → Optional cloud setup** and
+permission for each visit. Raw microphone audio never leaves the laptop. Claude
+receives recognized speech and recent chat; ElevenLabs receives Skelly's reply
+text. Provider billing and retention terms apply.
 
-## Optional local startup checks
+## Voice
 
-After setup, these Windows checks start the actual local companion and model on
-isolated loopback ports, then verify that they shut down. They do not open a
-browser, microphone, speaker, or Bluetooth device. Close any application using
-ports 18776–18778 first; the checks refuse to start if those ports are occupied.
+The launcher uses the local **Piper** voice, so **Advanced → Local voice** shows
+one option. The other voices listed there need separately prepared Pocket voice
+files that this repository does not include. Voice quality is the main open
+problem; see the [research archive](archive/skelly-live/README.md).
+
+## Stop
+
+**Stop** ends recording and playback in the browser. Sound already queued over
+Bluetooth may finish. **New visitor** also clears the visit's short memory, which
+stays in the laptop's memory only and expires after five idle minutes. Leaving
+or hiding the page does the same.
+
+## Back to normal operation
+
+1. Choose **New visitor**, then **Stop and exit** in the launcher window.
+2. In Windows, disconnect the Skelly Live speaker.
+3. Power-cycle Skelly.
+4. Plug the ESP32 back in and watch one complete normal routine.
+
+This procedure has not yet been confirmed on hardware. Record what you see.
+
+## Attended acceptance check
+
+With the ESP32 unplugged, low volume and an adult at the prop:
+
+1. The page opens with the microphone off and **Family** selected.
+2. **Test microphone** and **Play test through Skelly** play from Skelly, and the
+   jaw moves.
+3. One Family turn plays a reviewed reply from Skelly with jaw movement.
+4. **Stop** during listening, thinking and speaking: nothing new plays
+   afterward (queued Bluetooth sound may finish).
+5. Unplugging the selected microphone or speaker stops the turn; nothing
+   silently switches devices.
+6. [Back to normal operation](#back-to-normal-operation) ends with a normal
+   routine and no unexpected movement.
+
+Stop the check for unexpected movement, feedback, wrong speech, or failure to
+recover. Write down what you physically saw and heard, separately from any log.
+
+## Troubleshooting
+
+- **Page says the companion is offline:** use **Reconnect**. If that fails,
+  choose **Stop and exit** in the launcher and open it again.
+- **Port in use (8776, 8777 or 8778):** another copy or application is running.
+  Close it normally; the launcher never stops unknown processes.
+- **Speaker missing:** use step 1, or power-cycle Skelly in Bluetooth mode and
+  try once more.
+- **Recognition is poor:** move the microphone closer, or try
+  **Advanced → Microphone sensitivity**.
+
+Optional startup self-checks (no microphone, speaker or Bluetooth is opened):
 
 ```powershell
 & .\.skelly-build\voice-research-env\Scripts\python.exe tests/smoke_skelly_live_startup.py
 & .\.skelly-build\voice-research-env\Scripts\python.exe tests/smoke_skelly_live_launcher.py
 ```
-
-Both should report `PASS`. These checks establish local software startup and
-shutdown only. They do not replace the attended speaker, jaw, or recovery checks.
