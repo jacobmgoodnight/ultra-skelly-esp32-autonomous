@@ -1,10 +1,12 @@
-name: Character Director software checks
+name: Skelly Live software checks
 on:
   pull_request:
     paths:
       - "studio/**"
       - "experiments/pocket-conversation/**"
+      - "experiments/local-talkback/**"
       - "tests/test_family_conversation.py"
+      - "tests/test_reviewed_voice.py"
       - "tests/test_skelly_*.py"
       - "tests/test_skelly_*.cjs"
       - ".github/workflows/character-director.yml"
@@ -32,6 +34,14 @@ jobs:
           python tests/test_skelly_names.py
           python tests/test_skelly_followups.py
           python tests/test_skelly_voice_references.py
+          python tests/test_skelly_live_status.py
+          python tests/test_reviewed_voice.py
       - name: Check Live UI and cancellation
         run: |
           node --test tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs
+      - name: Install pinned Playwright and Chromium (test tooling only)
+        run: |
+          npm install --prefix .skelly-build/browser-tools --no-save --package-lock=false playwright@1.62.1
+          node .skelly-build/browser-tools/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Check the Skelly Live page in a real browser (simulated devices)
+        run: NODE_PATH="$PWD/.skelly-build/browser-tools/node_modules" node --test tests/test_skelly_live_browser.cjs

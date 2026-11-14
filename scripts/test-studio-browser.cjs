@@ -161,6 +161,12 @@ async function main(){
       assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
       assert.match(await page.locator('#deviceSaveStatus').textContent(),/matches verified/);
       assert.equal(await page.locator('#controllerSkelly').textContent(),'Not connected yet');
+      // Restart check (the mock keeps saved settings like the ESP32's flash): reading back must still match.
+      assert.equal(await page.locator('#retentionCheck').evaluate(d=>d.open),false);assert.equal(await page.locator('.live-teaser details').evaluate(d=>d.open),false);
+      assert.match(await page.locator('.live-teaser').textContent(),/Experimental/);
+      await page.locator('#controllerRead').click();
+      if(await page.locator('#sceneImportDialog').evaluate(d=>d.open).catch(()=>false))await page.locator('#sceneImportDialog button[value="replace"]').click();
+      await message(page,/Read 1 saved|read and verified/);assert.match(await page.locator('#deviceSaveStatus').textContent(),/matches verified/);
     },{width:390,height:844});
 
     await run('returning user · read, edit head intervals, validate and save',async page=>{

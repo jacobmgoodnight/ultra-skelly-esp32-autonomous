@@ -87,6 +87,20 @@ class Turns:
 
 class Engines(companion.Engines):
     conversation = False
+
+    def reviewed_recording(self, card, text):
+        """An approved local take of this exact catalog line, or None to synthesize.
+
+        The library re-checks review status, text and audio hashes on every read,
+        so an unreviewed, edited or name-personalized line never plays a take.
+        """
+        recordings = getattr(self, 'recordings', None)
+        if recordings is None or type(card) is not int or not 0 <= card < len(companion.REPLIES):
+            return None
+        for variant, line in enumerate(companion.REPLIES[card]):
+            if line == text:
+                return recordings.lookup_details(card, variant, text)
+        return None
     def __init__(self, pocket=False):
         super().__init__()
         self.eleven_voice = None  # This separate experiment is entirely local.
@@ -130,12 +144,16 @@ class Engines(companion.Engines):
                 from family_conversation import validate_speech
                 validate_speech(text)
             synth_started = time.monotonic()
-            audio, source_name = self.voice.synthesize(text, work, cancel, min(turn_deadline, synth_started + 10))
+            recording = self.reviewed_recording(card, text) if getattr(self, 'family_mode', False) else None
+            if recording is not None:
+                audio, source_name = recording[0], 'Reviewed recording · ' + recording[1]
+            else:
+                audio, source_name = self.voice.synthesize(text, work, cancel, min(turn_deadline, synth_started + 10))
             check(cancel, turn_deadline)
             self.remember_reply(decision, transcript, session)
             return {'card': card, 'text': text, 'audio': base64.b64encode(audio).decode('ascii'),
                 'source': source_name, 'synthesisSeconds': round(time.monotonic() - synth_started, 3),
-                'fallbackReason': self.voice.fallback_reason,
+                'fallbackReason': None if recording is not None else self.voice.fallback_reason,
                 'responseMode': decision.get('mode', 'catalog'),
                 'responseReason': decision.get('reason'),
                 'modelSeconds': decision.get('modelSeconds'),
@@ -186,9 +204,10 @@ def make_handler(engines, port, turns=None):
                 previews = getattr(engines, 'voice_previews', {})
                 return self.send(200, previews[key], 'audio/wav') if key in previews else self.send(404, b'{}')
             if route in ('/studio/conversation.html', '/studio/conversation-ui.js'):
-                name = 'index.html' if route.endswith('.html') else 'ui.js'
-                if getattr(engines, 'conversation', False):
-                    name = 'chat.html' if route.endswith('.html') else 'chat-ui.js'
+                # Only conversation mode (chat_server.py) has a page; standalone has none.
+                if not getattr(engines, 'conversation', False):
+                    return self.send(404, b'{}')
+                name = 'chat.html' if route.endswith('.html') else 'chat-ui.js'
                 return self.send(200, (HERE / name).read_bytes(),
                     'text/html; charset=utf-8' if name.endswith('.html') else 'text/javascript')
             if route == '/studio/conversation.js' and getattr(engines, 'conversation', False):
@@ -197,8 +216,6 @@ def make_handler(engines, port, turns=None):
                 return self.send(200, (HERE / 'adaptive-mic.js').read_bytes(), 'text/javascript')
             if route == '/studio/live-devices.js' and getattr(engines, 'conversation', False):
                 return self.send(200, (HERE / 'live-devices.js').read_bytes(), 'text/javascript')
-            if route in ('/studio/character-director.js', '/studio/character-preview.js', '/studio/character-events.js') and getattr(engines, 'conversation', False):
-                return self.send(200, (companion.ROOT / 'studio' / route.rsplit('/', 1)[1]).read_bytes(), 'text/javascript')
             if route in ('/studio/cloud-setup.html', '/studio/cloud-setup.js') and getattr(engines, 'conversation', False):
                 if '?' in self.path:
                     return self.send(400, b'{}')

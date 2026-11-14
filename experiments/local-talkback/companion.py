@@ -205,7 +205,9 @@ class Engines:
             return self.render_reply(1, 0, catalog_text(1, 0), voice, Path(folder))
 
 
-ASSETS = {'conversation.html', 'conversation.js', 'conversation-ui.js', 'style.css', 'talkback.js', 'talkback-auto.js'}
+# Shared Studio modules the Skelly Live page loads. The page itself is served by
+# pocket-conversation/server.py in conversation mode.
+ASSETS = {'style.css', 'audio.js', 'talkback.js', 'talkback-auto.js'}
 
 
 def make_handler(engines, port=8766):

@@ -11,6 +11,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/local-talkback'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/pocket-conversation'))
 import companion
 from recordings import Library, catalog_text
 from review_library import stage, approve, review_page, STARTER
@@ -130,6 +131,39 @@ class VoiceTests(unittest.TestCase):
                 self.assertEqual(request('POST', '/api/preview', {**headers, 'Origin': 'https://evil.example'})[0], 403)
             finally:
                 server.shutdown(); thread.join()
+
+
+class LiveFamilyRecordings(unittest.TestCase):
+    """Skelly Live Family mode plays an approved take of the exact line, else synthesizes."""
+
+    def setUp(self):
+        import server
+        self.lookup = server.Engines.reviewed_recording
+        self.temp = tempfile.TemporaryDirectory()
+        self.library = Library(Path(self.temp.name) / 'library')
+        source = Path(self.temp.name) / 'candidate.wav'
+        source.write_bytes(sample())
+        entry = stage(self.library, 2, 1, source, 'Qwen matched MOSS', 'dry and spooky')
+        self.unapproved_text = catalog_text(2, 1)
+        self.assertIsNone(self.lookup(type('E', (), {'recordings': self.library})(), 2, self.unapproved_text))
+        approve(self.library, 2, 1, entry['audio_sha256'])
+        self.engine = type('E', (), {'recordings': self.library})()
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_approved_exact_line_returns_the_take(self):
+        audio, voice = self.lookup(self.engine, 2, catalog_text(2, 1))
+        self.assertEqual(audio, sample())
+        self.assertEqual(voice, 'Qwen matched MOSS')
+
+    def test_other_lines_names_and_bad_cards_fall_back(self):
+        self.assertIsNone(self.lookup(self.engine, 2, catalog_text(2, 0)))
+        self.assertIsNone(self.lookup(self.engine, 2, 'Hi, Emma! ' + catalog_text(2, 1)))
+        self.assertIsNone(self.lookup(self.engine, 3, catalog_text(2, 1)))
+        for card in (-1, 999, '2', None, True):
+            self.assertIsNone(self.lookup(self.engine, card, catalog_text(2, 1)))
+        self.assertIsNone(self.lookup(type('E', (), {})(), 2, catalog_text(2, 1)))
 
 
 if __name__ == '__main__': unittest.main()

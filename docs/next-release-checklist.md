@@ -6,7 +6,8 @@ and exported settings. These checks are separate; audio is optional.
 
 | Check | Observe / pass criterion | Result |
 | --- | --- | --- |
-| Saved routine retention | Save/read-back a recognizable ordinary routine; unplug/restart ESP32 and Skelly. Same routine/settings return after discovery, without an unintended replay/reset. | Untested |
+| Saved routine retention | Save/read-back a recognizable ordinary routine, then follow Studio's **Optional · check it stays saved after a restart** under Save. After the restart, Read shows **matches verified settings** and the same routine returns without an unintended replay/reset. | Untested |
+| Bluetooth reconnection | With that safe routine running, power-cycle Skelly only (ESP32 stays powered). The ESP32 rediscovers Skelly by name and the routine resumes with no immediate replay or burst of movement. Repeat three times; note rough reconnect time. | Untested |
 | Ordered scenes | Use two clearly different mouth-OFF scenes. First starts, next takes over after its hold and current work completes. Observe both moves/eyes/lights; do not demand an exact wall-clock start. | Untested |
 | Random scenes | Use three mouth-OFF scenes. First starts, then another is selected without an immediate repeat. Several switches do not establish uniform probabilities. | Untested |
 | Browser installation | Close other USB sessions, use a reviewed original-WROOM package and explicitly accept overwrite. After upload/reconnect, firmware identity matches; read/save a safe ordinary routine. Preserve the Arduino recovery route. | Untested |
@@ -17,6 +18,10 @@ with what you see, but a status value/BLE write is not proof of physical complet
 Power-cycle retention and interrupted-save recovery are different tests. A deeper
 recovery test is optional, attended and should follow ordinary retention; never
 report it passed based on the mocked storage tests.
+
+The [hardware verification center](hardware-checklist.md) holds the longer result
+sheet, including the Skelly Live return-to-autonomy check; record results there
+too so the two sheets stay consistent.
 
 For any failure, provide firmware/build, exported settings, what physically
 happened and a log if available. Intermittent serial corruption remains unresolved;

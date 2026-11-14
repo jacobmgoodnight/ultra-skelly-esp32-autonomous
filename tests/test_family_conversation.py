@@ -150,5 +150,29 @@ class FamilyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             engine.respond(b'', self.cancel, 'guest', brain_mode='cloud', cloud_consent=True, conversation_mode='family')
 
+class StandaloneCompanionPages(unittest.TestCase):
+    """server.py without conversation mode has no page of its own; it must answer 404, not crash."""
+
+    def test_conversation_page_is_404_without_conversation_mode(self):
+        class Engine:
+            conversation = False
+            voice = type('Voice', (), {'label': 'Local'})()
+            brain = None
+        with ThreadingHTTPServer(('127.0.0.1', 0), server.make_handler(Engine(), 0)) as http:
+            port = http.server_address[1]
+            http.RequestHandlerClass = server.make_handler(Engine(), port)
+            worker = threading.Thread(target=http.serve_forever, daemon=True)
+            worker.start()
+            try:
+                for path in ('/studio/conversation.html', '/studio/conversation-ui.js'):
+                    with self.subTest(path=path):
+                        c = HTTPConnection('127.0.0.1', port, timeout=3)
+                        c.request('GET', path)
+                        self.assertEqual(c.getresponse().status, 404)
+                        c.close()
+            finally:
+                http.shutdown()
+
+
 if __name__ == '__main__':
     unittest.main()

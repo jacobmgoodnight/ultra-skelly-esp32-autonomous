@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=4417f12effa8">
+<link rel="stylesheet" href="./style.css?v=b64c3d435805">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=63da65c09f7c" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
@@ -194,6 +194,7 @@
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
       <button id="controllerWrite" class="controller-save" type="button" aria-describedby="controllerRoutineHelp deviceSaveStatus error" disabled>Save this routine</button>
       <p class="small-description">Wait for <strong>read-back verified</strong> before unplugging. Then watch Skelly while attended to verify movement, eyes and lights.</p>
+      <details class="instructions" id="retentionCheck"><summary>Optional · check it stays saved after a restart</summary><ol><li>Unplug the ESP32 and switch Skelly off for 10 seconds.</li><li>Plug both back in, choose <strong>Connect ESP32</strong>, then <strong>Read saved settings</strong>.</li><li>The status above should say <strong>matches verified settings</strong>, and Skelly should start the same routine without a burst of movement.</li></ol><p>If either is different, save your settings (.json) and note what Skelly did.</p></details>
       <details class="instructions controller-optional"><summary>Optional · save a scene collection</summary><p>Scenes saved in Scene builder stay in this browser. Use this action to replace the ESP32’s program with that saved collection, including its scene order. Unfinished editor changes are excluded.</p><button id="controllerScenes" type="button" disabled>Save scene collection</button></details>
       </section>
       <details class="instructions" id="controllerSetup"><summary>First-time setup · install firmware once</summary>
@@ -370,6 +371,7 @@
     </div>
   </aside>
 </main>
+<section class="live-teaser" aria-labelledby="liveTeaserHeading"><details class="instructions"><summary id="liveTeaserHeading">Experimental · Skelly Live, the talking Skelly</summary><p>Visitors talk and Skelly answers through its own speaker, using a Windows laptop and a microphone near the prop. It is separate from this controller: the ESP32 stays unplugged while it runs. Replies and voice are still being improved.</p><p><a href="../docs/skelly-live-operator.md">Skelly Live guide →</a></p></details></section>
 <footer>Community-made ESP32 controller for Ultra Skelly by Jacob Goodnight.</footer>
 </div>
 <dialog id="paletteDialog" class="small-dialog" aria-labelledby="paletteDialogTitle"><div class="dialog-head"><strong id="paletteDialogTitle">Edit palette</strong><button type="button" id="paletteDialogClose" aria-label="Close palette editor">✕</button></div><div class="dialog-body"><fieldset data-palette-editor="0" hidden><legend>Palette 1</legend><label>Name <input id="palette0Name" maxlength="24" value="Halloween"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette0Torso" value="#ff6000"></label><label>Head <input type="color" id="palette0Head" value="#00ff00"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="0"> Link torso &amp; head colors</label></fieldset>

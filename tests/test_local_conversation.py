@@ -245,8 +245,12 @@ class Boundaries(unittest.TestCase):
                 self.assertIsNone(cors)
                 token = json.loads(data)['token']
                 self.assertEqual(request('GET', '/')[0], 302)
-                self.assertEqual(request('GET', '/studio/conversation.html')[0], 200)
-                self.assertEqual(request('GET', '/studio/conversation-ui.js')[0], 200)
+                # The standalone companion serves only shared modules; the
+                # Skelly Live page comes from pocket-conversation/server.py.
+                for path in ['/studio/audio.js', '/studio/talkback.js', '/studio/talkback-auto.js']:
+                    self.assertEqual(request('GET', path)[0], 200)
+                for path in ['/studio/conversation.html', '/studio/conversation-ui.js', '/studio/talkback.html']:
+                    self.assertEqual(request('GET', path)[0], 404)
                 headers = {'X-Skelly-Token': token, 'Content-Type': 'audio/wav'}
                 self.assertEqual(request('POST', '/api/reply', b'')[0], 403)
                 self.assertEqual(request('POST', '/api/reply', b'', {**headers, 'Origin': 'https://evil.example'})[0], 403)
