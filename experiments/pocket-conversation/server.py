@@ -186,9 +186,10 @@ def make_handler(engines, port, turns=None):
                 previews = getattr(engines, 'voice_previews', {})
                 return self.send(200, previews[key], 'audio/wav') if key in previews else self.send(404, b'{}')
             if route in ('/studio/conversation.html', '/studio/conversation-ui.js'):
-                name = 'index.html' if route.endswith('.html') else 'ui.js'
-                if getattr(engines, 'conversation', False):
-                    name = 'chat.html' if route.endswith('.html') else 'chat-ui.js'
+                # Only conversation mode (chat_server.py) has a page; standalone has none.
+                if not getattr(engines, 'conversation', False):
+                    return self.send(404, b'{}')
+                name = 'chat.html' if route.endswith('.html') else 'chat-ui.js'
                 return self.send(200, (HERE / name).read_bytes(),
                     'text/html; charset=utf-8' if name.endswith('.html') else 'text/javascript')
             if route == '/studio/conversation.js' and getattr(engines, 'conversation', False):

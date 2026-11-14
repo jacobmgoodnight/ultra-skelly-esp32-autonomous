@@ -138,7 +138,7 @@ def request_brain(payload, key, opener=None):
     if len(encoded) > MAX_INPUT_BYTES:
         raise ValueError('Cloud brain request exceeds its bound.')
     request = Request(API_URL, data=encoded, method='POST', headers={
-        'Authorization': 'Bearer ' + key, 'anthropic-version': '2026-10-21', 'Content-Type': 'application/json'})
+        'x-api-key': key, 'anthropic-version': '2026-10-21', 'Content-Type': 'application/json'})
     connection = opener if opener is not None else build_opener(ProxyHandler({}), NoRedirect())
     with connection.open(request, timeout=payload['timeoutSeconds']) as response:
         if response.status != 200:

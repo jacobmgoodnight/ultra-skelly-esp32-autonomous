@@ -16,6 +16,7 @@ import wave
 HERE = Path(__file__).resolve().parents[1] / 'experiments/pocket-conversation'
 sys.path[:0] = [str(HERE), str(HERE.parent / 'local-talkback')]
 import chat_server
+import cloud_worker
 import conversation_policy
 import server
 from pocket_voice import Cancelled
@@ -269,6 +270,27 @@ class CloudSelectionTests(unittest.TestCase):
             engine.select_reply('I like building robots.', threading.Event(), time.monotonic() + 10, 'synthetic')
         engine.brain.reply.assert_not_called()
         engine.cloud_voice.synthesize.assert_not_called()
+
+
+class CloudBrainRequestHeaders(unittest.TestCase):
+    """The Messages API reads API keys from x-api-key; Bearer is only for OAuth tokens."""
+
+    def test_api_key_is_sent_as_x_api_key_not_bearer(self):
+        captured = []
+
+        class Opener:
+            def open(self, request, timeout):
+                captured.append(request)
+                raise RuntimeError('stop after capturing the request')
+
+        payload = {'question': False, 'timeoutSeconds': 5}
+        with patch.object(cloud_worker, 'build_request_body', return_value={'model': 'claude-haiku-5-5'}):
+            with self.assertRaises(RuntimeError):
+                cloud_worker.request_brain(payload, 'synthetic-brain-key', opener=Opener())
+        request = captured[0]
+        self.assertEqual(request.get_header('X-api-key'), 'synthetic-brain-key')
+        self.assertIsNone(request.get_header('Authorization'))
+        self.assertEqual(request.get_header('Anthropic-version'), '2026-10-21')
 
 
 if __name__ == '__main__':
