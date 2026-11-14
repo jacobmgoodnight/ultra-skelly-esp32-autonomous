@@ -6,7 +6,7 @@ and exported settings. These checks are separate; audio is optional.
 
 | Check | Observe / pass criterion | Result |
 | --- | --- | --- |
-| Saved routine retention | Save/read-back a recognizable ordinary routine; unplug/restart ESP32 and Skelly. Same routine/settings return after discovery, without an unintended replay/reset. | Untested |
+| Saved routine retention | Save/read-back a recognizable ordinary routine, then follow Studio's **Optional · check it stays saved after a restart** under Save. After the restart, Read shows **matches verified settings** and the same routine returns without an unintended replay/reset. | Untested |
 | Bluetooth reconnection | With that safe routine running, power-cycle Skelly only (ESP32 stays powered). The ESP32 rediscovers Skelly by name and the routine resumes with no immediate replay or burst of movement. Repeat three times; note rough reconnect time. | Untested |
 | Ordered scenes | Use two clearly different mouth-OFF scenes. First starts, next takes over after its hold and current work completes. Observe both moves/eyes/lights; do not demand an exact wall-clock start. | Untested |
 | Random scenes | Use three mouth-OFF scenes. First starts, then another is selected without an immediate repeat. Several switches do not establish uniform probabilities. | Untested |

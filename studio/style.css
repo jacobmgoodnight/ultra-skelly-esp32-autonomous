@@ -345,3 +345,5 @@ label:has(>input[type=checkbox]):not(.switch):not(.eye-choice){display:inline-fl
 @media(max-width:600px){.controller-before-save{grid-template-columns:1fr;gap:0}}
 @media(max-width:520px){.controller-connect-actions{display:grid;grid-template-columns:1fr 1fr}.controller-connect-actions #controllerConnect{grid-column:1/-1}.controller-step #controllerRead{width:100%}.controller-connections{grid-template-columns:1fr 1fr!important}.controller-consent{align-items:flex-start!important}.controller-consent input{margin-top:4px}.appearance-editors .eye-spotlight img{width:68px;height:68px}}
 @media(max-width:600px){.scene-editor-header .scene-editor{grid-template-columns:minmax(0,1fr) 85px;gap:8px}}
+
+.live-teaser{margin-top:34px}.live-teaser .instructions{margin-top:0}.live-teaser summary{cursor:pointer;font-weight:600;color:var(--text);font-size:13px}
