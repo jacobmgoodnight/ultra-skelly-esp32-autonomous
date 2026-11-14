@@ -198,8 +198,6 @@ def make_handler(engines, port, turns=None):
                 return self.send(200, (HERE / 'adaptive-mic.js').read_bytes(), 'text/javascript')
             if route == '/studio/live-devices.js' and getattr(engines, 'conversation', False):
                 return self.send(200, (HERE / 'live-devices.js').read_bytes(), 'text/javascript')
-            if route in ('/studio/character-director.js', '/studio/character-preview.js', '/studio/character-events.js') and getattr(engines, 'conversation', False):
-                return self.send(200, (companion.ROOT / 'studio' / route.rsplit('/', 1)[1]).read_bytes(), 'text/javascript')
             if route in ('/studio/cloud-setup.html', '/studio/cloud-setup.js') and getattr(engines, 'conversation', False):
                 if '?' in self.path:
                     return self.send(400, b'{}')

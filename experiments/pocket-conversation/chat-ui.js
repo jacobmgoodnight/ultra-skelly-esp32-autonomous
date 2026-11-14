@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const el=id=>document.getElementById(id);let turn,sessionRun,live,token='',selectedEngine='local',selectedBrain='local',selectedDelivery='natural',selectedConsent=false,selectedTone='haunt-dry',selectedConversation='open',familyCatalog=false,pendingGreetingGeneration=null,checking=false,checkGeneration=0,checkAbort,tick,session=window.crypto.randomUUID(),selectedPersonality='friendly',cues=[],cloud={brain:false,voice:false};
-  const director=new window.SkellyCharacterDirector.LiveDirector(),events=new window.SkellyCharacterEvents.LocalEvents();
+  const el=id=>document.getElementById(id);let turn,sessionRun,live,token='',selectedEngine='local',selectedBrain='local',selectedDelivery='natural',selectedConsent=false,selectedTone='haunt-dry',selectedConversation='family',familyCatalog=false,checking=false,checkGeneration=0,checkAbort,tick,session=window.crypto.randomUUID(),selectedPersonality='friendly',cues=[],cloud={brain:false,voice:false};
   // Cloud choices and permission are deliberately never restored from browser storage.
-  el('brainMode').value=el('engine').value='local';el('cloudDelivery').value='natural';el('cloudConsent').checked=false;
+  el('brainMode').value=el('engine').value='local';el('cloudDelivery').value='natural';el('cloudConsent').checked=false;el('conversationMode').value='family';
+  let liveLink=null,liveBusy=false;
   const usingCloud=()=>el('brainMode').value==='cloud'||el('engine').value==='elevenlabs';
   function cloudAllowed(){return ['open','family'].includes(el('conversationMode').value)&&['friendly','mischief',...(el('conversationMode').value==='family'?['guardian','storyteller']:[])].includes(el('personality').value)&&(el('conversationMode').value!=='family'||(familyCatalog&&!usingCloud()))&&['local','cloud'].includes(el('brainMode').value)&&['local','elevenlabs'].includes(el('engine').value)&&['natural','whispering','dry'].includes(el('cloudDelivery').value)&&(el('brainMode').value==='local'||cloud.brain)&&(el('engine').value==='local'||cloud.voice)&&(!usingCloud()||el('cloudConsent').checked);}
   function cloudDetails(){
@@ -20,7 +20,7 @@
     request:async(clip,signal)=>{
       if((selectedBrain==='cloud'&&(!cloud.brain||!selectedConsent||!el('cloudConsent').checked))||(selectedEngine==='elevenlabs'&&(!cloud.voice||!selectedConsent||!el('cloudConsent').checked)))throw Error('Allow the configured cloud services for this chat before talking. Nothing sent.');
       if(selectedConversation==='family'&&!familyCatalog)throw Error('Family replies are unavailable. Check or restart the companion. Nothing played.');
-      const identity=window.crypto.randomUUID(),turnToken=token,turnSession=session,personality=selectedPersonality,turnGeneration=turn.generation,conversation=selectedConversation;
+      const identity=window.crypto.randomUUID(),turnToken=token,turnSession=session,personality=selectedPersonality,conversation=selectedConversation;
       const cancel=()=>{void fetch('/api/cancel',{method:'POST',headers:{'X-Skelly-Token':turnToken,'X-Skelly-Turn':identity},keepalive:true}).catch(()=>{});};
       signal.addEventListener('abort',cancel,{once:true});
       try{
@@ -29,7 +29,6 @@
         const response=await fetch('/api/reply',{method:'POST',headers,body:clip,signal});
         const value=await window.SkellyConversation.readJSON(response);if(!response.ok)throw Error(value.error||'Local companion is unavailable.');
         if(conversation==='family'&&value.responseMode!=='family')throw Error('Companion did not return a reviewed family reply. Nothing played.');
-        if(!signal.aborted&&turn.active&&turn.generation===turnGeneration&&turn.phase==='thinking')pendingGreetingGeneration=conversation==='family'&&value.responseMode==='family'&&value.responseReason==='greeting'?turnGeneration:null;
         if(!signal.aborted){const cloudVoice=['elevenlabs-v3','elevenlabs-v4'].includes(value.source);el('voiceSource').textContent='Last reply: '+(cloudVoice?'ElevenLabs · '+value.source.slice(11):value.source==='pocket-haunt-dry'?'Pocket · Haunt dry':value.source==='pocket-haunt-croaky'?'Pocket · Haunt croaky':value.source==='pocket-e'?'Pocket · synthetic E':value.source==='piper-fallback'?'Piper fallback · Pocket did not produce a bounded reply':value.source==='windows-fallback'?'Windows fallback':'Piper')+(cloudVoice?' · cloud voice.':selectedTone.startsWith('haunt-')?' · new synthetic character reference.':selectedTone==='crypt'?' · crypt skeleton, lower pitch at normal pace.':selectedTone==='hollow'?' · hollow skeleton tone.':'.')+' '+(value.brainSource==='claude'?'Claude conversation. ':value.brainSource==='local'?'Local conversation. ':'')+(value.responseMode==='family'?'Reviewed family reply.':value.responseMode==='requested-joke'?'Requested catalog joke.':value.responseMode==='generated'?'Conversational reply.':value.responseMode==='conversation-recovery'?'Repetition interrupted.':'Friendly fallback. No automatic retry.');}
         return value;
       }finally{signal.removeEventListener('abort',cancel);}
@@ -42,6 +41,7 @@
     el('check').disabled=checking||busy;el('personality').disabled=el('conversationMode').disabled=el('sensitivity').disabled=el('attending').disabled=el('quickTest').disabled=el('handsFree').disabled=busy;el('brainMode').disabled=el('engine').disabled=busy||el('conversationMode').value==='family';el('profileGuardian').disabled=el('profileStoryteller').disabled=el('conversationMode').value!=='family';
     const cloudVoice=el('engine').value==='elevenlabs';el('tone').disabled=el('voice').disabled=busy||cloudVoice;el('cloudDelivery').disabled=busy||!cloudVoice;el('thinkingCue').disabled=busy||cloudVoice;el('cloudConsent').disabled=busy||!usingCloud();cloudDetails();
     el('forget').disabled=el('shutdown').disabled=!token||checking;
+    if(liveLink)el('enableLive').disabled=liveBusy||busy||!el('isolated').checked;
     el('status').textContent=sessionRun?.waiting?'Your turn is next. Microphone off for two seconds, then one quiet calibration second.':turn?.message||'Check the local engine, then choose Talk.';
     const stream=turn?.capture?.stream||live?.testStream(),label=stream?.getAudioTracks?.()[0]?.label;
     el('mic').textContent=stream?'Microphone ON'+(label?' · '+label.slice(0,120):''):'Microphone OFF';
@@ -49,11 +49,6 @@
     el('heard').textContent=turn?.heardText||'';
     el('sessionStatus').textContent=sessionRun?.active?'Turn '+sessionRun.count+' of 6'+(sessionRun.waiting?' · your turn shortly.':'.'):el('handsFree').checked?'Up to six turns. Start when ready.':'One turn at a time.';
     el('pause').textContent=remaining?'Pause: '+remaining+' seconds before the next Talk. The microphone stays off.':'';
-    const directorRemaining=Number.isFinite(turn?.cooldownUntil)?Math.max(0,turn.cooldownUntil-Date.now())/1000:remaining;
-    const state=director.observe({active:!!turn?.active,phase:turn?.phase,sessionActive:!!sessionRun?.active,completed:turn?.completed||0,remaining:directorRemaining,familyGreeting:pendingGreetingGeneration!==null&&pendingGreetingGeneration===turn?.generation});
-    el('directorCue').textContent='Simulated cue: '+state.cue+'. No prop commands are sent.';
-    if(state.state==='recovery'&&el('shareCharacterEvents').checked){director.setEvents(false);events.close();el('shareCharacterEvents').checked=false;}
-    if(el('shareCharacterEvents').checked)events.publish(director.drainEvents());
     if(live){const testPhase=live.testPhase();el('livePhase').textContent=['requesting','calibrating','listening','capturing'].includes(turn?.phase)||['requesting','recording','finishing'].includes(testPhase)?'Listening':turn?.phase==='thinking'?'Thinking':turn?.phase==='playing'||testPhase==='playing'?'Speaking':remaining?'Cooldown':'Idle';live.sync();}
     clearTimeout(tick);if(remaining&&!document.hidden)tick=setTimeout(draw,1000);
     if(!supported)el('service').textContent='Use desktop Chrome/Edge with microphone and Web Audio support.';
@@ -67,7 +62,7 @@
       const response=await fetch('/api/status',{signal:abort.signal});const value=await window.SkellyConversation.readJSON(response,2048);if(generation!==checkGeneration)return;
       if(value.conversation!==true||!response.ok||value.ready!==true||typeof value.token!=='string'||value.token.length>100)throw Error();
       token=value.token;el('service').textContent='Connected. Confirm your speaker below, then start talking.';if(!turn.active&&!turn.replyText)turn.message='Ready when you are.';
-      familyCatalog=value.familyCatalog===true;el('familyModeOption').disabled=!familyCatalog;el('familyStatus').textContent=familyCatalog?'Family mode uses reviewed local replies.':'Family mode unavailable: restart or update the local companion.';
+      familyCatalog=value.familyCatalog===true;el('familyModeOption').disabled=!familyCatalog;el('familyStatus').textContent=familyCatalog?'Family mode plays only replies a person has reviewed.':'Family replies are unavailable. Restart the Skelly Live launcher, or choose Open mode while you listen.';if(!familyCatalog&&el('conversationMode').value==='family')el('service').textContent='Connected, but reviewed family replies are unavailable. Restart the Skelly Live launcher.';
       el('localVoiceReady').textContent='Local voice: '+(typeof value.voice==='string'?value.voice.slice(0,120):'not reported')+'. Software readiness only; listen to verify the speaker.';
       const tones=Array.isArray(value.tones)?value.tones:['crypt','hollow','natural'];el('hauntDry').disabled=!tones.includes('haunt-dry');el('hauntCroaky').disabled=!tones.includes('haunt-croaky');if(live&&el('tone').options)for(const option of el('tone').options)option.disabled=!tones.includes(option.value);if(!tones.includes(el('tone').value))el('tone').value=live&&tones.includes('natural')?'natural':'crypt';
       if(live&&el('tone').options){const natural=[...el('tone').options].find(option=>option.value==='natural');if(natural)natural.textContent=tones.length===1?'Natural · '+(value.voice||'local voice'):'Original E voice';}
@@ -91,14 +86,13 @@
   const previewIds=['previewDry','previewCroaky','previewCrypt'];
   function stopPreviews(except=''){for(const id of previewIds)if(id!==except){el(id).pause?.();try{el(id).currentTime=0;}catch{}}}
   for(const id of previewIds)el(id).onplay=()=>{if(turn.active||sessionRun?.active)stopPreviews();else stopPreviews(id);};
-  function takeTurn(handsFree=false){if(!cloudAllowed()||(live&&(!live.ready()||live.testing())))return Promise.reject(Error('Check your selected devices and services before talking.'));pendingGreetingGeneration=null;stopPreviews();selectedEngine=el('engine').value;selectedBrain=el('brainMode').value;selectedDelivery=el('cloudDelivery').value;selectedConsent=usingCloud()&&el('cloudConsent').checked;selectedPersonality=el('personality').value;selectedConversation=el('conversationMode').value;selectedTone=el('tone').value;if(director.describe().state==='idle')director.setProfile(selectedPersonality);repeat.voice=selectedEngine==='elevenlabs'?'original':el('voice').value;if(live)repeat.sink=live.output();const thinkingClip=cueSchedule.choose(cues,!live&&el('thinkingCue').checked&&selectedEngine==='local');return turn.start(Number(el('sensitivity').value),{noPause:!live&&(handsFree||el('quickTest').checked),thinkingClip});}
+  function takeTurn(handsFree=false){if(!cloudAllowed()||(live&&(!live.ready()||live.testing())))return Promise.reject(Error('Check your selected devices and services before talking.'));stopPreviews();selectedEngine=el('engine').value;selectedBrain=el('brainMode').value;selectedDelivery=el('cloudDelivery').value;selectedConsent=usingCloud()&&el('cloudConsent').checked;selectedPersonality=el('personality').value;selectedConversation=el('conversationMode').value;selectedTone=el('tone').value;repeat.voice=selectedEngine==='elevenlabs'?'original':el('voice').value;if(live)repeat.sink=live.output();const thinkingClip=cueSchedule.choose(cues,!live&&el('thinkingCue').checked&&selectedEngine==='local');return turn.start(Number(el('sensitivity').value),{noPause:!live&&(handsFree||el('quickTest').checked),thinkingClip});}
   sessionRun=new window.SkellyConversation.ConversationSession({turn,startTurn:()=>takeTurn(true),mayListen:()=>!!token&&el('attending').checked&&el('handsFree').checked&&!document.hidden&&!checking&&cloudAllowed()&&(!live||(live.ready()&&!live.testing())),
     onEnd:(message,preserve)=>{const reply=turn.replyText,heard=turn.heardText;if(!preserve)forgetMemory();turn.stop(message);if(preserve){turn.replyText=reply;turn.heardText=heard;}draw();},onChange:draw});
   el('talk').onclick=()=>{if(!el('talk').disabled){if(el('handsFree').checked)sessionRun.begin();else void takeTurn().catch(error=>turn.stop(error.message));}};
   function forgetMemory(){const previous=session;session=window.crypto.randomUUID();el('cloudConsent').checked=false;selectedConsent=false;if(token)void fetch('/api/forget',{method:'POST',headers:{'X-Skelly-Token':token,'X-Skelly-Session':previous},keepalive:true}).catch(()=>{});}
-  function stop(forget=false){pendingGreetingGeneration=null;director.stop();director.setEvents(false);events.close();el('shareCharacterEvents').checked=false;sessionRun.stop();live?.stop();stopPreviews();if(forget)forgetMemory();else{el('cloudConsent').checked=false;selectedConsent=false;}++checkGeneration;checking=false;checkAbort?.abort();checkAbort=null;turn.stop(forget?'New visit. Microphone off.':'Paused. Your visit is still here; microphone off.');draw();}
+  function stop(forget=false){if(liveBusy)liveLink?.cancel();sessionRun.stop();live?.stop();stopPreviews();if(forget)forgetMemory();else{el('cloudConsent').checked=false;selectedConsent=false;}++checkGeneration;checking=false;checkAbort?.abort();checkAbort=null;turn.stop(forget?'New visit. Microphone off.':'Paused. Your visit is still here; microphone off.');draw();}
   el('stop').onclick=()=>stop();el('forget').onclick=()=>stop(true);el('personality').onchange=()=>{stop(true);turn.message='New personality, fresh visit. Microphone off.';draw();};el('attending').onchange=el('handsFree').onchange=el('cloudConsent').onchange=draw;
-  el('shareCharacterEvents').onchange=()=>{const enabled=el('shareCharacterEvents').checked&&events.enable();el('shareCharacterEvents').checked=enabled;director.setEvents(enabled);if(!enabled)events.close();draw();};
   el('conversationMode').onchange=()=>{stop(true);if(el('conversationMode').value==='family')el('brainMode').value=el('engine').value='local';else if(!['friendly','mischief'].includes(el('personality').value))el('personality').value='friendly';turn.message='Reply mode changed. Start a fresh visit.';draw();};
   el('brainMode').onchange=el('engine').onchange=()=>{stop(true);if(el('engine').value==='elevenlabs')el('voice').value='original';turn.message='Service changed. Start a fresh visit and allow cloud use if selected.';draw();};
   el('shutdown').onclick=async()=>{
@@ -107,10 +101,22 @@
     catch{el('service').textContent='Could not confirm companion shutdown. Choose Stop and exit in the Skelly Live launcher, then restart it.';}
   };
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stop(true);else draw();});window.addEventListener('pagehide',()=>stop(true));
-  navigator.mediaDevices?.addEventListener?.('devicechange',()=>{live?.changed();if(turn.active||sessionRun.active||el('shareCharacterEvents').checked){stop(true);turn.message='Audio devices changed. Check Windows input/output settings before another turn.';draw();}});
+  navigator.mediaDevices?.addEventListener?.('devicechange',()=>{live?.changed();if(turn.active||sessionRun.active){stop(true);turn.message='Audio devices changed. Check Windows input/output settings before another turn.';draw();}});
   if(window.SkellyLiveDevices){
     live=window.SkellyLiveDevices.create({media:navigator.mediaDevices,RepeatBack:window.SkellyTalkback.RepeatBack,Recorder:window.MediaRecorder,storage:window.localStorage,nodes:Object.fromEntries(['enableDevices','inputDevice','outputDevice','deviceStatus','testRecording','testPlayback'].map(id=>[id,el(id)])),onChange:draw,onPlayback:()=>{turn.cooldownUntil=Math.max(turn.cooldownUntil,Date.now()+60000);draw();},mayPlay:()=>el('attending').checked,isBusy:()=>!!turn.active||!!sessionRun.active||turn.remaining>0,outputSupported:!!window.HTMLMediaElement?.prototype?.setSinkId});
-    el('thinkingCue').checked=el('quickTest').checked=el('handsFree').checked=false;el('thinkingCue').closest('label').hidden=true;el('quickTest').closest('label').hidden=true;el('handsFree').closest('label').hidden=true;el('previewDry').closest('details').hidden=true;
+    el('thinkingCue').checked=el('quickTest').checked=el('handsFree').checked=false;el('thinkingCue').closest('label').hidden=true;el('quickTest').closest('label').hidden=true;el('handsFree').closest('label').hidden=true;el('previewDry').closest('details').hidden=true;el('sessionStatus').hidden=el('cueStatus').hidden=true;
+    if(window.SkellyTalkback.LiveLink&&window.SkellyAudio?.frame&&navigator.bluetooth&&window.isSecureContext){
+      liveLink=new window.SkellyTalkback.LiveLink(navigator.bluetooth,window.SkellyAudio.frame,{onChange:message=>{el('liveStatus').textContent=message;}});
+      el('isolated').onchange=draw;
+      el('enableLive').onclick=async()=>{
+        if(el('enableLive').disabled)return;
+        liveBusy=true;draw();el('liveStatus').textContent='Choose your Ultra Skelly in the Bluetooth chooser. Only the speaker request is sent.';
+        try{el('liveStatus').textContent=await liveLink.enable(el('propName').value);}
+        catch(error){el('liveStatus').textContent=error.message;}
+        finally{liveBusy=false;draw();}
+      };
+    }else el('liveStatus').textContent='This browser cannot turn on the speaker. Use desktop Chrome or Edge, or pair Skelly’s Live speaker from Windows Bluetooth settings.';
+    void el('check').onclick();
     // A background check never opens audio. If the companion disappears, stop
     // the current turn and require another explicit connection check.
     const heartbeat=async()=>{

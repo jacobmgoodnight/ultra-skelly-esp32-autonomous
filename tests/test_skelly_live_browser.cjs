@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
-const routes={'/':'experiments/pocket-conversation/chat.html','/talkback.js':'studio/talkback.js','/talkback-auto.js':'studio/talkback-auto.js','/adaptive-mic.js':'experiments/pocket-conversation/adaptive-mic.js','/conversation.js':'experiments/pocket-conversation/chat-turn.js','/conversation-ui.js':'experiments/pocket-conversation/chat-ui.js','/live-devices.js':'experiments/pocket-conversation/live-devices.js','/character-director.js':'studio/character-director.js','/character-preview.js':'studio/character-preview.js','/character-events.js':'studio/character-events.js'};
+const routes={'/':'experiments/pocket-conversation/chat.html','/talkback.js':'studio/talkback.js','/talkback-auto.js':'studio/talkback-auto.js','/adaptive-mic.js':'experiments/pocket-conversation/adaptive-mic.js','/conversation.js':'experiments/pocket-conversation/chat-turn.js','/conversation-ui.js':'experiments/pocket-conversation/chat-ui.js','/live-devices.js':'experiments/pocket-conversation/live-devices.js','/audio.js':'studio/audio.js'};
 test('operator page starts silent, routes explicit devices and discards a test clip',async()=>{
   let online=true;
   const server=http.createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;if(route==='/api/status'){res.setHeader('Content-Type','application/json');if(!online){res.writeHead(503);res.end('{}');return;}res.end(JSON.stringify({ready:true,conversation:true,familyCatalog:true,token:'test-token',voice:'local test',brain:'local test',tones:['haunt-dry'],modelLoaded:true}));return;}const file=routes[route];if(!file){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',file.endsWith('.html')?'text/html':'text/javascript');res.end(fs.readFileSync(path.join(root,file)));});
@@ -13,12 +13,17 @@ test('operator page starts silent, routes explicit devices and discards a test c
       window.testMicCalls=[];window.testSinks=[];
       const media={getUserMedia:async constraints=>{window.testMicCalls.push(constraints);return {getTracks:()=>[{stop(){}}],getAudioTracks:()=>[{label:'FLOW 8'}]};},enumerateDevices:async()=>[{kind:'audioinput',deviceId:'usb',label:'FLOW 8'},{kind:'audiooutput',deviceId:'skelly',label:'Skelly Live Stereo'}],addEventListener(){}};
       Object.defineProperty(navigator,'mediaDevices',{value:media});
+      Object.defineProperty(navigator,'bluetooth',{value:{requestDevice:async options=>{window.testBluetooth=options;throw new Error('chooser closed');}}});
       window.MediaRecorder=class {static isTypeSupported(){return true;}constructor(){this.state='inactive';this.mimeType='audio/webm';}start(){this.state='recording';}stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['test'])});this.onstop?.();}};
       HTMLMediaElement.prototype.setSinkId=async function(){};
       window.Audio=class {async setSinkId(id){window.testSinks.push(id);}async play(){window.testPlaybackAudio=this;}pause(){}removeAttribute(){}load(){}};
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/`);assert.equal(await page.evaluate(()=>testMicCalls.length),0);
-    await page.click('#check');await page.waitForFunction(()=>document.querySelector('#service').textContent.includes('Connected.'));
+    await page.waitForFunction(()=>document.querySelector('#service').textContent.includes('Connected.'));
+    assert.equal(await page.locator('#conversationMode').inputValue(),'family');assert.equal(await page.locator('#settings').evaluate(d=>d.open),false);assert.equal(await page.locator('#enableLive').isDisabled(),true);
+    await page.locator('#isolated').check();assert.equal(await page.locator('#enableLive').isDisabled(),false);await page.click('#enableLive');
+    await page.waitForFunction(()=>/No live-enable request was sent/.test(document.querySelector('#liveStatus').textContent));
+    assert.deepEqual(await page.evaluate(()=>testBluetooth.filters),[{name:'Ultra Skelly v2'}]);assert.equal(await page.locator('#enableLive').isDisabled(),false);
     assert.equal(await page.locator('#talk').isDisabled(),true);await page.click('#enableDevices');await page.selectOption('#inputDevice','usb');await page.selectOption('#outputDevice','skelly');
     assert.equal(await page.locator('#talk').isDisabled(),true);await page.locator('#attending').check();assert.equal(await page.locator('#talk').isDisabled(),false);
     if(process.env.SKELLY_LIVE_QA_SCREENSHOT)await page.screenshot({path:process.env.SKELLY_LIVE_QA_SCREENSHOT,fullPage:true});
