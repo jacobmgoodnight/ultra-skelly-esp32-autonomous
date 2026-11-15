@@ -1,5 +1,32 @@
 # Changelog
 
+## Skelly Live cleanup and Studio polish · browser, companion and documentation
+
+**Studio:** loads about half as much on first visit (eye previews resized from
+the originals to fit 240 px; first load at phone width 3.7 MB → 1.8 MB). A wrong
+file chosen for Load settings or Import scenes now gets a plain message instead
+of a parser error. Accessibility fixes leave every Studio page with no axe-core
+findings. Under Save, an optional "check it stays saved after a restart" step
+uses the existing read-back comparison. Skelly Live appears only as a collapsed
+experimental section at the bottom. The 19 Studio browser workflows now run in
+CI, and Pages deploys only after they pass.
+
+**Skelly Live (experimental):** one page with three steps (Skelly's speaker,
+microphone and speaker, Talk), one Character picker and everything else under
+Advanced. Family mode (reviewed replies only) is the default and never falls back
+to Open. Family mode now answers common questions from the reviewed catalog, and
+the Mischievous Skeleton, Haunted Guardian and Creepy Storyteller have their own
+owner-approved lines. Approved recordings of any Family line, including character
+lines, play instead of the Piper voice. The Claude cloud option's API-key header
+is fixed. The older Repeat-back and Halloween conversation pages are retired, and
+seven Live documents became one guide plus an archive.
+
+**Next season:** [First night back](docs/first-night-back.md) gathers the
+outstanding hardware checks into one attended session.
+
+Firmware, generated sketches and stored formats are unchanged. These changes have
+software evidence only.
+
 ## Eye preview consistency and audit cleanup · browser and documentation
 
 The enlarged eye preview now updates its image, descriptive label and alt text
