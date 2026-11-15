@@ -161,6 +161,16 @@ async function main(){
       assert.equal(await page.locator('[data-preset="subtle"]').getAttribute('aria-pressed'),'true');
       assert.match(await page.locator('#deviceSaveStatus').textContent(),/matches verified/);
       assert.equal(await page.locator('#controllerSkelly').textContent(),'Not connected yet');
+      // Not-a-settings-file and not-a-scene-library choices get plain messages and change nothing.
+      const before=await page.locator('#headMin').inputValue();
+      await page.locator('#profileFile').setInputFiles({name:'notes.json',mimeType:'application/json',buffer:Buffer.from('hello')});
+      await page.waitForFunction(()=>/isn’t a Skelly Studio settings file/.test(document.querySelector('#profileStatus').textContent));
+      assert.equal(await page.locator('#headMin').inputValue(),before);
+      await page.locator('#sceneFile').setInputFiles({name:'scenes.json',mimeType:'application/json',buffer:Buffer.from('{oops')});
+      await page.waitForFunction(()=>/isn’t a Skelly Studio scene library/.test(document.querySelector('#sceneMessage').textContent));
+      // Landmark and group labels found by the accessibility scan.
+      assert.equal(await page.locator('.hero').getAttribute('aria-label'),'Introduction');
+      for(const id of ['#sceneStrip','#sceneList','#sceneSequence'])assert.equal(await page.locator(id).getAttribute('role'),'group');
       // Restart check (the mock keeps saved settings like the ESP32's flash): reading back must still match.
       assert.equal(await page.locator('#retentionCheck').evaluate(d=>d.open),false);assert.equal(await page.locator('.live-teaser details').evaluate(d=>d.open),false);
       assert.match(await page.locator('.live-teaser').textContent(),/Experimental/);

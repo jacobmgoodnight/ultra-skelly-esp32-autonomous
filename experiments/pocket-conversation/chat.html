@@ -42,7 +42,7 @@ details.drawer{border:1px solid var(--line);border-radius:12px;margin-top:13px;b
 <p id="levelHint" hidden>Microphone off.</p>
 <div class="session-row"><label class="checkline"><input id="handsFree" type="checkbox">Keep the conversation going</label><p id="sessionStatus">One turn at a time.</p></div><p id="pause" role="status"></p>
 <div class="bubble visitor"><span class="speaker">What Skelly heard</span><p id="heard"></p></div>
-<div class="bubble skelly"><span class="speaker">Skelly</span><p id="reply" aria-label="Skelly reply" aria-live="polite"></p></div>
+<div class="bubble skelly"><span class="speaker">Skelly</span><p id="reply" role="status" aria-label="Skelly reply" aria-live="polite"></p></div>
 <div class="cloud" id="cloudPanel" hidden><label class="checkline"><input id="cloudConsent" type="checkbox" disabled>Allow the selected cloud services for this visit</label><p id="cloudDisclosure">Local mode keeps this conversation on your laptop.</p></div>
 <label class="field delivery" id="cloudDeliveryField" for="cloudDelivery" hidden>Delivery<select id="cloudDelivery" disabled><option value="natural">Natural character</option><option value="whispering">Whispering</option><option value="dry">Dry skeleton wit</option></select></label>
 <p class="privacy">Stop pauses. New visitor or leaving this page clears the visit.</p>

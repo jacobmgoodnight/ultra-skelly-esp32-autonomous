@@ -39,6 +39,15 @@ test("profile round trip keeps firmware output and device clip library",()=>{
   assert.equal(api.generateSketch(restored.config),api.generateSketch(before));
 });
 
+test("a file that is not JSON gets a plain-language message, not a parser error",()=>{
+  for(const text of ["", "hello", "{not json", "\u0000"]){
+    assert.throws(()=>api.parseProfile(text),error=>{
+      assert.match(error.message,/isn’t a Skelly Studio settings file/);
+      assert.doesNotMatch(error.message,/JSON|Unexpected|token/);
+      return true;
+    });
+  }
+});
 test("profile rejects bad schema, wrong types and invalid dormant settings",()=>{
   const valid=JSON.parse(api.createProfile(config(),{}));
   for(const mutate of [
