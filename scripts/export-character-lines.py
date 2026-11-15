@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / 'experiments/pocket-conversation')]
+sys.path[:0] = [str(ROOT / 'experiments/local-talkback')]
 import character_lines as c  # noqa: E402
 
 OUT = ROOT / 'docs/skelly-live-character-lines.md'
@@ -18,7 +18,7 @@ TOPICS = {c.GREETING: 'Hello', c.WHO: 'Who are you?', c.SCARY: 'Are you scary?',
 
 def render():
     out = ['# Skelly Live character lines (review sheet)', '',
-           'Generated from `experiments/pocket-conversation/character_lines.py` by',
+           'Generated from `experiments/local-talkback/character_lines.py` by',
            '`python scripts/export-character-lines.py`. Do not edit by hand.', '',
            'Skelly speaks a character\'s lines in Family mode **only after** that character is',
            'added to `APPROVED` in the source file. Until then it uses the shared reviewed',

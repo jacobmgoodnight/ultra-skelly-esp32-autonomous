@@ -16,6 +16,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / 'local-talkback'))
 import companion
+import character_lines
 from pocket_voice import Cancelled, GuardedVoice, check, run_process
 from cloud_brain import CloudBrain
 from cloud_voice import CloudVoice
@@ -88,15 +89,26 @@ class Turns:
 class Engines(companion.Engines):
     conversation = False
 
-    def reviewed_recording(self, card, text):
-        """An approved local take of this exact catalog line, or None to synthesize.
+    def reviewed_recording(self, text, profile=None):
+        """An approved local take of exactly this line, or None to synthesize.
 
-        The library re-checks review status, text and audio hashes on every read,
-        so an unreviewed, edited or name-personalized line never plays a take.
+        Lines are matched by their exact text, so greetings, goodbyes and the
+        fallback are found too. An approved character's own lines are checked
+        first, then the shared catalog. The library re-checks review status,
+        text and audio hashes on every read, so unreviewed, edited or
+        name-personalized lines never play a take.
         """
         recordings = getattr(self, 'recordings', None)
-        if recordings is None or type(card) is not int or not 0 <= card < len(companion.REPLIES):
+        if recordings is None or not isinstance(text, str) or not text:
             return None
+        if profile in character_lines.APPROVED:
+            for topic, lines in character_lines.LINES.get(profile, {}).items():
+                if text in lines:
+                    return recordings.lookup_details(topic, lines.index(text), text, profile)
+        for topic, lines in enumerate(companion.REPLIES):
+            if text in lines:
+                return recordings.lookup_details(topic, lines.index(text), text)
+        return None
         for variant, line in enumerate(companion.REPLIES[card]):
             if line == text:
                 return recordings.lookup_details(card, variant, text)
@@ -144,7 +156,7 @@ class Engines(companion.Engines):
                 from family_conversation import validate_speech
                 validate_speech(text)
             synth_started = time.monotonic()
-            recording = self.reviewed_recording(card, text) if getattr(self, 'family_mode', False) else None
+            recording = self.reviewed_recording(text, profile) if getattr(self, 'family_mode', False) else None
             if recording is not None:
                 audio, source_name = recording[0], 'Reviewed recording · ' + recording[1]
             else:

@@ -21,8 +21,9 @@ parser.add_argument('topic', type=int); parser.add_argument('variant', type=int)
 parser.add_argument('--reference', required=True, type=Path, help='Existing synthetic reference WAV; never visitor audio')
 parser.add_argument('--reference-text', required=True, type=Path, help='Exact words in the synthetic reference')
 parser.add_argument('--voice', required=True); parser.add_argument('--delivery', required=True)
+parser.add_argument('--character', choices=('mischief', 'guardian', 'storyteller'), help="Render that character's own line")
 args = parser.parse_args()
-phrase = catalog_text(args.topic, args.variant)
+phrase = catalog_text(args.topic, args.variant, args.character)
 research = ROOT / '.skelly-build/voice-research'
 exe = research / 'qwentts-ninja/qwen-tts.exe'
 models = research / 'qwen-design-models'
@@ -67,6 +68,6 @@ peak = float(np.max(np.abs(audio)))
 if peak < 1e-5:
     raise SystemExit('Silent generation; candidate not staged.')
 sf.write(wav, audio * min(1, .95 / peak), 22050, subtype='PCM_16')
-entry = stage(Library(DEFAULT_LIBRARY), args.topic, args.variant, wav, args.voice, args.delivery)
+entry = stage(Library(DEFAULT_LIBRARY), args.topic, args.variant, wav, args.voice, args.delivery, character=args.character)
 print(f"Unreviewed candidate {args.topic}/{args.variant}; {time.monotonic() - started:.2f}s; SHA-256 {entry['audio_sha256']}")
 print(f'Expected: {phrase}\nListen to the entire staged WAV before approving it.')

@@ -1,6 +1,6 @@
 # Skelly Live character lines (review sheet)
 
-Generated from `experiments/pocket-conversation/character_lines.py` by
+Generated from `experiments/local-talkback/character_lines.py` by
 `python scripts/export-character-lines.py`. Do not edit by hand.
 
 Skelly speaks a character's lines in Family mode **only after** that character is

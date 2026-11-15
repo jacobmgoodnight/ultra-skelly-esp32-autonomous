@@ -86,7 +86,7 @@ you, are you scary, how are you, thank you, candy, goodbye and "didn't catch
 that"; you approved all three on November 15, 2026. Every character shares the
 same jokes. All lines are in the [character review sheet](skelly-live-character-lines.md).
 
-To change a line, edit `experiments/pocket-conversation/character_lines.py` and
+To change a line, edit `experiments/local-talkback/character_lines.py` and
 run `python scripts/export-character-lines.py`. To take a character back to the
 shared catalog, remove its name from `APPROVED` in that file.
 
@@ -104,25 +104,30 @@ prepared Pocket voice files that this repository does not include.
 
 ### Reviewed recordings (better voice, recommended)
 
-Family mode only ever says lines from its fixed catalog, so each line can be
-recorded ahead of time with a slower, more characterful voice. When you approve
-a take, Family mode plays it instead of Piper. Lines without an approved take,
-and lines personalized with a visitor's name, still use Piper.
+Family mode only ever says fixed, reviewed lines, so each line can be recorded
+ahead of time with a slower, more characterful voice. When you approve a take,
+Family mode plays it instead of Piper. This covers the shared catalog and the
+approved characters' own lines. Lines without an approved take, and lines
+personalized with a visitor's name, still use Piper.
 **Advanced** shows which one played for the last reply.
 
 Using the local Python environment (`.skelly-build\voice-research-env\Scripts\python.exe`):
 
-1. List a varied starter set of 16 lines (topic and variant numbers):
-   `experiments/local-talkback/review_library.py starter`
+1. List a varied starter set of 16 shared lines (topic and variant numbers):
+   `experiments/local-talkback/review_library.py starter`. Add
+   `--character guardian` (or `mischief`, `storyteller`) to list that
+   character's 24 lines instead.
 2. Render a take of one line with the Qwen voice-matching setup from the
    [voice research](archive/skelly-live/expressive-voice-research.md), using a
    synthetic reference clip you liked (never a visitor recording):
    `experiments/voice-research/generate-candidate.py 2 1 --reference <ref.wav> --reference-text <ref.txt> --voice "Skelly" --delivery "dry and spooky"`
+   For a character's line, add the same `--character` option.
    This can be slow on a CPU; it runs ahead of time, not during a visit.
 3. Listen to every staged take on a local page:
    `experiments/local-talkback/review_library.py review-page`
 4. Approve the exact take you listened to, using the SHA-256 printed in step 2:
    `experiments/local-talkback/review_library.py approve 2 1 <sha256>`
+   (plus `--character …` for a character's line).
 
 A take plays only while its text, review status and audio checksum still
 match, so editing a line or its audio automatically falls back to Piper.
