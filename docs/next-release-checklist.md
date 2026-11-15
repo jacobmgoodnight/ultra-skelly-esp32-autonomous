@@ -1,5 +1,8 @@
 # Next attended checks — short result sheet
 
+For one combined sitting with the prop (controller, scenes, Skelly Live and
+return to normal in about 30–35 minutes), use [First night back](first-night-back.md).
+
 No new physical pass is claimed by the October 24 software update. Existing Studio,
 lighting and USB connection/read/save confirmations remain. Keep working firmware
 and exported settings. These checks are separate; audio is optional.

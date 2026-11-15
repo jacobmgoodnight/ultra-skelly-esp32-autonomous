@@ -150,6 +150,9 @@ This procedure has not yet been confirmed on hardware. Record what you see.
 
 ## Attended acceptance check
 
+To check Skelly Live together with the controller in one sitting, use
+[First night back](first-night-back.md). The steps below are the Live part on its own.
+
 With the ESP32 unplugged, low volume and an adult at the prop:
 
 1. The page opens with the microphone off and **Family** selected.
