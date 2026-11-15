@@ -73,6 +73,21 @@ After each reply there is a pause of about 45 seconds before the next **Talk**.
   recognized unsafe output but cannot guarantee suitability. Use it only while
   you are listening.
 
+Family mode answers greetings, goodbyes, joke requests and common questions
+(who are you, are you scary, how are you, thank you, candy, costumes, music,
+colors) from the reviewed catalog. Anything else gets a friendly "ask me for a
+joke" line.
+
+### Characters
+
+Friendly Trick-or-Treater uses the shared catalog. The Mischievous Skeleton,
+Haunted Guardian and Creepy Storyteller each have their own drafted lines in the
+[character review sheet](skelly-live-character-lines.md), but a character speaks
+them only after you approve it. To approve one, read all of its lines, then add
+its name (`'mischief'`, `'guardian'` or `'storyteller'`) to `APPROVED` in
+`experiments/pocket-conversation/character_lines.py`. Until then it uses the
+shared catalog. Jokes stay shared by every character.
+
 Cloud options (Claude for Open-mode replies, ElevenLabs for the voice) are off
 by default. They need setup through **Advanced → Optional cloud setup** and
 permission for each visit. Raw microphone audio never leaves the laptop. Claude

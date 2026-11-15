@@ -9,6 +9,8 @@ on:
       - "tests/test_reviewed_voice.py"
       - "tests/test_skelly_*.py"
       - "tests/test_skelly_*.cjs"
+      - "scripts/export-character-lines.py"
+      - "docs/skelly-live-character-lines.md"
       - ".github/workflows/character-director.yml"
   push:
     branches: [main]
@@ -36,6 +38,7 @@ jobs:
           python tests/test_skelly_voice_references.py
           python tests/test_skelly_live_status.py
           python tests/test_reviewed_voice.py
+          python scripts/export-character-lines.py --check
       - name: Check Live UI and cancellation
         run: |
           node --test tests/test_skelly_chat_ui.cjs tests/test_skelly_chat_turn.cjs tests/test_skelly_session.cjs tests/test_skelly_live_devices.cjs

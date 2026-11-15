@@ -4,8 +4,10 @@ from companion import NAMES, REPLIES, literal_topic
 from replies import JOKE_TOPICS
 from conversation_policy import offered_name, blocked_input
 from pocket_voice import CATALOG, check
+import character_lines
 
-# Reference only the existing reviewed catalog; no newly authored speech.
+# Speak only the shared reviewed catalog, plus a character's own lines once the
+# owner has approved that character in character_lines.APPROVED.
 GREETINGS = {
     'friendly': (REPLIES[9][0], REPLIES[1][0]),
     'mischief': (REPLIES[9][1], REPLIES[1][1]),
@@ -24,15 +26,43 @@ RESET = REPLIES[1][0]
 REDIRECT = REPLIES[0][1]
 FAMILY_LINES = CATALOG
 
+# Plain keyword intents for topics the reviewed catalog already answers.
+# Earlier patterns win; costume and joke subjects fall through to literal_topic.
+TOPIC_PATTERNS = (
+    (9, r"\bwho are you\b|\bwhat(?:'s| is) your name\b|\byour name\b"),
+    (13, r"\bhow are you\b|\bhow(?:'s| is) it going\b|\bhow do you feel\b"),
+    (14, r"\bthank(?:s| you)\b"),
+    (10, r"\bscar(?:y|ed|e)\b|\bafraid\b|\bspooky\b|\bfrighten"),
+    (7, r"\bcandy\b|\btrick or treat\b|\btreats?\b|\bchocolate\b"),
+    (11, r"\bdanc(?:e|es|ing)\b|\bmusic\b|\bsing\b|\bsongs?\b"),
+    (15, r"\bcolou?rs?\b"),
+)
+
+
+def family_topic(text):
+    for topic, pattern in TOPIC_PATTERNS:
+        if re.search(pattern, text, re.I):
+            return topic
+    return literal_topic(text)
+
+
+def character_line(deck, profile, topic, previous):
+    lines = character_lines.approved_lines(profile, topic)
+    return deck.pick(lines, previous) if lines else None
+
+
+def approved_speech(text):
+    return text in FAMILY_LINES or text in character_lines.all_approved()
+
 
 def validate_speech(text):
     """Fail closed at the final synthesis boundary, including name interpolation."""
     if not isinstance(text, str) or len(text) > 180:
         raise ValueError('Expected an approved family reply.')
-    if text in FAMILY_LINES:
+    if approved_speech(text):
         return
     match = re.fullmatch(r'Hi, ([A-Z][a-z]+)! (.+)', text)
-    if not match or match[1].casefold() not in NAMES or match[2] not in FAMILY_LINES:
+    if not match or match[1].casefold() not in NAMES or not approved_speech(match[2]):
         raise ValueError('Expected an approved family reply and allowlisted name.')
 
 
@@ -55,7 +85,8 @@ def select(transcript, memory, session, profile, cancel, deadline, deck):
     elif new_visitor:
         reply, marker = RESET, 'greeting'
     elif re.search(r'\b(?:goodbye|bye|good ?night|see you)\b', text, re.I):
-        reply, marker, keep_listening = FAREWELL, 'goodbye', False
+        reply = character_line(deck, profile, character_lines.GOODBYE, previous) or FAREWELL
+        marker, keep_listening = 'goodbye', False
     elif re.search(r'\b(?:joke|jokes|pun)\b|\bmake me laugh\b', text, re.I) and not re.search(r"\b(?:stop|no more|don't|do not)\b", text, re.I):
         topic = literal_topic(text)
         card, _, reply = deck.next(topic) if topic in JOKE_TOPICS else deck.next_joke()
@@ -71,12 +102,20 @@ def select(transcript, memory, session, profile, cancel, deadline, deck):
             reply = MORE[profile]
         marker = 'joke' if topic in JOKE_TOPICS else 'more'
     elif re.search(r'\b(?:hello|hi|hey|greetings)\b', text, re.I) or offered_name(text):
-        reply, marker = GREETINGS[profile][int(bool(history))], 'greeting'
+        reply = character_line(deck, profile, character_lines.GREETING, previous) or GREETINGS[profile][int(bool(history))]
+        marker = 'greeting'
         name = offered_name(text)
         if name and name.casefold() in NAMES:
             reply = 'Hi, ' + name.capitalize() + '! ' + reply
+    elif (topic := family_topic(text)) is not None:
+        reply = character_line(deck, profile, topic, previous)
+        if reply is None:
+            card, _, reply = deck.next(topic)
+        else:
+            card = topic
+        marker = 'joke' if topic in JOKE_TOPICS else 'topic'
     else:
-        reply = FALLBACK
+        reply = character_line(deck, profile, character_lines.UNCLEAR, previous) or FALLBACK
     validate_speech(reply)
     check(cancel, deadline)
     return {'card': card, 'text': reply, 'mode': 'family', 'reason': marker,

@@ -17,6 +17,7 @@ sys.path[:0] = [str(HERE), str(HERE.parent / 'local-talkback')]
 import chat_server
 import conversation_policy as policy
 import family_conversation as family
+import character_lines
 import server
 from pocket_voice import CATALOG
 
@@ -172,6 +173,71 @@ class StandaloneCompanionPages(unittest.TestCase):
                         c.close()
             finally:
                 http.shutdown()
+
+
+class FamilyTopicsAndCharacters(unittest.TestCase):
+    def setUp(self):
+        self.memory = policy.Memory(now=lambda: 0.0)
+        self.deck = server.companion.ReplyDeck()
+        self.cancel = threading.Event()
+
+    def turn(self, text, profile='friendly', session='guest'):
+        decision = family.select(text, self.memory, session, profile, self.cancel, time.monotonic() + 5, self.deck)
+        self.memory.commit(session, decision['revision'], decision['marker'], decision['text'])
+        return decision
+
+    def test_common_questions_get_reviewed_topic_answers_instead_of_one_fallback(self):
+        REPLIES = server.companion.REPLIES
+        for text, topic in [('Who are you?', 9), ('What is your name?', 9), ('How are you?', 13), ('Thank you', 14),
+                            ('Are you scary?', 10), ('Can I have some candy?', 7), ('Do you like to dance?', 11),
+                            ("What's your favorite color?", 15), ('I like your costume', 8), ('Do you like ghosts?', 3)]:
+            with self.subTest(text=text):
+                decision = self.turn(text, session=text)
+                self.assertIn(decision['text'], REPLIES[topic])
+                self.assertEqual(decision['card'], topic)
+        self.assertEqual(self.turn('Banana spaceship', session='other')['text'], family.FALLBACK)
+
+    def test_unapproved_character_lines_are_never_spoken(self):
+        self.assertEqual(character_lines.APPROVED, frozenset())
+        drafts = {line for topics in character_lines.LINES.values() for lines in topics.values() for line in lines}
+        for profile in character_lines.LINES:
+            for text in ['Hello', 'Who are you?', 'Are you scary?', 'How are you?', 'Thanks', 'Candy please', 'Mumble', 'Goodbye']:
+                with self.subTest(profile=profile, text=text):
+                    spoken = self.turn(text, profile, profile + text)['text']
+                    self.assertNotIn(spoken, drafts)
+                    with self.assertRaises(ValueError):
+                        family.validate_speech(next(iter(drafts)))
+
+    def test_an_approved_character_speaks_only_its_own_lines_and_rotates(self):
+        with patch.object(character_lines, 'APPROVED', frozenset({'guardian'})):
+            own = character_lines.LINES['guardian']
+            for text, topic in [('Hello', 1), ('Who are you?', 9), ('Are you scary?', 10), ('How are you?', 13),
+                                ('Thanks', 14), ('Candy please', 7), ('Mumble', 0), ('Goodbye', 12)]:
+                with self.subTest(text=text):
+                    decision = self.turn(text, 'guardian', 'g' + text)
+                    self.assertIn(decision['text'], own[topic])
+                    family.validate_speech(decision['text'])
+            first = self.turn('Who are you?', 'guardian', 'repeat')['text']
+            self.assertNotEqual(self.turn('Who are you?', 'guardian', 'repeat')['text'], first)
+            self.assertIn(self.turn('Tell me a ghost joke', 'guardian', 'joke')['text'], server.companion.REPLIES[3])
+            self.assertIn(self.turn('Who are you?', 'mischief', 'other')['text'], server.companion.REPLIES[9])
+            self.assertEqual(self.turn('Hello, I am Emma', 'guardian', 'named')['text'][:10], 'Hi, Emma! ')
+            family.validate_speech('Hi, Emma! ' + own[1][0])
+        with self.assertRaises(ValueError):
+            family.validate_speech(own[1][0])
+
+    def test_every_draft_line_passes_spoken_reply_and_input_filters(self):
+        self.assertEqual(set(character_lines.LINES), {'mischief', 'guardian', 'storyteller'})
+        for profile, topics in character_lines.LINES.items():
+            self.assertEqual(set(topics), set(character_lines.TOPICS), profile)
+            for lines in topics.values():
+                self.assertGreaterEqual(len(lines), 3)
+                self.assertEqual(len(set(lines)), len(lines))
+                for line in lines:
+                    with self.subTest(line=line):
+                        policy.validate_spoken_reply(line)
+                        self.assertFalse(policy.blocked_input(line))
+                        self.assertNotIn(line, CATALOG)
 
 
 if __name__ == '__main__':
