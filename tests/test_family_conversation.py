@@ -24,6 +24,11 @@ from pocket_voice import CATALOG
 
 class FamilyTests(unittest.TestCase):
     def setUp(self):
+        # These tests cover the shared reviewed catalog, as used by Friendly and by
+        # any character that has not been approved.
+        shared_only = patch.object(character_lines, 'APPROVED', frozenset())
+        shared_only.start()
+        self.addCleanup(shared_only.stop)
         self.clock = [0.0]
         self.memory = policy.Memory(now=lambda: self.clock[0])
         self.deck = server.companion.ReplyDeck()
@@ -197,8 +202,8 @@ class FamilyTopicsAndCharacters(unittest.TestCase):
                 self.assertEqual(decision['card'], topic)
         self.assertEqual(self.turn('Banana spaceship', session='other')['text'], family.FALLBACK)
 
+    @patch.object(character_lines, 'APPROVED', frozenset())
     def test_unapproved_character_lines_are_never_spoken(self):
-        self.assertEqual(character_lines.APPROVED, frozenset())
         drafts = {line for topics in character_lines.LINES.values() for lines in topics.values() for line in lines}
         for profile in character_lines.LINES:
             for text in ['Hello', 'Who are you?', 'Are you scary?', 'How are you?', 'Thanks', 'Candy please', 'Mumble', 'Goodbye']:
@@ -223,8 +228,18 @@ class FamilyTopicsAndCharacters(unittest.TestCase):
             self.assertIn(self.turn('Who are you?', 'mischief', 'other')['text'], server.companion.REPLIES[9])
             self.assertEqual(self.turn('Hello, I am Emma', 'guardian', 'named')['text'][:10], 'Hi, Emma! ')
             family.validate_speech('Hi, Emma! ' + own[1][0])
-        with self.assertRaises(ValueError):
-            family.validate_speech(own[1][0])
+        with patch.object(character_lines, 'APPROVED', frozenset()):
+            with self.assertRaises(ValueError):
+                family.validate_speech(own[1][0])
+
+    def test_owner_approved_all_three_characters_and_friendly_keeps_the_shared_catalog(self):
+        self.assertEqual(character_lines.APPROVED, frozenset({'mischief', 'guardian', 'storyteller'}))
+        for profile in character_lines.APPROVED:
+            with self.subTest(profile=profile):
+                self.assertIn(self.turn('Hello', profile, profile)['text'], character_lines.LINES[profile][1])
+                self.assertIn(self.turn('Are you scary?', profile, profile)['text'], character_lines.LINES[profile][10])
+        self.assertIn(self.turn('Hello', 'friendly', 'f')['text'], family.GREETINGS['friendly'])
+        self.assertIn(self.turn('Are you scary?', 'friendly', 'f')['text'], server.companion.REPLIES[10])
 
     def test_every_draft_line_passes_spoken_reply_and_input_filters(self):
         self.assertEqual(set(character_lines.LINES), {'mischief', 'guardian', 'storyteller'})

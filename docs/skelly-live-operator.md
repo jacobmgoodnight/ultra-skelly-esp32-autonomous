@@ -81,12 +81,14 @@ joke" line.
 ### Characters
 
 Friendly Trick-or-Treater uses the shared catalog. The Mischievous Skeleton,
-Haunted Guardian and Creepy Storyteller each have their own drafted lines in the
-[character review sheet](skelly-live-character-lines.md), but a character speaks
-them only after you approve it. To approve one, read all of its lines, then add
-its name (`'mischief'`, `'guardian'` or `'storyteller'`) to `APPROVED` in
-`experiments/pocket-conversation/character_lines.py`. Until then it uses the
-shared catalog. Jokes stay shared by every character.
+Haunted Guardian and Creepy Storyteller have their own lines for hello, who are
+you, are you scary, how are you, thank you, candy, goodbye and "didn't catch
+that"; you approved all three on November 15, 2026. Every character shares the
+same jokes. All lines are in the [character review sheet](skelly-live-character-lines.md).
+
+To change a line, edit `experiments/pocket-conversation/character_lines.py` and
+run `python scripts/export-character-lines.py`. To take a character back to the
+shared catalog, remove its name from `APPROVED` in that file.
 
 Cloud options (Claude for Open-mode replies, ElevenLabs for the voice) are off
 by default. They need setup through **Advanced → Optional cloud setup** and

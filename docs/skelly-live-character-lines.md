@@ -8,9 +8,9 @@ added to `APPROVED` in the source file. Until then it uses the shared reviewed
 catalog. Friendly Trick-or-Treater keeps the shared catalog, and jokes stay shared
 for every character.
 
-Approved now: **none**.
+Approved now: Haunted Guardian, Mischievous Skeleton, Creepy Storyteller.
 
-## Mischievous Skeleton (draft)
+## Mischievous Skeleton (approved)
 
 **Hello**
 
@@ -60,7 +60,7 @@ Approved now: **none**.
 - I missed that. Something about candy? It is always about candy.
 - Say that again, nice and slow. My skull has an echo.
 
-## Haunted Guardian (draft)
+## Haunted Guardian (approved)
 
 **Hello**
 
@@ -110,7 +110,7 @@ Approved now: **none**.
 - My ancient ears did not catch that. Ask me for a joke.
 - Hmm. A riddle? Speak plainly, friend, and I shall answer.
 
-## Creepy Storyteller (draft)
+## Creepy Storyteller (approved)
 
 **Hello**
 

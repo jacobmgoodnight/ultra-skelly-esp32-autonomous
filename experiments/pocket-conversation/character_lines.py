@@ -11,7 +11,8 @@ as any spoken reply (see tests/test_family_conversation.py).
 """
 
 # Add a character's name here only after reviewing all of its lines.
-APPROVED = frozenset()
+# 2026-11-15: owner approved all three drafted characters.
+APPROVED = frozenset({'mischief', 'guardian', 'storyteller'})
 
 # Topic numbers match experiments/local-talkback/replies.py TOPICS.
 UNCLEAR, GREETING, CANDY, WHO, SCARY, GOODBYE, HOW, THANKS = 0, 1, 7, 9, 10, 12, 13, 14
