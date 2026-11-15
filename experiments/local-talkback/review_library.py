@@ -4,7 +4,8 @@ import html
 import json
 from pathlib import Path
 
-from recordings import Library, catalog_text, digest
+from recordings import Library, catalog_text, digest, same_line, take_file
+import character_lines
 from voice import MAX_REPLY_WAV, validate_reply_wave
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,8 +15,8 @@ STARTER = ((1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (3, 1), (4, 0), (5, 0),
            (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0), (16, 0), (19, 0))
 
 
-def stage(library, topic, variant, source, voice, delivery):
-    text = catalog_text(topic, variant)
+def stage(library, topic, variant, source, voice, delivery, character=None):
+    text = catalog_text(topic, variant, character)
     source = Path(source)
     if source.stat().st_size > MAX_REPLY_WAV:
         raise ValueError('Candidate exceeds the audio limit.')
@@ -24,21 +25,23 @@ def stage(library, topic, variant, source, voice, delivery):
     if not voice.strip() or len(voice) > 80 or not delivery.strip() or len(delivery) > 120:
         raise ValueError('Provide a short voice name and delivery description.')
     entries = library.entries()
-    entries = [e for e in entries if not (e.get('topic') == topic and e.get('variant') == variant)]
+    entries = [e for e in entries if not same_line(e, topic, variant, character)]
     library.directory.mkdir(parents=True, exist_ok=True)
-    name = f'{topic}-{variant}.wav'
+    name = take_file(topic, variant, character)
     (library.directory / name).write_bytes(data)
     entry = {'topic': topic, 'variant': variant, 'text': text, 'text_sha256': digest(text.encode('utf-8')),
              'file': name, 'audio_sha256': digest(data), 'review_status': 'unreviewed',
              'voice': voice, 'delivery': delivery}
+    if character is not None:
+        entry['character'] = character
     entries.append(entry)
     library.save(entries)
     return entry
 
 
-def approve(library, topic, variant, audio_hash):
+def approve(library, topic, variant, audio_hash, character=None):
     entries = library.entries()
-    matches = [e for e in entries if e.get('topic') == topic and e.get('variant') == variant]
+    matches = [e for e in entries if same_line(e, topic, variant, character)]
     if len(matches) != 1 or matches[0].get('review_status') != 'unreviewed':
         raise ValueError('Exactly one unreviewed candidate is required.')
     entry = matches[0]
@@ -48,7 +51,7 @@ def approve(library, topic, variant, audio_hash):
     # Validate every binding before saving approval, including a fresh disk read.
     class Pending(Library):
         def entries(self): return entries
-    if Pending(library.directory).lookup(topic, variant, catalog_text(topic, variant)) is None:
+    if Pending(library.directory).lookup(topic, variant, catalog_text(topic, variant, character), character) is None:
         raise ValueError('Candidate changed or is incompatible; stage and listen again.')
     library.save(entries)
 
@@ -59,9 +62,9 @@ def review_page(library):
     for entry in library.entries():
         if not isinstance(entry, dict):
             raise ValueError('Invalid candidate entry.')
-        topic, variant = entry.get('topic'), entry.get('variant')
-        expected = catalog_text(topic, variant)
-        if entry.get('text') != expected or entry.get('file') != f'{topic}-{variant}.wav':
+        topic, variant, character = entry.get('topic'), entry.get('variant'), entry.get('character')
+        expected = catalog_text(topic, variant, character)
+        if entry.get('text') != expected or entry.get('file') != take_file(topic, variant, character):
             raise ValueError('Candidate identity or text has changed; restage it.')
         path = library.directory / entry['file']
         if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_REPLY_WAV:
@@ -70,9 +73,10 @@ def review_page(library):
         if entry.get('audio_sha256') != digest(data) or entry.get('text_sha256') != digest(expected.encode('utf-8')):
             raise ValueError('A candidate has changed; restage it before listening.')
         esc = lambda value: html.escape(str(value), quote=True)
-        rows.append(f'<section><h2>Reply {topic} / {variant} · {esc(entry.get("voice", ""))}</h2>'
+        who = (esc(character) + ' · ') if character is not None else ''
+        rows.append(f'<section><h2>{who}Reply {topic} / {variant} · {esc(entry.get("voice", ""))}</h2>'
                     f'<p>{esc(entry.get("delivery", ""))} · {esc(entry.get("review_status", ""))}</p>'
-                    f'<audio controls preload="none" src="{topic}-{variant}.wav"></audio>'
+                    f'<audio controls preload="none" src="{esc(entry["file"])}"></audio>'
                     f'<p>Expected: {esc(expected)}</p><p>SHA-256: <code>{esc(entry["audio_sha256"])}</code></p></section>')
     page = ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
             '<title>Skelly candidate review</title><style>body{font:18px system-ui;background:#181323;color:#fff;'
@@ -91,22 +95,30 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, default=DEFAULT_LIBRARY)
     sub = parser.add_subparsers(dest='command', required=True)
-    sub.add_parser('starter')
+    characters = sorted(character_lines.LINES)
+    start = sub.add_parser('starter')
+    start.add_argument('--character', choices=characters, help='List that character\'s own lines instead.')
     add = sub.add_parser('stage')
     add.add_argument('topic', type=int); add.add_argument('variant', type=int); add.add_argument('wave', type=Path)
     add.add_argument('--voice', required=True); add.add_argument('--delivery', required=True)
+    add.add_argument('--character', choices=characters)
     ok = sub.add_parser('approve')
     ok.add_argument('topic', type=int); ok.add_argument('variant', type=int); ok.add_argument('audio_sha256')
+    ok.add_argument('--character', choices=characters)
     sub.add_parser('list')
     sub.add_parser('review-page')
     args = parser.parse_args()
     library = Library(args.library)
     if args.command == 'starter':
-        print(json.dumps([{'topic': t, 'variant': v, 'text': catalog_text(t, v)} for t, v in STARTER], indent=2))
+        if args.character:
+            ids = [(t, v) for t, lines in character_lines.LINES[args.character].items() for v in range(len(lines))]
+            print(json.dumps([{'character': args.character, 'topic': t, 'variant': v, 'text': catalog_text(t, v, args.character)} for t, v in ids], indent=2))
+        else:
+            print(json.dumps([{'topic': t, 'variant': v, 'text': catalog_text(t, v)} for t, v in STARTER], indent=2))
     elif args.command == 'stage':
-        print(json.dumps(stage(library, args.topic, args.variant, args.wave, args.voice, args.delivery), indent=2))
+        print(json.dumps(stage(library, args.topic, args.variant, args.wave, args.voice, args.delivery, args.character), indent=2))
     elif args.command == 'approve':
-        approve(library, args.topic, args.variant, args.audio_sha256)
+        approve(library, args.topic, args.variant, args.audio_sha256, args.character)
         print('Approved exact candidate. Listen again and restage if it changes.')
     elif args.command == 'review-page':
         print('Open this local page to listen: ' + str(review_page(library)))

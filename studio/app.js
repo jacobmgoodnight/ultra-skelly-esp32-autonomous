@@ -107,7 +107,9 @@
   function writeAudioReference(ref){audioReference=normalizeAudioReference(ref);}
   function parseProfile(text) {
     if(typeof text!=="string" || text.length>65536)throw new Error("Choose a Studio settings file smaller than 64 KB.");
-    const profile=JSON.parse(text);
+    let profile;
+    try{profile=JSON.parse(text);}
+    catch{throw new Error("This isn’t a Skelly Studio settings file. Choose a .json file made with Save settings.");}
     if(!profile || profile.app!=="SkellyStudio" || ![1,2,3,4,5].includes(profile.version) ||
        !profile.config || typeof profile.config!=="object" || Array.isArray(profile.config))
       throw new Error("This is not a supported Skelly Studio profile (version 1–5).");

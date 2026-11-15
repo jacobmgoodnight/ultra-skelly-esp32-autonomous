@@ -54,7 +54,7 @@ introduction and two jokes but needed a spookier character. A subsequent design
 E was closer, though still not spooky enough. Treat these as promising references,
 not final approval or proof of consistent delivery across all 80 lines. See
 [voice research](expressive-voice-research.md) and the
-[research setup](../experiments/voice-research/README.md) for the measured
+[research setup](../../../experiments/voice-research/README.md) for the measured
 comparisons, source revisions, licenses, and model preparation. Large model
 downloads and the CPU build require internet and disk space initially; generation
 below uses local files and no microphone.

@@ -11,16 +11,14 @@ application that embeds this sketch and replaces validated constants plus severa
 optional scheduling blocks. It downloads one self-contained `.ino`. No backend,
 Wi-Fi, or ongoing browser connection is involved.
 
-The separate [repeat-back lab](experimental-talkback.md) uses a laptop microphone
-and the paired Live audio speaker. The optional [local Halloween conversation
-companion](local-halloween-conversation.md) adds Windows localhost speech/reply
-engines and a separate page; only approved reply lines and allowlisted first names
-can reach synthesis. These experiments do not participate in the ESP32 scheduler
-or change ordinary Studio's static/offline architecture.
-The conversation experiment also offers an explicitly selected ElevenLabs voice;
-it sends only name-free reviewed reply text to the provider, while recognition,
-reply selection and the ESP32 firmware remain local. This option requires the
-owner's own key and internet and never runs by default.
+[Skelly Live](skelly-live-operator.md) is a separate, optional Windows experiment:
+a local companion (`experiments/pocket-conversation/chat_server.py`, built on
+`server.py` and `experiments/local-talkback/companion.py`) recognizes speech,
+chooses a reply and serves one page that plays it through Skelly's Live speaker.
+Family mode, the default, speaks only reviewed catalog lines. It does not take
+part in the ESP32 scheduler, and the ESP32 stays unplugged while it runs.
+Optional Claude and ElevenLabs services need the owner's own keys and per-visit
+permission.
 
 ## Optional USB settings and scenes
 

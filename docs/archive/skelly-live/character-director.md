@@ -96,5 +96,5 @@ at low volume:
 
 Passing this isolated test does not establish simultaneous audio and motors,
 automatic handoff, extended endurance, every reply, or all lighting behavior.
-Follow [Skelly Live operator setup](skelly-live-operator.md) and the existing
-[hardware verification matrix](hardware-verification.md) for current evidence.
+Follow [Skelly Live operator setup](../../skelly-live-operator.md) and the existing
+[hardware verification matrix](../../hardware-verification.md) for current evidence.

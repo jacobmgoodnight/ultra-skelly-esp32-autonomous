@@ -3,21 +3,39 @@ import hashlib
 import json
 from pathlib import Path
 
+import character_lines
 from replies import REPLIES
 from voice import MAX_REPLY_WAV, validate_reply_wave
 
 MAX_MANIFEST = 128 * 1024
-MAX_ENTRIES = 80
+MAX_ENTRIES = 160  # 80 shared catalog lines plus 72 character lines, with headroom
 
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def catalog_text(topic, variant):
-    if type(topic) is not int or type(variant) is not int or not 0 <= topic < len(REPLIES) or not 0 <= variant < len(REPLIES[topic]):
+def catalog_text(topic, variant, character=None):
+    """Exact reviewed text: the shared catalog, or a character's own line."""
+    if type(topic) is not int or type(variant) is not int:
         raise ValueError('Unknown reply ID.')
-    return REPLIES[topic][variant]
+    if character is None:
+        if not 0 <= topic < len(REPLIES) or not 0 <= variant < len(REPLIES[topic]):
+            raise ValueError('Unknown reply ID.')
+        return REPLIES[topic][variant]
+    lines = character_lines.LINES.get(character, {}).get(topic, ()) if isinstance(character, str) else ()
+    if not 0 <= variant < len(lines):
+        raise ValueError('Unknown character line.')
+    return lines[variant]
+
+
+def take_file(topic, variant, character=None):
+    return f'{character}-{topic}-{variant}.wav' if character is not None else f'{topic}-{variant}.wav'
+
+
+def same_line(entry, topic, variant, character=None):
+    return (isinstance(entry, dict) and type(entry.get('topic')) is int and type(entry.get('variant')) is int
+            and entry['topic'] == topic and entry['variant'] == variant and entry.get('character') == character)
 
 
 class Library:
@@ -35,17 +53,20 @@ class Library:
             raise ValueError('Invalid recording manifest.')
         return data['entries']
 
-    def lookup(self, topic, variant, text):
-        result = self.lookup_details(topic, variant, text)
+    def lookup(self, topic, variant, text, character=None):
+        result = self.lookup_details(topic, variant, text, character)
         return result[0] if result is not None else None
 
-    def lookup_details(self, topic, variant, text):
+    def lookup_details(self, topic, variant, text, character=None):
         """Read and revalidate each time; invalid or unreviewed data is never played."""
-        expected = catalog_text(topic, variant)
+        try:
+            expected = catalog_text(topic, variant, character)
+        except ValueError:
+            return None
         if text != expected:
             return None
         try:
-            matches = [e for e in self.entries() if isinstance(e, dict) and type(e.get('topic')) is int and type(e.get('variant')) is int and e['topic'] == topic and e['variant'] == variant]
+            matches = [e for e in self.entries() if same_line(e, topic, variant, character)]
             if len(matches) != 1:
                 return None
             entry = matches[0]
@@ -55,7 +76,7 @@ class Library:
             if not isinstance(voice, str) or not voice.strip() or len(voice) > 80:
                 return None
             name = entry.get('file')
-            if not isinstance(name, str) or name != f'{topic}-{variant}.wav':
+            if not isinstance(name, str) or name != take_file(topic, variant, character):
                 return None
             path = self.directory / name
             if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_REPLY_WAV:

@@ -7,7 +7,7 @@ model and detailed timing were not supplied. Longer runs, physical Stop/hidden-p
 checks, body-still criteria and return to autonomy remain **Untested**. This experiment
 is for the 6.5-foot Ultra Skelly v2 only, not the experimental 12-foot model.
 
-Open [Repeat-back lab](../studio/talkback.html) in desktop Chrome or Edge over
+Open Repeat-back lab (retired; now step 1 of the Skelly Live page) in desktop Chrome or Edge over
 HTTPS or localhost. This is a separate static page with no link in the ordinary
 Studio controls. It does not change or install ESP32 firmware. It requires a
 computer/browser while in use; ordinary autonomous operation remains independent.
@@ -217,7 +217,7 @@ Run `node --test studio/tests/talkback*.test.cjs` for recording lifecycle,
 bounded memory/time, late permission/connect results, cancellation, output failures,
 UI gating, speech segmentation/WAV bounds, worklet overload, automatic session
 limits/cleanup and exact live-enable packet tests. Full baseline and pinned compilation
-requirements remain in [testing](testing.md). Firmware and generation are unchanged.
+requirements remain in [testing](../../testing.md). Firmware and generation are unchanged.
 
 ## Primary research references
 

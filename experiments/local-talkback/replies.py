@@ -194,6 +194,14 @@ class ReplyDeck:
         self._recent.append((topic_id, variant_id))
         return topic_id, variant_id, REPLIES[topic_id][variant_id]
 
+    def pick(self, lines, avoid=''):
+        """Choose one line from a small fixed reviewed set, avoiding an immediate repeat."""
+        choices = [line for line in lines if line != avoid] or list(lines)
+        if not choices:
+            raise ValueError('No reviewed lines to choose from.')
+        self._rng.shuffle(choices)
+        return choices[0]
+
     def next_joke(self):
         if not self._joke_bag:
             self._joke_bag.extend(JOKE_TOPICS)

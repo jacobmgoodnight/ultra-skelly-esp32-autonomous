@@ -1,7 +1,7 @@
 # Isolated voice research
 
 This folder does not change or start the companion, use a microphone, play audio,
-connect to the prop, or send visitor data. See [the research report](../../docs/expressive-voice-research.md)
+connect to the prop, or send visitor data. See [the research report](../../docs/archive/skelly-live/expressive-voice-research.md)
 for sources, listening limits and the intended attended comparison. Generated
 samples are not reviewed or approved for use around children automatically.
 
@@ -80,7 +80,7 @@ previews, not automatically approved for the conversation system.
 
 ## Qwen3-TTS VoiceDesign: isolated preparation
 
-The [research report](../../docs/expressive-voice-research.md#voicedesign-cpu-preparation-and-memory-check)
+The [research report](../../docs/archive/skelly-live/expressive-voice-research.md#voicedesign-cpu-preparation-and-memory-check)
 records why this is the next character-voice candidate and the initial
 memory-limited result. This is a prerecorded preview, not an installed
 conversation voice. The two verified Q4 model files occupy about 1.44 GB and

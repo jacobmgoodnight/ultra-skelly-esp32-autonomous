@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
 <title>Skelly Studio — ESP32 Controller</title>
-<link rel="stylesheet" href="./style.css?v=4417f12effa8">
+<link rel="stylesheet" href="./style.css?v=b64c3d435805">
 <script src="./template.js?v=02956163b422" defer></script>
 <script src="./experience.js?v=63da65c09f7c" defer></script>
 <script src="./runtime-schema.js?v=cbef716262c7" defer></script>
 <script src="./runtime.js?v=cd8425c9a6a5" defer></script>
 <script src="./serial.js?v=58497297ca88" defer></script>
-<script src="./app.js?v=d607f391c77d" defer></script>
+<script src="./app.js?v=87c434d5f9d4" defer></script>
 <script src="./scene-model.js?v=52758fbcd976" defer></script>
-<script src="./scenes.js?v=40d265784548" defer></script>
+<script src="./scenes.js?v=f02749e946ca" defer></script>
 <script src="./looks.js?v=55dee1d1c002" defer></script>
 <script src="./release.js?v=5c425add56d7" defer></script>
 <script src="./controller-state.js?v=5397557df793" defer></script>
@@ -30,7 +30,7 @@
   <div><a class="brand" href="../"><span class="brand-skull" aria-hidden="true">💀</span> <strong>Skelly Studio</strong></a><div class="eyebrow">ULTRA SKELLY V2 · ESP32 BLE</div></div>
   <a class="github" href="https://github.com/jacobmgoodnight/ultra-skelly-esp32-autonomous" rel="noopener" target="_blank">View GitHub ↗</a>
 </header>
-<section class="hero">
+<section class="hero" aria-label="Introduction">
   <span class="kicker">BUILD YOUR OWN AUTONOMOUS SKELLY</span>
   <h1>Make your Skelly<br><em>come alive.</em></h1>
   <p>Choose a personality, customize movement, eyes and lighting, then connect and save to your ESP32 over USB. Watch Skelly to verify the result.</p>
@@ -152,12 +152,12 @@
       <div class="save-locations"><p id="browserSaveStatus">Browser library · 0 of 4 scenes</p></div>      <details class="instructions"><summary>Choose a quick look</summary><label class="look-scope" data-look-ui>Apply to <select id="sceneStarterScope"><option value="appearance">Eyes and lights only</option><option value="complete">Complete routine</option></select></label><div class="scene-starters"><button type="button" data-scene-starter="moonlit"><img src="./images/eyes/eye_icon_8.png" width="46" height="46" alt=""><b>Moonlit Watcher</b><small>Head 60–120 sec · arm &amp; torso off</small><span>Moonlight · fixed eye #8</span></button><button type="button" data-scene-starter="haunted"><img src="./images/eyes/eye_icon_1.png" width="46" height="46" alt=""><b>Haunted Porch</b><small>Head 32–45 · arm 60–120 · torso 75–180 sec</small><span>Combined 240–600 sec · random eyes 1–8 · Haunted</span></button><button type="button" data-scene-starter="ember"><img src="./images/eyes/eye_icon_4.png" width="46" height="46" alt=""><b>Ember Glow</b><small>Head 35–75 · arm 150–240 sec · torso off</small><span>Ember · fixed eye #4</span></button></div><p>Eyes and lights only preserves your movement, mouth, timing and scene name. Complete routine starts a new 10-minute scene with mouth off. Update or save the scene to keep your changes.</p></details>
       </div>
       <div id="draftRecovery" class="draft-recovery" hidden><strong>Recover your previous editor draft</strong><div><button type="button" id="draftRestore">Restore draft</button><button type="button" id="draftDiscard">Discard draft</button></div></div>
-      <h3 class="scene-strip-title">Scene sequence</h3><div id="sceneStrip" class="scene-strip" aria-label="Saved scene sequence"></div><p id="sceneStripNote" class="small-description"></p><details class="instructions"><summary>Copy appearance from a saved scene</summary><div class="appearance-copy" data-look-ui><label>From <select id="appearanceCopySource"></select></label><label>Copy <select id="appearanceCopyScope"><option value="appearance">Eyes and lights</option><option value="eyes">Eyes only</option><option value="lights">Lights only</option></select></label><button type="button" id="appearanceCopyApply" disabled>Copy to current editor</button></div><p id="appearanceCopyStatus" class="small-description" role="status">Copy appearance, then update the scene you are editing.</p></details><div id="sceneList" class="scene-cards" aria-label="Saved scenes"></div>
+      <h3 class="scene-strip-title">Scene sequence</h3><div id="sceneStrip" class="scene-strip" role="group" aria-label="Saved scene sequence"></div><p id="sceneStripNote" class="small-description"></p><details class="instructions"><summary>Copy appearance from a saved scene</summary><div class="appearance-copy" data-look-ui><label>From <select id="appearanceCopySource"></select></label><label>Copy <select id="appearanceCopyScope"><option value="appearance">Eyes and lights</option><option value="eyes">Eyes only</option><option value="lights">Lights only</option></select></label><button type="button" id="appearanceCopyApply" disabled>Copy to current editor</button></div><p id="appearanceCopyStatus" class="small-description" role="status">Copy appearance, then update the scene you are editing.</p></details><div id="sceneList" class="scene-cards" role="group" aria-label="Saved scenes"></div>
       <div class="scene-library-actions"><button id="sceneUndo" type="button" disabled>Undo last library change</button><span>Up to four scenes · saved in this browser</span></div>
       <label><input id="sceneRotate" type="checkbox"> Automatically switch scenes</label>
       <label class="scene-order">Scene order <select id="sceneOrder"><option value="ordered">In order</option><option value="random">Random · no immediate repeats</option></select></label>
       <details class="scene-overview instructions"><summary>Compare saved scenes</summary><div class="scene-compare-wrap" tabindex="0" role="region" aria-label="Saved scene comparison"><table id="sceneComparison"><caption>Saved browser scenes · editor drafts are excluded</caption><thead><tr><th scope="col">Scene</th><th scope="col">Minutes</th><th scope="col">Movement</th><th scope="col">Eyes</th><th scope="col">Lighting</th><th scope="col" id="sceneAudioColumn" hidden>Audio · experimental</th></tr></thead><tbody id="sceneComparisonRows"></tbody></table></div></details>
-      <section class="routine-preview" aria-labelledby="routinePreviewTitle"><h3 id="routinePreviewTitle">Routine preview</h3><p class="small-description">Saved scenes · sample requests within each hold</p><label class="scene-preview-picker" for="scenePreviewSelect">Preview scene <select id="scenePreviewSelect" disabled></select></label><div id="sceneSequence" class="scene-sequence" aria-label="Selected saved scene timing preview"></div></section><p class="small-description" id="sceneSequenceNote">Save your first scene using the controls above.</p>
+      <section class="routine-preview" aria-labelledby="routinePreviewTitle"><h3 id="routinePreviewTitle">Routine preview</h3><p class="small-description">Saved scenes · sample requests within each hold</p><label class="scene-preview-picker" for="scenePreviewSelect">Preview scene <select id="scenePreviewSelect" disabled></select></label><div id="sceneSequence" class="scene-sequence" role="group" aria-label="Selected saved scene timing preview"></div></section><p class="small-description" id="sceneSequenceNote">Save your first scene using the controls above.</p>
       <details class="instructions"><summary>Scene timing help</summary><p>Each scene starts its hold when Bluetooth connects. Switching waits for current actions and full cooldowns, then reconnects with the next scene. Scenes do not advance while disconnected. Random starts with the first scene and avoids immediate repeats.</p></details>
       <div class="profile-actions"><button id="sceneExport" type="button">Export scenes</button><button id="sceneImport" type="button">Import scenes</button><button id="sceneDownload" type="button">Download scene routine (.ino)</button><input id="sceneFile" class="sr-only" type="file" accept=".json" aria-label="Choose saved scenes"></div>
     </div></details>
@@ -194,6 +194,7 @@
       <label class="controller-consent"><input id="controllerConsent" type="checkbox"> Replace the controller’s saved routine when its current actions finish</label>
       <button id="controllerWrite" class="controller-save" type="button" aria-describedby="controllerRoutineHelp deviceSaveStatus error" disabled>Save this routine</button>
       <p class="small-description">Wait for <strong>read-back verified</strong> before unplugging. Then watch Skelly while attended to verify movement, eyes and lights.</p>
+      <details class="instructions" id="retentionCheck"><summary>Optional · check it stays saved after a restart</summary><ol><li>Unplug the ESP32 and switch Skelly off for 10 seconds.</li><li>Plug both back in, choose <strong>Connect ESP32</strong>, then <strong>Read saved settings</strong>.</li><li>The status above should say <strong>matches verified settings</strong>, and Skelly should start the same routine without a burst of movement.</li></ol><p>If either is different, save your settings (.json) and note what Skelly did.</p></details>
       <details class="instructions controller-optional"><summary>Optional · save a scene collection</summary><p>Scenes saved in Scene builder stay in this browser. Use this action to replace the ESP32’s program with that saved collection, including its scene order. Unfinished editor changes are excluded.</p><button id="controllerScenes" type="button" disabled>Save scene collection</button></details>
       </section>
       <details class="instructions" id="controllerSetup"><summary>First-time setup · install firmware once</summary>
@@ -370,6 +371,7 @@
     </div>
   </aside>
 </main>
+<section class="live-teaser" aria-labelledby="liveTeaserHeading"><details class="instructions"><summary id="liveTeaserHeading">Experimental · Skelly Live, the talking Skelly</summary><p>Visitors talk and Skelly answers through its own speaker, using a Windows laptop and a microphone near the prop. It is separate from this controller: the ESP32 stays unplugged while it runs. Replies and voice are still being improved.</p><p><a href="../docs/skelly-live-operator.md">Skelly Live guide →</a></p></details></section>
 <footer>Community-made ESP32 controller for Ultra Skelly by Jacob Goodnight.</footer>
 </div>
 <dialog id="paletteDialog" class="small-dialog" aria-labelledby="paletteDialogTitle"><div class="dialog-head"><strong id="paletteDialogTitle">Edit palette</strong><button type="button" id="paletteDialogClose" aria-label="Close palette editor">✕</button></div><div class="dialog-body"><fieldset data-palette-editor="0" hidden><legend>Palette 1</legend><label>Name <input id="palette0Name" maxlength="24" value="Halloween"></label><div class="palette-edit-colors"><label>Torso <input type="color" id="palette0Torso" value="#ff6000"></label><label>Head <input type="color" id="palette0Head" value="#00ff00"></label></div><label><input type="checkbox" class="palette-link" data-palette-link="0"> Link torso &amp; head colors</label></fieldset>

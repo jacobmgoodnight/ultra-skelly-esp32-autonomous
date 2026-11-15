@@ -5,12 +5,14 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 import wave
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/local-talkback'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/pocket-conversation'))
 import companion
 from recordings import Library, catalog_text
 from review_library import stage, approve, review_page, STARTER
@@ -130,6 +132,79 @@ class VoiceTests(unittest.TestCase):
                 self.assertEqual(request('POST', '/api/preview', {**headers, 'Origin': 'https://evil.example'})[0], 403)
             finally:
                 server.shutdown(); thread.join()
+
+
+class LiveFamilyRecordings(unittest.TestCase):
+    """Skelly Live plays an approved take of the exact spoken line, else synthesizes."""
+
+    def setUp(self):
+        import server
+        import character_lines
+        self.server, self.characters = server, character_lines
+        self.temp = tempfile.TemporaryDirectory()
+        self.library = Library(Path(self.temp.name) / 'library')
+        self.source = Path(self.temp.name) / 'candidate.wav'
+        self.source.write_bytes(sample())
+        self.engine = type('E', (), {'recordings': self.library})()
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def lookup(self, text, profile=None):
+        return self.server.Engines.reviewed_recording(self.engine, text, profile)
+
+    def approve(self, topic, variant, character=None, voice='Qwen matched MOSS'):
+        entry = stage(self.library, topic, variant, self.source, voice, 'dry and spooky', character=character)
+        self.assertIsNone(self.lookup(catalog_text(topic, variant, character), character))
+        approve(self.library, topic, variant, entry['audio_sha256'], character=character)
+        return entry
+
+    def test_shared_lines_are_found_by_text_including_greetings(self):
+        self.approve(2, 1)
+        self.approve(9, 0, voice='Greeting take')  # Friendly's first greeting; Family reports it with card 0
+        self.assertEqual(self.lookup(catalog_text(2, 1)), (sample(), 'Qwen matched MOSS'))
+        self.assertEqual(self.lookup(catalog_text(9, 0), 'friendly'), (sample(), 'Greeting take'))
+        self.assertIsNone(self.lookup(catalog_text(2, 0)))
+        self.assertIsNone(self.lookup('Hi, Emma! ' + catalog_text(2, 1)))
+        for bad in (None, 7, b'x', ''):
+            self.assertIsNone(self.lookup(bad))
+        self.assertIsNone(self.server.Engines.reviewed_recording(type('E', (), {})(), catalog_text(2, 1)))
+
+    def test_character_takes_play_only_for_that_approved_character(self):
+        line = self.characters.LINES['guardian'][1][0]
+        entry = self.approve(1, 0, character='guardian', voice='Guardian take')
+        self.assertEqual(entry['file'], 'guardian-1-0.wav')
+        with patch.object(self.characters, 'APPROVED', frozenset({'guardian'})):
+            self.assertEqual(self.lookup(line, 'guardian'), (sample(), 'Guardian take'))
+            self.assertIsNone(self.lookup(line, 'mischief'))
+            self.assertIsNone(self.lookup(line))
+            self.assertIsNone(self.lookup(catalog_text(1, 0), 'guardian'))  # shared 1/0 has no take
+        with patch.object(self.characters, 'APPROVED', frozenset()):
+            self.assertIsNone(self.lookup(line, 'guardian'))
+
+    def test_shared_and_character_takes_with_the_same_numbers_stay_separate(self):
+        self.approve(1, 0, voice='Shared take')
+        self.approve(1, 0, character='storyteller', voice='Storyteller take')
+        with patch.object(self.characters, 'APPROVED', frozenset({'storyteller'})):
+            self.assertEqual(self.lookup(catalog_text(1, 0))[1], 'Shared take')
+            self.assertEqual(self.lookup(self.characters.LINES['storyteller'][1][0], 'storyteller')[1], 'Storyteller take')
+        self.assertEqual(len(self.library.entries()), 2)
+        page = review_page(self.library).read_text(encoding='utf-8')
+        self.assertIn('storyteller-1-0.wav', page)
+        self.assertIn('1-0.wav', page)
+
+    def test_character_identity_and_tampering_fail_closed(self):
+        entry = self.approve(10, 2, character='mischief')
+        line = self.characters.LINES['mischief'][10][2]
+        with patch.object(self.characters, 'APPROVED', frozenset({'mischief'})):
+            self.assertIsNotNone(self.lookup(line, 'mischief'))
+            for key, value in [('character', 'guardian'), ('character', None), ('file', '10-2.wav'), ('text', line + '!')]:
+                altered = dict(entry, review_status='approved'); altered[key] = value
+                self.library.save([altered])
+                self.assertIsNone(self.lookup(line, 'mischief'), key)
+        for bad in [('nobody', 1, 0), ('guardian', 2, 0), ('guardian', 1, 9)]:
+            with self.assertRaises(ValueError):
+                catalog_text(bad[1], bad[2], bad[0])
 
 
 if __name__ == '__main__': unittest.main()
