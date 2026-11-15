@@ -59,3 +59,25 @@ jobs:
           name: compiled-source-hashes-${{ github.run_id }}
           path: .skelly-build/validation/results.json
           if-no-files-found: error
+  browser:
+    # Real-browser Studio workflows with simulated Web Serial; no hardware.
+    # Pages deploys only after this workflow succeeds on main.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned Playwright and Chromium (test tooling only)
+        run: |
+          npm install --prefix .skelly-build/browser-tools --no-save --package-lock=false playwright@1.62.1
+          node .skelly-build/browser-tools/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Run Studio browser workflows (desktop and phone widths)
+        run: NODE_PATH="$PWD/.skelly-build/browser-tools/node_modules" node scripts/test-studio-browser.cjs
+      - name: Keep screenshots and results when a workflow fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-browser-results-${{ github.run_id }}
+          path: .skelly-build/browser-results/
+          if-no-files-found: ignore

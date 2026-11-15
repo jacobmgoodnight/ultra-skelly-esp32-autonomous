@@ -271,7 +271,9 @@ feedback do not establish live conversation or physical jaw behavior.
 transaction code in headless Playwright. It starts its own loopback server and
 replaces Web Serial with an in-browser fixture before loading the page; it never
 requests a real port. No frontend dependency or hosted service is added. The browser
-runner is an optional separate command, not part of the dependency-free Node suite.
+runner is a separate command, not part of the dependency-free Node suite. CI runs it
+in the `browser` job of the Studio smoke tests with pinned Playwright 1.62.1 Chromium,
+so Pages deploys only after it passes; failure screenshots are uploaded as an artifact.
 
 Use an environment that provides Playwright on Node's module path. For a local
 Windows installation with Edge, test tooling can live entirely in ignored output:
